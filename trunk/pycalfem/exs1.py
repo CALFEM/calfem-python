@@ -36,8 +36,24 @@ assem(Edof[0,:], K, Ke2)
 assem(Edof[1,:], K, Ke1)
 assem(Edof[2,:], K, Ke2)
 
+print K
+
 bc = array([1,3])
-a = solveq(K, f, bc)
+a,Q = solveq(K, f, bc)
 
 print a
+print Q
+
+ed1=extract(Edof[0,:],a)
+ed2=extract(Edof[1,:],a)
+ed3=extract(Edof[2,:],a)
+
+ed = extract(Edof,a)
+
+print ed
+
+print ed1
+print ed2
+print ed3
+
 
