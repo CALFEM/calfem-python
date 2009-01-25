@@ -37,10 +37,29 @@ def solveq(K,f,bcPrescr,bcVal=None):
     bc[ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
     
-    fsys = f[bcDofs]
+    fsys = f[bcDofs] 
     asys = linalg.solve(K[ix_((bcDofs),(bcDofs))], fsys);
+    
     a = zeros([nDofs,1])
-    return a
+    Q = zeros([nDofs,1])
+    a[ix_(bcDofs)] = asys
+    Q=K*a-f;
+
+    return (a,Q)
+    
+def extract(edof,a):
+    nElements = edof.shape[0]
+    nDofs = edof.shape[1]
+    edofArray = asarray(edof)
+    ed = zeros([nElements,nDofs])
+    i=0
+    for row in edofArray:
+        idx = row-1
+        ed[i,:]=a[ix_(idx)].T
+        i+=1
+        
+    return ed
+        
 
 def hooke(ptype,E,v):
 
