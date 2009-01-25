@@ -1,62 +1,225 @@
 from numpy import *
 
 def spring1e(ep):
-    """Ke=spring1e(ep)
-    -------------------------------------------------------------
+    """-------------------------------------------------------------
      PURPOSE
       Compute element stiffness matrix for spring element.
     
-     INPUT:  ep = [k];       spring stiffness or analog quantity
+     INPUT:  ep = k;       spring stiffness or analog quantity
     
-     OUTPUT: Ke :            stiffness matrix, dim(Ke)= 2 x 2
-    -------------------------------------------------------------
-    
-     LAST MODIFIED: P-E Austrell 1994-11-02
-     Copyright (c)  Division of Structural Mechanics and
-                    Department of Solid Mechanics.
-                    Lund Institute of Technology
+     OUTPUT: Ke:           stiffness matrix, dim(Ke)= 2 x 2
     -------------------------------------------------------------"""
     k = ep
-    Ke = mat([[k,-k],[-k,k]],'d')
-    return Ke
+    return mat([[k,-k],[-k,k]],'d')
+
+def spring1s(ep,ed):
+    """-------------------------------------------------------------
+     PURPOSE
+      Compute element force in spring element (spring1e).
+    
+     INPUT:  ep = k        spring stiffness or analog quantity
+             ed = [u1 u2]  element displacements
+                           u1, u2: nodal displacements
+                                
+    
+     OUTPUT: es  = [N]       element force
+    -------------------------------------------------------------"""
+    k = ep
+    return k*(ed[1]-ed[0]);   
+
+def bar1e(ep):
+    """-------------------------------------------------------------
+     PURPOSE
+      Compute element stiffness matrix for spring element.
+    
+     INPUT:  ep = k;       spring stiffness or analog quantity
+    
+     OUTPUT: Ke:           stiffness matrix, dim(Ke)= 2 x 2
+    -------------------------------------------------------------"""
+    k = ep
+    return mat([[k,-k],[-k,k]],'d')
+
+def bar1s(ep,ed):
+    """-------------------------------------------------------------
+     PURPOSE
+      Compute element force in spring element (spring1e).
+    
+     INPUT:  ep = k        spring stiffness or analog quantity
+             ed = [u1 u2]  element displacements
+                           u1, u2: nodal displacements
+                                
+    
+     OUTPUT: es  = [N]       element force
+    -------------------------------------------------------------"""
+    k = ep
+    return k*(ed[1]-ed[0]);   
+
+def bar2e(ex,ey,ep):
+    """----------------------------------------------------------------------
+    PURPOSE
+     Compute the element stiffness matrix for two dimensional bar element.
+    
+    INPUT:  ex = [x1 x2];
+            ey = [y1 y2];      element node coordinates
+    
+            ep = [E A]         E: Young's modulus
+                               A: Cross section area
+    
+    OUTPUT: Ke : stiffness matrix, dim(Ke)= 4 x 4
+    ----------------------------------------------------------------------"""
+    E=ep[0]
+    A=ep[1]
+    
+    b = mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
+    L = asscalar(sqrt(b.T*b))
+    
+    Kle = mat([[1.,-1.],[-1.,1.]])*E*A/L
+    
+    n = asarray(b.T/L).reshape(2,)
+    
+    G = mat([
+        [n[0],n[1],0.,0.],
+        [0.,0.,n[0],n[1]]
+    ])
+    
+    return G.T*Kle*G
+
+def bar2s(ex,ey,ep,ed):
+    """-------------------------------------------------------------
+     PURPOSE
+      Compute normal force in two dimensional bar element.
+    
+     INPUT:  ex = [x1 x2]
+             ey = [y1 y2]        element coordinates
+    
+             ep = [E A]          E : Young's modulus
+                                 A : Cross section area
+    
+             ed : [u1 u2 u3 u4]  element displacement vector
+    
+     OUTPUT: es = [N]            element force 
+    -------------------------------------------------------------"""
+    E=ep[0]
+    A=ep[1]
+    
+    b = mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
+    L = asscalar(sqrt(b.T*b))
+    
+    Kle = mat([[1.,-1.],[-1.,1.]])*E*A/L
+    
+    n = asarray(b.T/L).reshape(2,) 
+    
+    G = mat([
+        [n[0],n[1],0.,0.],
+        [0.,0.,n[0],n[1]]
+    ])
+    
+    u=asmatrix(ed).T
+    N=E*A/L*mat([[-1.,1.]])*G*u
+    return asscalar(N)
 
 
 def assem(edof,K,Ke,f=None,fe=None):
-    edofArray = asarray(edof)
-    for row in edofArray:
-        idx = row-1
+    """-------------------------------------------------------------
+    PURPOSE
+     Assemble element matrices Ke ( and fe ) into the global
+     stiffness matrix K ( and the global force vector f )
+     according to the topology matrix edof.
+    
+    INPUT: edof:       dof topology array
+           K :         the global stiffness matrix
+           Ke:         element stiffness matrix
+           f :         the global force vector
+           fe:         element force vector
+    
+    OUTPUT: K :        the new global stiffness matrix
+            f :        the new global force vector
+    -------------------------------------------------------------"""
+    
+    if rank(edof) == 1:
+        idx = edof-1
         K[ix_(idx,idx)] = K[ix_(idx,idx)] + Ke
         if (f!=None) and (fe!=None):
             f[ix_(idx)] = f[ix_(idx)] + fe
+    else:
+        for row in edof:
+            idx = row-1
+            K[ix_(idx,idx)] = K[ix_(idx,idx)] + Ke
+            if (f!=None) and (fe!=None):
+                f[ix_(idx)] = f[ix_(idx)] + fe
+            
+    return K
             
 def solveq(K,f,bcPrescr,bcVal=None):
+    """-------------------------------------------------------------
+    PURPOSE
+     Solve static FE-equations considering boundary conditions.
+    
+    INPUT:  K : global stiffness matrix, dim(K)= nd x nd
+            f : global load vector, dim(f)= nd x 1
+    
+            bc :    1-dim integer array containing prescribed dofs.
+                    
+            bcVal:  1-dim float array containing prescribed values.
+    
+    OUTPUT:  a : solution including boundary values
+             Q : reaction force vector
+                 dim(a)=dim(Q)= nd x 1, nd : number of dof's
+    -------------------------------------------------------------"""    
+    
     nDofs = K.shape[0]
+    nPdofs = bcPrescr.shape[0]
+    
+    if bcVal==None:
+        bcVal = zeros([nPdofs],'d')
+    
     bc = ones(nDofs, 'bool')    
     bcDofs = arange(nDofs)
     
     bc[ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
-    
-    fsys = f[bcDofs] 
+     
+    fsys = f[bcDofs]-K[ix_((bcDofs),(bcPrescr-1))]*asmatrix(bcVal).reshape(nPdofs,1)
     asys = linalg.solve(K[ix_((bcDofs),(bcDofs))], fsys);
     
     a = zeros([nDofs,1])
-    Q = zeros([nDofs,1])
+    a[ix_(bcPrescr-1)] = asmatrix(bcVal).reshape(nPdofs,1)
     a[ix_(bcDofs)] = asys
-    Q=K*a-f;
+    
+    Q=K*asmatrix(a)-f
+    
+    print Q
 
-    return (a,Q)
+    return (asmatrix(a),Q)
     
 def extract(edof,a):
-    nElements = edof.shape[0]
-    nDofs = edof.shape[1]
-    edofArray = asarray(edof)
-    ed = zeros([nElements,nDofs])
-    i=0
-    for row in edofArray:
-        idx = row-1
-        ed[i,:]=a[ix_(idx)].T
-        i+=1
+    """-------------------------------------------------------------
+    PURPOSE
+     Extract element displacements from the global displacement
+     vector according to the topology matrix edof.
+    
+    INPUT:  a:      the global displacement vector
+            edof:   dof topology array
+    
+    OUTPUT: ed:     element displacement array
+    -------------------------------------------------------------"""
+
+    ed = None
+    
+    if rank(edof)==1:
+        nDofs = len(edof)
+        ed = zeros([nDofs])
+        idx = edof-1
+        ed[:] = a[ix_(idx)].T
+    else:
+        nElements = edof.shape[0]
+        nDofs = edof.shape[1]
+        ed = zeros([nElements,nDofs])
+        i=0
+        for row in edof:
+            idx = row-1
+            ed[i,:]=a[ix_(idx)].T
+            i+=1
         
     return ed
         
