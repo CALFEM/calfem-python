@@ -36,7 +36,9 @@ ep=array([E,A,I])
 ex=array([0.,3.])
 ey=array([0.,0.])
 
-(Ke,fe)=beam2e(ex,ey,ep)
+Ke=beam2e(ex,ey,ep)
+
+print(Ke)
 
 # ----- Assemble Ke into K ---------------------------------------
 
@@ -51,14 +53,26 @@ bc=array([1,2,11])
 
 Ed=extract(Edof,a);
 
-#es1=beam2s(ex,ey,ep,Ed(1,:));
-#es2=beam2s(ex,ey,ep,Ed(2,:));
-#es3=beam2s(ex,ey,ep,Ed(3,:));
+es1,ed1,ec1=beam2s(ex,ey,ep,Ed[0,:],np=10)
+es2,ed2,ec2=beam2s(ex,ey,ep,Ed[1,:],np=10)
+es3,ed3,ec3=beam2s(ex,ey,ep,Ed[2,:],np=10)
 
 # ----- Results --------------------------------------------------
 
+print("a=")
 print(a)
+print("r=")
 print(r)
-#print(es1)
-#print(es2)
-#print(es3)
+print("es1=")
+print(es1)
+print("es2=")
+print(es2)
+print("es3=")
+print(es3)
+
+print("ed1=")
+print(ed1)
+print("ed2=")
+print(ed2)
+print("ed3=")
+print(ed3)
