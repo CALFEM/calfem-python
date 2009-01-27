@@ -138,35 +138,44 @@ def beam2e(ex,ey,ep,eq=None):
                 fe : element load vector (6 x 1)
     --------------------------------------------------------------------"""
 
-    b=mat([[ex(2)-ex(1)],[ey(2)-ey(1)]])
+    b=mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
     L = asscalar(sqrt(b.T*b))
-    n=b/L
+    n = asarray(b.T/L).reshape(2,) 
     
     E=ep[0]
     A=ep[1]
     I=ep[2]
     
-    qx=0
-    qy=0
-    if nargin>3; qx=eq(1); qy=eq(2); end
-    
-    Kle=[E*A/L   0            0      -E*A/L      0          0 ;
-           0   12*E*I/L^3   6*E*I/L^2  0   -12*E*I/L^3  6*E*I/L^2;
-           0   6*E*I/L^2    4*E*I/L    0   -6*E*I/L^2   2*E*I/L;
-         -E*A/L  0            0       E*A/L      0          0 ;
-           0   -12*E*I/L^3 -6*E*I/L^2  0   12*E*I/L^3  -6*E*I/L^2;
-           0   6*E*I/L^2    2*E*I/L    0   -6*E*I/L^2   4*E*I/L];
+    qx=0.
+    qy=0.
+    if eq!=None:
+        qx=eq[0]
+        qy=eq[1]
+        
+    Kle = mat([
+        [E*A/L,      0.,          0.,    -E*A/L,    0.,        0.      ],
+        [  0.,    12*E*I/L**3., 6*E*I/L**2.,    0., -12*E*I/L**3., 6*E*I/L**2. ],
+        [  0.,    6*E*I/L**2.,  4*E*I/L,      0., -6*E*I/L**2.,  2*E*I/L   ],
+        [-E*A/L,     0.,          0.,     E*A/L,    0.,        0.      ],
+        [  0.,   -12*E*I/L**3.,-6*E*I/L**2.,    0.,  12*E*I/L**3.,-6*E*I/L**2. ],
+        [  0.,    6*E*I/L**2.,  2*E*I/L,      0.,  -6*E*I/L**2., 4*E*I/L   ]
+    ])
      
-    fle=L*[qx/2 qy/2 qy*L/12 qx/2 qy/2 -qy*L/12]';
+    fle=L*mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+     
+    G=mat([
+        [ n[0], n[1],  0.,    0.,    0.,   0.],
+        [-n[1], n[0],  0.,    0.,    0.,   0.],
+        [0.,    0.,    1.,    0.,    0.,   0.],
+        [0.,    0.,    0.,   n[0],  n[1],  0.],
+        [0.,    0.,    0.,  -n[1],  n[0],  0.],
+        [0.,    0.,    0.,    0.,    0.,   1.]
+    ])
     
-    G=[n(1) n(2)  0    0    0   0;
-      -n(2) n(1)  0    0    0   0;
-        0    0    1    0    0   0;
-        0    0    0   n(1) n(2) 0;
-        0    0    0  -n(2) n(1) 0;
-        0    0    0    0    0   1];
+    Ke=G.T*Kle*G
+    fe=G.T*fle
     
-    Ke=G'*Kle*G;   fe=G'*fle; 
+    return Ke, fe
 
 
 def assem(edof,K,Ke,f=None,fe=None):
