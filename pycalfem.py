@@ -175,7 +175,104 @@ def beam2e(ex,ey,ep,eq=None):
     Ke=G.T*Kle*G
     fe=G.T*fle
     
-    return Ke, fe
+    if eq==None:
+        return Ke
+    else:
+        return Ke,fe
+
+def beam2s(ex,ey,ep,ed,eq=None,np=None):
+    """---------------------------------------------------------------------
+    PURPOSE
+      Compute section forces in two dimensional beam element (beam2e). 
+ 
+    INPUT:  ex = [x1 x2]
+            ey = [y1 y2]     element node coordinates
+
+            ep = [E A I]     element properties,
+                              E:  Young's modulus
+                              A:  cross section area
+                              I:  moment of inertia
+
+            ed = [u1 ... u6] element displacements
+
+            eq = [qx qy]     distributed loads, local directions 
+
+            n : number of evaluation points ( default=2 )
+          
+    OUTPUT: es = [ N1 V1 M1 ;  section forces, local directions, in 
+                   N2 V2 M2 ;  n points along the beam, dim(es)= n x 3
+                   .........]  
+           
+            edi = [ u1 v1 ;    element displacements, local directions,
+                    u2 v2 ;    in n points along the beam, dim(es)= n x 2
+                   .......]    
+
+            eci = [ x1  ;      local x-coordinates of the evaluation 
+                    x2 ;       points, (x1=0 and xn=L)
+                    ...]
+    -------------------------------------------------------------------------"""
+    EA=ep[0]*ep[1]
+    EI=ep[0]*ep[2]
+    b=mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b.T/L).reshape(2,)
+    
+    qx=0.
+    qy=0.
+    
+    if eq!=None:
+        qx=eq[0]
+        qy=eq[1] 
+      
+    ne=2
+    
+    if np!=None:
+        ne = np
+        
+    C=mat([
+        [0.,   0.,   0.,    1.,   0.,   0.],
+        [0.,   0.,   0.,    0.,   0.,   1.],
+        [0.,   0.,   0.,    0.,   1.,   0.],
+        [L,   0.,   0.,    1.,   0.,   0.],
+        [0.,   L**3, L**2,   0.,   L,    1.],
+        [0., 3*L**2, 2*L,   0.,   1.,   0.]
+    ])
+   
+    G=mat([
+        [ n[0], n[1],  0.,    0.,    0.,   0.],
+        [-n[1], n[0],  0.,    0.,    0.,   0.],
+        [0.,    0.,    1.,    0.,    0.,   0.],
+        [0.,    0.,    0.,   n[0],  n[1],  0.],
+        [0.,    0.,    0.,  -n[1],  n[0],  0.],
+        [0.,    0.,    0.,    0.,    0.,   1.]
+    ])
+    
+    M=ravel(C.I*(G*asmatrix(ed).T-matrix([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI), qy*L**3/(6*EI)]).T))
+    A=matrix([M[0],M[3]]).T
+    B=matrix([M[1],M[2],M[4],M[5]]).T
+    
+    x=asmatrix(arange(0.,L+L/(ne-1),L/(ne-1))).T
+    zero=asmatrix(zeros([len(x)])).T
+    one=asmatrix(ones([len(x)])).T
+    
+    u=concatenate((x,one),1)*A-power(x,2)*qx/(2*EA)
+    du=concatenate((one,zero),1)*A-x*qx/EA
+    v=concatenate((power(x,3),power(x,2),x,one),1)*B+power(x,4)*qy/(24*EI)
+    d2v=concatenate((6*x,2*one,zero,zero),1)*B+power(x,2)*qy/(2*EI)
+    d3v=concatenate((6*one,zero,zero,zero),1)*B+x*qy/EI
+    
+    N=EA*du
+    M=EI*d2v
+    V=-EI*d3v
+    edi=concatenate((u,v),1)
+    eci=x
+    es=concatenate((N,V,M),1)
+    
+    return (es,edi,eci)
 
 
 def assem(edof,K,Ke,f=None,fe=None):
@@ -247,8 +344,6 @@ def solveq(K,f,bcPrescr,bcVal=None):
     
     Q=K*asmatrix(a)-f
     
-    print Q
-
     return (asmatrix(a),Q)
     
 def extract(edof,a):
