@@ -560,7 +560,16 @@ def eldraw2(ex,ey,plotpar=None,elnum=None):
     ymax = ey.max()
     ysize = ymax-ymin
     ymargin = ysize*0.10
-    plot(ex.transpose(),ey.transpose())
-    axis([xmin-xmargin,xmax+xmargin,ymin-ymargin,ymax+xmargin])
+    plot(ex.transpose(),ey.transpose(), color="blue")
+    
+def elmargin(scale=0.2):
+    a = gca()
+    xlim = a.get_xlim()
+    ylim = a.get_ylim()
+    xs = xlim[1]-xlim[0]
+    ys = ylim[1]-ylim[0]
+    a.set_xlim([xlim[0]-xs*scale,xlim[1]+xs*scale])
+    a.set_ylim([ylim[0]-ys*scale,ylim[1]+ys*scale])
+    
     
     
