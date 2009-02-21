@@ -96,9 +96,9 @@ ey = array([
 print ey
 
 fig = figure()
-eldraw2(ex1,ey1)
-eldraw2(ex2,ey2)
-eldraw2(ex3,ey3)
+#eldraw2(ex1,ey1)
+#eldraw2(ex2,ey2)
+eldraw2(ex,ey)
 axis([-1.5,7.5,-0.5,5.5])
 show()
  
