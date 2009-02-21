@@ -485,30 +485,23 @@ def extract(edof,a):
         
 
 def hooke(ptype,E,v):
-
-    # D=hooke(ptype,E,v)
-    #-------------------------------------------------------------
-    #  PURPOSE
-    #   Calculate the material matrix for a linear
-    #   elastic and isotropic material.
-    #
-    # INPUT:  ptype=1:  plane stress
-    #               2:  plane strain
-    #               3:  axisymmetry
-    #               4:  three dimensional
-    #
-    #          E : Young's modulus
-    #          v : Poissons const.
-    #
-    # OUTPUT: D : material matrix
-    #-------------------------------------------------------------
+    """D=hooke(ptype,E,v)
+    -------------------------------------------------------------
+      PURPOSE
+       Calculate the material matrix for a linear
+       elastic and isotropic material.
     
-    # LAST MODIFIED: M Ristinmaa 1995-10-25
-    # Copyright (c)  Division of Structural Mechanics and
-    #                Department of Solid Mechanics.
-    #                Lund Institute of Technology
-    #-------------------------------------------------------------
+     INPUT:  ptype=1:  plane stress
+                   2:  plane strain
+                   3:  axisymmetry
+                   4:  three dimensional
     
+              E : Young's modulus
+              v : Poissons const.
+    
+     OUTPUT: D : material matrix
+    -------------------------------------------------------------"""
+   
     if ptype == 1:
         D = E*matrix(
             [[1, v, 0],
@@ -571,5 +564,47 @@ def elmargin(scale=0.2):
     a.set_xlim([xlim[0]-xs*scale,xlim[1]+xs*scale])
     a.set_ylim([ylim[0]-ys*scale,ylim[1]+ys*scale])
     
+def scalfact2(ex,ey,ed,rat=0.2):
+    """[sfac]=scalfact2(ex,ey,ed,rat)
+    -------------------------------------------------------------
+     PURPOSE 
+       Determine scale factor for drawing computational results, such as 
+       displacements, section forces or flux.
+    
+     INPUT
+        ex,ey:  element node coordinates
+                       
+        ed:     element displacement matrix or section force matrix
+    
+        rat: relation between illustrated quantity and element size. 
+        If not specified, 0.2 is used.
+        
+    -------------------------------------------------------------"""
+
+    nen = -1
+    if ex.shape == ey.shape:
+        nen = ex[1]
+    else:
+        print "ex and ey shapes do not match."
+        return 1.0
+    
+    dlmax = 0.
+    edmax = 1.
+
+    if rank(ex)==1:
+        nen = ex.shape[0]
+        nel = 1
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+    else:
+        nen = ex.shape[1]
+        nel = ex.shape[0]
+    
+    
+    k = rat
+    return k*dlmax/edmax
+
     
     
