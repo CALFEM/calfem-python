@@ -582,14 +582,14 @@ def scalfact2(ex,ey,ed,rat=0.2):
     -------------------------------------------------------------"""
 
     nen = -1
-    if ex.shape == ey.shape:
-        nen = ex[1]
-    else:
+    if ex.shape != ey.shape:
         print "ex and ey shapes do not match."
         return 1.0
     
     dlmax = 0.
     edmax = 1.
+    
+    print rank(ex)
 
     if rank(ex)==1:
         nen = ex.shape[0]
@@ -601,10 +601,57 @@ def scalfact2(ex,ey,ed,rat=0.2):
     else:
         nen = ex.shape[1]
         nel = ex.shape[0]
-    
-    
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+        
     k = rat
     return k*dlmax/edmax
 
+def eldisp2(ex,ey,ed,rat=0.2):
+    """[sfac]=scalfact2(ex,ey,ed,rat)
+    -------------------------------------------------------------
+     PURPOSE 
+       Determine scale factor for drawing computational results, such as 
+       displacements, section forces or flux.
+    
+     INPUT
+        ex,ey:  element node coordinates
+                       
+        ed:     element displacement matrix or section force matrix
+    
+        rat: relation between illustrated quantity and element size. 
+        If not specified, 0.2 is used.
+        
+    -------------------------------------------------------------"""
+
+    nen = -1
+    if ex.shape != ey.shape:
+        print "ex and ey shapes do not match."
+        return 1.0
+    
+    dlmax = 0.
+    edmax = 1.
+    
+    print rank(ex)
+
+    if rank(ex)==1:
+        nen = ex.shape[0]
+        nel = 1
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+    else:
+        nen = ex.shape[1]
+        nel = ex.shape[0]
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+        
+    k = rat
+    return k*dlmax/edmax
     
     
