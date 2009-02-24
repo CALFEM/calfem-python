@@ -482,6 +482,10 @@ def extract(edof,a):
             i+=1
         
     return ed
+
+def coordxtr(edof,coord,dof,nen):
+    
+    for 
         
 
 def hooke(ptype,E,v):
