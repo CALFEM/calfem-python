@@ -281,6 +281,88 @@ def beam2s(ex,ey,ep,ed,eq=None,np=None):
     
     return (es,edi,eci)
     
+def flw2te(ex,ey,ep,D,eq=None):
+    """Ke=flw2te(ex,ey,ep,D)
+    [Ke,fe]=flw2te(ex,ey,ep,D,eq)
+    -------------------------------------------------------------
+     PURPOSE
+      Compute element stiffness (conductivity) matrix for a 
+      triangular field element.
+    
+     INPUT:  ex = [x1 x2 x3]
+             ey = [y1 y2 y3]      element coordinates
+    
+             ep = [t]  	       element thickness  	 
+                                 
+             D = [kxx kxy;
+                  kyx kyy]        constitutive matrix
+    
+             eq                   heat supply per unit volume
+    
+     OUTPUT: Ke :  element 'stiffness' matrix (3 x 3)
+    
+             fe :  element load vector (3 x 1)
+    -------------------------------------------------------------"""
+    t=ep[0];
+    if eq==None:
+        eq=0.
+    
+    exm = asmatrix(ex)
+    eym = asmatrix(ey)
+    C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
+    B=matrix([
+        [0.,1.,0.],
+        [0.,0.,1.]
+    ])*C.I
+    A=0.5*linalg.det(C)
+  
+    Ke=B.T*D*B*t*A
+    fe=matrix([[1.,1.,1.]]).T*eq*A*t/3
+       
+    if eq==0.:
+        return Ke
+    else:
+        return Ke, fe
+    
+function [es,et]=flw2ts(ex,ey,D,ed)
+    """[es,et]=flw2ts(ex,ey,D,ed)
+    -------------------------------------------------------------
+     PURPOSE
+      Compute flows or corresponding quantities in the
+      triangular field element.
+    
+     INPUT:  ex = [x1 x2 x3]
+             ey = [y1 y2 y3]         element coordinates
+                                 
+             D = [kxx kxy;
+                  kyx kyy]           constitutive matrix
+    
+             ed =[u1 u2 u3]          u1,u2,u3: nodal values
+                  .. .. ..;
+    
+    
+     OUTPUT: es=[ qx qy ] 
+                  ... ..]            element flows
+    
+             et=[ gx gy ]
+                  ... ..]            element gradients
+    -------------------------------------------------------------"""
+
+    exm = asmatrix(ex)
+    eym = asmatrix(ey)
+    C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
+    B=matrix([
+        [0.,1.,0.],
+        [0.,0.,1.]
+    ])*C.I
+   
+    qs=-D*B*ed.T
+    qt=B*ed.T;
+    
+    es=[qs.T]
+    et=[qt.T]
+
+    
 def plante(ex,ey,ep,D,eq=None):
     """
      Ke=plante(ex,ey,ep,D)
@@ -497,8 +579,7 @@ def dofHash(dof):
         value = -2
     return value
 
-def createdofs(coords,nDof):
-    nCoords = size(coords,0)
+def createdofs(nCoords,nDof):
     return arange(nCoords*nDof).reshape(nCoords,nDof)+1
 
 def coordxtr(edof,coords,dofs):
@@ -517,9 +598,7 @@ def coordxtr(edof,coords,dofs):
     for dof in dofs:
         dofDict[dofHash(dof)] = idx
         idx += 1
-        
-    print dofDict
-        
+              
     # Loop over edof and extract element coords
     
     ex = zeros((nElements,nElementNodes))
@@ -535,8 +614,8 @@ def coordxtr(edof,coords,dofs):
             if i0==i1:
                 dof = [etopo[i*nDofs]]
             else:
-                dof = etopo[i*nDofs:(i*nDofs+nDofs-1)]
-                
+                dof = etopo[i*nDofs:(i*nDofs+nDofs)]
+            
             nodeCoord = coords[dofDict[dofHash(dof)]]
             
             if nDimensions>=1:

@@ -1,9 +1,10 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+import os, sys
 
 from numpy import *
+from pycalfem import *
 
 def readInt(f):
 	"""
@@ -31,7 +32,23 @@ def readSingleFloat(f):
 	"""
 	return readFloat(f)[0]
 	
-def triangle(vertices, segments = None, holes = None, maxArea=None, logFilename="tri.log"):
+def which(filename):
+	if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+		p = os.defpath
+	else:
+		p = os.environ['PATH']
+	
+	pathlist = p.split (os.pathsep)
+	pathlist.append(".")
+	
+	for path in pathlist:
+		f = os.path.join(path, filename)
+		if os.access(f, os.X_OK):
+			return f
+	return None
+
+	
+def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log"):
 	"""
 	Triangulerar ett område beskrivet av ett antal punkter (vertices) samt 
 	ett antal linjer som utgör en slute polygon (segments), maxArea anger 
@@ -40,12 +57,21 @@ def triangle(vertices, segments = None, holes = None, maxArea=None, logFilename=
 	användarens temp-katalog.
 	"""
 	
+	# Check for triangle executable
+	
+	triangleExecutable = which("triangle")
+	if triangleExecutable==None:
+		print "Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH)."
+		return None, None, None, None
+	
 	# Create triangle options
 	
 	options = ""
 	
 	if maxArea!=None:
-		options = options + "-a%f " % maxArea
+		options += "-a%f " % maxArea + " "
+	if quality:
+		options += "-q"
 		
 	# Set initial variables
 	
@@ -125,9 +151,11 @@ def triangle(vertices, segments = None, holes = None, maxArea=None, logFilename=
 				boundaryVertices[boundaryMarker] = []
 			
 			allVertices[i,:] = [vertexRow[1], vertexRow[2]]
-			boundaryVertices[boundaryMarker].append(i)
+			boundaryVertices[boundaryMarker].append(i+1)
 			
 		nodeFile.close()
+		
+	# Read elements
 			
 	elements = []
 		
@@ -145,8 +173,6 @@ def triangle(vertices, segments = None, holes = None, maxArea=None, logFilename=
 			
 		elementFile.close()
 			
-	#os.system("../../bin/showme %s" % (elementFilename))
-	
 	# Clean up
 	
 	try:
@@ -157,4 +183,31 @@ def triangle(vertices, segments = None, holes = None, maxArea=None, logFilename=
 	except:
 		pass
 	
-	return allVertices, boundaryVertices, elements
+	# Add dofs in edof and bcVerts
+	
+	dofs = createdofs(size(allVertices,0),dofsPerNode)
+	
+	if dofsPerNode>1:
+		expandedElements = zeros((size(elements,0),3*dofsPerNode),'i')
+		dofs = createdofs(size(allVertices,0),dofsPerNode)
+		
+		elIdx = 0
+		
+		for elementTopo in elements:		
+			for i in range(3):
+				expandedElements[elIdx,i*dofsPerNode:(i*dofsPerNode+dofsPerNode)] = dofs[elementTopo[i]-1,:]
+			elIdx += 1
+			
+		for bVertIdx in boundaryVertices.keys():
+			bVert = boundaryVertices[bVertIdx]
+			bVertNew = []
+			for i in range(len(bVert)):
+				for j in range(dofsPerNode):
+					bVertNew.append(dofs[bVert[i]-1][j])
+					
+			boundaryVertices[bVertIdx] = bVertNew
+			
+		return allVertices, expandedElements, dofs, boundaryVertices
+		
+	
+	return allVertices, elements, dofs, boundaryVertices
