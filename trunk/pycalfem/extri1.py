@@ -18,15 +18,11 @@ segments = array([
     [3,0,1]
 ])
 
-coord, bcVert, topo = triangle(vertices, segments, maxArea=0.01)
+coords, bcVert, edof = triangle(vertices, segments, maxArea=0.005)
+dofs = createdofs(coords,1)
+ex, ey = coordxtr(edof, coords, dofs)
 
-#print coord
-#print bcVert
-#print topo
+eldraw2(ex, ey)
+show()
 
-nDof = 1
-nElements = size(topo,0)
-
-dof = arange(nElements*nDof).reshape(nElements,nDof)+1
-
-ex, ey, = coordxtr(topo, coord, dof, 3)
+#print edof
