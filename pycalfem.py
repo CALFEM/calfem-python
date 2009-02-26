@@ -483,11 +483,80 @@ def extract(edof,a):
         
     return ed
 
-def coordxtr(edof,coord,dof,nen):
-    
-    for 
-        
+def c_mul(a, b):
+    return eval(hex((long(a) * b) & 0xFFFFFFFFL)[:-1])
 
+def dofHash(dof):
+    if len(dof)==1:
+        return dof[0]
+    value = 0x345678
+    for item in dof:
+        value = c_mul(1000003, value) ^ hash(item)
+    value = value ^ len(dof)
+    if value == -1:
+        value = -2
+    return value
+
+def createdofs(coords,nDof):
+    nCoords = size(coords,0)
+    return arange(nCoords*nDof).reshape(nCoords,nDof)+1
+
+def coordxtr(edof,coords,dofs):
+    
+    # Create dictionary with dof indices
+    
+    dofDict = {}
+    nDofs = size(dofs,1)
+    nElements = size(edof,0)
+    nDimensions = size(coords,1)
+    nElementDofs = size(edof,1)
+    
+    nElementNodes = nElementDofs/nDofs
+    
+    idx = 0
+    for dof in dofs:
+        dofDict[dofHash(dof)] = idx
+        idx += 1
+        
+    print dofDict
+        
+    # Loop over edof and extract element coords
+    
+    ex = zeros((nElements,nElementNodes))
+    ey = zeros((nElements,nElementNodes))
+    ez = zeros((nElements,nElementNodes))
+    
+    elementIdx = 0
+    for etopo in edof:
+        for i in range(nElementNodes):
+            i0 = i*nDofs
+            i1 = i*nDofs+nDofs-1
+            dof = []
+            if i0==i1:
+                dof = [etopo[i*nDofs]]
+            else:
+                dof = etopo[i*nDofs:(i*nDofs+nDofs-1)]
+                
+            nodeCoord = coords[dofDict[dofHash(dof)]]
+            
+            if nDimensions>=1:
+                ex[elementIdx,i] = nodeCoord[0]
+            if nDimensions>=2:
+                ey[elementIdx,i] = nodeCoord[1]
+            if nDimensions>=3:
+                ez[elementIdx,i] = nodeCoord[2]
+            
+        elementIdx += 1
+        
+    if nDimensions==1:
+        return ex
+    
+    if nDimensions==2:
+        return ex, ey
+    
+    if nDimensions==3:
+        return ex, ey, ez
+        
 def hooke(ptype,E,v):
     """D=hooke(ptype,E,v)
     -------------------------------------------------------------
@@ -541,22 +610,17 @@ def hooke(ptype,E,v):
     return D
 
 def eldraw2(ex,ey,plotpar=None,elnum=None):
-    
     if rank(ex)==1:
         nen = ex.shape[0]
         nel = 1
     else:
         nen = ex.shape[1]
         nel = ex.shape[0]
-
-    xmin = ex.min()
-    xmax = ex.max()
-    xsize = xmax-xmin
-    xmargin = xsize*0.10
-    ymin = ey.min()
-    ymax = ey.max()
-    ysize = ymax-ymin
-    ymargin = ysize*0.10
+        
+    if nen > 2:
+        ex = hstack([ex,ex[:,0].reshape(nel,1)])
+        ey = hstack([ey,ey[:,0].reshape(nel,1)])
+        
     plot(ex.transpose(),ey.transpose(), color="blue")
     
 def elmargin(scale=0.2):
