@@ -47,6 +47,17 @@ def which(filename):
 			return f
 	return None
 
+def applybc(boundaryDofs, bc, bcVal, marker, value=0.0):
+
+    if boundaryDofs.has_key(marker):
+        bcAdd = array(boundaryDofs[marker])
+        bcAddVal = ones([size(bcAdd)])*value
+
+        return hstack([bc,bcAdd]), hstack([bcVal,bcAddVal])
+    else:
+        print "Error: Boundary marker", marker, "does not exist."
+
+
 	
 def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log"):
 	"""
@@ -207,7 +218,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
 					
 			boundaryVertices[bVertIdx] = bVertNew
 			
-		return allVertices, expandedElements, dofs, boundaryVertices
+		return allVertices, asarray(expandedElements), dofs, boundaryVertices
 		
 	
 	return allVertices, elements, dofs, boundaryVertices
