@@ -1,6 +1,5 @@
 #!/bin/env python
 
-#from numpy import *
 from pycalfem import *
 from pycalfem_utils import *
 
@@ -75,11 +74,28 @@ bc, bcVal = applybc(bdofs,bc,bcVal,3,0.0)
             
 a,r = solveq(K,f,bc,bcVal)
 
-print a
+# ---- Compute element forces
+
+print "Computing element forces..."
+
+ed = extract(edof,a)
+qs, qt = flw2ts(ex, ey, D, ed)
+
+# ---- Visualise results
 
 print "Drawing element mesh..."
-eldraw2(ex, ey)
-show()
+
+mlscalar2d(coords,edof,a)
+#mlwireframe2d(coords,edof)
+
+mlab.axes()
+cb = mlab.colorbar(orientation="vertical")
+
+elCoords = elcenter2d(ex, ey)
+mlflux2d(elCoords, qs, 40.0)
+
+mlab.view(0,0)
+mlab.show()
 
 
 

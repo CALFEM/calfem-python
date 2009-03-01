@@ -1,11 +1,17 @@
 from numpy import *
 
 haveMatplotLib = True
+haveMlab = True
 
 try:
     from matplotlib.pyplot import *
 except:
     haveMatplotLib = False
+
+try:
+    from enthought.mayavi import mlab
+except:
+    haveMlab = False
 
 def spring1e(ep):
     """-------------------------------------------------------------
@@ -348,19 +354,39 @@ def flw2ts(ex,ey,D,ed):
                   ... ..]            element gradients
     -------------------------------------------------------------"""
 
-    exm = asmatrix(ex)
-    eym = asmatrix(ey)
-    edm = asmatrix(ed)
-    C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
-    B=matrix([
-        [0.,1.,0.],
-        [0.,0.,1.]
-    ])*C.I
-   
-    qs=-D*B*edm.T
-    qt=B*edm.T
+    if ex.shape[0]>1:
+        qs = zeros([ex.shape[0],2])
+        qt = zeros([ex.shape[0],2])
+        row = 0
+        for exr, eyr, edr in zip(ex, ey, ed):
+            exm = asmatrix(exr)
+            eym = asmatrix(eyr)
+            edm = asmatrix(edr)
+            C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
+            B=matrix([
+                [0.,1.,0.],
+                [0.,0.,1.]
+            ])*C.I
+
+            qs[row,:]=(-D*B*edm.T).T
+            qt[row,:]=(B*edm.T).T
+            row += 1
+
+        return qs, qt
+    else:
+        exm = asmatrix(ex)
+        eym = asmatrix(ey)
+        edm = asmatrix(ed)
+        C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
+        B=matrix([
+            [0.,1.,0.],
+            [0.,0.,1.]
+        ])*C.I
+
+        qs=-D*B*edm.T
+        qt=B*edm.T
     
-    return qs.T, qt.T
+        return qs.T, qt.T
 
 def plante(ex,ey,ep,D,eq=None):
     """
@@ -800,5 +826,50 @@ def eldisp2(ex,ey,ed,rat=0.2):
         
     k = rat
     return k*dlmax/edmax
+
+def elcenter2d(ex, ey):
+    exm = reshape(ex.sum(1)/ex.shape[1],[ex.shape[0],1])
+    eym = reshape(ey.sum(1)/ey.shape[1],[ey.shape[0],1])
+
+    return hstack([exm,eym])
+
+def mlscalar2d(coords, edof, a):
+    if not haveMlab:
+        return
+
+    x = reshape(coords[:,0],[size(coords[:,0])])
+    y = reshape(coords[:,1],[size(coords[:,1])])
+    z = zeros([size(coords[:,0])])
+    ascalar = reshape(asarray(a),[size(a)])
+
+    mlab.triangular_mesh(x, y, z, edof-1, scalars=ascalar, representation="surface")
+
+def mlflux2d(coords, vf, scalefactor=None, displaymode="2darrow"):
+    if not haveMlab:
+        return
+
+    x = reshape(coords[:,0],[size(coords[:,0])])
+    y = reshape(coords[:,1],[size(coords[:,1])])
+    z = zeros([size(coords[:,0])])
+    u = reshape(vf[:,0],[size(vf[:,0])])
+    v = reshape(vf[:,1],[size(vf[:,1])])
+    w = zeros([size(vf[:,0])])
+
+    if scalefactor == None:
+        mlab.quiver3d(x, y, z, u, v, w, mode=displaymode)
+    else:
+        mlab.quiver3d(x, y, z, u, v, w, mode=displaymode, scale_factor=scalefactor)
+
+
+def mlwireframe2d(coords, edof):
+    if not haveMlab:
+        return
+
+    x = reshape(coords[:,0],[size(coords[:,0])])
+    y = reshape(coords[:,1],[size(coords[:,1])])
+    z = zeros([size(coords[:,0])])+1
+    scalars = ones([size(coords[:,0])])
+
+    mlab.triangular_mesh(x, y, z, edof-1, scalars=scalars, representation="mesh", colormap="bone", line_width=20.0)
     
     
