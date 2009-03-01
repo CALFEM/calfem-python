@@ -324,7 +324,7 @@ def flw2te(ex,ey,ep,D,eq=None):
     else:
         return Ke, fe
     
-function [es,et]=flw2ts(ex,ey,D,ed)
+def flw2ts(ex,ey,D,ed):
     """[es,et]=flw2ts(ex,ey,D,ed)
     -------------------------------------------------------------
      PURPOSE
@@ -350,19 +350,18 @@ function [es,et]=flw2ts(ex,ey,D,ed)
 
     exm = asmatrix(ex)
     eym = asmatrix(ey)
+    edm = asmatrix(ed)
     C=asmatrix(hstack([ones((3,1)),exm.T,eym.T]))
     B=matrix([
         [0.,1.,0.],
         [0.,0.,1.]
     ])*C.I
    
-    qs=-D*B*ed.T
-    qt=B*ed.T;
+    qs=-D*B*edm.T
+    qt=B*edm.T
     
-    es=[qs.T]
-    et=[qt.T]
+    return qs.T, qt.T
 
-    
 def plante(ex,ey,ep,D,eq=None):
     """
      Ke=plante(ex,ey,ep,D)
@@ -635,7 +634,7 @@ def coordxtr(edof,coords,dofs):
     
     if nDimensions==3:
         return ex, ey, ez
-        
+
 def hooke(ptype,E,v):
     """D=hooke(ptype,E,v)
     -------------------------------------------------------------
@@ -701,6 +700,7 @@ def eldraw2(ex,ey,plotpar=None,elnum=None):
         ey = hstack([ey,ey[:,0].reshape(nel,1)])
         
     plot(ex.transpose(),ey.transpose(), color="blue")
+    gca().set_aspect("equal")
     
 def elmargin(scale=0.2):
     a = gca()
