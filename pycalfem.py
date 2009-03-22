@@ -1,3 +1,5 @@
+# -*- coding: iso-8859-15 -*-
+
 from numpy import *
 
 haveMatplotLib = True
@@ -14,72 +16,89 @@ except:
     haveMlab = False
 
 def spring1e(ep):
-    """-------------------------------------------------------------
-     PURPOSE
-      Compute element stiffness matrix for spring element.
+    """
+    Compute element stiffness matrix for spring element.
     
-     INPUT:  ep = k;       spring stiffness or analog quantity
+    Parameters:
     
-     OUTPUT: Ke:           stiffness matrix, dim(Ke)= 2 x 2
-    -------------------------------------------------------------"""
+        ep = k          spring stiffness or analog quantity
+        
+    Returns:
+    
+        Ke              stiffness matrix, dim(Ke)= 2 x 2
+        
+    """
     k = ep
     return mat([[k,-k],[-k,k]],'d')
 
 def spring1s(ep,ed):
-    """-------------------------------------------------------------
-     PURPOSE
-      Compute element force in spring element (spring1e).
+    """
+    Compute element force in spring element (spring1e).
     
-     INPUT:  ep = k        spring stiffness or analog quantity
-             ed = [u1 u2]  element displacements
-                           u1, u2: nodal displacements
-                                
+    Parameters:
     
-     OUTPUT: es  = [N]       element force
-    -------------------------------------------------------------"""
+        ep = k          spring stiffness or analog quantity
+        ed = [u1 u2]    element displacements
+                        u1, u2: nodal displacements
+                        
+    Returns:
+    
+        es              element force [N]
+    """
     k = ep
     return k*(ed[1]-ed[0]);   
 
 def bar1e(ep):
-    """-------------------------------------------------------------
-     PURPOSE
-      Compute element stiffness matrix for spring element.
+    """
+    Compute element stiffness matrix for spring element.
     
-     INPUT:  ep = k;       spring stiffness or analog quantity
+    Parameters:
     
-     OUTPUT: Ke:           stiffness matrix, dim(Ke)= 2 x 2
-    -------------------------------------------------------------"""
+        ep = k          spring stiffness or analog quantity
+        
+    Returns:
+    
+        Ke              stiffness matrix, dim(Ke)= 2 x 2
+    
+    """
     k = ep
     return mat([[k,-k],[-k,k]],'d')
 
 def bar1s(ep,ed):
-    """-------------------------------------------------------------
-     PURPOSE
-      Compute element force in spring element (spring1e).
+    """
+    Compute element force in spring element (spring1e).
     
-     INPUT:  ep = k        spring stiffness or analog quantity
-             ed = [u1 u2]  element displacements
-                           u1, u2: nodal displacements
-                                
+    Parameters:
     
-     OUTPUT: es  = [N]       element force
-    -------------------------------------------------------------"""
+        ep = k          spring stiffness or analog quantity
+        ed = [u1 u2]    element displacements
+                        u1, u2: nodal displacements
+                        
+    Returns:
+    
+        es              element force [N]
+    
+    """
     k = ep
     return k*(ed[1]-ed[0]);   
 
 def bar2e(ex,ey,ep):
-    """----------------------------------------------------------------------
-    PURPOSE
-     Compute the element stiffness matrix for two dimensional bar element.
+    """
+    Compute the element stiffness matrix for two dimensional bar element.
     
-    INPUT:  ex = [x1 x2];
-            ey = [y1 y2];      element node coordinates
+    Parameters:
     
-            ep = [E A]         E: Young's modulus
-                               A: Cross section area
+        ex = [x1 x2]
+        ey = [y1 y2]    element node coordinates
     
-    OUTPUT: Ke : stiffness matrix, dim(Ke)= 4 x 4
-    ----------------------------------------------------------------------"""
+        ep = [E A]      E: Young's modulus
+                        A: Cross section area
+                        
+    Returns:
+    
+        Ke              stiffness matrix, dim(Ke)= 4 x 4
+    
+    """
     E=ep[0]
     A=ep[1]
     
@@ -98,20 +117,24 @@ def bar2e(ex,ey,ep):
     return G.T*Kle*G
 
 def bar2s(ex,ey,ep,ed):
-    """-------------------------------------------------------------
-     PURPOSE
-      Compute normal force in two dimensional bar element.
+    """
+    Compute normal force in two dimensional bar element.
     
-     INPUT:  ex = [x1 x2]
-             ey = [y1 y2]        element coordinates
+    Parameters:
     
-             ep = [E A]          E : Young's modulus
-                                 A : Cross section area
+        ex = [x1 x2]
+        ey = [y1 y2]        element coordinates
     
-             ed : [u1 u2 u3 u4]  element displacement vector
+        ep = [E A]          E : Young's modulus
+                            A : Cross section area
     
-     OUTPUT: es = [N]            element force 
-    -------------------------------------------------------------"""
+        ed = [u1 u2 u3 u4]  element displacement vector
+        
+    Returns:
+    
+        es                  element force [N]
+    
+    """
     E=ep[0]
     A=ep[1]
     
@@ -132,24 +155,28 @@ def bar2s(ex,ey,ep,ed):
     return asscalar(N)
 
 def beam2e(ex,ey,ep,eq=None):
-    """---------------------------------------------------------------------
-        PURPOSE
-         Compute the stiffness matrix for a two dimensional beam element. 
+    """
+    Compute the stiffness matrix for a two dimensional beam element.
+    
+    Parameters:
      
-        INPUT:  ex = [x1 x2]
-                ey = [y1 y2]       element node coordinates
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
     
-                ep = [E A I]       element properties
-                                      E: Young's modulus
-                                      A: Cross section area
-                                      I: Moment of inertia
+        ep = [E A I]        element properties
+                            E: Young's modulus
+                            A: Cross section area
+                            I: Moment of inertia
     
-                eq = [qx qy]       distributed loads, local directions
+        eq = [qx qy]        distributed loads, local directions
+        
+    Returns:
      
-        OUTPUT: Ke : element stiffness matrix (6 x 6)
+        Ke                  element stiffness matrix (6 x 6)
     
-                fe : element load vector (6 x 1)
-    --------------------------------------------------------------------"""
+        fe                  element load vector (6 x 1)
+    
+    """
 
     b=mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
     L = asscalar(sqrt(b.T*b))
@@ -194,36 +221,40 @@ def beam2e(ex,ey,ep,eq=None):
         return Ke,fe
 
 def beam2s(ex,ey,ep,ed,eq=None,np=None):
-    """---------------------------------------------------------------------
-    PURPOSE
-      Compute section forces in two dimensional beam element (beam2e). 
+    """
+    Compute section forces in two dimensional beam element (beam2e).
+    
+    Parameters:
  
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]     element node coordinates
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
 
-            ep = [E A I]     element properties,
-                              E:  Young's modulus
-                              A:  cross section area
-                              I:  moment of inertia
+        ep = [E A I]        element properties,
+                            E:  Young's modulus
+                            A:  cross section area
+                            I:  moment of inertia
 
-            ed = [u1 ... u6] element displacements
+        ed = [u1 ... u6]    element displacements
 
-            eq = [qx qy]     distributed loads, local directions 
+        eq = [qx qy]        distributed loads, local directions 
 
-            n : number of evaluation points ( default=2 )
+        n                   number of evaluation points ( default=2 )
+        
+    Returns:
           
-    OUTPUT: es = [ N1 V1 M1 ;  section forces, local directions, in 
-                   N2 V2 M2 ;  n points along the beam, dim(es)= n x 3
-                   .........]  
+        es = [ N1 V1 M1     section forces, local directions, in 
+               N2 V2 M2     n points along the beam, dim(es)= n x 3
+               .........]  
            
-            edi = [ u1 v1 ;    element displacements, local directions,
-                    u2 v2 ;    in n points along the beam, dim(es)= n x 2
-                   .......]    
+        edi = [ u1 v1       element displacements, local directions,
+                u2 v2       in n points along the beam, dim(es)= n x 2
+                .......]    
 
-            eci = [ x1  ;      local x-coordinates of the evaluation 
-                    x2 ;       points, (x1=0 and xn=L)
+            eci = [ x1      local x-coordinates of the evaluation 
+                    x2      points, (x1=0 and xn=L)
                     ...]
-    -------------------------------------------------------------------------"""
+    
+    """
     EA=ep[0]*ep[1]
     EI=ep[0]*ep[2]
     b=mat([
@@ -288,27 +319,28 @@ def beam2s(ex,ey,ep,ed,eq=None,np=None):
     return (es,edi,eci)
     
 def flw2te(ex,ey,ep,D,eq=None):
-    """Ke=flw2te(ex,ey,ep,D)
-    [Ke,fe]=flw2te(ex,ey,ep,D,eq)
-    -------------------------------------------------------------
-     PURPOSE
-      Compute element stiffness (conductivity) matrix for a 
-      triangular field element.
+    """
+    Compute element stiffness (conductivity) matrix for a triangular field element.
     
-     INPUT:  ex = [x1 x2 x3]
-             ey = [y1 y2 y3]      element coordinates
+    Parameters:
     
-             ep = [t]  	       element thickness  	 
-                                 
-             D = [kxx kxy;
-                  kyx kyy]        constitutive matrix
+        ex = [x1 x2 x3]
+        ey = [y1 y2 y3]     element coordinates
     
-             eq                   heat supply per unit volume
+        ep = [t]            element thickness    
+
+        D = [kxx kxy;
+             kyx kyy]       constitutive matrix
     
-     OUTPUT: Ke :  element 'stiffness' matrix (3 x 3)
+             eq             heat supply per unit volume
+             
+    Returns:
     
-             fe :  element load vector (3 x 1)
-    -------------------------------------------------------------"""
+        Ke                  element 'stiffness' matrix (3 x 3)
+
+        fe                  element load vector (3 x 1)
+    
+    """
     t=ep[0];
     if eq==None:
         eq=0.
@@ -331,28 +363,29 @@ def flw2te(ex,ey,ep,D,eq=None):
         return Ke, fe
     
 def flw2ts(ex,ey,D,ed):
-    """[es,et]=flw2ts(ex,ey,D,ed)
-    -------------------------------------------------------------
-     PURPOSE
-      Compute flows or corresponding quantities in the
-      triangular field element.
+    """
+    Compute flows or corresponding quantities in the triangular field element.
     
-     INPUT:  ex = [x1 x2 x3]
-             ey = [y1 y2 y3]         element coordinates
+    Parameters:
+    
+        ex = [x1 x2 x3]
+        ey = [y1 y2 y3]         element coordinates
                                  
-             D = [kxx kxy;
-                  kyx kyy]           constitutive matrix
+             D = [kxx kxy
+                  kyx kyy]      constitutive matrix
     
-             ed =[u1 u2 u3]          u1,u2,u3: nodal values
+             ed =[u1 u2 u3]     u1,u2,u3: nodal values
                   .. .. ..;
+                  
+    Returns:
     
+        es=[ qx qy ] 
+             ... ..]                element flows
     
-     OUTPUT: es=[ qx qy ] 
-                  ... ..]            element flows
+        et=[ gx gy ]
+             ... ..]                element gradients
     
-             et=[ gx gy ]
-                  ... ..]            element gradients
-    -------------------------------------------------------------"""
+    """
 
     if ex.shape[0]>1:
         qs = zeros([ex.shape[0],2])
@@ -390,33 +423,26 @@ def flw2ts(ex,ey,D,ed):
 
 def plante(ex,ey,ep,D,eq=None):
     """
-     Ke=plante(ex,ey,ep,D)
-     [Ke,fe]=plante(ex,ey,ep,D,eq)
-    -------------------------------------------------------------
-     PURPOSE
-      Calculate the stiffness matrix for a triangular plane stress
-      or plane strain element.
+    Calculate the stiffness matrix for a triangular plane stress or plane strain element.
     
-     INPUT:  ex = [x1 x2 x3]         element coordinates
-             ey = [y1 y2 y3]
+    Parameters:
+    
+        ex = [x1 x2 x3]         element coordinates
+        ey = [y1 y2 y3]
      
-             ep = [ptype t ]         ptype: analysis type
-                                     t: thickness
+        ep = [ptype t]          ptype: analysis type
+                                t: thickness
      
-             D                       constitutive matrix
+        D                       constitutive matrix
     
-             eq = [bx;               bx: body force x-dir
-                   by]               by: body force y-dir
+        eq = [bx;               bx: body force x-dir
+              by]               by: body force y-dir
+              
+    Returns:
     
-     OUTPUT: Ke : element stiffness matrix (6 x 6)
-             fe : equivalent nodal forces (6 x 1)
-    -------------------------------------------------------------
-    
-     LAST MODIFIED: M Ristinmaa 1995-10-25
-     Copyright (c)  Division of Structural Mechanics and
-                    Department of Solid Mechanics.
-                    Lund Institute of Technology
-    -------------------------------------------------------------
+        Ke                      element stiffness matrix (6 x 6)
+        fe                      equivalent nodal forces (6 x 1) (if eq is given)
+
     """
 
     ptype = ep[0];
@@ -489,21 +515,26 @@ def plante(ex,ey,ep,D,eq=None):
 #
 
 def assem(edof,K,Ke,f=None,fe=None):
-    """-------------------------------------------------------------
-    PURPOSE
-     Assemble element matrices Ke ( and fe ) into the global
-     stiffness matrix K ( and the global force vector f )
-     according to the topology matrix edof.
+    """
+    Assemble element matrices Ke ( and fe ) into the global
+    stiffness matrix K ( and the global force vector f )
+    according to the topology matrix edof.
     
-    INPUT: edof:       dof topology array
-           K :         the global stiffness matrix
-           Ke:         element stiffness matrix
-           f :         the global force vector
-           fe:         element force vector
+    Parameters:
     
-    OUTPUT: K :        the new global stiffness matrix
-            f :        the new global force vector
-    -------------------------------------------------------------"""
+        edof        dof topology array
+        K           the global stiffness matrix
+        Ke          element stiffness matrix
+        f           the global force vector
+        fe          element force vector
+        
+    Output parameters:
+    
+        K           the new global stiffness matrix
+        f           the new global force vector
+        fe          element force vector
+    
+    """
     
     if rank(edof) == 1:
         idx = edof-1
@@ -520,21 +551,25 @@ def assem(edof,K,Ke,f=None,fe=None):
     return K
             
 def solveq(K,f,bcPrescr,bcVal=None):
-    """-------------------------------------------------------------
-    PURPOSE
-     Solve static FE-equations considering boundary conditions.
+    """
+    Solve static FE-equations considering boundary conditions.
     
-    INPUT:  K : global stiffness matrix, dim(K)= nd x nd
-            f : global load vector, dim(f)= nd x 1
+    Parameters:
     
-            bc :    1-dim integer array containing prescribed dofs.
-                    
-            bcVal:  1-dim float array containing prescribed values.
+        K           global stiffness matrix, dim(K)= nd x nd
+        f           global load vector, dim(f)= nd x 1
     
-    OUTPUT:  a : solution including boundary values
-             Q : reaction force vector
-                 dim(a)=dim(Q)= nd x 1, nd : number of dof's
-    -------------------------------------------------------------"""    
+        bcPrescr    1-dim integer array containing prescribed dofs.
+        bcVal       1-dim float array containing prescribed values.
+                    If not given all prescribed dofs are assumed 0.
+        
+    Returns:
+    
+        a           solution including boundary values
+        Q           reaction force vector
+                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
+    
+    """    
     
     nDofs = K.shape[0]
     nPdofs = bcPrescr.shape[0]
@@ -560,16 +595,20 @@ def solveq(K,f,bcPrescr,bcVal=None):
     return (asmatrix(a),Q)
     
 def extract(edof,a):
-    """-------------------------------------------------------------
-    PURPOSE
-     Extract element displacements from the global displacement
-     vector according to the topology matrix edof.
+    """
+    Extract element displacements from the global displacement
+    vector according to the topology matrix edof.
     
-    INPUT:  a:      the global displacement vector
-            edof:   dof topology array
+    Parameters:
     
-    OUTPUT: ed:     element displacement array
-    -------------------------------------------------------------"""
+        a           the global displacement vector
+        edof        dof topology array
+    
+    Returns:
+    
+        ed:     element displacement array
+    
+    """
 
     ed = None
     
@@ -605,9 +644,28 @@ def dofHash(dof):
     return value
 
 def createdofs(nCoords,nDof):
+    """
+    Create dof array [nCoords x nDof]
+    """
     return arange(nCoords*nDof).reshape(nCoords,nDof)+1
 
 def coordxtr(edof,coords,dofs):
+    """
+    Create element coordinate matrices ex, ey, ez from edof
+    coord and dofs matrices.
+    
+    Parameters:
+    
+        edof            [nel x (nen * nnd)], nnd = number of node dofs
+        coords          [ncoords x ndims],   ndims = node dimensions
+        dofs            [ncoords x nnd]
+        
+    Returns:
+    
+        ex              if ndims = 1
+        ex, ey          if ndims = 2
+        ex, ey, ez      if ndims = 3
+    """
     
     # Create dictionary with dof indices
     
@@ -662,22 +720,25 @@ def coordxtr(edof,coords,dofs):
         return ex, ey, ez
 
 def hooke(ptype,E,v):
-    """D=hooke(ptype,E,v)
-    -------------------------------------------------------------
-      PURPOSE
-       Calculate the material matrix for a linear
-       elastic and isotropic material.
+    """
+    Calculate the material matrix for a linear
+    elastic and isotropic material.
     
-     INPUT:  ptype=1:  plane stress
-                   2:  plane strain
-                   3:  axisymmetry
-                   4:  three dimensional
+    Parameters:
     
-              E : Young's modulus
-              v : Poissons const.
+        ptype=  1:  plane stress
+                2:  plane strain
+                3:  axisymmetry
+                4:  three dimensional
     
-     OUTPUT: D : material matrix
-    -------------------------------------------------------------"""
+        E           Young's modulus
+        v           Poissons const.
+        
+    Returns:
+    
+        D           material matrix
+    
+    """
    
     if ptype == 1:
         D = E*matrix(
@@ -714,6 +775,15 @@ def hooke(ptype,E,v):
     return D
 
 def eldraw2(ex,ey,plotpar=None,elnum=None):
+    """
+    Draw elements in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        plotpar         (not implemented yet)
+    
+    """
     if rank(ex)==1:
         nen = ex.shape[0]
         nel = 1
@@ -738,21 +808,20 @@ def elmargin(scale=0.2):
     a.set_ylim([ylim[0]-ys*scale,ylim[1]+ys*scale])
     
 def scalfact2(ex,ey,ed,rat=0.2):
-    """[sfac]=scalfact2(ex,ey,ed,rat)
-    -------------------------------------------------------------
-     PURPOSE 
-       Determine scale factor for drawing computational results, such as 
-       displacements, section forces or flux.
+    """
+    Determine scale factor for drawing computational results, such as 
+    displacements, section forces or flux.
     
-     INPUT
-        ex,ey:  element node coordinates
+    Parameters:
+    
+        ex, ey      element node coordinates
                        
-        ed:     element displacement matrix or section force matrix
+        ed          element displacement matrix or section force matrix
     
-        rat: relation between illustrated quantity and element size. 
-        If not specified, 0.2 is used.
+        rat         relation between illustrated quantity and element size. 
+                    If not specified, 0.2 is used.
         
-    -------------------------------------------------------------"""
+    """
 
     nen = -1
     if ex.shape != ey.shape:
@@ -783,22 +852,6 @@ def scalfact2(ex,ey,ed,rat=0.2):
     return k*dlmax/edmax
 
 def eldisp2(ex,ey,ed,rat=0.2):
-    """[sfac]=scalfact2(ex,ey,ed,rat)
-    -------------------------------------------------------------
-     PURPOSE 
-       Determine scale factor for drawing computational results, such as 
-       displacements, section forces or flux.
-    
-     INPUT
-        ex,ey:  element node coordinates
-                       
-        ed:     element displacement matrix or section force matrix
-    
-        rat: relation between illustrated quantity and element size. 
-        If not specified, 0.2 is used.
-        
-    -------------------------------------------------------------"""
-
     nen = -1
     if ex.shape != ey.shape:
         print "ex and ey shapes do not match."
