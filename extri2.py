@@ -6,45 +6,43 @@ from pycalfem_classes import *
 
 # ---- Problem constants
 
-kx = 50
-ky = 50
-t = 1.0
-ep = [t]
+t = 0.1
+v = 0.35
+E = 2.1e9
+ptype = 1
+ep = [ptype,t]
 
-D = matrix([
-    [kx, 0.],
-    [0., ky]
-])
+D=hooke(ptype, E, v)
 
 # ---- Problem geometry
 
+l = 0.2
+w = 0.05
+h = 0.1
+
 vertices = array([
-    [0.0, 0.0],
-    [200., 0.0],
-    [200., 70.0],
-    [120.0, 70.0],
-    [120.0, 20.0],
-    [80.0, 20.0],
-    [80.0, 70.0],
-    [0.0, 70.0]
+    [0.0, h],
+    [l, h],
+    [l, 0.0],
+    [l-w, 0.0],
+    [l-w, h-w],
+    [0.0, h-w]
 ])
 
 segments = array([
     [0,1,1],
     [1,2,1],
-    [2,3,2],
+    [2,3,3],
     [3,4,1],
     [4,5,1],
-    [5,6,1],
-    [6,7,3],
-    [7,0,1]
+    [5,0,2]
 ])
 
 # ---- Create element mesh
 
 print "Creating element mesh..."
 
-coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
+coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=0.0001, dofsPerNode=2)
 
 # ---- Assemble system matrix
 
@@ -53,10 +51,12 @@ print "Assemblig system matrix..."
 nDofs = size(dofs)
 ex, ey = coordxtr(edof, coords, dofs)
 
+#eldraw2(ex,ey)
+
 K = zeros([nDofs,nDofs])
 
 for eltopo, elx, ely in zip(edof, ex, ey):
-    Ke = flw2te(elx, ely, ep, D)
+    Ke = plante(elx, ely, ep, D)
     assem(eltopo, K, Ke)
 
 # ---- Solving equation system
@@ -68,8 +68,8 @@ f = zeros([nDofs,1])
 bc = array([],'i')
 bcVal = array([],'i')
 
-bc, bcVal = applybc(bdofs,bc,bcVal,2,30.0)
-bc, bcVal = applybc(bdofs,bc,bcVal,3,0.0)
+bc, bcVal = applybc(bdofs,bc,bcVal,2,0.0)
+applyforce(bdofs,f,3,10e3,2)
             
 a,r = solveq(K,f,bc,bcVal)
 
@@ -78,7 +78,7 @@ a,r = solveq(K,f,bc,bcVal)
 print "Computing element forces..."
 
 ed = extract(edof,a)
-qs, qt = flw2ts(ex, ey, D, ed)
+es, et = plants(ex, ey, ep, D, ed)
 
 # ---- Visualise results
 
