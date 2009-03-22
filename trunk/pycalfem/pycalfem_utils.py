@@ -3,8 +3,28 @@
 
 import os, sys
 
+haveMatplotLib = True
+haveMlab = True
+haveWx = True
+
+try:
+    from matplotlib.pyplot import *
+except:
+    haveMatplotLib = False
+
+try:
+    from enthought.mayavi import mlab
+except:
+    haveMlab = False
+    
+try:
+    import wx
+except:
+    haveWx = False
+    
 from numpy import *
 from pycalfem import *
+from pycalfem_classes import ElementView
 
 def readInt(f):
     """
@@ -48,7 +68,7 @@ def which(filename):
             return f
     return None
 
-def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0):
+def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0, dimension=0):
     """
     Apply boundary condition to bcPresc and bcVal matrices.
     
@@ -60,6 +80,7 @@ def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0):
         marker              Boundary marker to assign boundary condition.
         value               Value to assign boundary condition.
                             If not giben 0.0 is assigned.
+        dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y
                             
     """
 
@@ -70,6 +91,34 @@ def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0):
         return hstack([bcPresc,bcAdd]), hstack([bcVal,bcAddVal])
     else:
         print "Error: Boundary marker", marker, "does not exist."
+        
+def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
+    """
+    Apply boundary condition to bcPresc and bcVal matrices.
+    
+    Parameters:
+    
+        boundaryDofs        Dictionary with boundary dofs.
+        f                   force matrix.
+        marker              Boundary marker to assign boundary condition.
+        value               Value to assign boundary condition.
+                            If not giben 0.0 is assigned.
+        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y
+                            
+    """
+
+    if boundaryDofs.has_key(marker):
+        if dimension == 0:
+            f[boundaryDofs[marker]] += value
+        elif dimension == 1:
+            f[boundaryDofs[marker][(dimension-1)::2]] += value
+            print boundaryDofs[marker][(dimension-1)::2]
+        elif dimension == 2:
+            f[boundaryDofs[marker][(dimension-1)::2]] += value            
+            print boundaryDofs[marker][(dimension-1)::2]
+    else:
+        print "Error: Boundary marker", marker, "does not exist."
+    
 
 def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log"):
     """
@@ -279,3 +328,132 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
         
     
     return allVertices, elements, dofs, boundaryVertices
+
+def eldraw2(ex, ey):
+    """
+    Draw elements in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        plotpar         (not implemented yet)
+    
+    """   
+    class ElDispApp(wx.App):
+        def OnInit(self):
+            wx.InitAllImageHandlers()
+            mainWindow = ElementView(None, -1, "")
+            mainWindow.ex = ex
+            mainWindow.ey = ey
+            mainWindow.showNodalValues = False
+            self.SetTopWindow(mainWindow)
+            mainWindow.Show()
+            return 1
+    
+    app = ElDispApp(0)
+    app.MainLoop()
+    
+def eliso2(ex, ey, ed):
+    """
+    Draw elements in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        plotpar         (not implemented yet)
+    
+    """   
+    class ElDispApp(wx.App):
+        def OnInit(self):
+            wx.InitAllImageHandlers()
+            mainWindow = ElementView(None, -1, "")
+            mainWindow.ex = ex
+            mainWindow.ey = ey
+            mainWindow.showMesh = True
+            mainWindow.showNodalValues = True
+            self.SetTopWindow(mainWindow)
+            mainWindow.Show()
+            return 1
+    
+    app = ElDispApp(0)
+    app.MainLoop()
+
+def eldisp2(ex, ey, ed, magnfac=0.1):
+    class ElDispApp(wx.App):
+        def OnInit(self):
+            wx.InitAllImageHandlers()
+            mainWindow = ElementView(None, -1, "")
+            mainWindow.dofsPerNode = 2
+            mainWindow.ex = ex
+            mainWindow.ey = ey
+            mainWindow.ed = ed
+            mainWindow.showMesh = True
+            mainWindow.showNodalValues = False
+            mainWindow.showDisplacements = True
+            mainWindow.magnfac = magnfac
+            self.SetTopWindow(mainWindow)
+            mainWindow.Show()
+            return 1
+    
+    app = ElDispApp(0)
+    app.MainLoop()
+    
+
+def elmargin(scale=0.2):
+    a = gca()
+    xlim = a.get_xlim()
+    ylim = a.get_ylim()
+    xs = xlim[1]-xlim[0]
+    ys = ylim[1]-ylim[0]
+    a.set_xlim([xlim[0]-xs*scale,xlim[1]+xs*scale])
+    a.set_ylim([ylim[0]-ys*scale,ylim[1]+ys*scale])
+    
+def scalfact2(ex,ey,ed,rat=0.2):
+    """
+    Determine scale factor for drawing computational results, such as 
+    displacements, section forces or flux.
+    
+    Parameters:
+    
+        ex, ey      element node coordinates
+                       
+        ed          element displacement matrix or section force matrix
+    
+        rat         relation between illustrated quantity and element size. 
+                    If not specified, 0.2 is used.
+        
+    """
+
+    nen = -1
+    if ex.shape != ey.shape:
+        print "ex and ey shapes do not match."
+        return 1.0
+    
+    dlmax = 0.
+    edmax = 1.
+    
+    print rank(ex)
+
+    if rank(ex)==1:
+        nen = ex.shape[0]
+        nel = 1
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+    else:
+        nen = ex.shape[1]
+        nel = ex.shape[0]
+        dxmax=ex.T.max()-ex.T.min()
+        dymax=ey.T.max()-ey.T.min()
+        dlmax=max(dxmax,dymax);
+        edmax=abs(ed).max();
+        
+    k = rat
+    return k*dlmax/edmax
+
+def elcenter2d(ex, ey):
+    exm = reshape(ex.sum(1)/ex.shape[1],[ex.shape[0],1])
+    eym = reshape(ey.sum(1)/ey.shape[1],[ey.shape[0],1])
+
+    return hstack([exm,eym])

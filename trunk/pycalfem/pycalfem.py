@@ -2,19 +2,6 @@
 
 from numpy import *
 
-haveMatplotLib = True
-haveMlab = True
-
-try:
-    from matplotlib.pyplot import *
-except:
-    haveMatplotLib = False
-
-try:
-    from enthought.mayavi import mlab
-except:
-    haveMlab = False
-
 def spring1e(ep):
     """
     Compute element stiffness matrix for spring element.
@@ -464,18 +451,12 @@ def plante(ex,ey,ep,D,eq=None):
          [0, 0, 0, 1, ex[2], ey[2] ]]
         )
     
-    #print "C =", C
+    A = 0.5*linalg.det(matrix([[1, ex[0], ey[0]],[1, ex[1], ey[1]],[1, ex[2], ey[2]]]))
     
-    A = 0.5*det(matrix([[1, ex[0], ey[0]],[1, ex[1], ey[1]],[1, ex[2], ey[2]]]))
-    
-    #print "A = ", A
-
     # --------- plane stress --------------------------------------
     
     if ptype == 1:
-        B = matrix([[0,1,0,0,0,0],[0,0,0,0,0,1],[0,0,1,0,1,0]])*inv(C)
-        
-        #print "B = ", B
+        B = matrix([[0,1,0,0,0,0],[0,0,0,0,0,1],[0,0,1,0,1,0]])*linalg.inv(C)
         
         colD = D.shape[1]
         
@@ -488,7 +469,10 @@ def plante(ex,ey,ep,D,eq=None):
         Ke = B.T*Dm*B*A*t
         fe = A/3*matrix([[bx,by,bx,by,bx,by]]).T*t
         
-    return Ke, fe
+        if eq == None:
+            return Ke
+        else:
+            return Ke, fe
        
 #%--------- plane strain --------------------------------------       
 #elseif ptype==2
@@ -513,6 +497,88 @@ def plante(ex,ey,ep,D,eq=None):
 #%--------------------------end--------------------------------
 #
 #
+def plants(ex,ey,ep,D,ed):
+    """
+    Calculate element normal and shear stress for a
+    triangular plane stress or plane strain element.
+    
+    INPUT:  ex = [x1 x2 x3]         element coordinates
+           ey = [y1 y2 y3]
+    
+           ep = [ptype t ]         ptype: analysis type
+                                   t: thickness
+    
+           D                       constitutive matrix
+    
+           ed =[u1 u2 ...u6        element displacement vector
+                ......     ]       one row for each element
+    
+    OUTPUT: es = [ sigx sigy [sigz] tauxy   element stress matrix
+                 ......                 ]  one row for each element
+    
+           et = [ epsx epsy [epsz] gamxy   element strain matrix
+                 ......                 ]  one row for each element
+    """
+
+    ptype=ep[0]
+    
+    rowed=ed.shape[0]
+    rowex=ex.shape[0]
+    
+    # --------- plane stress --------------------------------------
+    
+    if ptype==1:
+        
+        colD = D.shape[1]
+
+        if colD>3:
+            Cm = inv(D)
+            Dm = inv(Cm(ix_((0,1,3),(0,1,3))))
+        else:
+            Dm = D
+            
+        incie=0
+
+        if rowex==1:
+            incie=0
+        else:
+            incie=1
+      
+        et=zeros([rowed,colD])
+        es=zeros([rowed,colD])
+        
+        ie=0
+        
+        for i in range(rowed):
+            C = matrix(
+                [[1, ex[ie,0], ey[ie,0], 0, 0, 0 ], 
+                 [0, 0, 0, 1, ex[ie,0], ey[ie,0] ],
+                 [1, ex[ie,1], ey[ie,1], 0, 0, 0 ],
+                 [0, 0, 0, 1, ex[ie,1], ey[ie,1] ],
+                 [1, ex[ie,2], ey[ie,2], 0, 0, 0 ],
+                 [0, 0, 0, 1, ex[ie,2], ey[ie,2] ]]
+                )
+            
+            B = matrix([
+                [0,1,0,0,0,0],
+                [0,0,0,0,0,1],
+                [0,0,1,0,1,0]])*linalg.inv(C)
+        
+            ee=B*asmatrix(ed[ie,:]).T
+
+            if colD>3:
+                ss=zeros([colD,1])
+                ss[[0,1,3]]=Dm*ee
+                ee=Cm*ss
+            else:
+                ss=Dm*ee
+    
+            et[ie,:] = ee.T
+            es[ie,:] = ss.T
+    
+            ie = ie + incie
+            
+        return es, et
 
 def assem(edof,K,Ke,f=None,fe=None):
     """
@@ -773,156 +839,3 @@ def hooke(ptype,E,v):
         print "ptype not supported."
         
     return D
-
-def eldraw2(ex,ey,plotpar=None,elnum=None):
-    """
-    Draw elements in 2d.
-    
-    Parameters:
-    
-        ex, ey          Element coordinates
-        plotpar         (not implemented yet)
-    
-    """
-    if rank(ex)==1:
-        nen = ex.shape[0]
-        nel = 1
-    else:
-        nen = ex.shape[1]
-        nel = ex.shape[0]
-        
-    if nen > 2:
-        ex = hstack([ex,ex[:,0].reshape(nel,1)])
-        ey = hstack([ey,ey[:,0].reshape(nel,1)])
-        
-    plot(ex.transpose(),ey.transpose(), color="blue")
-    gca().set_aspect("equal")
-    
-def elmargin(scale=0.2):
-    a = gca()
-    xlim = a.get_xlim()
-    ylim = a.get_ylim()
-    xs = xlim[1]-xlim[0]
-    ys = ylim[1]-ylim[0]
-    a.set_xlim([xlim[0]-xs*scale,xlim[1]+xs*scale])
-    a.set_ylim([ylim[0]-ys*scale,ylim[1]+ys*scale])
-    
-def scalfact2(ex,ey,ed,rat=0.2):
-    """
-    Determine scale factor for drawing computational results, such as 
-    displacements, section forces or flux.
-    
-    Parameters:
-    
-        ex, ey      element node coordinates
-                       
-        ed          element displacement matrix or section force matrix
-    
-        rat         relation between illustrated quantity and element size. 
-                    If not specified, 0.2 is used.
-        
-    """
-
-    nen = -1
-    if ex.shape != ey.shape:
-        print "ex and ey shapes do not match."
-        return 1.0
-    
-    dlmax = 0.
-    edmax = 1.
-    
-    print rank(ex)
-
-    if rank(ex)==1:
-        nen = ex.shape[0]
-        nel = 1
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
-    else:
-        nen = ex.shape[1]
-        nel = ex.shape[0]
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
-        
-    k = rat
-    return k*dlmax/edmax
-
-def eldisp2(ex,ey,ed,rat=0.2):
-    nen = -1
-    if ex.shape != ey.shape:
-        print "ex and ey shapes do not match."
-        return 1.0
-    
-    dlmax = 0.
-    edmax = 1.
-    
-    print rank(ex)
-
-    if rank(ex)==1:
-        nen = ex.shape[0]
-        nel = 1
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
-    else:
-        nen = ex.shape[1]
-        nel = ex.shape[0]
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
-        
-    k = rat
-    return k*dlmax/edmax
-
-def elcenter2d(ex, ey):
-    exm = reshape(ex.sum(1)/ex.shape[1],[ex.shape[0],1])
-    eym = reshape(ey.sum(1)/ey.shape[1],[ey.shape[0],1])
-
-    return hstack([exm,eym])
-
-def mlscalar2d(coords, edof, a):
-    if not haveMlab:
-        return
-
-    x = reshape(coords[:,0],[size(coords[:,0])])
-    y = reshape(coords[:,1],[size(coords[:,1])])
-    z = zeros([size(coords[:,0])])
-    ascalar = reshape(asarray(a),[size(a)])
-
-    mlab.triangular_mesh(x, y, z, edof-1, scalars=ascalar, representation="surface")
-
-def mlflux2d(coords, vf, scalefactor=None, displaymode="2darrow"):
-    if not haveMlab:
-        return
-
-    x = reshape(coords[:,0],[size(coords[:,0])])
-    y = reshape(coords[:,1],[size(coords[:,1])])
-    z = zeros([size(coords[:,0])])
-    u = reshape(vf[:,0],[size(vf[:,0])])
-    v = reshape(vf[:,1],[size(vf[:,1])])
-    w = zeros([size(vf[:,0])])
-
-    if scalefactor == None:
-        mlab.quiver3d(x, y, z, u, v, w, mode=displaymode)
-    else:
-        mlab.quiver3d(x, y, z, u, v, w, mode=displaymode, scale_factor=scalefactor)
-
-
-def mlwireframe2d(coords, edof):
-    if not haveMlab:
-        return
-
-    x = reshape(coords[:,0],[size(coords[:,0])])
-    y = reshape(coords[:,1],[size(coords[:,1])])
-    z = zeros([size(coords[:,0])])+1
-    scalars = ones([size(coords[:,0])])
-
-    mlab.triangular_mesh(x, y, z, edof-1, scalars=scalars, representation="mesh", colormap="bone", line_width=20.0)
-    
-    
