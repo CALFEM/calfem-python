@@ -374,7 +374,7 @@ def flw2ts(ex,ey,D,ed):
     
     """
 
-    if ex.shape[0]>1:
+    if len(ex.shape)>1:
         qs = zeros([ex.shape[0],2])
         qt = zeros([ex.shape[0],2])
         row = 0
