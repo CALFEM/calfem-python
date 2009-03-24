@@ -40,7 +40,7 @@ f[11]=-0.5e6*cos(pi/6)
 
 A=25.0e-4
 E=2.1e11
-ep=array([E,A])
+ep=[E,A]
 
 # ----- Element coordinates --------------------------------------
 
@@ -72,17 +72,17 @@ ey = array([
  
 # ----- Create element stiffness matrices Ke and assemble into K -
 
-for i in range(10):
-    Ke = bar2e(ex[i,:],ey[i,:],ep)
-    assem(Edof[i,:],K,Ke)
-    
+for elx, ely, eltopo in zip(ex, ey, Edof):
+    Ke = bar2e(elx, ely,ep)
+    assem(eltopo,K,Ke)
+   
 print("Stiffness matrix K:")
 print(K)
 
 # ----- Solve the system of equations ----------------------------
 
 bc = array([1,2,3,4])
-[a,r] = solveq(K,f,bc)
+a, r = solveq(K,f,bc)
 
 print("Displacements a:")
 print(a)
@@ -97,7 +97,9 @@ N=zeros([Edof.shape[0]])
 
 print("Element forces:")
 
-for i in range(10):
-    N[i]=bar2s(ex[i,:],ey[i,:],ep,ed[i,:]);
-    print("N%d = %g" % (i,N[i]))
+i = 0
+for elx, ely, eld in zip(ex, ey, ed):
+    N[i] = bar2s(elx,ely,ep,eld);
+    print("N%d = %g" % (i+1,N[i]))
+    i+=1
  

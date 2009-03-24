@@ -25,9 +25,8 @@ Edof = array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K=mat(zeros((3,3)))
-f=mat(zeros((3,1)))
-f[1]=100
+K=matrix(zeros((3,3)))
+f=matrix(zeros((3,1)))
 
 # ----- Element stiffness matrices  ------------------------------
 
@@ -49,7 +48,9 @@ print(K)
 # ----- Solve the system of equations ----------------------------
 
 bc = array([1,3])
-a,Q = solveq(K, f, bc)
+f[1]=100
+
+a, r = solveq(K, f, bc)
 
 print("Displacements a:")
 print(a)
