@@ -19,12 +19,12 @@ except:
     
 try:
     import wx
+    from pycalfem_classes import ElementView
 except:
     haveWx = False
     
 from numpy import *
 from pycalfem import *
-from pycalfem_classes import ElementView
 
 def readInt(f):
     """
@@ -338,7 +338,11 @@ def eldraw2(ex, ey):
         ex, ey          Element coordinates
         plotpar         (not implemented yet)
     
-    """   
+    """
+    if not haveWx:
+        print "wxPython not installed."
+        return
+    
     class ElDispApp(wx.App):
         def OnInit(self):
             wx.InitAllImageHandlers()
@@ -362,7 +366,11 @@ def eliso2(ex, ey, ed):
         ex, ey          Element coordinates
         plotpar         (not implemented yet)
     
-    """   
+    """
+    if not haveWx:
+        print "wxPython not installed."
+        return
+    
     class ElDispApp(wx.App):
         def OnInit(self):
             wx.InitAllImageHandlers()
@@ -379,6 +387,10 @@ def eliso2(ex, ey, ed):
     app.MainLoop()
 
 def eldisp2(ex, ey, ed, magnfac=0.1):
+    if not haveWx:
+        print "wxPython not installed."
+        return
+    
     class ElDispApp(wx.App):
         def OnInit(self):
             wx.InitAllImageHandlers()

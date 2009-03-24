@@ -22,9 +22,8 @@ Edof = array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K=mat(zeros((8,8)))
-f=mat(zeros((8,1)))
-f[5]=-80e3
+K=matrix(zeros((8,8)))
+f=matrix(zeros((8,1)))
 
 # ----- Element properties ---------------------------------------
  
@@ -32,9 +31,9 @@ E=2.0e11
 A1=6.0e-4
 A2=3.0e-4
 A3=10.0e-4
-ep1=array([E,A1])
-ep2=array([E,A2])
-ep3=array([E,A3])
+ep1=[E,A1]
+ep2=[E,A2]
+ep3=[E,A3]
  
 #----- Element coordinates --------------------------------------
 
@@ -54,9 +53,9 @@ Ke3=bar2e(ex3,ey3,ep3)
  
 #----- Assemble Ke into K ---------------------------------------
 
-K=assem(Edof[0,:],K,Ke1)
-K=assem(Edof[1,:],K,Ke2)
-K=assem(Edof[2,:],K,Ke3)
+assem(Edof[0,:],K,Ke1)
+assem(Edof[1,:],K,Ke2)
+assem(Edof[2,:],K,Ke3)
 
 print("Stiffness matrix K:")
 print(K)
@@ -64,7 +63,8 @@ print(K)
 #----- Solve the system of equations ----------------------------
 
 bc=array([1,2,3,4,7,8])
-[a,r]=solveq(K,f,bc)
+f[5] = -80e3
+a, r = solveq(K,f,bc)
 
 print("Displacements a:")
 print(a)
