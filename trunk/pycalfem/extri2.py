@@ -42,7 +42,7 @@ segments = array([
 
 print "Creating element mesh..."
 
-coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=0.0001, dofsPerNode=2)
+coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=0.00005, dofsPerNode=2)
 
 # ---- Assemble system matrix
 

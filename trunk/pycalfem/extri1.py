@@ -84,7 +84,9 @@ qs, qt = flw2ts(ex, ey, D, ed)
 
 print "Drawing element mesh..."
 
-eldisp2(ex,ey,ed)
+print ed
+
+eliso2(ex,ey,ed)
 
 print "Done."
 

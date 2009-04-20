@@ -64,6 +64,7 @@ def which(filename):
     
     for path in pathlist:
         f = os.path.join(path, filename)
+        print f
         if os.access(f, os.X_OK):
             return f
     return None
@@ -176,7 +177,12 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     
     # Check for triangle executable
     
-    triangleExecutable = which("triangle")
+    triangleExecutable = ""
+    if sys.platform == "win32":
+        triangleExecutable = which("triangle.exe")
+    else:
+        triangleExecutable = which("triangle")
+        
     if triangleExecutable==None:
         print "Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH)."
         return None, None, None, None
@@ -357,7 +363,7 @@ def eldraw2(ex, ey):
     app = ElDispApp(0)
     app.MainLoop()
     
-def eliso2(ex, ey, ed):
+def eliso2(ex, ey, ed, showMesh=False):
     """
     Draw elements in 2d.
     
@@ -377,7 +383,8 @@ def eliso2(ex, ey, ed):
             mainWindow = ElementView(None, -1, "")
             mainWindow.ex = ex
             mainWindow.ey = ey
-            mainWindow.showMesh = True
+            mainWindow.ed = ed
+            mainWindow.showMesh = showMesh
             mainWindow.showNodalValues = True
             self.SetTopWindow(mainWindow)
             mainWindow.Show()
@@ -386,7 +393,7 @@ def eliso2(ex, ey, ed):
     app = ElDispApp(0)
     app.MainLoop()
 
-def eldisp2(ex, ey, ed, magnfac=0.1):
+def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
     if not haveWx:
         print "wxPython not installed."
         return
@@ -399,7 +406,7 @@ def eldisp2(ex, ey, ed, magnfac=0.1):
             mainWindow.ex = ex
             mainWindow.ey = ey
             mainWindow.ed = ed
-            mainWindow.showMesh = True
+            mainWindow.showMesh = showMesh
             mainWindow.showNodalValues = False
             mainWindow.showDisplacements = True
             mainWindow.magnfac = magnfac
