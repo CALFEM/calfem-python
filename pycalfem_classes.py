@@ -246,7 +246,7 @@ class ElementView(OpenGLFrame):
         
         for elx, ely, eld in zip(self._ex, self._ey, self._ed):
             
-            if nNodes == 3:
+            if self._elementNodes == 3:
             
                 (sx1, sy1) = self.worldToScreen(elx[0], ely[0])
                 (sx2, sy2) = self.worldToScreen(elx[1], ely[1])
