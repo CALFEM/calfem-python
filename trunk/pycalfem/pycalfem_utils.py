@@ -50,6 +50,24 @@ def readSingleFloat(f):
     """
     return readFloat(f)[0]
     
+def writeSingleFloat(f, floatValue):
+    write(f, "%g\n" % floatValue)
+    
+def writeSingleInt(f, intValue):
+    write(f, "%d\n" % intValue)
+
+def writeFloatList(f, floatList):
+    for floatValue in floatList:
+        f.write("%g " % floatValue)
+    f.write("\n")
+    
+def writeIntList(f, intList):
+    for intValue in intList:
+        f.write("%d " % intValue)
+    f.write("\n")
+    
+    
+
 def which(filename):
     """
     Return complete path to executable given by filename.
@@ -64,7 +82,6 @@ def which(filename):
     
     for path in pathlist:
         f = os.path.join(path, filename)
-        print f
         if os.access(f, os.X_OK):
             return f
     return None
