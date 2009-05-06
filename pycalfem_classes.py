@@ -5,24 +5,29 @@ import wx
 
 from wx import glcanvas
 from OpenGL.GL import *
+from OpenGL.GLUT import *
 
 import colorsys
 
+def drawBitmapText(text, font=GLUT_BITMAP_TIMES_ROMAN_24):
+    for c in text:
+        glutBitmapCharacter(font, ord(c))
+
 def floatRgb(mag, cmin, cmax):
-        """
-        Return a tuple of floats between 0 and 1 for the red, green and
-        blue amplitudes.
-        """
-        
-        try:
-               # normalize to [0,1]
-               x = float(mag-cmin)/float(cmax-cmin)
-        except:
-               # cmax = cmin
-               x = 0.5
-               
-        red, green, blue = colorsys.hsv_to_rgb(x*240./360, 1.0, 1.0)
-        return (red, green, blue)
+    """
+    Return a tuple of floats between 0 and 1 for the red, green and
+    blue amplitudes.
+    """
+    
+    try:
+           # normalize to [0,1]
+           x = float(mag-cmin)/float(cmax-cmin)
+    except:
+           # cmax = cmin
+           x = 0.5
+           
+    red, green, blue = colorsys.hsv_to_rgb(x*240./360, 1.0, 1.0)
+    return (red, green, blue)
 
 class OpenGLFrame(wx.Frame):
     def __init__(self, *args, **kwds):
@@ -84,6 +89,21 @@ class OpenGLFrame(wx.Frame):
 
         self.onDraw()
         event.Skip()
+        
+    def drawStrokeText(self, text, x=0.0, y=0.0, fontSize=1.0, color=[0.0, 0.0, 0.0], font=GLUT_STROKE_ROMAN):
+        glPushMatrix()
+        glTranslate(x, y, 0)
+        glPushMatrix()
+        glColor(color)
+        glScalef(fontSize/119.05, -fontSize/119.05, 0.0)
+        glTranslate(0.0, -fontSize/119.05, 0.0)
+        
+        for c in text:
+            glutStrokeCharacter(font, ord(c))
+    
+        glPopMatrix()
+        glPopMatrix()
+
 
     #
     # GLFrame OpenGL Event Handlers
@@ -161,6 +181,8 @@ class ElementView(OpenGLFrame):
         self._showNodalValues = True
         self._showDisplacements = False
         
+        self.drawAnnotations = None
+        
     def calcLimits(self):
         
         self._limits = [1e300, 1e300, -1e300, -1e300]
@@ -214,7 +236,7 @@ class ElementView(OpenGLFrame):
     def drawMesh(self):
              
         # Draw elements
-        
+                              
         glBegin(GL_LINES)
               
         for elx, ely in zip(self._ex, self._ey):
@@ -224,6 +246,8 @@ class ElementView(OpenGLFrame):
                 (sx1, sy1) = self.worldToScreen(elx[0], ely[0])
                 (sx2, sy2) = self.worldToScreen(elx[1], ely[1])
                 (sx3, sy3) = self.worldToScreen(elx[2], ely[2])
+                
+                print sx1, sy1
                             
                 glColor(0.5, 0.5, 0.5)
                 glVertex(sx1,sy1)
@@ -328,6 +352,7 @@ class ElementView(OpenGLFrame):
         """
         Draw the window.
         """
+              
         glClear(GL_COLOR_BUFFER_BIT)
         if self._showNodalValues:
             self.drawNodalValues()
@@ -335,6 +360,10 @@ class ElementView(OpenGLFrame):
             self.drawMesh()
         if self._showDisplacements:
             self.drawDisplacements()
+            
+        if self.drawAnnotations!=None:
+            self.drawAnnotations(self, self._width, self._height)
+            
         self.SwapBuffers()
         
     def getModelHeight(self):
