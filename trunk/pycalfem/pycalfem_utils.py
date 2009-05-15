@@ -127,13 +127,11 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
 
     if boundaryDofs.has_key(marker):
         if dimension == 0:
-            f[boundaryDofs[marker]] += value
+            f[boundaryDofs[marker]-1] += value
         elif dimension == 1:
-            f[boundaryDofs[marker][(dimension-1)::2]] += value
-            print boundaryDofs[marker][(dimension-1)::2]
+            f[boundaryDofs[marker][(dimension-1)::2]-1] += value
         elif dimension == 2:
-            f[boundaryDofs[marker][(dimension-1)::2]] += value            
-            print boundaryDofs[marker][(dimension-1)::2]
+            f[boundaryDofs[marker][(dimension-1)::2]-1] += value            
     else:
         print "Error: Boundary marker", marker, "does not exist."
     
@@ -468,8 +466,6 @@ def scalfact2(ex,ey,ed,rat=0.2):
     dlmax = 0.
     edmax = 1.
     
-    print rank(ex)
-
     if rank(ex)==1:
         nen = ex.shape[0]
         nel = 1
