@@ -69,7 +69,7 @@ bc = array([],'i')
 bcVal = array([],'i')
 
 bc, bcVal = applybc(bdofs,bc,bcVal,2,0.0)
-applyforce(bdofs,f,3,10e3,2)
+applyforce(bdofs,f,3,-10e3,2)
             
 a,r = solveq(K,f,bc,bcVal)
 

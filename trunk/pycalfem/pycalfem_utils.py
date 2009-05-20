@@ -51,10 +51,10 @@ def readSingleFloat(f):
     return readFloat(f)[0]
     
 def writeSingleFloat(f, floatValue):
-    write(f, "%g\n" % floatValue)
+    f.write("%g\n" % floatValue)
     
 def writeSingleInt(f, intValue):
-    write(f, "%d\n" % intValue)
+    f.write("%d\n" % intValue)
 
 def writeFloatList(f, floatList):
     for floatValue in floatList:
@@ -127,11 +127,11 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
 
     if boundaryDofs.has_key(marker):
         if dimension == 0:
-            f[boundaryDofs[marker]-1] += value
+            f[asarray(boundaryDofs[marker])-1] += value
         elif dimension == 1:
-            f[boundaryDofs[marker][(dimension-1)::2]-1] += value
+            f[asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value
         elif dimension == 2:
-            f[boundaryDofs[marker][(dimension-1)::2]-1] += value            
+            f[asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value            
     else:
         print "Error: Boundary marker", marker, "does not exist."
     
