@@ -103,6 +103,58 @@ def bar2e(ex,ey,ep):
     
     return G.T*Kle*G
 
+def bar2g(ex,ey,ep,N):
+    """
+    Compute element stiffness matrix for two dimensional geometric
+    nonlinear bar element.
+    
+    Parameters:
+    
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+        
+        ep = [E A]          E: Young's modulus
+                            A: Cross sections area
+                            
+        N                   normal force
+        
+    Returns:
+    
+        Ke                  stiffness matrix, dim(Ke) = 4 x 4
+        
+    """
+    E = ep[0]
+    A = ep[1]
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    
+    n = asarray(b.T/L).reshape(2,)
+
+    G = mat([
+        [n[0],n[1],0.,0.],
+        [-n[1],n[0],0.,0.],
+        [0.,0.,n[0],n[1]],
+        [0.,0.,-n[1],n[0]]
+    ])
+    
+    Kle = E*A/L*mat([
+        [1,0,-1,0],
+        [0,0,0,0],
+        [-1,0,1,0],
+        [0,0,0,0]
+    ])+N/L*mat([
+        [0,0,0,0],
+        [0,1,0,-1],
+        [0,0,0,0],
+        [0,-1,0,1]
+    ])
+
+    return G.T*Kle*G
+
 def bar2s(ex,ey,ep,ed):
     """
     Compute normal force in two dimensional bar element.
