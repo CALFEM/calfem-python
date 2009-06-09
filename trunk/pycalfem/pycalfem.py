@@ -192,6 +192,95 @@ def bar2s(ex,ey,ep,ed):
     u=asmatrix(ed).T
     N=E*A/L*mat([[-1.,1.]])*G*u
     return asscalar(N)
+    
+def bar3e(ex,ey,ez,ep):
+    """
+    Compute element stiffness matrix for three dimensional bar element.
+    
+    Parameters:
+    
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+        ez = [z1 z2]
+        
+        ep = [E A]          E: Young's modulus
+                            A: Cross sections area
+        
+    Returns:
+    
+        Ke                  stiffness matrix, dim(Ke) = 6 x 6
+        
+    """
+    E = ep[0]
+    A = ep[1]
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    
+    n = asarray(b.T/L).reshape(3,)
+
+    G = mat([
+        [n[0],n[1],n[2],0.,0.,0.],
+        [0.,0.,0.,n[0],n[1],n[2]],
+    ])
+    
+    Kle = E*A/L*mat([
+        [1,-1],
+        [-1,1],
+    ])
+
+    return G.T*Kle*G
+
+def bar3s(ex,ey,ez,ep,ed):
+    """
+    Compute normal force in three dimensional bar element.
+    
+    Parameters:
+    
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+        ez = [z1 z2]
+        
+        ep = [E A]          E: Young's modulus
+                            A: Cross sections area
+        
+        ed = [u1 ... u6]    element displacements
+        
+    Returns:
+    
+        es = [N]            normal force
+
+    """
+    E = ep[0]
+    A = ep[1]
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    
+    n = asarray(b.T/L).reshape(3,)
+
+    G = mat([
+        [n[0],n[1],n[2],0.,0.,0.],
+        [0.,0.,0.,n[0],n[1],n[2]],
+    ])
+    
+    Kle = E*A/L*mat([
+        [1,-1],
+        [-1,1],
+    ])
+
+    u = asmatrix(ed).T
+    N = E*A/L*mat([[-1.,1.]])*G*u
+    print "N =",N
+    return asscalar(N)
 
 def beam2e(ex,ey,ep,eq=None):
     """
