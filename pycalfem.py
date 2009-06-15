@@ -221,7 +221,7 @@ def bar3e(ex,ey,ez,ep):
     ])
     L = asscalar(sqrt(b.T*b))
     
-    n = asarray(b.T/L).reshape(3,)
+    n = asarray(b.T/L).reshape(3)
 
     G = mat([
         [n[0],n[1],n[2],0.,0.,0.],
@@ -265,7 +265,7 @@ def bar3s(ex,ey,ez,ep,ed):
     ])
     L = asscalar(sqrt(b.T*b))
     
-    n = asarray(b.T/L).reshape(3,)
+    n = asarray(b.T/L).reshape(3)
 
     G = mat([
         [n[0],n[1],n[2],0.,0.,0.],
@@ -347,7 +347,7 @@ def beam2e(ex,ey,ep,eq=None):
         return Ke
     else:
         return Ke,fe
-
+    
 def beam2s(ex,ey,ep,ed,eq=None,np=None):
     """
     Compute section forces in two dimensional beam element (beam2e).
@@ -445,6 +445,188 @@ def beam2s(ex,ey,ep,ed,eq=None,np=None):
     es=concatenate((N,V,M),1)
     
     return (es,edi,eci)
+
+def beam2t(ex,ey,ep,eq=None):
+    """
+    Compute the stiffness matrix for a two dimensional elastic
+    Timoshenko beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+    
+        ep = [E G A I ks]   element properties
+                              E: Young's modulus
+                              G: Shear modulus
+                              A: Cross section area
+                              I: Moment of inertia
+                             ks: Shear correction factor
+    
+        eq = [qx qy]        distributed loads, local directions
+        
+    Returns:
+     
+        Ke                  element stiffness matrix (6 x 6)
+    
+        fe                  element load vector (6 x 1)
+    
+    """
+
+    b = mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b.T/L).reshape(2)
+    
+    E = ep[0]
+    Gm = ep[1]
+    A = ep[2]
+    I = ep[3]
+    ks = ep[4]
+        
+    qx = 0.
+    qy = 0.
+    if eq != None:
+        qx = eq[0]
+        qy = eq[1]
+    
+    m = (12/L**2)*(E*I/(Gm*A*ks))
+    
+    Kle = E/(1+m)*mat([
+        [A*(1+m)/L,      0.,         0.,        -A*(1+m)/L,     0.,          0.      ],
+        [0.,         12*I/L**3., 6*I/L**2.,         0.,    -12*I/L**3., 6*I/L**2.    ],
+        [0.,         6*I/L**2.,  4*I*(1+m/4.)/L,    0.,    -6*I/L**2.,  2*I*(1-m/2)/L],
+        [-A*(1+m)/L,     0.,         0.,         A*(1+m)/L,     0.,          0.      ],
+        [0.,        -12*I/L**3.,-6*I/L**2.,         0.,     12*I/L**3.,-6*I/L**2.    ],
+        [0.,         6*I/L**2.,  2*I*(1-m/2)/L,     0.,    -6*I/L**2.,  4*I*(1+m/4)/L]
+    ])
+
+    fle = L*mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+    
+    G = mat([
+        [ n[0], n[1],  0.,   0.,   0.,   0.],
+        [-n[1], n[0],  0.,   0.,   0.,   0.],
+        [  0.,   0.,   1.,   0.,   0.,   0.],
+        [  0.,   0.,   0.,  n[0], n[1],  0.],
+        [  0.,   0.,   0., -n[1], n[0],  0.],
+        [  0.,   0.,   0.,   0.,   0.,   1.]
+    ])
+    
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+    
+    if eq == None:
+        return Ke
+    else:
+        return Ke,fe
+
+def beam2ts(ex,ey,ep,ed,eq=None,np=None):
+    """
+    Compute section forces in two dimensional beam element (beam2e).
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]       element node coordinates
+
+        ep = [E,G,A,I,ks]   element properties,
+                              E:  Young's modulus
+                              G:  shear modulus
+                              A:  cross section area
+                              I:  moment of inertia
+
+        ed = [u1, ... ,u6]  element displacements
+
+        eq = [qx, qy]       distributed loads, local directions 
+
+        n                   number of evaluation points ( default=2 )
+        
+    Returns:
+          
+        es = [[N1,V1,M1],   section forces, local directions, in 
+              [N2,V2,M2],   n points along the beam, dim(es)= n x 3
+              ..........]  
+    
+        edi = [[u1,v1,teta1],   element displacements, local directions,
+               [u2,v2,teta2],   and rotation of cross section at
+               .............]   in n points along the beam, dim(es)= n x 2
+    
+    (Note! Rotation of the cross section is not equal to dv/dx for Timoshenko beam element)
+    
+        eci = [[x1],    local x-coordinates of the evaluation 
+               [x2],    points, (x1=0 and xn=L)
+               ....]
+    
+    """
+    EA = ep[0]*ep[2]
+    EI = ep[0]*ep[3]
+    GAK = ep[1]*ep[2]*ep[4]
+    alfa = EI/GAK
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b.T/L).reshape(2)
+    
+    qx = 0.
+    qy = 0.
+    if eq != None:
+        qx = eq[0]
+        qy = eq[1] 
+      
+    ne = 2
+    
+    if np != None:
+        ne = np
+        
+    C = mat([
+        [ 0., 0.,              0.,   1., 0., 0.],
+        [ 0., 0.,              0.,   0., 0., 1.],
+        [ 0., 6*alfa,          0.,   0., 1., 0.],
+        [ L,  0.,              0.,   1., 0., 0.],
+        [ 0., L**3,            L**2, 0., L,  1.],
+        [ 0., 3*(L**2+2*alfa), 2*L,  0., 1., 0.]
+    ])
+   
+    G = mat([
+        [ n[0], n[1], 0., 0.,   0.,   0.],
+        [-n[1], n[0], 0., 0.,   0.,   0.],
+        [ 0.,    0.,  1., 0.,   0.,   0.],
+        [ 0.,    0.,  0., n[0], n[1], 0.],
+        [ 0.,    0.,  0.,-n[1], n[0], 0.],
+        [ 0.,    0.,  0., 0.,   0.,   1.]
+    ])
+    
+    M = ravel(C.I*(G*asmatrix(ed).T-mat([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI)-qy*L**2/(2*GAK), qy*L**3/(6*EI)]).T))
+    C2 = mat([M[0], M[3]]).T
+    C4 = mat([M[1], M[2], M[4], M[5]]).T
+    
+    x = asmatrix(arange(0., L+L/(ne-1), L/(ne-1))).T
+    zero = asmatrix(zeros([len(x)])).T
+    one = asmatrix(ones([len(x)])).T
+    
+    u = concatenate((x,one),1)*C2-qx/(2*EA)*power(x,2)
+    du = concatenate((one,zero),1)*C2-qx*x/EA
+    
+    v = concatenate((power(x,3),power(x,2),x,one),1)*C4+qy/(24*EI)*power(x,4)-qy/(2*GAK)*power(x,2)
+    dv = concatenate((3*power(x,2),2*x,one,zero),1)*C4+qy*power(x,3)/(6*EI)-qy*x/GAK
+    
+    teta = concatenate((3*(power(x,2)+2*alfa*one),2*x,one,zero),1)*C4+qy*power(x,3)/(6*EI)
+    dteta = concatenate((6*x,2*one,zero,zero),1)*C4+qy*power(x,2)/(2*EI)
+    
+    N = EA*du
+    M = EI*dteta
+    V = GAK*(dv-teta)
+    
+    es = concatenate((N,V,M),1)
+    edi = concatenate((u,v,teta),1)
+    eci = x
+
+    if np != None:
+        return es,edi,eci
+    else:
+        return es
     
 def flw2te(ex,ey,ep,D,eq=None):
     """
@@ -755,7 +937,10 @@ def assem(edof,K,Ke,f=None,fe=None):
             if (f!=None) and (fe!=None):
                 f[ix_(idx)] = f[ix_(idx)] + fe
             
-    return K
+    if f == None:
+        return K
+    else:
+        return K,f
             
 def solveq(K,f,bcPrescr,bcVal=None):
     """
