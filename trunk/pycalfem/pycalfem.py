@@ -627,6 +627,253 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
         return es,edi,eci
     else:
         return es
+
+def beam2w(ex,ey,ep,eq=None):
+    """
+    Compute the stiffness matrix for a two dimensional beam element
+    on elastic foundation.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]       element node coordinates
+
+        ep = [E,A,I,ka,kt]  element properties,
+                              E:  Young's modulus
+                              A:  cross section area
+                              I:  moment of inertia
+                             ka:  axial foundation stiffness
+                             kt:  transversal foundation stiffness
+
+        eq = [qx, qy]       distributed loads, local directions
+
+    Returns:
+
+        Ke                  beam stiffness matrix (6 x 6)
+        
+        fe                  element load vector (6 x 1)
+    """
+    b = mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b/L).reshape(2)
+    
+    E,A,I,ka,kt = ep
+    
+    qx = 0
+    qy = 0
+    if eq != None:
+        qx,qy = eq
+    
+    K1 = mat([
+        [ E*A/L,  0,           0,         -E*A/L, 0,           0         ],
+        [ 0,      12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [ 0,      6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L   ],
+        [-E*A/L,  0,           0,          E*A/L, 0,           0         ],
+        [ 0,     -12*E*I/L**3,-6*E*I/L**2, 0,     12*E*I/L**3,-6*E*I/L**2],
+        [ 0,      6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L   ]
+        ])
+    
+    K2 = L/420*mat([
+        [ 140*ka,    0,       0,         70*ka,  0,       0        ],
+        [ 0,         156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L  ],
+        [ 0,         22*kt*L, 4*kt*L**2, 0,      13*kt*L,-3*kt*L**2],
+        [ 70*ka,     0,       0,         140*ka, 0,       0        ],
+        [ 0,         54*kt,   13*kt*L,   0,      156*kt, -22*kt*L  ],
+        [ 0,        -13*kt*L,-3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
+    ])
+    
+    Kle = K1+K2
+    fle = L*mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+
+    G = mat([
+        [ n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [ 0,    0,    1, 0,    0,    0],
+        [ 0,    0,    0, n[0], n[1], 0],
+        [ 0,    0,    0,-n[1], n[0], 0],
+        [ 0,    0,    0, 0,    0,    1]
+    ])
+    
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+    
+    if eq != None:
+        return Ke,fe
+    else:
+        return Ke
+    
+def beam2ws(ex,ey,ep,ed,eq=None):
+    """
+    Compute section forces in a two dimensional beam element
+    on elastic foundation.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I,ka,kt]      element properties,
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+                                 ka:  axial foundation stiffness
+                                 kt:  transversal foundation stiffness
+
+        ed = [u1, ... ,u6]      element displacement vector
+
+        eq = [qx, qy]           distributed loads, local directions
+
+    Returns:
+
+        es = [[N1, V1, M1],
+              [N2, V2, M2]]     element forces, local direction
+    """
+    if asmatrix(ed).shape[0] > 1:
+        print "Only one row is allowed in the ed matrix !!!"
+        return
+
+    b = mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b/L).reshape(2,)
+    
+    E,A,I,ka,kt = ep
+    
+    qx = 0
+    qy = 0
+    if eq != None:
+        qx,qy = eq
+    
+    K1 = mat([
+        [ E*A/L,  0,           0,         -E*A/L, 0,           0         ],
+        [ 0,      12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [ 0,      6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L   ],
+        [-E*A/L,  0,           0,          E*A/L, 0,           0         ],
+        [ 0,     -12*E*I/L**3,-6*E*I/L**2, 0,     12*E*I/L**3,-6*E*I/L**2],
+        [ 0,      6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L   ]
+        ])
+    
+    K2 = L/420*mat([
+        [ 140*ka,    0,       0,         70*ka,  0,       0        ],
+        [ 0,         156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L  ],
+        [ 0,         22*kt*L, 4*kt*L**2, 0,      13*kt*L,-3*kt*L**2],
+        [ 70*ka,     0,       0,         140*ka, 0,       0        ],
+        [ 0,         54*kt,   13*kt*L,   0,      156*kt, -22*kt*L  ],
+        [ 0,        -13*kt*L,-3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
+    ])
+    
+    Kle = K1+K2
+    fle = L*mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+    
+    G = mat([
+        [ n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [ 0,    0,    1, 0,    0,    0],
+        [ 0,    0,    0, n[0], n[1], 0],
+        [ 0,    0,    0,-n[1], n[0], 0],
+        [ 0,    0,    0, 0,    0,    1]
+    ])
+
+    P = Kle*G*asmatrix(ed).T-fle
+    print "P =",P
+    es = mat([
+        [-P[0,0],-P[1,0],-P[2,0]],
+        [ P[3,0], P[4,0], P[5,0]]
+    ])
+    
+    return es
+
+def beam2g(ex,ey,ep,N,eq=None):
+    """
+    Compute the element stiffness matrix for a two dimensional
+    beam element with respect to geometric nonlinearity.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I]            element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+
+        N                       axial force in the beam
+
+        eq                      distributed transverse load
+
+    Returns:
+
+        Ke                      element stiffness matrix (6 x 6)
+        
+        fe                      element load vector (6 x 1)
+    """
+    if eq != None:
+        if size(eq) > 1:
+            print "eq should be a scalar !!!"
+            return
+    else:
+        eq = 0
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b/L).reshape(2,)
+    
+    E,A,I = ep
+    
+    rho = -N*L**2/(pi**2*E*I)
+    
+    eps = 2.2204e-16
+    kL = pi*sqrt(abs(rho))+eps
+
+    if rho > 0:
+        f1 = (kL/2)/tan(kL/2)
+        f2 = (1/12)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        
+        h = 6*(2/kL**2-(1+cos(kL))/(kL*sin(kL)))
+    elif rho < 0:
+        f1 = (kL/2)/tanh(kL/2)
+        f2 = -(1/12)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+
+        h = -6*(2/kL**2-(1+cosh(kL))/(kL*sinh(kL)))
+    else:
+        f1 = f2 = f3 = f4 = f5 = 1
+    
+    Kle = mat([
+        [ E*A/L, 0,              0,            -E*A/L, 0,              0            ],
+        [ 0,     12*E*I*f5/L**3, 6*E*I*f2/L**2, 0,    -12*E*I*f5/L**3, 6*E*I*f2/L**2],
+        [ 0,     6*E*I*f2/L**2,  4*E*I*f3/L,    0,    -6*E*I*f2/L**2,  2*E*I*f4/L   ],
+        [-E*A/L, 0,              0,             E*A/L, 0,              0            ],
+        [ 0,    -12*E*I*f5/L**3,-6*E*I*f2/L**2, 0,     12*E*I,f5/L**3,-6*E*I*f2/L**2],
+        [ 0,     6*E*I*f2/L**2,  2*E*I*f4/L,    0,    -6*E*I*f2/L**2,  4*E*I*f3/L   ]
+    ])
+    
+    fle = eq*L*mat([0,1/2,L*h/12,0,1/2,-L*h/12]).T
+    
+    G = mat([
+        [ n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [ 0,    0,    1, 0,    0,    0],
+        [ 0,    0,    0, n[0], n[1], 0],
+        [ 0,    0,    0,-n[1], n[0], 0],
+        [ 0,    0,    0, 0,    0,    1]
+    ])
+    
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+    
+    if eq != None:
+        return Ke,fe
+    else:
+        return Ke
     
 def flw2te(ex,ey,ep,D,eq=None):
     """
