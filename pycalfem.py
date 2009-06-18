@@ -774,7 +774,7 @@ def beam2ws(ex,ey,ep,ed,eq=None):
     ])
 
     P = Kle*G*asmatrix(ed).T-fle
-    print "P =",P
+
     es = mat([
         [-P[0,0],-P[1,0],-P[2,0]],
         [ P[3,0], P[4,0], P[5,0]]
@@ -811,6 +811,8 @@ def beam2g(ex,ey,ep,N,eq=None):
         if size(eq) > 1:
             print "eq should be a scalar !!!"
             return
+        else:
+            eq = eq[0]
     else:
         eq = 0
     
@@ -830,33 +832,121 @@ def beam2g(ex,ey,ep,N,eq=None):
 
     if rho > 0:
         f1 = (kL/2)/tan(kL/2)
-        f2 = (1/12)*kL**2/(1-f1)
+        f2 = (1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-        
         h = 6*(2/kL**2-(1+cos(kL))/(kL*sin(kL)))
     elif rho < 0:
         f1 = (kL/2)/tanh(kL/2)
-        f2 = -(1/12)*kL**2/(1-f1)
+        f2 = -(1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-
         h = -6*(2/kL**2-(1+cosh(kL))/(kL*sinh(kL)))
     else:
-        f1 = f2 = f3 = f4 = f5 = 1
+        f1 = f2 = f3 = f4 = f5 = h = 1
+
+    Kle = mat([
+        [ E*A/L,  0.,              0.,            -E*A/L, 0.,              0.            ],
+        [ 0.,     12*E*I*f5/L**3., 6*E*I*f2/L**2., 0.,   -12*E*I*f5/L**3., 6*E*I*f2/L**2.],
+        [ 0.,     6*E*I*f2/L**2.,  4*E*I*f3/L,     0.,   -6*E*I*f2/L**2.,  2*E*I*f4/L    ],
+        [-E*A/L,  0.,              0.,             E*A/L, 0.,              0.            ],
+        [ 0.,    -12*E*I*f5/L**3.,-6*E*I*f2/L**2., 0.,    12*E*I*f5/L**3.,-6*E*I*f2/L**2.],
+        [ 0.,     6*E*I*f2/L**2.,  2*E*I*f4/L,     0.,   -6*E*I*f2/L**2.,  4*E*I*f3/L    ]
+    ])
+
+    fle = eq*L*mat([0.,1/2.,L*h/12,0.,1/2.,-L*h/12]).T
+    
+    G = mat([
+        [ n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [ 0,    0,    1, 0,    0,    0],
+        [ 0,    0,    0, n[0], n[1], 0],
+        [ 0,    0,    0,-n[1], n[0], 0],
+        [ 0,    0,    0, 0,    0,    1]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+    
+    if eq != None:
+        return Ke,fe
+    else:
+        return Ke
+    
+def beam2gs(ex,ey,ep,ed,N,eq=None):
+    """
+    Calculate section forces in a two dimensional nonlinear
+    beam element.
+
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I]            element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+
+        ed = [u1, ... ,u6]      element displacement vector
+
+        N                       axial force
+
+        eq = [qy]               distributed transverse load
+
+    Returns:
+
+        es = [[N1,V1,M1],       element forces, local directions
+              [N2,V2,M2]]
+    """
+    if eq != None:
+        eq = eq[0]
+    else:
+        eq = 0
+    
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b/L).reshape(2,)
+    
+    E,A,I = ep
+    
+    rho = -N*L**2/(pi**2*E*I)
+    
+    eps = 2.2204e-16
+    kL = pi*sqrt(abs(rho))+eps
+
+    if rho > 0:
+        f1 = (kL/2)/tan(kL/2)
+        f2 = (1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = 6*(2/kL**2-(1+cos(kL))/(kL*sin(kL)))
+    elif rho < 0:
+        f1 = (kL/2)/tanh(kL/2)
+        f2 = -(1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = -6*(2/kL**2-(1+cosh(kL))/(kL*sinh(kL)))
+    else:
+        f1 = f2 = f3 = f4 = f5 = h = 1
     
     Kle = mat([
         [ E*A/L, 0,              0,            -E*A/L, 0,              0            ],
         [ 0,     12*E*I*f5/L**3, 6*E*I*f2/L**2, 0,    -12*E*I*f5/L**3, 6*E*I*f2/L**2],
         [ 0,     6*E*I*f2/L**2,  4*E*I*f3/L,    0,    -6*E*I*f2/L**2,  2*E*I*f4/L   ],
         [-E*A/L, 0,              0,             E*A/L, 0,              0            ],
-        [ 0,    -12*E*I*f5/L**3,-6*E*I*f2/L**2, 0,     12*E*I,f5/L**3,-6*E*I*f2/L**2],
+        [ 0,    -12*E*I*f5/L**3,-6*E*I*f2/L**2, 0,     12*E*I*f5/L**3,-6*E*I*f2/L**2],
         [ 0,     6*E*I*f2/L**2,  2*E*I*f4/L,    0,    -6*E*I*f2/L**2,  4*E*I*f3/L   ]
     ])
-    
-    fle = eq*L*mat([0,1/2,L*h/12,0,1/2,-L*h/12]).T
+
+    fle = eq*L*mat([0,1/2.,L*h/12,0,1/2.,-L*h/12]).T
     
     G = mat([
         [ n[0], n[1], 0, 0,    0,    0],
@@ -867,13 +957,15 @@ def beam2g(ex,ey,ep,N,eq=None):
         [ 0,    0,    0, 0,    0,    1]
     ])
     
-    Ke = G.T*Kle*G
-    fe = G.T*fle
+    u = asmatrix(ed).T
+    P = Kle*G*u-fle
+
+    es = mat([
+        [-P[0,0],-P[1,0],-P[2,0]],
+        [ P[3,0], P[4,0], P[5,0]]
+    ])
     
-    if eq != None:
-        return Ke,fe
-    else:
-        return Ke
+    return es
     
 def flw2te(ex,ey,ep,D,eq=None):
     """
