@@ -966,7 +966,84 @@ def beam2gs(ex,ey,ep,ed,N,eq=None):
     ])
     
     return es
+
+def beam2d(ex,ey,ep):
+    """
+    Calculate the stiffness matrix Ke, the mass matrix Me
+    and the damping matrix Ce for a 2D elastic Bernoulli
+    beam element.
+
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I,m,(a,b)]    element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+                                  m:  mass per unit length
+                                a,b:  damping coefficients,
+                                      Ce=aMe+bKe
+
+    Returns:
+
+        Ke                      element stiffness matrix (6 x 6)
+        Me                      element mass martix
+        Ce                      element damping matrix, optional
+    """
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    n = asarray(b/L).reshape(2,)
     
+    a = 0
+    b = 0
+    if size(ep) == 4:
+        E,A,I,m = ep
+    elif size(ep) == 6:
+        E,A,I,m,a,b = ep
+    
+    Kle = mat([
+        [ E*A/L, 0,           0,         -E*A/L, 0,           0         ],
+        [ 0,     12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [ 0,     6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L   ],
+        [-E*A/L, 0,           0,          E*A/L, 0,           0         ],
+        [ 0,    -12*E*I/L**3,-6*E*I/L**2, 0,     12*E*I/L**3,-6*E*I/L**2],
+        [ 0,     6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L   ]
+    ])
+
+    Mle = m*L/420*mat([
+        [ 140, 0,    0,      70,  0,    0     ],
+        [ 0,   156,  22*L,   0,   54,  -13*L  ],
+        [ 0,   22*L, 4*L**2, 0,   13*L,-3*L**2],
+        [ 70,  0,    0,      140, 0,    0     ],
+        [ 0,   54,   13*L,   0,   156, -22*L  ],
+        [ 0,  -13*L,-3*L**2, 0,  -22*L, 4*L**2]
+    ])
+    
+    Cle = a*Mle+b*Kle
+
+    G = mat([
+        [ n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [ 0,    0,    1, 0,    0,    0],
+        [ 0,    0,    0, n[0], n[1], 0],
+        [ 0,    0,    0,-n[1], n[0], 0],
+        [ 0,    0,    0, 0,    0,    1]
+    ])
+    
+    Ke = G.T*Kle*G
+    Me = G.T*Mle*G
+    Ce = G.T*Cle*G
+    
+    if size(ep) == 4:
+        return Ke,Me
+    elif size(ep) == 6:
+        return Ke,Me,Ce
+
 def flw2te(ex,ey,ep,D,eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
