@@ -1044,6 +1044,113 @@ def beam2d(ex,ey,ep):
     elif size(ep) == 6:
         return Ke,Me,Ce
 
+def beam3e(ex,ey,ez,eo,ep,eq=None):
+    """
+    Calculate the stiffness matrix for a 3D elastic Bernoulli
+    beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]
+        ey = [y1 y2]
+        ez = [z1 z2]            element node coordinates
+        
+        eo = [xz yz zz]         orientation of local z axis
+        
+        ep = [E G A Iy Iz Kv]   element properties
+                                  E: Young's modulus
+                                  G: Shear modulus
+                                  A: Cross section area
+                                 Iy: Moment of inertia, local y-axis
+                                 Iz: Moment of inertia, local z-axis
+                                 Kv: Saint-Venant's torsion constant
+    
+        eq = [qx qy qz qw]      distributed loads
+
+    Returns:
+
+        Ke                      beam stiffness matrix (12 x 12)
+
+        fe                      equivalent nodal forces (12 x 1)
+
+    """
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+        ])
+    L = asscalar(sqrt(b.T*b))
+    n1 = asarray(b.T/L).reshape(3,)
+    
+    eo = asmatrix(eo)
+    lc = asscalar(sqrt(eo*eo.T))
+    n3 = asarray(eo/lc).reshape(3,)
+    
+    E,Gs,A,Iy,Iz,Kv = ep
+
+    qx = 0.
+    qy = 0.
+    qz = 0.
+    qw = 0.
+    if eq != None:
+        qx,qy,qz,qw = eq
+
+    a = E*A/L
+    b = 12*E*Iz/L**3
+    c = 6*E*Iz/L**2
+    d = 12*E*Iy/L**3
+    e = 6*E*Iy/L**2
+    f = Gs*Kv/L
+    g = 2*E*Iy/L
+    h = 2*E*Iz/L
+
+    Kle = mat([
+        [ a, 0, 0, 0, 0,   0,  -a, 0, 0, 0, 0,   0  ],
+        [ 0, b, 0, 0, 0,   c,   0,-b, 0, 0, 0,   c  ],
+        [ 0, 0, d, 0,-e,   0,   0, 0,-d, 0,-e,   0  ],
+        [ 0, 0, 0, f, 0,   0,   0, 0, 0,-f, 0,   0  ],
+        [ 0, 0,-e, 0, 2*g, 0,   0, 0, e, 0, g,   0  ],
+        [ 0, c, 0, 0, 0,   2*h, 0,-c, 0, 0, 0,   h  ],
+        [-a, 0, 0, 0, 0,   0,   a, 0, 0, 0, 0,   0  ],
+        [ 0,-b, 0, 0, 0,  -c,   0, b, 0, 0, 0,  -c  ],
+        [ 0, 0,-d, 0, e,   0,   0, 0, d, 0, e,   0  ],
+        [ 0, 0, 0,-f, 0,   0,   0, 0, 0, f, 0,   0  ],
+        [ 0, 0,-e, 0, g,   0,   0, 0, e, 0, 2*g, 0  ],
+        [ 0, c, 0, 0, 0,   h,   0,-c, 0, 0, 0,   2*h]
+    ])
+
+    fle = L/2*mat([qx, qy, qz, qw, -qz*L/6, qy*L/6, qx, qy, qz, qw, qz*L/6, -qy*L/6]).T
+
+    n2 = array([0.,0.,0.])
+    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
+    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
+    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
+
+    #An = append([n1,n2],[n3],0)
+
+    G = mat([
+        [ n1[0], n1[1], n1[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ n2[0], n2[1], n2[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ n3[0], n3[1], n3[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n1[0], n1[1], n1[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n2[0], n2[1], n2[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n3[0], n3[1], n3[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n1[0], n1[1], n1[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n2[0], n2[1], n2[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n3[0], n3[1], n3[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n1[0], n1[1], n1[2]],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n2[0], n2[1], n2[2]],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n3[0], n3[1], n3[2]],
+    ])
+    
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+    
+    if eq == None:
+        return Ke
+    else:
+        return Ke,fe
+
 def flw2te(ex,ey,ep,D,eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
