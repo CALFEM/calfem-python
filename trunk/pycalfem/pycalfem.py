@@ -1151,6 +1151,160 @@ def beam3e(ex,ey,ez,eo,ep,eq=None):
     else:
         return Ke,fe
 
+def beam3s(ex,ey,ez,eo,ep,ed,eq=None,n=None):
+    """
+    Calculate the variation of the section forces and displacements
+    along a three-dimensional beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]                element node coordinates
+        ey = [y1 y2]
+        ez = [z1 z2]
+
+        eo = [xz yz zz]             orientation of local z axis
+        
+        ep = [E G A Iy Iz Kv]       element properties
+                                      E: Young's modulus
+                                      G: Shear modulus
+                                      A: Cross section area
+                                     Iy: Moment of inertia, local y-axis
+                                     Iz: Moment of inertia, local z-axis
+                                     Kv: Saint-Venant's torsion constant
+
+        ed                          the element displacement vector from the
+                                    global coordinate system
+    
+        eq = [qx qy qz qw]          the disibuted axial, transversal and
+                                    torsional loads
+
+        n                           the number of point in which displacements
+                                    and section forces are to be computed
+
+    Returns:
+
+        es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
+              [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
+              [..,...,...,..,...,...],
+              [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
+
+        edi = [[u1,v1,w1,fi1],          displacements in n points along
+               [u2,v2,w2,fi2],          the local x-axis
+               [..,..,..,...],
+               [un,vn,wn,fin]]
+
+        eci = [[x1],                    local x-coordinates of the evaluation
+               [x2],                    points
+               [..],
+               [xn]]
+
+    """
+    b = mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = asscalar(sqrt(b.T*b))
+    n1 = asarray(b.T/L).reshape(3,)
+    
+    eo = asmatrix(eo)
+    lc = asscalar(sqrt(eo*eo.T))
+    n3 = asarray(eo/lc).reshape(3,)
+
+    EA = ep[0]*ep[2]
+    EIy = ep[0]*ep[3]
+    EIz = ep[0]*ep[4]
+    GKv = ep[1]*ep[5]
+
+    qx = 0.
+    qy = 0.
+    qz = 0.
+    qw = 0.
+    if eq != None:
+        qx,qy,qz,qw = eq
+
+    ne = 2
+    if n != None:
+        ne = n
+        
+    n2 = array([0.,0.,0.])
+    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
+    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
+    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
+
+    G = mat([
+        [ n1[0], n1[1], n1[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ n2[0], n2[1], n2[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ n3[0], n3[1], n3[2], 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n1[0], n1[1], n1[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n2[0], n2[1], n2[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, n3[0], n3[1], n3[2], 0, 0, 0, 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n1[0], n1[1], n1[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n2[0], n2[1], n2[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, n3[0], n3[1], n3[2], 0, 0, 0],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n1[0], n1[1], n1[2]],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n2[0], n2[1], n2[2]],
+        [ 0, 0, 0, 0, 0, 0, 0, 0, 0, n3[0], n3[1], n3[2]],
+    ])
+
+    u = G*asmatrix(ed).T-array([    # u is the local element displacement
+        [ 0               ],        # vector minus the particular solution
+        [ 0               ],        # to the beam's diff.eq:s
+        [ 0               ],
+        [ 0               ],
+        [ 0               ],
+        [ 0               ],
+        [-qx*L**2/(2*EA)  ],
+        [ qy*L**4/(24*EIz)],
+        [ qz*L**4/(24*EIy)],
+        [-qw*L**2/(2*GKv) ],
+        [-qz*L**3/(6*EIy) ],
+        [ qy*L**3/(6*EIz) ]
+    ])
+
+    C = mat([
+        [ 0, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0],
+        [ 0, 0, 0,      0,    0, 1, 0,      0,    0, 0, 0, 0],
+        [ 0, 0, 0,      0,    0, 0, 0,      0,    0, 1, 0, 0],
+        [ 0, 0, 0,      0,    0, 0, 0,      0,    0, 0, 0, 1],
+        [ 0, 0, 0,      0,    0, 0, 0,      0,   -1, 0, 0, 0],
+        [ 0, 0, 0,      0,    1, 0, 0,      0,    0, 0, 0, 0],
+        [ L, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0,],
+        [ 0, 0, L**3,   L**2, L, 1, 0,      0,    0, 0, 0, 0],
+        [ 0, 0, 0,      0,    0, 0, L**3,   L**2, L, 1, 0, 0],
+        [ 0, 0, 0,      0,    0, 0, 0,      0,    0, 0, L, 1],
+        [ 0, 0, 0,      0,    0, 0,-3*L**2,-2*L, -1, 0, 0, 0],
+        [ 0, 0, 3*L**2, 2*L,  1, 0, 0,      0,    0, 0, 0, 0],
+    ])
+
+    m = linalg.inv(C)*u
+    eci = zeros((ne,1))
+    es = zeros((ne,6))
+    edi = zeros((ne,4))
+    for i in arange(ne):
+        x = i*L/(ne-1)
+        eci[i,0] = x
+        es[i,:] = (mat([
+            [EA, 0, 0,       0,     0, 0, 0,       0,     0, 0, 0,   0],
+            [0,  0,-6*EIz,   0,     0, 0, 0,       0,     0, 0, 0,   0],
+            [0,  0, 0,       0,     0, 0,-6*EIy,   0,     0, 0, 0,   0],
+            [0,  0, 0,       0,     0, 0, 0,       0,     0, 0, GKv, 0],
+            [0,  0, 0,       0,     0, 0,-6*EIy*x,-2*EIy, 0, 0, 0,   0],
+            [0,  0, 6*EIz*x, 2*EIz, 0, 0, 0,       0,     0, 0, 0,   0]
+            ])*m+array([-qx*x,-qy*x,-qz*x,-qw*x,-qz*x**2/2,qy*x**2/2]).reshape(6,1)).T
+
+        edi[i,:] = (mat([
+            [ x, 1, 0,    0,    0, 0, 0,    0,    0, 0, 0, 0],
+            [ 0, 0, x**3, x**2, x, 1, 0,    0,    0, 0, 0, 0],
+            [ 0, 0, 0,    0,    0, 0, x**3, x**2, x, 1, 0, 0],
+            [ 0, 0, 0,    0,    0, 0, 0,    0,    0, 0, x, 1]
+        ])*m+array([-qx*x**2/(2*EA),qy*x**4/(24*EIz),qz*x**4/(24*EIy),-qw*x**2/(2*GKv)]).reshape(4,1)).T
+    
+    if n == None:
+        return es
+    else:
+        return es,edi,eci
+    
 def flw2te(ex,ey,ep,D,eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
