@@ -1698,6 +1698,42 @@ def extract(edof,a):
         
     return ed
 
+def statcon(K,f,cd):
+    """
+    Condensation of static FE-equations according to the vector cd.
+
+    Parameters:
+    
+        K                       global stiffness matrix, dim(K) = nd x nd
+        f                       global load vector, dim(f)= nd x 1
+
+        cd                      vector containing dof's to be eliminated
+                                dim(cd)= nc x 1, nc: number of condensed dof's
+    Returns:
+    
+        K1                      condensed stiffness matrix,
+                                dim(K1)= (nd-nc) x (nd-nc)
+        f1                      condensed load vector, dim(f1)= (nd-nc) x 1
+    """
+    nd,nd = shape(K)
+    cd = (cd-1).flatten()
+  
+    aindx = arange(nd)
+    aindx = delete(aindx,cd,0)
+    bindx = cd
+
+    Kaa = mat(K[ix_(aindx,aindx)])
+    Kab = mat(K[ix_(aindx,bindx)])
+    Kbb = mat(K[ix_(bindx,bindx)])
+
+    fa = mat(f[aindx])
+    fb = mat(f[bindx])
+    
+    K1 = Kaa-Kab*Kbb.I*Kab.T
+    f1 = fa-Kab*Kbb.I*fb
+    
+    return K1,f1
+
 def c_mul(a, b):
     return eval(hex((long(a) * b) & 0xFFFFFFFFL)[:-1])
 
