@@ -1408,6 +1408,155 @@ def flw2ts(ex,ey,D,ed):
     
         return qs.T, qt.T
 
+def flw2qe(ex,ey,ep,D,eq=None):
+    """
+    Compute element stiffness (conductivity) matrix for a triangular field element.
+    
+    Parameters:
+    
+        ex = [x1, x2, x3, x4]
+        ey = [y1, y2, y3, y4]   element coordinates
+    
+        ep = [t]                element thickness    
+
+        D = [[kxx, kxy],
+             [kyx, kyy]]        constitutive matrix
+    
+        eq                      heat supply per unit volume
+             
+    Returns:
+    
+        Ke                      element 'stiffness' matrix (4 x 4)
+
+        fe                      element load vector (4 x 1)
+    
+    """
+    xc = sum(ex)/4.
+    yc = sum(ey)/4.
+
+    K = zeros((5,5))
+    f = zeros((5,1))
+    
+    if eq == None:
+        k1 = flw2te([ex[0],ex[1],xc],[ey[0],ey[1],yc],ep,D)
+        K = assem(array([1,2,5]),K,k1)
+        k1 = flw2te([ex[1],ex[2],xc],[ey[1],ey[2],yc],ep,D)
+        K = assem(array([2,3,5]),K,k1)
+        k1 = flw2te([ex[2],ex[3],xc],[ey[2],ey[3],yc],ep,D)
+        K = assem(array([3,4,5]),K,k1)
+        k1 = flw2te([ex[3],ex[0],xc],[ey[3],ey[0],yc],ep,D)
+        K = assem(array([4,1,5]),K,k1)
+    else:
+        k1,f1 = flw2te([ex[0],ex[1],xc],[ey[0],ey[1],yc],ep,D,eq)    
+        K,f = assem(array([1,2,5]),K,k1,f,f1)
+        k1,f1 = flw2te([ex[1],ex[2],xc],[ey[1],ey[2],yc],ep,D,eq)
+        K,f = assem(array([2,3,5]),K,k1,f,f1)
+        k1,f1 = flw2te([ex[2],ex[3],xc],[ey[2],ey[3],yc],ep,D,eq)
+        K,f = assem(array([3,4,5]),K,k1,f,f1)
+        k1,f1 = flw2te([ex[3],ex[0],xc],[ey[3],ey[0],yc],ep,D,eq)
+        K,f = assem(array([4,1,5]),K,k1,f,f1)
+    Ke1,fe1 = statcon(K,f,array([5]));
+
+    Ke = Ke1
+    fe = fe1
+    
+    if eq == None:
+        return Ke
+    else:
+        return Ke,fe
+
+def flw2qs(ex,ey,ep,D,ed,eq=None):
+    """
+    Compute flows or corresponding quantities in the
+    quadrilateral field element.
+    
+    Parameters:
+    
+        ex = [x1, x2, x3, x4]
+        ey = [y1, y2, y3, y4]      element coordinates
+    
+        ep = [t]                   element thickness    
+
+        D = [[kxx, kxy],
+             [kyx, kyy]]           constitutive matrix
+
+        ed = [[u1, u2, u3, u4],
+              [.., .., .., ..]]    u1,u2,u3,u4: nodal values
+    
+        eq                         heat supply per unit volume
+             
+    Returns:
+    
+        es = [[qx, qy],
+              [.., ..]]            element flows
+
+        et = [[gx, gy],
+              [.., ..]]            element gradients
+    
+    """
+    K = zeros((5,5))
+    f = zeros((5,1))
+    
+    xm = sum(ex)/4
+    ym = sum(ey)/4
+    
+    if eq == None:
+        q = 0
+    else:
+        q = eq
+    
+    En = array([
+        [1,2,5],
+        [2,3,5],
+        [3,4,5],
+        [4,1,5]
+    ])
+    ex1 = array([ex[0],ex[1],xm])
+    ey1 = array([ey[0],ey[1],ym])
+    ex2 = array([ex[1],ex[2],xm])
+    ey2 = array([ey[1],ey[2],ym])
+    ex3 = array([ex[2],ex[3],xm])
+    ey3 = array([ey[2],ey[3],ym])
+    ex4 = array([ex[3],ex[0],xm])
+    ey4 = array([ey[3],ey[0],ym])
+    
+    if eq == None:
+        k1 = flw2te(ex1,ey1,ep,D)
+        K = assem(En[0],K,k1)
+        k1 = flw2te(ex2,ey2,ep,D)
+        K = assem(En[1],K,k1)
+        k1 = flw2te(ex3,ey3,ep,D)
+        K = assem(En[2],K,k1)
+        k1 = flw2te(ex4,ey4,ep,D)
+        K = assem(En[3],K,k1)
+    else:
+        k1,f1 = flw2te(ex1,ey1,ep,D,q)
+        K,f = assem(En[0],K,k1,f,f1)
+        k1,f1 = flw2te(ex2,ey2,ep,D,q)
+        K,f = assem(En[1],K,k1,f,f1)
+        k1,f1 = flw2te(ex3,ey3,ep,D,q)
+        K,f = assem(En[2],K,k1,f,f1)
+        k1,f1 = flw2te(ex4,ey4,ep,D,q)
+        K,f = assem(En[3],K,k1,f,f1)
+    
+    if rank(ed)==1:
+        ed = array([ed])
+    ni,nj = shape(ed)
+
+    a = zeros((5,ni))
+    for i in range(ni):
+        a[ix_(range(5),[i])],r = asarray(solveq(K,f,arange(1,5),ed[i]))
+
+    s1,t1 = flw2ts(ex1,ey1,D,a[ix_(En[0,:]-1,arange(ni))].T)
+    s2,t2 = flw2ts(ex2,ey2,D,a[ix_(En[1,:]-1,arange(ni))].T)
+    s3,t3 = flw2ts(ex3,ey3,D,a[ix_(En[2,:]-1,arange(ni))].T)
+    s4,t4 = flw2ts(ex4,ey4,D,a[ix_(En[3,:]-1,arange(ni))].T)
+    
+    es = (s1+s2+s3+s4)/4.
+    et = (t1+t2+t3+t4)/4.
+    
+    return es,et
+
 def plante(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
