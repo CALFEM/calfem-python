@@ -1677,6 +1677,131 @@ def flw2i4e(ex,ey,ep,D,eq=None):
     else:
         return Ke1*t,fe1*t*eq
 
+def flw2i4s(ex,ey,ep,D,ed):
+    """
+    Compute flows or corresponding quantities in the
+    4 node isoparametric element.
+    
+    Parameters:
+        
+        ex = [x1 x2 x3 x4]         element coordinates
+        ey = [y1 y2 y3 y4]
+
+        ep = [t ir]                thickness and integration rule
+
+        D  = [[kxx kxy],
+              [kyx kyy]]           constitutive matrix
+
+        ed = [u1, u2, u3, u4]      u1,u2,u3,u4: nodal values
+
+    Returns:
+        es = [[qx, qy],
+              [.., ..]]             element flows
+
+        et = [[qx, qy],
+              [... ..]]             element gradients
+
+        eci=[[ix1, iy1],            Gauss point location vector
+             [...  ...],            nint: number of integration points
+             [ix(nint), iy(nint)]
+
+    """
+    t = ep[0]
+    ir = ep[1]
+    ngp = ir*ir
+
+    if ir == 1:
+        g1 = 0.0
+        w1 = 2.0
+        gp = mat([g1,g1])
+        w = mat([w1,w1])
+    elif ir == 2:
+        g1 = 0.577350269189626
+        w1 = 1
+        gp = mat([
+            [-g1,-g1],
+            [ g1,-g1],
+            [-g1, g1],
+            [ g1, g1]
+        ])
+        w = mat([
+            [w1,w1],
+            [w1,w1],
+            [w1,w1],
+            [w1,w1]
+        ])
+    elif ir == 3:
+        g1 = 0.774596669241483
+        g2 = 0.
+        w1 = 0.555555555555555
+        w2 = 0.888888888888888
+        gp = mat([
+            [-g1,-g1],
+            [-g2,-g1],
+            [ g1,-g1],
+            [-g1, g2],
+            [ g2, g2],
+            [ g1, g2],
+            [-g1, g1],
+            [ g2, g1],
+            [ g1, g1]
+        ])
+        w = mat([
+            [w1,w1],
+            [w2,w1],
+            [w1,w1],
+            [w1,w2],
+            [w2,w2],
+            [w1,w2],
+            [w1,w1],
+            [w2,w1],
+            [w1,w1]
+        ])
+    else:
+        print "Used number of integration points not implemented"
+    wp = multiply(w[:,0],w[:,1])
+
+    xsi = gp[:,0]
+    eta = gp[:,1]
+    r2 = ngp*2
+
+    N = multiply((1-xsi),(1-eta))/4.
+    N = append(N,multiply((1+xsi),(1-eta))/4.,axis=1)
+    N = append(N,multiply((1+xsi),(1+eta))/4.,axis=1)
+    N = append(N,multiply((1-xsi),(1+eta))/4.,axis=1)
+    
+    dNr = mat(zeros((r2,4)))
+    dNr[0:r2:2,0] =-(1-eta)/4.
+    dNr[0:r2:2,1] = (1-eta)/4.
+    dNr[0:r2:2,2] = (1+eta)/4.
+    dNr[0:r2:2,3] =-(1+eta)/4.
+    dNr[1:r2+1:2,0] =-(1-xsi)/4.
+    dNr[1:r2+1:2,1] =-(1+xsi)/4.
+    dNr[1:r2+1:2,2] = (1+xsi)/4.
+    dNr[1:r2+1:2,3] = (1-xsi)/4.
+
+    eci = N*mat([ex,ey]).T
+    if rank(ed) == 1:
+        ed = array([ed])
+    red,ced = shape(ed)
+    JT = dNr*mat([ex,ey]).T
+    
+    es = mat(zeros((ngp*red,2)))
+    et = mat(zeros((ngp*red,2)))
+    for i in range(ngp):
+        indx = array([2*(i+1)-1,2*(i+1)])
+        detJ = linalg.det(JT[indx-1,:])
+        if detJ < 10*finfo(float).eps:
+            print "Jacobideterminanten lika med noll!"
+        JTinv = linalg.inv(JT[indx-1,:])
+        B = JTinv*dNr[indx-1,:]
+        p1 = -D*B*ed.T
+        p2 = B*ed.T
+        es[i:ngp*red:ngp,:] = p1.T
+        et[i:ngp*red:ngp,:] = p2.T
+    
+    return es,et,eci
+
 def plante(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
