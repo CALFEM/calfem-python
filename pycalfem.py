@@ -1801,6 +1801,139 @@ def flw2i4s(ex,ey,ep,D,ed):
     
     return es,et,eci
 
+def flw2i8e(ex,ey,ep,D,eq=None):
+    """
+    Compute element stiffness (conductivity)
+    matrix for 8 node isoparametric field element.
+    
+    Parameters:
+    
+        ex = [x1, ..., x8]      element coordinates
+        ey = [y1, ..., y8]
+        
+        ep = [t, ir]            thickness and integration rule
+
+        D = [[kxx, kxy],
+             [kyx, kyy]]        constitutive matrix
+
+        eq                      heat supply per unit volume
+
+    Returns:
+    
+        Ke                      element 'stiffness' matrix (8 x 8)
+        fe                      element load vector (8 x 1)
+
+    """
+    t = ep[0]
+    ir = ep[1]
+    ngp = ir*ir
+
+    if eq == None:
+        q = 0
+    else:
+        q = eq
+
+    if ir == 1:
+        g1 = 0.0
+        w1 = 2.0
+        gp = mat([g1,g1])
+        w = mat([w1,w1])
+    elif ir == 2:
+        g1 = 0.577350269189626
+        w1 = 1
+        gp = mat([
+            [-g1,-g1],
+            [ g1,-g1],
+            [-g1, g1],
+            [ g1, g1]
+        ])
+        w = mat([
+            [w1,w1],
+            [w1,w1],
+            [w1,w1],
+            [w1,w1]
+        ])
+    elif ir == 3:
+        g1 = 0.774596669241483
+        g2 = 0.
+        w1 = 0.555555555555555
+        w2 = 0.888888888888888
+        gp = mat([
+            [-g1,-g1],
+            [-g2,-g1],
+            [ g1,-g1],
+            [-g1, g2],
+            [ g2, g2],
+            [ g1, g2],
+            [-g1, g1],
+            [ g2, g1],
+            [ g1, g1]
+        ])
+        w = mat([
+            [w1,w1],
+            [w2,w1],
+            [w1,w1],
+            [w1,w2],
+            [w2,w2],
+            [w1,w2],
+            [w1,w1],
+            [w2,w1],
+            [w1,w1]
+        ])
+    else:
+        print "Used number of integration points not implemented"
+    wp = multiply(w[:,0],w[:,1])
+
+    xsi = gp[:,0]
+    eta = gp[:,1]
+    r2 = ngp*2
+
+    N = multiply(multiply(-(1-xsi),(1-eta)),(1+xsi+eta))/4.
+    N = append(N,multiply(multiply(-(1+xsi),(1-eta)),(1-xsi+eta))/4.,axis=1)
+    N = append(N,multiply(multiply(-(1+xsi),(1+eta)),(1-xsi-eta))/4.,axis=1)
+    N = append(N,multiply(multiply(-(1-xsi),(1+eta)),(1+xsi-eta))/4.,axis=1)
+    N = append(N,multiply((1-multiply(xsi,xsi)),(1-eta))/2.,axis=1)
+    N = append(N,multiply((1+xsi),(1-multiply(eta,eta)))/2.,axis=1)
+    N = append(N,multiply((1-multiply(xsi,xsi)),(1+eta))/2.,axis=1)
+    N = append(N,multiply((1-xsi),(1-multiply(eta,eta)))/2.,axis=1)
+
+    dNr = mat(zeros((r2,8)))
+    dNr[0:r2:2,0] = -(-multiply((1-eta),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
+    dNr[0:r2:2,1] = -(multiply((1-eta),(1-xsi+eta))-multiply((1+xsi),(1-eta)))/4.
+    dNr[0:r2:2,2] = -(multiply((1+eta),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
+    dNr[0:r2:2,3] = -(-multiply((1+eta),(1+xsi-eta))+multiply((1-xsi),(1+eta)))/4.
+    dNr[0:r2:2,4] = -multiply(xsi,(1-eta))
+    dNr[0:r2:2,5] = (1-multiply(eta,eta))/2.
+    dNr[0:r2:2,6] = -multiply(xsi,(1+eta))
+    dNr[0:r2:2,7] = -(1-multiply(eta,eta))/2.
+    dNr[1:r2+1:2,0] = -(-multiply((1-xsi),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,1] = -(-multiply((1+xsi),(1-xsi+eta))+multiply((1+xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,2] = -(multiply((1+xsi),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,3] = -(multiply((1-xsi),(1+xsi-eta))-multiply((1-xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,4] = -(1-multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,5] = -multiply(eta,(1+xsi))
+    dNr[1:r2+1:2,6] = (1-multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,7] = -multiply(eta,(1-xsi))
+
+    Ke1 = mat(zeros((8,8)))
+    fe1 = mat(zeros((8,1)))
+    JT = dNr*mat([ex,ey]).T
+
+    for i in range(ngp):
+        indx = array([2*(i+1)-1,2*(i+1)])
+        detJ = linalg.det(JT[indx-1,:])
+        if detJ < 10*finfo(float).eps:
+            print "Jacobideterminanten lika med noll!"
+        JTinv = linalg.inv(JT[indx-1,:])
+        B = JTinv*dNr[indx-1,:]
+        Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
+        fe1 = fe1+N[i,:].T*detJ*wp[i]
+    
+    if eq != None:
+        return Ke1*t,fe1*t*q
+    else:
+        return Ke1*t
+
 def plante(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
