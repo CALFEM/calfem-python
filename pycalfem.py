@@ -812,9 +812,9 @@ def beam2g(ex,ey,ep,N,eq=None):
             print "eq should be a scalar !!!"
             return
         else:
-            eq = eq[0]
+            q = eq[0]
     else:
-        eq = 0
+        q = 0
     
     b = mat([
         [ex[1]-ex[0]],
@@ -827,8 +827,7 @@ def beam2g(ex,ey,ep,N,eq=None):
     
     rho = -N*L**2/(pi**2*E*I)
     
-    eps = 2.2204e-16
-    kL = pi*sqrt(abs(rho))+eps
+    kL = pi*sqrt(abs(rho))+finfo(float).eps
 
     if rho > 0:
         f1 = (kL/2)/tan(kL/2)
@@ -856,7 +855,7 @@ def beam2g(ex,ey,ep,N,eq=None):
         [ 0.,     6*E*I*f2/L**2.,  2*E*I*f4/L,     0.,   -6*E*I*f2/L**2.,  4*E*I*f3/L    ]
     ])
 
-    fle = eq*L*mat([0.,1/2.,L*h/12,0.,1/2.,-L*h/12]).T
+    fle = q*L*mat([0.,1/2.,L*h/12,0.,1/2.,-L*h/12]).T
     
     G = mat([
         [ n[0], n[1], 0, 0,    0,    0],
