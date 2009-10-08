@@ -2071,6 +2071,149 @@ def flw2i8s(ex,ey,ep,D,ed):
 
     return es,et,eci
 
+def flw3i8e(ex,ey,ez,ep,D,eq=None):
+    """
+    Compute element stiffness (conductivity)
+    matrix for 8 node isoparametric field element.
+    
+    Parameters:
+    
+        ex = [x1,x2,x3,...,x8]
+        ey = [y1,y2,y3,...,y8]      element coordinates
+        ez = [z1,z2,z3,...,z8]
+
+        ep = [ir]                   Ir: Integration rule
+
+        D = [[kxx,kxy,kxz],
+             [kyx,kyy,kyz],
+             [kzx,kzy,kzz]]         constitutive matrix
+
+        eq                          heat supply per unit volume
+
+    Output:
+
+        Ke                          element 'stiffness' matrix (8 x 8)
+        fe                          element load vector (8 x 1)
+
+    """
+    ir = ep[0]
+    ngp = ir*ir*ir
+    
+    if eq == None:
+        q = 0
+    else:
+        q = eq
+    
+    if ir == 2:
+        g1 = 0.577350269189626
+        w1 = 1
+        gp = mat([
+            [-1,-1,-1],
+            [ 1,-1,-1],
+            [ 1, 1,-1],
+            [-1, 1,-1],
+            [-1,-1, 1],
+            [ 1,-1, 1],
+            [ 1, 1, 1],
+            [-1, 1, 1]
+        ])*g1
+        w = mat(ones((8,3)))*w1
+    elif ir == 3:
+        g1 = 0.774596669241483
+        g2 = 0.
+        w1 = 0.555555555555555
+        w2 = 0.888888888888888
+        gp = mat(zeros((27,3)))
+        w = mat(zeros((27,3)))
+        I1 = array([-1,0,1,-1,0,1,-1,0,1])
+        I2 = array([0,-1,0,0,1,0,0,1,0])
+        gp[:,0] = mat([I1,I1,I1]).reshape(27,1)*g1
+        gp[:,0] = mat([I2,I2,I2]).reshape(27,1)*g2+gp[:,0]
+        I1 = abs(I1)
+        I2 = abs(I2)
+        w[:,0] = mat([I1,I1,I1]).reshape(27,1)*w1
+        w[:,0] = mat([I2,I2,I2]).reshape(27,1)*w2+w[:,0]
+        I1 = array([-1,-1,-1,0,0,0,1,1,1])
+        I2 = array([0,0,0,1,1,1,0,0,0])
+        gp[:,1] = mat([I1,I1,I1]).reshape(27,1)*g1
+        gp[:,1] = mat([I2,I2,I2]).reshape(27,1)*g2+gp[:,1]
+        I1 = abs(I1)
+        I2 = abs(I2)
+        w[:,1] = mat([I1,I1,I1]).reshape(27,1)*w1
+        w[:,1] = mat([I2,I2,I2]).reshape(27,1)*w2+w[:,1]
+        I1 = array([-1,-1,-1,-1,-1,-1,-1,-1,-1])
+        I2 = array([0,0,0,0,0,0,0,0,0])
+        I3 = abs(I1)
+        gp[:,2] = mat([I1,I2,I3]).reshape(27,1)*g1
+        gp[:,2] = mat([I2,I3,I2]).reshape(27,1)*g2+gp[:,2]
+        w[:,2] = mat([I3,I2,I3]).reshape(27,1)*w1
+        w[:,2] = mat([I2,I3,I2]).reshape(27,1)*w2+w[:,2]
+    else:
+        print "Used number of integration points not implemented"
+        return
+
+    wp = multiply(multiply(w[:,0],w[:,1]),w[:,2])
+
+    xsi = gp[:,0]
+    eta = gp[:,1]
+    zet = gp[:,2]
+    r2 = ngp*3
+    
+    N = multiply(multiply((1-xsi),(1-eta)),(1-zet))/8.
+    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1-zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1-xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1+zet))/8.,axis=1)
+    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1+zet))/8.,axis=1)
+    
+    dNr = mat(zeros((r2,8)))
+    dNr[0:r2:3,0]= multiply(-(1-eta),(1-zet))
+    dNr[0:r2:3,1]= multiply((1-eta),(1-zet))
+    dNr[0:r2:3,2]= multiply((1+eta),(1-zet))
+    dNr[0:r2:3,3]= multiply(-(1+eta),(1-zet))
+    dNr[0:r2:3,4]= multiply(-(1-eta),(1+zet))
+    dNr[0:r2:3,5]= multiply((1-eta),(1+zet))
+    dNr[0:r2:3,6]= multiply((1+eta),(1+zet))
+    dNr[0:r2:3,7]= multiply(-(1+eta),(1+zet))
+    dNr[1:r2+1:3,0] = multiply(-(1-xsi),(1-zet))
+    dNr[1:r2+1:3,1] = multiply(-(1+xsi),(1-zet))
+    dNr[1:r2+1:3,2] = multiply((1+xsi),(1-zet))
+    dNr[1:r2+1:3,3] = multiply((1-xsi),(1-zet))
+    dNr[1:r2+1:3,4] = multiply(-(1-xsi),(1+zet))
+    dNr[1:r2+1:3,5] = multiply(-(1+xsi),(1+zet))
+    dNr[1:r2+1:3,6] = multiply((1+xsi),(1+zet))
+    dNr[1:r2+1:3,7] = multiply((1-xsi),(1+zet))
+    dNr[2:r2+2:3,0] = multiply(-(1-xsi),(1-eta))
+    dNr[2:r2+2:3,1] = multiply(-(1+xsi),(1-eta))
+    dNr[2:r2+2:3,2] = multiply(-(1+xsi),(1+eta))
+    dNr[2:r2+2:3,3] = multiply(-(1-xsi),(1+eta))
+    dNr[2:r2+2:3,4] = multiply((1-xsi),(1-eta))
+    dNr[2:r2+2:3,5] = multiply((1+xsi),(1-eta))
+    dNr[2:r2+2:3,6] = multiply((1+xsi),(1+eta))
+    dNr[2:r2+2:3,7] = multiply((1-xsi),(1+eta))
+    dNr = dNr/8.
+
+    Ke1 = mat(zeros((8,8)))
+    fe1 = mat(zeros((8,1)))
+    JT = dNr*mat([ex,ey,ez]).T
+    
+    for i in range(ngp):
+        indx = array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
+        detJ = linalg.det(JT[indx-1,:])
+        if detJ < 10*finfo(float).eps:
+            print "Jacobideterminanten lika med noll!"
+        JTinv = linalg.inv(JT[indx-1,:])
+        B = JTinv*dNr[indx-1,:]
+        Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
+        fe1 = fe1+N[i,:].T*detJ*wp[i]
+
+    if eq != None:
+        return Ke1,fe1*q
+    else:
+        return Ke1
+
 def plante(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
