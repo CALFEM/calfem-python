@@ -2535,6 +2535,96 @@ def plants(ex,ey,ep,D,ed):
             
         return es, et
 
+def platre(ex,ey,ep,D,eq=None):
+    """
+    Calculate the stiffness matrix for a rectangular plate element.
+    NOTE! Element sides must be parallel to the coordinate axis.
+    
+    Parameters:
+
+        ex = [x1,x2,x3,x4]          element coordinates
+        ey = [y1,y2,y3,y4]
+
+        ep = [t]                    thicknes
+
+        D                           constitutive matrix for
+                                    plane stress         
+
+        eq = [qz]                   load/unit area
+    Returns:
+
+        Ke                          element stiffness matrix (12 x 12)
+        fe                          equivalent nodal forces (12 x 1)
+
+    """
+    Lx = (ex[2]-ex[0]).astype(float)
+    Ly = (ey[2]-ey[0]).astype(float)
+    t = ep[0]
+
+    D = t**3/12.*D
+
+    A1 = Ly/(Lx**3)
+    A2 = Lx/(Ly**3)
+    A3 = 1/Lx/Ly
+    A4 = Ly/(Lx**2)
+    A5 = Lx/(Ly**2)
+    A6 = 1/Lx
+    A7 = 1/Ly
+    A8 = Ly/Lx
+    A9 = Lx/Ly
+
+    C1 = 4*A1*D[0,0]+4*A2*D[1,1]+2*A3*D[0,1]+5.6*A3*D[2,2]
+    C2 = -4*A1*D[0,0]+2*A2*D[1,1]-2*A3*D[0,1]-5.6*A3*D[2,2]
+    C3 = 2*A1*D[0,0]-4*A2*D[1,1]-2*A3*D[0,1]-5.6*A3*D[2,2]
+    C4 = -2*A1*D[0,0]-2*A2*D[1,1]+2*A3*D[0,1]+5.6*A3*D[2,2]
+    C5 = 2*A5*D[1,1]+A6*D[0,1]+0.4*A6*D[2,2]
+    C6 = 2*A4*D[0,0]+A7*D[0,1]+0.4*A7*D[2,2]
+    
+    C7 = 2*A5*D[1,1]+0.4*A6*D[2,2]
+    C8 = 2*A4*D[0,0]+0.4*A7*D[2,2]
+    C9 = A5*D[1,1]-A6*D[0,1]-0.4*A6*D[2,2]
+    C10 = A4*D[0,0]-A7*D[0,1]-0.4*A7*D[2,2]
+    C11 = A5*D[1,1]-0.4*A6*D[2,2]
+    C12 = A4*D[0,0]-0.4*A7*D[2,2]
+    
+    C13 = 4/3.*A9*D[1,1]+8/15.*A8*D[2,2]
+    C14 = 4/3.*A8*D[0,0]+8/15.*A9*D[2,2]
+    C15 = 2/3.*A9*D[1,1]-8/15.*A8*D[2,2]
+    C16 = 2/3.*A8*D[0,0]-8/15.*A9*D[2,2]
+    C17 = 2/3.*A9*D[1,1]-2/15.*A8*D[2,2]
+    C18 = 2/3.*A8*D[0,0]-2/15.*A9*D[2,2]
+    C19 = 1/3.*A9*D[1,1]+2/15.*A8*D[2,2]
+    C20 = 1/3.*A8*D[0,0]+2/15.*A9*D[2,2]
+    C21 = D[0,1]
+
+    Keq = mat(zeros((12,12)))
+    Keq[0,0:13] = C1,C5,-C6,C2,C9,-C8,C4,C11,-C12,C3,C7,-C10
+    Keq[1,1:13] = C13,-C21,C9,C15,0,-C11,C19,0,-C7,C17,0
+    Keq[2,2:13] = C14,C8,0,C18,C12,0,C20,-C10,0,C16
+    Keq[3,3:13] = C1,C5,C6,C3,C7,C10,C4,C11,C12
+    Keq[4,4:13] = C13,C21,-C7,C17,0,-C11,C19,0
+    Keq[5,5:13] = C14,C10,0,C16,-C12,0,C20
+    Keq[6,6:13] = C1,-C5,C6,C2,-C9,C8
+    Keq[7,7:13] = C13,-C21,-C9,C15,0
+    Keq[8,8:13] = C14,-C8,0,C18
+    Keq[9,9:13] = C1,-C5,-C6
+    Keq[10,10:13] = C13,C21
+    Keq[11,11] = C14
+    Keq = Keq.T+Keq-diag(diag(Keq))
+
+    if eq != None:
+        q = eq
+        R1 = q*Lx*Ly/4
+        R2 = q*Lx*Ly**2/24
+        R3 = q*Ly*Lx**2/24
+
+        feq = mat([R1,R2,-R3,R1,R2,R3,R1,-R2,R3,R1,-R2,-R3])
+
+    if eq != None:
+        return Keq,feq
+    else:
+        return Keq
+
 def assem(edof,K,Ke,f=None,fe=None):
     """
     Assemble element matrices Ke ( and fe ) into the global
