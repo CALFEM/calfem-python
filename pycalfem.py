@@ -2422,7 +2422,7 @@ def plante(ex,ey,ep,D,eq=None):
             Dm = D
             
         Ke = B.T*Dm*B*A*t
-        fe = A/3*matrix([[bx,by,bx,by,bx,by]]).T*t
+        fe = A/3*matrix([bx,by,bx,by,bx,by]).T*t
         
         if eq == None:
             return Ke
@@ -2477,6 +2477,13 @@ def plants(ex,ey,ep,D,ed):
 
     ptype=ep[0]
     
+    if ndim(ex) == 1:
+        ex = array([ex])
+    if ndim(ey) == 1:
+        ey = array([ey])
+    if ndim(ed) == 1:
+        ed = array([ed])
+
     rowed=ed.shape[0]
     rowex=ex.shape[0]
     
@@ -2487,8 +2494,8 @@ def plants(ex,ey,ep,D,ed):
         colD = D.shape[1]
 
         if colD>3:
-            Cm = inv(D)
-            Dm = inv(Cm(ix_((0,1,3),(0,1,3))))
+            Cm = linalg.inv(D)
+            Dm = linalg.inv(Cm[ix_((0,1,3),(0,1,3))])
         else:
             Dm = D
             
@@ -2518,7 +2525,7 @@ def plants(ex,ey,ep,D,ed):
                 [0,1,0,0,0,0],
                 [0,0,0,0,0,1],
                 [0,0,1,0,1,0]])*linalg.inv(C)
-        
+            
             ee=B*asmatrix(ed[ie,:]).T
 
             if colD>3:
@@ -2534,6 +2541,103 @@ def plants(ex,ey,ep,D,ed):
             ie = ie + incie
             
         return es, et
+    
+def plantf(ex,ey,ep,es):
+    """
+    Compute internal element force vector in a triangular element
+    in plane stress or plane strain. 
+
+    Parameters:
+
+        ex = [x1,x2,x3]                 node coordinates
+        ey = [y1,y2,y3]
+
+        ep = [ptype,t]                  ptype: analysis type
+                                        t: thickness
+
+        es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
+              [  ......              ]] one row for each element
+
+    OUTPUT:
+
+        fe = [[f1],[f2],...,[f8]]       internal force vector
+
+    """
+
+    ptype,t = ep
+
+    colD = es.shape[1]
+
+    #--------- plane stress --------------------------------------
+
+    if ptype == 1:
+
+        C = mat([
+            [1, ex[0], ey[0], 0,    0,     0],
+            [0,     0,     0, 1, ex[0], ey[0]],
+            [1, ex[1], ey[1], 0,    0,     0],
+            [0,     0,     0, 1, ex[1], ey[1]],
+            [1, ex[2], ey[2], 0,    0,     0],
+            [0,     0,     0, 1, ex[2], ey[2]]
+        ])
+
+        A = 0.5*linalg.det(mat([
+            [1, ex[0], ey[0]],
+            [1, ex[1], ey[1]],
+            [1, ex[2], ey[2]]
+            ]))
+
+        B = mat([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 1, 0, 1, 0]
+        ])*linalg.inv(C)
+    
+        if colD > 3:
+            stress = asmatrix(es[ix_((0,1,3))])
+        else:
+            stress = asmatrix(es)
+
+        ef = (A*t*B.T*stress.T).T
+        
+        return reshape(asarray(ef),6)
+
+    #--------- plane strain --------------------------------------
+    
+    elif ptype == 2:
+
+        C = mat([
+            [1, ex[0], ey[0], 0,     0,     0],
+            [0,     0,     0, 1, ex[0], ey[0]],
+            [1, ex[1], ey[1], 0,     0,     0],
+            [0,     0,     0, 1, ex[1], ey[1]],
+            [1, ex[2], ey[2], 0,     0,     0],
+            [0,     0,     0, 1, ex[2], ey[2]]
+        ])
+
+        A = 0.5*linalg.det(mat([
+            [1, ex[0], ey[0]],
+            [1, ex[1], ey[1]],
+            [1, ex[2], ey[2]]
+            ]))
+
+        B = mat([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 1, 0, 1, 0]
+        ])*linalg.inv(C)
+
+        if colD > 3:
+            stress = asmatrix(es[ix_((1,2,4))])
+        else:
+            stress = asmatrix(es)
+
+        ef = (A*t*B.T*stress.T).T
+        
+        return reshape(asarray(ef),6)
+  
+    else:
+        print "Error ! Check first argument, ptype=1 or 2 allowed"
 
 def platre(ex,ey,ep,D,eq=None):
     """
@@ -2696,7 +2800,7 @@ def solveq(K,f,bcPrescr,bcVal=None):
     
     bc[ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
-     
+    
     fsys = f[bcDofs]-K[ix_((bcDofs),(bcPrescr-1))]*asmatrix(bcVal).reshape(nPdofs,1)
     asys = linalg.solve(K[ix_((bcDofs),(bcDofs))], fsys);
     
