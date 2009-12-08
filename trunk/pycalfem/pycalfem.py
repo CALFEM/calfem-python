@@ -2369,16 +2369,16 @@ def plante(ex,ey,ep,D,eq=None):
     
     Parameters:
     
-        ex = [x1 x2 x3]         element coordinates
-        ey = [y1 y2 y3]
+        ex = [x1,x2,x3]         element coordinates
+        ey = [y1,y2,y3]
      
-        ep = [ptype t]          ptype: analysis type
+        ep = [ptype,t]          ptype: analysis type
                                 t: thickness
      
         D                       constitutive matrix
     
-        eq = [bx;               bx: body force x-dir
-              by]               by: body force y-dir
+        eq = [[bx],               bx: body force x-dir
+              [by]]               by: body force y-dir
               
     Returns:
     
@@ -2387,8 +2387,7 @@ def plante(ex,ey,ep,D,eq=None):
 
     """
 
-    ptype = ep[0];
-    t = ep[1];
+    ptype,t = ep
     
     bx = 0.0
     by = 0.0
@@ -2397,61 +2396,77 @@ def plante(ex,ey,ep,D,eq=None):
         bx = eq[0]
         by = eq[1]
         
-    C = matrix(
-        [[1, ex[0], ey[0], 0, 0, 0 ], 
-         [0, 0, 0, 1, ex[0], ey[0] ],
-         [1, ex[1], ey[1], 0, 0, 0 ],
-         [0, 0, 0, 1, ex[1], ey[1] ],
-         [1, ex[2], ey[2], 0, 0, 0 ],
-         [0, 0, 0, 1, ex[2], ey[2] ]]
-        )
+    C = mat([
+        [1, ex[0], ey[0], 0,     0,     0], 
+        [0,     0,     0, 1, ex[0], ey[0]],
+        [1, ex[1], ey[1], 0,     0,     0],
+        [0,     0,     0, 1, ex[1], ey[1]],
+        [1, ex[2], ey[2], 0,     0,     0],
+        [0,     0,     0, 1, ex[2], ey[2]]
+        ])
     
-    A = 0.5*linalg.det(matrix([[1, ex[0], ey[0]],[1, ex[1], ey[1]],[1, ex[2], ey[2]]]))
+    A = 0.5*linalg.det(mat([
+        [1, ex[0], ey[0]],
+        [1, ex[1], ey[1]],
+        [1, ex[2], ey[2]]
+        ]))
     
     # --------- plane stress --------------------------------------
     
     if ptype == 1:
-        B = matrix([[0,1,0,0,0,0],[0,0,0,0,0,1],[0,0,1,0,1,0]])*linalg.inv(C)
+        B = mat([
+            [0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1],
+            [0, 0, 1, 0, 1, 0]
+            ])*linalg.inv(C)
         
         colD = D.shape[1]
         
-        if colD>3:
-            Cm = inv(D)
-            Dm = inv(Cm(ix_((0,1,3),(0,1,3))))
+        if colD > 3:
+            Cm = linalg.inv(D)
+            Dm = linalg.inv(Cm(ix_((0,1,3),(0,1,3))))
         else:
             Dm = D
             
         Ke = B.T*Dm*B*A*t
-        fe = A/3*matrix([bx,by,bx,by,bx,by]).T*t
+        fe = A/3*mat([bx,by,bx,by,bx,by]).T*t
         
         if eq == None:
             return Ke
         else:
-            return Ke, fe
+            return Ke,fe.T
        
-#%--------- plane strain --------------------------------------       
-#elseif ptype==2
-#       B=[0 1 0 0 0 0
-#          0 0 0 0 0 1
-#          0 0 1 0 1 0]*inv(C);
-#
-#       colD=size(D,2);
-#       if colD>3
-#         Dm=D([1 2 4],[1 2 4]);
-#       else
-#         Dm=D;
-#       end
-#
-#       Ke=B'*Dm*B*A*t;
-#       fe=A/3*[bx by bx by bx by]'*t;
-#       
-#else
-#   error('Error ! Check first argument, ptype=1 or 2 allowed')
-#   return
-#end
-#%--------------------------end--------------------------------
-#
-#
+    #--------- plane strain --------------------------------------       
+    
+    elif ptype == 2:
+        B = mat([
+            [0, 1, 0, 0, 0, 0,],
+            [0, 0, 0, 0, 0, 1,],
+            [0, 0, 1, 0, 1, 0,]
+            ])*linalg.inv(C)
+
+        colD = D.shape[1]
+        
+        if colD > 3:
+            Dm = D(ix_((1,2,4),(1,2,4)))
+        else:
+            Dm = D
+
+        Ke = B.T*Dm*B*A*t
+        fe = A/3*mat([bx,by,bx,by,bx,by]).T*t
+        
+        if eq == None:
+            return Ke
+        else:
+            return Ke,fe.T
+
+    else:
+        print "Error ! Check first argument, ptype=1 or 2 allowed"
+        if eq == None:
+            return None
+        else:
+            return None,None
+
 def plants(ex,ey,ep,D,ed):
     """
     Calculate element normal and shear stress for a
@@ -2638,6 +2653,7 @@ def plantf(ex,ey,ep,es):
   
     else:
         print "Error ! Check first argument, ptype=1 or 2 allowed"
+        return None
 
 def platre(ex,ey,ep,D,eq=None):
     """
