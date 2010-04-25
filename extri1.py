@@ -2,7 +2,6 @@
 
 from pycalfem import *
 from pycalfem_utils import *
-from pycalfem_classes import *
 
 # ---- Problem constants
 
@@ -46,6 +45,8 @@ print "Creating element mesh..."
 
 coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
 
+print coords[0:8,:]
+
 # ---- Assemble system matrix
 
 print "Assemblig system matrix..."
@@ -70,6 +71,9 @@ bcVal = array([],'i')
 
 bc, bcVal = applybc(bdofs,bc,bcVal,2,30.0)
 bc, bcVal = applybc(bdofs,bc,bcVal,3,0.0)
+
+print bc
+print bcVal
             
 a,r = solveq(K,f,bc,bcVal)
 
@@ -84,9 +88,8 @@ qs, qt = flw2ts(ex, ey, D, ed)
 
 print "Drawing element mesh..."
 
-print ed
-
 eliso2(ex,ey,ed)
+eldraw2(ex,ey)
 
 print "Done."
 

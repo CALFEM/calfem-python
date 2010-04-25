@@ -247,8 +247,6 @@ class ElementView(OpenGLFrame):
                 (sx2, sy2) = self.worldToScreen(elx[1], ely[1])
                 (sx3, sy3) = self.worldToScreen(elx[2], ely[2])
                 
-                print sx1, sy1
-                            
                 glColor(0.5, 0.5, 0.5)
                 glVertex(sx1,sy1)
                 glVertex(sx2,sy2)
@@ -285,11 +283,11 @@ class ElementView(OpenGLFrame):
                     c2 = floatRgb(eld[1*self._dofsPerNode+(self._showDimension-1)], self._maxNodeValue, self._minNodeValue)
                     c3 = floatRgb(eld[2*self._dofsPerNode+(self._showDimension-1)], self._maxNodeValue, self._minNodeValue)
                         
-                glColor(c1)
+                glColor3f(c1[0], c1[1], c1[2])
                 glVertex(sx1,sy1)
-                glColor(c2)
+                glColor3f(c2[0], c2[1], c2[2])
                 glVertex(sx2,sy2)
-                glColor(c3)
+                glColor3f(c3[0], c3[1], c3[2])
                 glVertex(sx3,sy3)
             
         glEnd()
@@ -347,6 +345,7 @@ class ElementView(OpenGLFrame):
         glHint(GL_LINE_SMOOTH_HINT,GL_NICEST)
         glLineWidth(1.0)
         glDisable(GL_DEPTH_TEST)
+        glDisable(GL_LIGHTING)
 
     def onDraw(self, *args, **kwargs):
         """
