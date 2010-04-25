@@ -86,7 +86,7 @@ def which(filename):
             return f
     return None
 
-def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0, dimension=0):
+def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
     Apply boundary condition to bcPresc and bcVal matrices.
     
@@ -103,12 +103,43 @@ def applybc(boundaryDofs, bcPresc, bcVal, marker, value=0.0, dimension=0):
     """
 
     if boundaryDofs.has_key(marker):
-        bcAdd = array(boundaryDofs[marker])
-        bcAddVal = ones([size(bcAdd)])*value
+        if (dimension==0):
+            bcAdd = array(boundaryDofs[marker])
+            bcAddVal = ones([size(bcAdd)])*value
+        elif (dimension==1):
+            bcAdd = boundaryDofs[marker][(dimension-1)::2]
+            bcAddVal = ones([size(bcAdd)])*value
+        else:
+            bcAdd = boundaryDofs[marker][(dimension-1)::2]
+            bcAddVal = ones([size(bcAdd)])*value
 
-        return hstack([bcPresc,bcAdd]), hstack([bcVal,bcAddVal])
+        return hstack([bcPrescr,bcAdd]), hstack([bcVal,bcAddVal])
     else:
         print "Error: Boundary marker", marker, "does not exist."
+        
+def applybcnode(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
+    
+    if (dimension==0):
+        bcAdd = asarray(dofs[nodeIdx])
+        bcAddVal = ones([size(bcAdd)])*value
+    elif (dimension==1):
+        bcAdd = asarray(dofs[nodeIdx,dimension-1])
+        bcAddVal = ones([size(bcAdd)])*value
+    else:
+        bcAdd = asarray(dofs[nodeIdx,dimension-1])
+        bcAddVal = ones([size(bcAdd)])*value
+
+    return hstack([bcPrescr,bcAdd]), hstack([bcVal,bcAddVal])
+    
+
+def applyforcenode(nodeIdx, dofs, f, value=0.0, dimension=0):
+
+    if (dimension==0):
+        f[dofs[nodeIdx]]+=value
+    elif (dimension==1):
+        f[dofs[nodeIdx,dimension-1]]+=value
+    else:
+        f[dofs[nodeIdx,dimension-1]]+=value
         
 def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
@@ -198,6 +229,8 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     else:
         triangleExecutable = which("triangle")
         
+    print triangleExecutable    
+        
     if triangleExecutable==None:
         print "Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH)."
         return None, None, None, None
@@ -221,10 +254,10 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     
     # All files are created as temporary files
     
-    if not os.path.exists("./triangle"):
-        os.mkdir("./triangle")
+    if not os.path.exists("./trimesh.temp"):
+        os.mkdir("./trimesh.temp")
         
-    filename = "./triangle/polyfile.poly"
+    filename = "./trimesh.temp/polyfile.poly"
     
     if segments!=None:
         nSegments = len(segments)
@@ -257,7 +290,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
 
     # Execute triangle
     
-    os.system("%s %s %s > tri.log" % ("triangle", options, filename))
+    os.system("%s %s %s > tri.log" % (triangleExecutable, options, filename))
     
     # Read results from triangle
     
