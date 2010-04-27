@@ -254,6 +254,15 @@ class ElementView(OpenGLFrame):
                 glVertex(sx3,sy3)
                 glVertex(sx3,sy3)
                 glVertex(sx1,sy1)
+                
+            elif self._elementNodes == 2:
+            
+                (sx1, sy1) = self.worldToScreen(elx[0], ely[0])
+                (sx2, sy2) = self.worldToScreen(elx[1], ely[1])
+
+                glColor(0.5, 0.5, 0.5)
+                glVertex(sx1,sy1)
+                glVertex(sx2,sy2)
             
         glEnd()
         
@@ -315,7 +324,16 @@ class ElementView(OpenGLFrame):
                 glVertex(sx3,sy3)
                 glVertex(sx3,sy3)
                 glVertex(sx1,sy1)
+
+            elif self._elementNodes == 2:
             
+                (sx1, sy1) = self.worldToScreen(elx[0]+scl*eld[0], ely[0]+scl*eld[1])
+                (sx2, sy2) = self.worldToScreen(elx[1]+scl*eld[2], ely[1]+scl*eld[3])
+
+                glColor(0.3, 0.3, 0.3)
+                glVertex(sx1,sy1)
+                glVertex(sx2,sy2)
+
         glEnd()
 
             
