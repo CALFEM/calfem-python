@@ -90,9 +90,9 @@ es, et = plants(ex, ey, ep, D, ed)
 print "Drawing element mesh..."
 
 eldisp2(ex,ey,ed)
+waitDisplay()
 
 print "Done."
-
 
 
 

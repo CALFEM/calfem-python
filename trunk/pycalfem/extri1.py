@@ -72,9 +72,6 @@ bcVal = array([],'i')
 bc, bcVal = applybc(bdofs,bc,bcVal,2,30.0)
 bc, bcVal = applybc(bdofs,bc,bcVal,3,0.0)
 
-print bc
-print bcVal
-            
 a,r = solveq(K,f,bc,bcVal)
 
 # ---- Compute element forces
@@ -88,8 +85,9 @@ qs, qt = flw2ts(ex, ey, D, ed)
 
 print "Drawing element mesh..."
 
-eliso2(ex,ey,ed)
+eliso2(ex,ey,ed)    
 eldraw2(ex,ey)
+waitDisplay()
 
 print "Done."
 
