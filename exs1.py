@@ -56,7 +56,7 @@ print("Displacements a:")
 print(a)
 
 print("Reaction forces Q:")
-print(Q)
+print(r)
 
 # ----- Element forces -------------------------------------------
 
