@@ -11,8 +11,8 @@
 #     Ola Dahlblom 2004-09-14
 #----------------------------------------------------------------
 
-from numpy import *
 from pycalfem import *
+from pycalfem_utils import *
 
 # ----- Topology -------------------------------------------------
 
@@ -24,8 +24,8 @@ Edof = array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K=mat(zeros((12,12)))
-f=mat(zeros((12,1)))
+K=matrix(zeros((12,12)))
+f=matrix(zeros((12,1)))
 f[3]=2e+3
 
 # ----- Element stiffness and element load matrices  -------------
@@ -70,7 +70,7 @@ print r
 
 # ----- Section forces -------------------------------------------
 
-Ed=extract(Edof,a);
+Ed=extractEldisp(Edof,a);
 
 es1,ed1,ec1=beam2s(ex1,ey1,ep1,Ed[0,:],eq1,np=21)
 es2,ed2,ec2=beam2s(ex2,ey2,ep1,Ed[1,:],eq2,np=21)
@@ -95,17 +95,10 @@ ey = array([
 ])
 print ey
 
-fig = figure()
-#eldraw2(ex1,ey1)
-#eldraw2(ex2,ey2)
 eldraw2(ex,ey)
-print Ed
-sfac1=scalfact2(ex,ey,Ed,0.1)
-sfac2=scalfact2(ex1,ey1,Ed[1,:],0.1)
-print sfac1, sfac2
-axis([-1.5,7.5,-0.5,5.5])
-show()
- 
+eldisp2(ex,ey,Ed)
+waitDisplay()
+
 #figure(1)
 #plotpar=[2 1 0];
 #eldraw2(ex1,ey1,plotpar);
