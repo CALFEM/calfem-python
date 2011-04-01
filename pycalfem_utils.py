@@ -6,16 +6,6 @@ import os, sys
 haveMatplotLib = True
 haveMlab = True
 haveWx = True
-
-try:
-    from matplotlib.pyplot import *
-except:
-    haveMatplotLib = False
-
-try:
-    from enthought.mayavi import mlab
-except:
-    haveMlab = False
     
 globalWxApp = None
        
@@ -26,7 +16,6 @@ try:
 except:
     haveWx = False
     
-from numpy import *
 from pycalfem import *
 
 def readInt(f):
@@ -170,7 +159,7 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
         print "Error: Boundary marker", marker, "does not exist."
     
 
-def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log"):
+def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log", triangleExecutablePath=None):
     """
     Triangulates an area described by a number vertices (vertices) and a set
     of segments that describes a closed polygon. 
@@ -226,12 +215,18 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     
     # Check for triangle executable
     
-    triangleExecutable = ""
-    if sys.platform == "win32":
-        triangleExecutable = which("triangle.exe")
+    triangleExecutable = triangleExecutablePath
+    
+    if triangleExecutable == None:    
+        triangleExecutable = ""
+        if sys.platform == "win32":
+            triangleExecutable = which("triangle.exe")
+        else:
+            triangleExecutable = which("triangle")
     else:
-        triangleExecutable = which("triangle")
-        
+        if not os.path.exists(triangleExecutable):
+            triangleExecutable = None
+            
     if triangleExecutable==None:
         print "Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH)."
         return None, None, None, None
@@ -491,6 +486,9 @@ def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
     mainWindow.Show()
             
 def waitDisplay():
+    globalWxApp.MainLoop()
+
+def show():
     globalWxApp.MainLoop()
 
 def elmargin(scale=0.2):

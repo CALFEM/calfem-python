@@ -78,7 +78,7 @@ a,r = solveq(K,f,bc,bcVal)
 
 print "Computing element forces..."
 
-ed = extract(edof,a)
+ed = extractEldisp(edof,a)
 qs, qt = flw2ts(ex, ey, D, ed)
 
 # ---- Visualise results

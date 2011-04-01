@@ -2831,7 +2831,7 @@ def solveq(K,f,bcPrescr,bcVal=None):
     
     return (asmatrix(a),Q)
     
-def extract(edof,a):
+def extractEldisp(edof,a):
     """
     Extract element displacements from the global displacement
     vector according to the topology matrix edof.
