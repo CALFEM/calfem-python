@@ -3046,3 +3046,28 @@ def hooke(ptype,E,v):
         print "ptype not supported."
         
     return D
+
+def effmises(es,ptype):
+    
+    nel = size(es,0)
+    escomps = size(es, 1)
+    
+    eseff = zeros([nel])
+     
+    if ptype == 1:
+        sigxx = es[:,0]
+        sigyy = es[:,1]
+        sigxy = es[:,2]
+        eseff = sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
+        return eseff
+    
+def stress2nodal(eseff, edof):
+    
+    edvalues = zeros([size(edof, 0), size(edof,1)])
+    elnodes = size(edof,1)/2
+    
+    for etopo, eleseff in zip(edof, eseff):
+        print etopo
+        edvalues[etopo-1,:] = edvalues[etopo-1,:] + eleseff / elnodes
+                     
+    return edvalues

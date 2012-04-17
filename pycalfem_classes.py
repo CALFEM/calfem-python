@@ -168,9 +168,12 @@ class ElementView(OpenGLFrame):
         self._nodeLimits = [1e300, -1e300]
         self._maxNodeValue = -1e300
         self._minNodeValue = 1e300
+        self._maxElementValue = -1e300
+        self._minElementValue = 1e300
         self._ex = None
         self._ey = None
         self._ed = None
+        self._ev = None
         self._magnfac = 0.1
         self._elementNodes = 3
         self._dofsPerNode = 1
@@ -180,6 +183,7 @@ class ElementView(OpenGLFrame):
         self._showMesh = True
         self._showNodalValues = True
         self._showDisplacements = False
+        self._showElementValues = False
         
         self.drawAnnotations = None
         
@@ -212,6 +216,10 @@ class ElementView(OpenGLFrame):
             self._minNodeValue = self._ed.min()
         else:
             self._maxNodeValue = abs(self._ed).max()
+            
+    def calcElementLimits(self):
+        self._maxElementValue = self._ev.max()
+        self._minElementValue = self._ev.min()
     
     def calcScaling(self):
 
@@ -301,6 +309,35 @@ class ElementView(OpenGLFrame):
             
         glEnd()
         
+    def drawElementValues(self):
+                
+        # Draw element values
+        
+        if self._elementNodes == 3:
+            glBegin(GL_TRIANGLES)
+        else:
+            return
+        
+        for elx, ely, elv in zip(self._ex, self._ey, self._ev):
+            
+            if self._elementNodes == 3:
+            
+                (sx1, sy1) = self.worldToScreen(elx[0], ely[0])
+                (sx2, sy2) = self.worldToScreen(elx[1], ely[1])
+                (sx3, sy3) = self.worldToScreen(elx[2], ely[2])
+                           
+                if self._dofsPerNode == 1:
+                    c1 = floatRgb(elv, self._maxElementValue, self._minElementValue)
+                else:
+                    c1 = floatRgb(elv, self._maxElementValue, self._minElementValue)
+                        
+                glColor3f(c1[0], c1[1], c1[2])
+                glVertex(sx1,sy1)
+                glVertex(sx2,sy2)
+                glVertex(sx3,sy3)
+            
+        glEnd()
+        
     def drawDisplacements(self):
         
         # Draw elements
@@ -371,6 +408,8 @@ class ElementView(OpenGLFrame):
         """
               
         glClear(GL_COLOR_BUFFER_BIT)
+        if self._showElementValues:
+            self.drawElementValues()
         if self._showNodalValues:
             self.drawNodalValues()
         if self._showMesh:
@@ -426,6 +465,12 @@ class ElementView(OpenGLFrame):
     def getShowNodalValues(self):
         return self._showNodalValues
     
+    def setShowElementValues(self, showElementValues):
+        self._showElementValues = showElementValues
+        
+    def getShowElementValues(self):
+        return self._showElementValues
+
     def setShowDisplacements(self, showDisplacements):
         self._showDisplacements = showDisplacements
         
@@ -450,9 +495,17 @@ class ElementView(OpenGLFrame):
     def getMagnFac(self):
         return self._magnfac
     
+    def getEv(self):
+        return self._ev
+    
+    def setEv(self, value):
+        self._ev = value
+        self.calcElementLimits()
+    
     ex = property(getEx, setEx)
     ey = property(getEy, setEy)
     ed = property(getEd, setEd)
+    ev = property(getEv, setEv)
     dofsPerNode = property(getDofsPerNode, setDofsPerNode)
     elementNodes = property(getElementNodes, setElementNodes)
     modelWidth = property(getModelWidth)
@@ -461,4 +514,5 @@ class ElementView(OpenGLFrame):
     showMesh = property(getShowMesh, setShowMesh)
     showNodalValues = property(getShowNodalValues, setShowNodalValues)
     showDisplacements = property(getShowDisplacements, setShowDisplacements)
+    showElementValues = property(getShowElementValues, setShowElementValues)
     

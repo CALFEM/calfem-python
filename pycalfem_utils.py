@@ -321,7 +321,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
             boundaryVertices[boundaryMarker].append(i+1)
             
         nodeFile.close()
-        
+               
     # Read elements
             
     elements = []
@@ -343,10 +343,11 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     # Clean up
     
     try:
-        os.remove(filename)
-        os.remove(nodeFilename)
-        os.remove(elementFilename)
-        os.remove(polyFilename)
+        pass
+        #os.remove(filename)
+        #os.remove(nodeFilename)
+        #os.remove(elementFilename)
+        #os.remove(polyFilename)
     except:
         pass
     
@@ -415,11 +416,12 @@ def eldraw2(ex, ey):
     
 def eliso2(ex, ey, ed, showMesh=False):
     """
-    Draw elements in 2d.
+    Draw nodal values in 2d.
     
     Parameters:
     
         ex, ey          Element coordinates
+        ed              Element nodal values
         plotpar         (not implemented yet)
     
     """
@@ -450,30 +452,35 @@ def eliso2(ex, ey, ed, showMesh=False):
     mainWindow.showNodalValues = True
     mainWindow.Show()
     
-def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
+def elval2(ex, ey, ev, showMesh=False):
+    """
+    Draw elements values in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        ev              Element values (scalar)
+        plotpar         (not implemented yet)
+    
+    """
     if not haveWx:
         print "wxPython not installed."
         return
     
-    #class ElDispApp(wx.App):
-    #    def OnInit(self):
-    #        wx.InitAllImageHandlers()
-    #        mainWindow = ElementView(None, -1, "")
-    #        mainWindow.dofsPerNode = 2
-    #        mainWindow.ex = ex
-    #        mainWindow.ey = ey
-    #        mainWindow.ed = ed
-    #        mainWindow.showMesh = showMesh
-    #        mainWindow.showNodalValues = False
-    #        mainWindow.showDisplacements = True
-    #        mainWindow.magnfac = magnfac
-    #        self.SetTopWindow(mainWindow)
-    #        mainWindow.Show()
-    #        return 1
-    #
-    #app = ElDispApp(0)
-    #app.MainLoop()
+    mainWindow = ElementView(None, -1, "")
+    mainWindow.ex = ex
+    mainWindow.ey = ey
+    mainWindow.ev = ev
+    mainWindow.showMesh = showMesh
+    mainWindow.showElementValues = True
+    mainWindow.showNodalValues = False
+    mainWindow.Show()
     
+def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
+    if not haveWx:
+        print "wxPython not installed."
+        return
+        
     mainWindow = ElementView(None, -1, "")
     mainWindow.dofsPerNode = 2
     mainWindow.ex = ex
