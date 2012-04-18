@@ -85,14 +85,15 @@ print "Computing element forces..."
 ed = extractEldisp(edof,a)
 es, et = plants(ex, ey, ep, D, ed)
 ev = effmises(es, ptype)
-#nv = stress2nodal(ev, edof)
+esnv = stress2nodal(ev, edof)
 
 # ---- Visualise results
 
 print "Drawing element mesh..."
 
+eldisp2(ex, ey, ed)
 elval2(ex,ey,ev)
-#eliso2(ex,ey,nv)
+eliso2(ex,ey,esnv)
 waitDisplay()
 
 print "Done."
