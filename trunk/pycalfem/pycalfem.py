@@ -3048,6 +3048,26 @@ def hooke(ptype,E,v):
     return D
 
 def effmises(es,ptype):
+    """
+    Calculate effective von mises stresses.
+    
+    Parameters:
+        
+        es
+    
+        ptype=  1:  plane stress
+                2:  plane strain
+                3:  axisymmetry
+                4:  three dimensional
+    
+       es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
+              [  ......              ]] one row for each element
+              
+    Returns:
+    
+        eseff  = [eseff_0 .. eseff_nel-1]
+    
+    """
     
     nel = size(es,0)
     escomps = size(es, 1)
@@ -3062,12 +3082,30 @@ def effmises(es,ptype):
         return eseff
     
 def stress2nodal(eseff, edof):
+    """
+    Convert element effective stresses to nodal effective
+    stresses.
     
-    edvalues = zeros([size(edof, 0), size(edof,1)])
-    elnodes = size(edof,1)/2
+    Parameters:
+        
+        eseff  = [eseff_0 .. eseff_nel-1] 
+        edof   = [dof topology array]
+    
+    Returns:
+    
+        ev:     element value array [[ev_0_0 ev_0_1 ev_0_nen-1 ]
+                                      ..
+                                      ev_nel-1_0 ev_nel-1_1 ev_nel-1_nen-1]
+                      
+    """
+    
+    values = zeros(edof.max())
+    elnodes = size(edof,1) / 2
     
     for etopo, eleseff in zip(edof, eseff):
-        print etopo
-        edvalues[etopo-1,:] = edvalues[etopo-1,:] + eleseff / elnodes
+        values[etopo-1] = values[etopo-1] + eleseff / elnodes
+        
+    evtemp = extractEldisp(edof,values)
+    ev = evtemp[:,range(0,elnodes*2,2)]
                      
-    return edvalues
+    return ev
