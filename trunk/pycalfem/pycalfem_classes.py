@@ -186,6 +186,7 @@ class ElementView(OpenGLFrame):
         self._showElementValues = False
         
         self.drawAnnotations = None
+        self.drawCustom = None
         
     def calcLimits(self):
         
@@ -408,6 +409,7 @@ class ElementView(OpenGLFrame):
         """
               
         glClear(GL_COLOR_BUFFER_BIT)
+        
         if self._showElementValues:
             self.drawElementValues()
         if self._showNodalValues:
@@ -416,6 +418,9 @@ class ElementView(OpenGLFrame):
             self.drawMesh()
         if self._showDisplacements:
             self.drawDisplacements()
+            
+        if self.drawCustom!=None:
+            self.drawCustom(self, self._width, self._height)
             
         if self.drawAnnotations!=None:
             self.drawAnnotations(self, self._width, self._height)
