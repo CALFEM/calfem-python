@@ -4,6 +4,15 @@ from pycalfem import *
 from pycalfem_utils import *
 from pycalfem_classes import *
 
+def drawCustom(self, width, height):
+    print "drawCustom", width, height    
+    glPushMatrix()
+    glBegin(GL_LINES)
+    glColor(1.0, 0.0, 0.0, 1.0)
+    glVertex(50,50,0)
+    glVertex(100,100,0)
+    glPopMatrix()
+
 # ---- Problem constants
 
 t = 0.1
@@ -92,8 +101,19 @@ esnv = stress2nodal(ev, edof)
 print "Drawing element mesh..."
 
 eldisp2(ex, ey, ed)
-elval2(ex,ey,ev)
-eliso2(ex,ey,esnv)
+elval2(ex, ey, ev)
+eliso2(ex, ey, esnv)
+
+elementView = ElementView(None, -1, "")
+elementView.ex = ex
+elementView.ey = ey
+elementView.ev = ev
+elementView.showMesh = False
+elementView.showElementValues = True
+elementView.showNodalValues = False
+elementView.drawCustom = drawCustom
+elementView.Show()
+
 waitDisplay()
 
 print "Done."

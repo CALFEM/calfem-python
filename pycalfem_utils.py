@@ -490,8 +490,8 @@ def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
     mainWindow.showNodalValues = False
     mainWindow.showDisplacements = True
     mainWindow.magnfac = magnfac
-    mainWindow.Show()
-            
+    mainWindow.Show()    
+           
 def waitDisplay():
     globalWxApp.MainLoop()
 
