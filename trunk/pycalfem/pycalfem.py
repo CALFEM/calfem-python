@@ -2748,6 +2748,129 @@ def platre(ex,ey,ep,D,eq=None):
     else:
         return Keq
 
+        
+def planqe(ex,ey,ep,D,eq=None):
+    """
+    Calculate the stiffness matrix for a quadrilateral
+    plane stress or plane strain element.
+
+    Parameters:
+        ex=[x1 x2 x3 x4]    element coordinates
+        ey=[y1 y2 y3 y4]
+                                
+        ep = [ptype, t]     ptype: analysis type
+                            t: element thickness 
+
+        D                   constitutive matrix
+
+        eq = [bx;           bx: body force in x direction
+              by]           by: body force in y direction
+
+    OUTPUT: Ke :  element stiffness matrix (8 x 8)
+            fe : equivalent nodal forces (row array)
+    """
+    K=zeros((10,10))
+    f=zeros((10,1))
+    
+    xm=sum(ex)/4.
+    ym=sum(ey)/4.
+    
+    b1 = eq if eq is not None else array([[0],[0]])
+    
+    ke1, fe1 = plante(array([ex[0], ex[1], xm]), array([ey[0], ey[1], ym]), ep, D, b1)
+    K, f = assem(array([1, 2, 3, 4, 9, 10]), K, ke1, f, fe1)
+    ke1, fe1 = plante(array([ex[1], ex[2], xm]), array([ey[1], ey[2], ym]), ep, D, b1)
+    K, f = assem(array([3, 4, 5, 6, 9, 10]), K, ke1, f, fe1)
+    ke1, fe1 = plante(array([ex[2], ex[3], xm]), array([ey[2], ey[3], ym]), ep, D, b1)
+    K, f = assem(array([5, 6, 7, 8, 9, 10]), K, ke1, f, fe1)
+    ke1, fe1 = plante(array([ex[3], ex[0], xm]), array([ey[3], ey[0], ym]), ep, D, b1)
+    K, f = assem(array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
+    Ke, fe = statcon(K, f, array([[9],[10]]))
+    
+    if eq == None:
+        return Ke
+    else:
+        return Ke,fe
+        
+
+def planqs(ex,ey,ep,D,ed,eq=None):
+    """
+    Calculate element normal and shear stress for a quadrilateral 
+    plane stress or plane strain element.
+    
+    Parameters:
+            ex = [x1 x2 x3 x4]      element coordinates
+            ey = [y1 y2 y3 y4]
+    
+            ep = [ptype, t]         ptype: analysis type
+                                    t:  thickness
+                                   
+            D                       constitutive matrix
+    
+            ed = [u1 u2 ..u8]       element displacement vector
+    
+            eq = [[bx]               bx: body force in x direction
+                  [by]]              by: body force in y direction
+    
+    OUTPUT: es = [ sigx sigy (sigz) tauxy]    element stress array
+            et = [ epsx epsy (epsz) gamxy]    element strain array
+    """
+    
+    if ex.shape != (4,) or ey.shape != (4,) or ed.shape != (8,):
+        raise ValueError('Error ! PLANQS: only one element at the time (ex, ey, ed must be a row arrays)')
+
+    K = zeros((10,10))
+    f = zeros((10,1))
+    
+    xm = sum(ex)/4.
+    ym = sum(ey)/4.
+        
+    b1 = eq if eq is not None else array([[0],[0]])
+    
+    ex1 = array([ex[0], ex[1], xm]) 
+    ey1 = array([ey[0], ey[1], ym])
+    ex2 = array([ex[1], ex[2], xm]) 
+    ey2 = array([ey[1], ey[2], ym])
+    ex3 = array([ex[2], ex[3], xm]) 
+    ey3 = array([ey[2], ey[3], ym])
+    ex4 = array([ex[3], ex[0], xm]) 
+    ey4 = array([ey[3], ey[0], ym])
+    
+    ke1, fe1 = plante(ex1, ey1, ep, D, b1)
+    K, f = assem(array([1, 2, 3, 4, 9, 10]), K, ke1, f, fe1)
+    ke1,fe1 = plante(ex2, ey2, ep, D, b1)
+    K, f = assem(array([3, 4, 5, 6, 9, 10]), K, ke1, f, fe1)
+    ke1, fe1 = plante(ex3, ey3, ep, D, b1)
+    K, f = assem(array([5, 6, 7, 8, 9, 10]), K, ke1, f, fe1)
+    ke1, fe1 = plante(ex4, ey4, ep, D, b1)
+    K, f = assem(array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
+    
+    A1 = 0.5 * linalg.det( hstack([ones((3,1)), mat(ex1).T, mat(ey1).T]) )
+    A2 = 0.5 * linalg.det( hstack([ones((3,1)), mat(ex2).T, mat(ey2).T]) )
+    A3 = 0.5 * linalg.det( hstack([ones((3,1)), mat(ex3).T, mat(ey3).T]) )
+    A4 = 0.5 * linalg.det( hstack([ones((3,1)), mat(ex4).T, mat(ey4).T]) )
+    Atot = A1+A2+A3+A4;
+    
+    
+    a, _ = solveq(K, f, array(range(1,9)), ed)
+        
+#    ni = ed.shape[0]
+#    a = mat(empty((10,ni)))
+#    for i in range(ni):
+#        a[:,i] = solveq(K, f, array(range(1,9)), ed[i,:])[0]
+#        #a = hstack([a, solveq(K, f, hstack([matrix(range(1,9)).T, ed[i,:].T]) ) ])
+    
+    s1, t1 = plants(ex1, ey1, ep, D, hstack([a[[0, 1, 2, 3, 8, 9], :].T]) );
+    s2, t2 = plants(ex2, ey2, ep, D, hstack([a[[2, 3, 4, 5, 8, 9], :].T]) );
+    s3, t3 = plants(ex3, ey3, ep, D, hstack([a[[4, 5, 6, 7, 8, 9], :].T]) );
+    s4, t4 = plants(ex4, ey4, ep, D, hstack([a[[6, 7, 0, 1, 8, 9], :].T]) );
+    
+    es = (s1*A1+s2*A2+s3*A3+s4*A4)/Atot;
+    et = (t1*A1+t2*A2+t3*A3+t4*A4)/Atot;
+    
+    return es[0], et[0] #[0] because these are 1-by-3 arrays and we want row arrays out.
+        
+        
 def assem(edof,K,Ke,f=None,fe=None):
     """
     Assemble element matrices Ke ( and fe ) into the global
