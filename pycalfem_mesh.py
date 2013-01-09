@@ -1,5 +1,3 @@
-#TODO: Make temporary files go in a separate folder
-
 import os, sys
 from numpy import *
 from pycalfem import *
@@ -187,21 +185,19 @@ class GmshMesher():
             dim = 3 if is3D else 2 #In this case geoData is a path string, so the dimension must be supplied by the user.
             if not os.path.exists(geoFilePath):
                 directory = os.path.dirname(__file__)
-                print "directory:", directory
                 geoFilePath = os.path.join(directory, geoFilePath) #Try relative path
-                print "geoFilePath:", geoFilePath
                 if not os.path.exists(geoFilePath):
                     raise IOError("Error: Could not find geo-file " + geoFilePath)
         else:
             dim = 3 if self.geoData.is3D else 2   #Get the dimension of the model from geoData.
             if not os.path.exists("./gmshMeshTemp"):
                 os.mkdir("./gmshMeshTemp")
-            geoFilePath = "tempGeometry.geo" #"gmshMeshTemp/tempGeometry.geo"
+            geoFilePath = "gmshMeshTemp/tempGeometry.geo" #"gmshMeshTemp/tempGeometry.geo"
             self.geofile = open(geoFilePath, "w") #Create temp geometry file
             self.writeGeoFile()#Write geoData to file            
             self.geofile.close()
         
-        mshFileName= os.getcwd() + '\\' + 'meshFile.msh' #Filepath to the msh-file that will be generated.
+        mshFileName= os.getcwd() + '/gmshMeshTemp/' + 'meshFile.msh' #Filepath to the msh-file that will be generated.
         #construct options string:
         options = ""
         options += ' -' + str(dim)
@@ -216,15 +212,15 @@ class GmshMesher():
         options += ' ' + self.additionalOptions
         
         #Execute gmsh
-        print(gmshExe + " " + geoFilePath + " " + options) #TEMP
+        #print(gmshExe + " " + geoFilePath + " " + options) #TEMP
         os.system("%s %s %s" % (gmshExe, geoFilePath, options))
         
         #Read generated msh file:
-        print("Opening msh file " + mshFileName)#TEMP
+        #print("Opening msh file " + mshFileName)#TEMP
         
         mshFile = open(mshFileName, 'r')
         
-        print("Reading msh file...")#TEMP
+        #print("Reading msh file...")#TEMP
         ln = mshFile.readline()
         while(ln != '$Nodes\n'): #Read until we find the nodes
             ln = mshFile.readline()
@@ -277,7 +273,7 @@ class GmshMesher():
         for key in self.nodesOnVolume.keys(): #Convert set to list
                 self.nodesOnVolume[key] = list(self.nodesOnVolume[key])
                 
-        print("Closing msh file...")#TEMP        
+        #print("Closing msh file...")#TEMP        
         mshFile.close()
         
         dofs = createdofs(size(allNodes,0), self.dofsPerNode)
