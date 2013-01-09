@@ -2869,6 +2869,192 @@ def planqs(ex,ey,ep,D,ed,eq=None):
     et = (t1*A1+t2*A2+t3*A3+t4*A4)/Atot;
     
     return es[0], et[0] #[0] because these are 1-by-3 arrays and we want row arrays out.
+
+
+def plani4e(ex,ey,ep,D,eq=None):
+    """
+    Calculate the stiffness matrix for a 4 node isoparametric
+    element in plane strain or plane stress.
+    
+    Parameters:
+        ex = [x1 ...   x4]  element coordinates. Row array
+        ey = [y1 ...   y4]
+                                
+        ep =[ptype, t, ir]  ptype: analysis type
+                            t : thickness
+                            ir: integration rule
+    
+        D                   constitutive matrix
+    
+        eq = [bx; by]       bx: body force in x direction
+                            by: body force in y direction
+                                Any array with 2 elements acceptable
+    
+    Returns:
+        Ke : element stiffness matrix (8 x 8)
+        fe : equivalent nodal forces (8 x 1)
+    """
+    ptype=ep[0] 
+    t=ep[1]  
+    ir=ep[2]  
+    ngp=ir*ir
+    if eq == None:
+        q = zeros((2,1))
+    else:
+        q = reshape(eq, (2,1))
+#--------- gauss points --------------------------------------    
+    if ir == 1:
+        g1 = 0.0
+        w1 = 2.0
+        gp = mat([g1,g1])
+        w = mat([w1,w1])
+    elif ir == 2:
+        g1 = 0.577350269189626
+        w1 = 1
+        gp = mat([
+            [-g1,-g1],
+            [ g1,-g1],
+            [-g1, g1],
+            [ g1, g1]])
+        w = mat([
+            [ w1, w1],
+            [ w1, w1],
+            [ w1, w1],
+            [ w1, w1]])
+    elif ir == 3:
+        g1 = 0.774596669241483
+        g2 = 0.
+        w1 = 0.555555555555555
+        w2 = 0.888888888888888
+        gp = mat([
+            [-g1,-g1],
+            [-g2,-g1],
+            [ g1,-g1],
+            [-g1, g2],
+            [ g2, g2],
+            [ g1, g2],
+            [-g1, g1],
+            [ g2, g1],
+            [ g1, g1]])
+        w = mat([
+            [ w1, w1],
+            [ w2, w1],
+            [ w1, w1],
+            [ w1, w2],
+            [ w2, w2],
+            [ w1, w2],
+            [ w1, w1],
+            [ w2, w1],
+            [ w1, w1]])
+    else:
+        print "Used number of integration points not implemented" 
+    wp = multiply(w[:,0],w[:,1])
+    xsi = gp[:,0]
+    eta = gp[:,1]
+    r2 = ngp*2
+    # Shape Functions
+    N = multiply((1-xsi),(1-eta))/4.
+    N = append(N,multiply((1+xsi),(1-eta))/4.,axis=1)
+    N = append(N,multiply((1+xsi),(1+eta))/4.,axis=1)
+    N = append(N,multiply((1-xsi),(1+eta))/4.,axis=1)
+    
+    dNr = mat(zeros((r2,4)))
+    dNr[0:r2:2,0] = -(1-eta)/4.
+    dNr[0:r2:2,1] = (1-eta)/4.
+    dNr[0:r2:2,2] = (1+eta)/4.
+    dNr[0:r2:2,3] = -(1+eta)/4.
+    dNr[1:r2+1:2,0] = -(1-xsi)/4.
+    dNr[1:r2+1:2,1] = -(1+xsi)/4.
+    dNr[1:r2+1:2,2] = (1+xsi)/4.
+    dNr[1:r2+1:2,3] = (1-xsi)/4.
+
+#
+    Ke1 = mat(zeros((8,8)))
+    fe1 = mat(zeros((8,1)))
+    JT = dNr*mat([ex,ey]).T 
+    # --------- plane stress --------------------------------------
+    if ptype==1:
+        colD=shape(D)[0]
+        if colD>3:
+            Cm=linalg.inv(D)
+            Dm=linalg.inv(Cm[ ix_([0,1,3],[0,1,3]) ])
+        else:
+            Dm=D          
+#
+        B=matrix(zeros((3,8)))
+        N2=matrix(zeros((2,8)))
+        for i in range(ngp):
+            indx = array([2*(i+1)-1,2*(i+1)])
+            detJ = linalg.det(JT[indx-1,:])
+            if detJ < 10*finfo(float).eps:
+                print "Jacobideterminant equal or less than zero!"
+            JTinv = linalg.inv(JT[indx-1,:])  
+            dNx=JTinv*dNr[indx-1,:]
+#   
+            index_array_even=array([0,2,4,6])
+            index_array_odd=array([1,3,5,7])
+#    
+            counter=0    
+            for index in index_array_even:      
+                B[0,index] = dNx[0,counter]
+                B[2,index] = dNx[1,counter]
+                N2[0,index]=N[i,counter]
+                counter=counter+1
+#
+            counter=0    
+            for index in index_array_odd:
+                B[1,index]   = dNx[1,counter]
+                B[2,index]   = dNx[0,counter]
+                N2[1,index]  =N[i,counter]
+                counter=counter+1
+#   
+            Ke1 = Ke1+B.T*Dm*B*detJ*asscalar(wp[i])*t
+            fe1 = fe1 + N2.T * q * detJ * asscalar(wp[i]) * t
+
+        return Ke1,fe1
+#--------- plane strain --------------------------------------
+    elif ptype==2:
+#      
+        colD=shape(D)[0]
+        if colD>3:
+            Dm = D[ix_([0,1,3],[0,1,3])]
+        else:
+            Dm = D
+#
+        B=matrix(zeros((3,8)))
+        N2=matrix(zeros((2,8)))
+        for i in range(ngp):
+            indx = array([2*(i+1)-1,2*(i+1)])
+            detJ = linalg.det(JT[indx-1,:])
+            if detJ < 10*finfo(float).eps:
+                print "Jacobideterminant equal or less than zero!"
+            JTinv = linalg.inv(JT[indx-1,:])  
+            dNx=JTinv*dNr[indx-1,:]
+#   
+            index_array_even=array([0,2,4,6])
+            index_array_odd=array([1,3,5,7])
+#    
+            counter=0    
+            for index in index_array_even:
+#
+                B[0,index] = dNx[0,counter]
+                B[2,index] = dNx[1,counter]
+                N2[0,index]=N[i,counter]
+#
+                counter=counter+1
+#
+            counter=0    
+            for index in index_array_odd:
+                B[1,index]   = dNx[1,counter]
+                B[2,index]   = dNx[0,counter]
+                N2[1,index]  =N[i,counter]
+                counter=counter+1
+#   
+            Ke1 = Ke1 + B.T * Dm * B * detJ * asscalar(wp[i]) * t
+            fe1 = fe1+N2.T*q*detJ*asscalar(wp[i])*t
+        return Ke1,fe1
+    else:
+        print "Error ! Check first argument, ptype=1 or 2 allowed"
         
         
 def assem(edof,K,Ke,f=None,fe=None):
