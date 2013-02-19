@@ -23,63 +23,77 @@ class GeoData():
     
     
     def removePoint(self, ID):
+        '''Removes the point with this ID'''
         self.points.pop(ID)
     
     
     def removeCurve(self, ID):
+        '''Removes the curve with this ID'''
         self.curve.pop(ID)
     
     
     def removeSurface(self, ID):
+        '''Removes the surface with this ID'''
         self.surfaces.pop(ID)
     
     
     def removeVolume(self, ID):
+        '''Removes the volume with this ID'''
         self.volumes.pop(ID)
     
     
-    def getPointCoords(self, pointIDs=None):
-        '''Returns an N-by-3 list of point coordinates if the parameter is
-        a list of pointIDs. If the parameter is just a single integer then 
+    def getPointCoords(self, IDs=None):
+        '''
+        Returns an N-by-3 list of point coordinates if the parameter is
+        a list of IDs. If the parameter is just a single integer then 
         a single coordinate (simple 3-element list) is returned.
-        If the parameter is undefined (or None) all point coords will be returned'''
-        if pointIDs == None:
+        If the parameter is undefined (or None) all point coords will be returned
+        '''
+        if IDs == None:
             return [p[0] for p in self.points.values()]
         try:
-            pointCoords = [self.points[pID][0] for pID in pointIDs]
-        except TypeError: #pointIDs was not iterable. Probably just a single ID.
-            pointCoords = self.points[pointIDs][0]
+            pointCoords = [self.points[pID][0] for pID in IDs]
+        except TypeError: #IDs was not iterable. Probably just a single ID.
+            pointCoords = self.points[IDs][0]
         return pointCoords
     
     
-    def pointsOnCurves(self, curveIDs):
-        '''Returns a list of all geometric points (not nodes) on the curves
-        specified in curveIDs. curveIDs may be an integer or a list of integers.'''
-        return self._subentitiesOnEntities(curveIDs, self.curves, 1)
+    def pointsOnCurves(self, IDs):
+        '''
+        Returns a list of all geometric points (not nodes) on the curves
+        specified in IDs. IDs may be an integer or a list of integers.
+        '''
+        return self._subentitiesOnEntities(IDs, self.curves, 1)
     
     
-    def stuffOnSurfaces(self, surfaceIDs):
-        '''Returns lists of all geometric points and curves on the surfaces
-        specified in surfaceIDs. surfaceIDs may be an integer or a list of integers'''
-        curveSet = self._subentitiesOnEntities(surfaceIDs, self.surfaces, 1) #Curves on the outer edges
-        curveSet.update( self._subentityHolesOnEntities(surfaceIDs, self.surfaces, 2) ) #Curves on the holes
+    def stuffOnSurfaces(self, IDs):
+        '''
+        Returns lists of all geometric points and curves on the surfaces
+        specified in IDs. IDs may be an integer or a list of integers
+        '''
+        curveSet = self._subentitiesOnEntities(IDs, self.surfaces, 1) #Curves on the outer edges
+        curveSet.update( self._subentityHolesOnEntities(IDs, self.surfaces, 2) ) #Curves on the holes
         pointList = self.pointsOnCurves(curveSet) #Points on the curves of these surfaces.
         return pointList, list(curveSet)
         
-    def stuffOnVolumes(self, volumeIDs):
-        '''Returns lists of all geometric points, curves, and surfaces on the volumes
-        specified in volumeIDs. volumeIDs may be an integer or a list of integers'''
-        surfaceSet = self._subentitiesOnEntities(volumeIDs, self.surfaces, 0)
-        surfaceSet.update( self._subentitiesOnEntities(volumeIDs, self.surfaces, 1) )
+    def stuffOnVolumes(self, IDs):
+        '''
+        Returns lists of all geometric points, curves, and surfaces on the volumes
+        specified in IDs. IDs may be an integer or a list of integers
+        '''
+        surfaceSet = self._subentitiesOnEntities(IDs, self.surfaces, 0)
+        surfaceSet.update( self._subentitiesOnEntities(IDs, self.surfaces, 1) )
         pointList, curveList = self.stuffOnSurfaces(surfaceSet)
         return pointList, curveList, list(surfaceSet)
     
     def _subentitiesOnEntities(self, IDs, entityDict, index):
-        '''Duplicate code. Gets the IDs of the subentities that
+        '''
+        Duplicate code. Gets the IDs of the subentities that
         make up an entity, i.e. the points that define a curve or
         the curves that define a surface. Note that only the outer
         subentities of surfaces and volumes can be extracted with
-        this function. For holes use _subentityHolesOnEntities().'''
+        this function. For holes use _subentityHolesOnEntities().
+        '''
         theSet = set()
         try:
             for ID in IDs:
@@ -352,7 +366,7 @@ class GeoData():
         holes     - List of lists of curve IDs that make up the inner
                     boundaries of the surface. The curves must lie in the
                     same plane. 
-                       
+                    
         ID        - Positive integer ID of this surface. If left unspecified
                     the surface will be assigned the smallest unused surface-ID.
                     It is recommended to specify all surface-IDs or none.
@@ -369,7 +383,7 @@ class GeoData():
         Parameters:
         outerLoop - List of 3 or 4 curve IDs that make up the boundary of
                     the surface.
-                       
+                    
         ID        - Positive integer ID of this surface. If left unspecified
                     the surface will be assigned the smallest unused surface-ID.
                     It is recommended to specify all surface-IDs or none.
@@ -388,7 +402,7 @@ class GeoData():
         outerLoop - List of 4 curve IDs that make up the boundary of
                     the surface. The curves must be structured, i.e. their
                     parameter 'elOnCurv' must be defined.
-                       
+                    
         ID        - Positive integer ID of this surface. If left unspecified
                     the surface will be assigned the smallest unused surface-ID.
                     It is recommended to specify all surface-IDs or none.
@@ -424,7 +438,7 @@ class GeoData():
         
         holes         - List of lists of surface IDs that make up the inner
                         boundaries of the volume.
-                       
+                    
         ID            - Positive integer ID of this volume. If left unspecified
                         the volume will be assigned the smallest unused volume-ID.
                         It is recommended to specify all volume-IDs or none.
@@ -438,7 +452,7 @@ class GeoData():
         Parameters:
         outerSurfaces - List of surface IDs that make up the outer boundary of
                         the volume. The surfaces must be Structured Surfaces.
-                       
+                    
         ID            - Positive integer ID of this volume. If left unspecified
                         the volume will be assigned the smallest unused volume-ID.
                         It is recommended to specify all volume-IDs or none.
@@ -458,25 +472,29 @@ class GeoData():
         self.volumes[ID] = [outerSurfaces, holes, ID, marker, isStructured] 
         
         
-    def setPointMarker(self, pointID, marker):
-        self.points[pointID][2] = marker
+    def setPointMarker(self, ID, marker):
+        '''Sets the marker of the point with the ID'''
+        self.points[ID][2] = marker
     
     
-    def setCurveMarker(self, curveID, marker):
-        self.curves[curveID][2] = marker
+    def setCurveMarker(self, ID, marker):
+        '''Sets the marker of the curve with the ID'''
+        self.curves[ID][2] = marker
         
         
-    def setSurfaceMarker(self, surfaceID, marker):
-        self.surfaces[surfaceID][4] = marker
+    def setSurfaceMarker(self, ID, marker):
+        '''Sets the marker of the surface with the ID'''
+        self.surfaces[ID][4] = marker
         
         
-    def setVolumeMarker(self, volumeID, marker):
-        self.volumes[volumeID][3] = marker
+    def setVolumeMarker(self, ID, marker):
+        '''Sets the marker of the volume with the ID'''
+        self.volumes[ID][3] = marker
     
     
     def _checkIfProperStructuredQuadBoundary(self, outerLoop, ID):
         '''Checks if the four edges of a quad-shaped superelement exist and
-           are correct, i.e elOnCurve of opposite curves are equal.'''
+        are correct, i.e elOnCurve of opposite curves are equal.'''
         if len(outerLoop) != 4:
             raise IndexError("Structured Surface: outerloop must be a list of 4 positive integers denoting curve indices")
         
@@ -487,6 +505,9 @@ class GeoData():
             c3 = self.curves[outerLoop[3]]
         except KeyError:
             raise KeyError("Structured Surface: Attempted construction of StructuredSurface with ID=%s from a curve that does not exist" % ID)
+        
+        if None in [c0, c1, c2, c3]:
+            raise Exception("Attempted to create structured surface from non-structured boundary curves.")
         
         if( c0[-3] != c2[-3] or c1[-3] != c3[-3] ): #Check if the number of elements on opposite curves match.
             raise Exception("Structured Surface: The outerLoop of StructuredSurface %i is not properly " + 
@@ -532,11 +553,3 @@ class GeoData():
         for i in range(len(dictionary)):
             if sortedkeys[i] != i:
                 return i
-
-
-
-
-
-        
-        
-        

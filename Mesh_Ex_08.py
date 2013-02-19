@@ -12,12 +12,12 @@ import visvis as vv
 # ---- Create Geometry
 g = "examplegeo\ex8.geo" #Relative path to the geo file that contains the geometry.
 
-elmType = 3 #3 Quads
+elType = 3 #3 Quads
 dofsPerNode = 2
 
 mesher = GmshMesher(geoData = g,
-                    gmshExecPath = None, #"gmsh\gmsh.exe"
-                    elmType = elmType, 
+                    gmshExecPath = None,
+                    elType = elType, 
                     dofsPerNode= dofsPerNode)
 coords, edof, dofs, bdofs, elementmarkers = mesher.create()
 
@@ -46,8 +46,8 @@ bc, bcVal = applybc(bdofs, bc, bcVal, 5, 0.0, 0)
 applyforce(bdofs, f, 7, 10e5, 1)
 a,r = solveq(K,f,bc,bcVal)
 
-print "Drawing element mesh..."
-pcv.drawDisplacements(a, coords, edof, dofsPerNode, elmType, doDrawUndisplacedMesh=True, title="Example 08 - Geometry from 06")
+print "Visualising..."
+pcv.drawDisplacements(a, coords, edof, dofsPerNode, elType, doDrawUndisplacedMesh=True, title="Example 08 - Geometry from 06")
 
 # Enter main loop:
 app = vv.use()

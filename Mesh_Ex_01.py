@@ -30,12 +30,12 @@ g.addPoint([1.7, 0.7])
 
 #Add curves:
 # There are four types of curves. In this example we create an ellipse arc and some splines.
-# The first parameter is a list of point IDs that make the curve.
+# The first parameter is a list of point IDs that define the curve.
 # Curves can have have IDs and markers. In this example the IDs are undefined so the curves are
 # automatically assigned IDs. The markers can be used for identifying regions/boundaries in the
 # model.
-g.addEllipse([7,8,9,10], marker=50)   #0 An ellipse arc. Read the function doc for more information.
-g.addSpline([0, 1], marker=80)        #1
+g.addEllipse([7,8,9,10], marker=50)   #0 An ellipse arc. Read the function doc for more information. The four points are [start, center, majorAxis, end]
+g.addSpline([0, 1], marker=80)        #1 A spline. Splines pass through the points in the first parameter.
 g.addSpline([2, 1])                   #2
 g.addSpline([3, 2])                   #3
 g.addSpline([0, 3])                   #4
@@ -54,18 +54,22 @@ g.addSpline([4, 5, 6, 4])             #7 This is a closed spline. The start and 
 g.addSurface([4,3,2,1], [[7], [5,6,0]])
 
 #MESHING:
-elmType = 3 #Element type 3 is quad. (2 is triangle. See gmsh manual for more element types)
+elType = 3 #Element type 3 is quad. (2 is triangle. See user manual for more element types)
 dofsPerNode= 1 #Degrees of freedom per node.
 
 mesher = GmshMesher(geoData = g,
-                    gmshExecPath = None, #Path to gmsh.exe. If None then the system PATH variable is queried. Relative and absolute paths work.
-                    elmSizeFactor = 0.05, #Factor that changes element sizes.
-                    elmType = elmType, 
+                    gmshExecPath = None, #Path to gmsh.exe. If None then the system PATH variable is queried. Both relative and absolute paths work, like "gmsh\gmsh.exe".
+                    elSizeFactor = 0.05, #Factor that changes element sizes.
+                    elType = elType, 
                     dofsPerNode= dofsPerNode)
 
 #Mesh the geometry:
 # The first four return values are the same as those that trimesh2d() returns.
-# value elementmarkers is a list of markers, and is used for finding the marker of a given element (index).
+# coords is as list of node coordinates.
+# edof is the element topology (element degrees of freedom)
+# dofs is a lists of all degrees of freedom
+# bdofs is a dictionary of boundary dofs (dofs of geometric entities with markers).
+# elementmarkers is a list of markers, and is used for finding the marker of a given element (index).
 coords, edof, dofs, bdofs, elementmarkers = mesher.create()
 
 
@@ -77,7 +81,7 @@ pcv.drawGeometry(g)#Draws the geometry. Note that surfaces and volumes are not d
 
 vv.figure() #New figure window
 
-pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elmType=elmType, filled=True, title="Example 01") #Draws the mesh.
+pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=True, title="Example 01") #Draws the mesh.
 
 pcv.addText("This is a Text", pos=(1, -0.3), angle=45)  #Adds a text in world space
 
