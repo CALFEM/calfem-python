@@ -15,7 +15,7 @@ g.addPoint([0.5, -0.3, -0.3], 1)
 g.addPoint([1, 0, 0], 2)
 g.addPoint([1, 1, 0], 3)
 g.addPoint([0, 1, 0], 4, marker = 11) #Set some markers no reason.
-g.addPoint([0, 0, 1], 5, marker = 11)
+g.addPoint([0, 0, 1], 5, marker = 11) #(markers can be given to points as well as curves and surfaces)
 g.addPoint([1, 0, 1], 6, marker = 11)
 g.addPoint([1, 1, 1], 7)
 g.addPoint([0, 1, 1], 8)
@@ -45,16 +45,16 @@ g.addStructuredSurface([3, 4, 11, 7], 5)
 #Add Volume:
 #addStructuredVolume() takes three args. The first is a list of surface IDs (structured surfaces).
 # The surfaces should make a hexahedron (i.e. 6 surfaces). Other kinds of structured volumes than hexahedra will
-# not work for hexahedral elements.
-#The two optional subsequent parameters are the volume ID and volume marker.  
+# not work for hexahedral elements, which is the only type of 3D element that CALFEM handles.
+#The two optional parameters are the volume ID and volume marker.
 g.addStructuredVolume([0,1,2,3,4,5], 0, marker=90)
 
-elmType = 5 #Element type 5 is hexahedron. (See gmsh manual for more element types)
+elType = 5 #Element type 5 is hexahedron. (See user manual for more element types)
 dofsPerNode= 1 #Degrees of freedom per node.
 
 mesher = GmshMesher(geoData = g,
                     gmshExecPath = None,
-                    elmType = elmType, 
+                    elType = elType, 
                     dofsPerNode= dofsPerNode)
 
 #Mesh the geometry:
@@ -68,7 +68,7 @@ coords, edof, dofs, bdofs, _ = mesher.create()
 pcv.drawGeometry(g, drawPoints=False)#Draws the geometry.
 
 vv.figure()
-pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elmType=elmType, filled=True) #Draws the mesh.
+pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=True) #Draws the mesh.
 
 pcv.addText("This is a Text", pos=(1, 0.5, 0.5), angle=45)  #Adds a text in world space
 ourLabel = pcv.addLabel("This is a Label", pos=(20,30), angle=-45) #Adds a label in the screen space

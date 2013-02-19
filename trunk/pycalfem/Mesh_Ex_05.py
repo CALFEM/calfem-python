@@ -1,6 +1,6 @@
 '''Example 05
-This example shows how to make an unstructured 3D mesh (tetrahedron elements, which pycalfem cant actually use).
-It also demonstrates how to do subplot and create two axes that are viewed from the same camera.
+This example shows how to make an unstructured 3D mesh (tetrahedron elements, which calfem cant actually use).
+It also demonstrates how to do subplots and create two axes that are viewed from the same camera.
 ''' 
 
 from pycalfem_GeoData import *
@@ -32,13 +32,13 @@ g.addRuledSurface([2,3,4])
 
 g.addVolume([0,1,2,3])
 
-elmType = 4 #Element type 4 is tetrahedron. Pycalfem (See gmsh manual for more element types).
+elType = 4 #Element type 4 is tetrahedron. (See user manual for more element types).
 dofsPerNode= 1 #Degrees of freedom per node.
 
 mesher = GmshMesher(geoData = g,
                     gmshExecPath = None,
-                    elmType = elmType,
-                    elmSizeFactor = 0.3,
+                    elType = elType,
+                    elSizeFactor = 0.3,
                     dofsPerNode= dofsPerNode)
 
 #Mesh the geometry:
@@ -54,7 +54,7 @@ cam = vv.cameras.ThreeDCamera()
 a1.camera = a2.camera = cam
 #Draw:
 pcv.drawGeometry(g, axes=a1)#Draws the geometry.
-pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elmType=elmType, filled=False, axes=a2) #Draws the mesh.
+pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=False, axes=a2) #Draws the mesh.
 
 # Enter main loop:
 app = vv.use()

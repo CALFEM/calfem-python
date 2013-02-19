@@ -68,11 +68,11 @@ class MainWindow(wx.Frame):
         
         # Create Geometry:
         g = "examplegeo\ex8.geo"
-        self.elmType = 3 #3 Quads
+        self.elType = 3 #3 Quads
         self.dofsPerNode = 2
         mesher = GmshMesher(geoData = g,
                             gmshExecPath = None, #"gmsh\gmsh.exe"
-                            elmType = self.elmType, 
+                            elType = self.elType, 
                             dofsPerNode= self.dofsPerNode)
         self.coords, self.edof, self.dofs, self.bdofs, _ = mesher.create()
         
@@ -102,7 +102,7 @@ class MainWindow(wx.Frame):
         vv.clf()
         
         # Plot:
-        pcv.drawDisplacements(self.a, self.coords, self.edof, self.dofsPerNode, self.elmType, doDrawUndisplacedMesh=True, title="Example 09")
+        pcv.drawDisplacements(self.a, self.coords, self.edof, self.dofsPerNode, self.elType, doDrawUndisplacedMesh=True, title="Example 09")
     
     def _Clear(self, event):
         vv.clf() #Clear current figure

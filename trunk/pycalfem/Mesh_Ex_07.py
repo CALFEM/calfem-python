@@ -49,12 +49,12 @@ g.addSpline([6,4], elOnCurve = 6)
 g.addStructuredSurface([0,2,1,3], marker = 10)
 g.addStructuredSurface([1,4,5,6], marker = 11)
 
-elmType = 16 #Element type 16 is 8-node-quad. (See gmsh manual for more element types)
+elType = 16 #Element type 16 is 8-node-quad. (See gmsh manual for more element types)
 dofsPerNode= 1 #Degrees of freedom per node.
 
 mesher = GmshMesher(geoData = g,
                     gmshExecPath = None, #Path to gmsh.exe. If None then the system PATH variable is queried. Relative and absolute paths work.
-                    elmType = elmType,
+                    elType = elType,
                     dofsPerNode= dofsPerNode)
 coords, edof, dofs, bdofs, elementmarkers = mesher.create()
 
@@ -89,22 +89,16 @@ ed = extractEldisp(edof,a)
 for i in range(shape(ex)[0]):
     es, et, eci = flw2i8s(ex[i,:], ey[i,:], ep, Ddict[elementmarkers[i]], ed[i,:])
     #Do something with es, et, eci here.
-    
-#qs, qt = flw2ts(ex, ey, D, ed)
-
-
-print "Drawing element mesh..."
-#eliso2(ex,ey,ed) #These only work for triangular elements.    
-#eldraw2(ex,ey)
-
+   
+print "Visualising..."
 drawGeometry(g, title="Geometry")
 
 vv.figure()
-drawMesh(coords, edof, dofsPerNode, elmType, filled=False)
+drawMesh(coords, edof, dofsPerNode, elType, filled=False)
 #8-node quads are drawn as simple quads.
 
 vv.figure()
-drawNodalValues(a, coords, edof, dofsPerNode, elmType, title="Example 7")
+drawNodalValues(a, coords, edof, dofsPerNode, elType, title="Example 7")
 getColorbar().SetLabel("Temperature")
 addText("The bend has high conductivity", (125,125))
 addText("This part has low conductivity", (160,-50))

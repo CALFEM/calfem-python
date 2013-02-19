@@ -1,6 +1,6 @@
 '''Example 06
 Solves a plane stress 2D problem using a structured mesh.
-Shows how to draw von Mises effective stress as an element value with drawElementValues(). (Currently commented code)
+Shows how to draw von Mises effective stress as an element value with drawElementValues().
 Shows use of GmshMesher attribute 'nodesOnCurve' (dictionary that says which nodes are on a given geometry curve)
 '''
 
@@ -42,10 +42,10 @@ splines = [[0,1], [1,2], [6,7], [7,8], [8,13],          #0-4
 for s in splines:
     g.addSpline(s, elOnCurve=5)
     
-g.setCurveMarker(curveID=4,  marker=7) #Assign marker 7 to the splines on the right.
-g.setCurveMarker(curveID=5,  marker=7) # We will apply a force on nodes with marker 7.
-g.setCurveMarker(curveID=10, marker=5) #Assign marker 5 to the splines on the left.
-g.setCurveMarker(curveID=11, marker=5) # The nodes with marker 5 will be locked in place.
+g.setCurveMarker(ID=4,  marker=7) #Assign marker 7 to the splines on the right.
+g.setCurveMarker(ID=5,  marker=7) # We will apply a force on nodes with marker 7.
+g.setCurveMarker(ID=10, marker=5) #Assign marker 5 to the splines on the left.
+g.setCurveMarker(ID=11, marker=5) # The nodes with marker 5 will be locked in place.
 
 # Points in circle arcs are [start, center, end]
 circlearcs = [[2, 23, 3], [3, 23, 4], [4, 23, 5], [5, 23, 6],           #26-29
@@ -68,11 +68,11 @@ g.addStructuredSurface([32, 17, 18, 25]) #11
 
 
 print "Meshing geometry..."
-elmType = 3 #3 Quads
+elType = 3 #3 Quads
 dofsPerNode = 2
 
 mesher = GmshMesher(geoData = g,
-                    elmType = elmType,
+                    elType = elType,
                     dofsPerNode=dofsPerNode, 
                     gmshExecPath = None)
 coords, edof, dofs, bdofs, elementmarkers = mesher.create()
@@ -112,10 +112,10 @@ print "Visualising..."
 pcv.drawGeometry(g, drawPoints=False, labelCurves=True)
 
 vv.figure()
-pcv.drawElementValues(vonMises, coords, edof, dofsPerNode, elmType, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
+pcv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
 
 vv.figure()
-pcv.drawDisplacements(a, coords, edof, dofsPerNode, elmType, doDrawUndisplacedMesh=True, title="Example 06")
+pcv.drawDisplacements(a, coords, edof, dofsPerNode, elType, doDrawUndisplacedMesh=True, title="Example 06")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on the right hand side of the mesh:
 rightSideNodes = set()

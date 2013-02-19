@@ -1,6 +1,6 @@
 import os, sys
-from numpy import *
-from pycalfem import *
+import numpy as np
+from pycalfem import createdofs
 from pycalfem_utils import which
    
 
@@ -10,7 +10,7 @@ from pycalfem_utils import which
 #            D.extend(dofs[node])
 #        return D
                 
-def offsetIndices(lst, offset=0):
+def _offsetIndices(lst, offset=0):
     '''Shifts the indices by offset. 
     Positive offsets move the indices away from 0.
     Negative offsets move the indices towards 0.
@@ -19,7 +19,7 @@ def offsetIndices(lst, offset=0):
     
     
     
-def formatList(lst, offset=0):
+def _formatList(lst, offset=0):
     """
     Turns a list of numbers into a corresponding string of comma-separated numbers.
     The parameter offset is a number that is added to the numbers.
@@ -30,12 +30,12 @@ def formatList(lst, offset=0):
     """
     #Increment the indices by 1. Join list-elements as strings separated by ', '. 
     try:
-        return ', '.join(map(str, offsetIndices(lst, offset) ))
+        return ', '.join(map(str, _offsetIndices(lst, offset) ))
     except TypeError:
         return lst+offset #If lst is not iterable (causes TypeError), then it is probably an integer.
 
 
-def insertInSetDict(dictionary, key, values):
+def _insertInSetDict(dictionary, key, values):
     '''inserts values at key in dictionary containing sets. Values may be
     a single value or iterable, in which case each value is inserted'''
     if not dictionary.has_key(key):
@@ -48,19 +48,24 @@ def insertInSetDict(dictionary, key, values):
     
     
 class GmshMesher():
+    '''
+    Meshes geometry in GeoData objects or geo-files by calling the Gmsh executable.
+    This is done when the function create() is called.
+    '''
     
-    def __init__(self, geoData, elmType=2, elmSizeFactor=1, dofsPerNode=1, 
+    def __init__(self, geoData, elType=2, elSizeFactor=1, dofsPerNode=1, 
                 gmshExecPath=None, clcurv=False,
                 minSize = None, maxSize = None, meshingAlgorithm = None,
-                bgmFile=None, additionalOptions = ''):       
+                additionalOptions = ''):       
         '''        
         Parameters:
         
             geoData        GeoData instance or string containing path to .geo-file
                             
-            elmType        Integer. Element type and order. See gmsh manual for details.
+            elType        Integer. Element type and order. 
+                           See gmsh manual for details.
             
-            elmSizeFactor  Float. Factor by which the element sizes are multiplied.
+            elSizeFactor  Float. Factor by which the element sizes are multiplied.
             
             dofsPerNode    Number of degrees of freedom per node.
             
@@ -73,27 +78,24 @@ class GmshMesher():
             
             maxSize        Maximum element size
             
-            meshingAlgorithm  String. Select mesh algorithm ('meshadapt', 'del2d', 'front2d',
-                              'del3d', 'front3d', ...). See the gmsh manual for more info.
-                            
-            bgmFile        The file name of a background mesh file (.bgm). Gmsh can use 
-                           bgm files to prescribe element sizes.
+            meshingAlgorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
+                              'front2d',  'del3d', 'front3d', ...). 
+                              See the gmsh manual for more info.
             
             additionalOptions  String containing additional command line args for gmsh.
                                Use this if a gmsh option is not covered by the above 
-                               parameters (See section 3.3 in the gmsh manual for a list 
-                               of options)):
+                               parameters (See section 3.3 in the gmsh manual for a 
+                               list of options)):
            '''
         self.geoData = geoData
-        self.elmType = elmType
-        self.elmSizeFactor = elmSizeFactor
+        self.elType = elType
+        self.elSizeFactor = elSizeFactor
         self.dofsPerNode = dofsPerNode
         self.gmshExecPath = gmshExecPath
         self.clcurv = clcurv
         self.minSize = minSize
         self.maxSize = maxSize
         self.meshingAlgorithm = meshingAlgorithm
-        self.bgmFile = bgmFile
         self.additionalOptions = additionalOptions
         
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93] #gmsh elements that have rectangle faces
@@ -136,20 +138,23 @@ class GmshMesher():
             bdofs           Boundary dofs. Dictionary containing lists of dofs for
                             each boundary marker. Dictionary key = marker id.
                             
-            elementmarkers  List of integer markers. Row i contains the marker of element i.
-                            Markers are similar to boundary markers and can be used to identify
-                            in which region an element lies.
+            elementmarkers  List of integer markers. Row i contains the marker of
+                            element i. Markers are similar to boundary markers and
+                            can be used to identify in which region an element lies.
                             
     Running this function also creates object variables:
             
-            nodesOnCurve    Dictionary containing lists of node-indices. Key is a curve-ID and the value
-                            is a list of indices of all nodes on that curve, including its end points.
+            nodesOnCurve    Dictionary containing lists of node-indices. Key is a 
+                            curve-ID and the value is a list of indices of all nodes
+                            on that curve, including its end points.
             
-            nodesOnSurface  Dictionary containing lists of node-indices. Key is a surface-ID and the value
-                            is a list of indices of the nodes on that surface, including its boundary.
+            nodesOnSurface  Dictionary containing lists of node-indices. Key is a
+                            surface-ID and the value is a list of indices of the nodes
+                            on that surface, including its boundary.
             
-            nodesOnVolume   Dictionary containing lists of node-indices. Key is a volume-ID and the value
-                            is a list of indices of the nodes in that volume, including its surface. 
+            nodesOnVolume   Dictionary containing lists of node-indices. Key is a
+                            volume-ID and the value is a list of indices of the nodes
+                            in that volume, including its surface. 
         '''
         #Nodes per element for different element types:
         #(taken from Chapter 9, page 89 of the gmsh manual)
@@ -160,7 +165,7 @@ class GmshMesher():
                            21:10, 22:12, 23:15, 24:15, 25:21,
                            26:4,  27:5,  28:6,  29:20, 30:35,
                            31:56, 92:64, 93:125}
-        nodesPerElement = nodesPerElmDict[self.elmType]        
+        nodesPerElement = nodesPerElmDict[self.elType]        
         
         # Check for GMSH executable [NOTE]Mostly copied from trimesh2d(). TODO: Test on different systems
         gmshExe = self.gmshExecPath
@@ -172,11 +177,10 @@ class GmshMesher():
                 gmshExe = which("gmsh")
         else:
             if not os.path.exists(gmshExe):
-                directory = os.path.dirname(__file__)
-                gmshExe = os.path.join(directory, self.gmshExecPath) #Try relative path
+                gmshExe = os.path.join(os.getcwd(), self.gmshExecPath) #Try relative path
                 if not os.path.exists(gmshExe):
                     gmshExe = None #Relative path didnt work either
-                
+              
         if gmshExe==None:
             raise IOError("Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
         
@@ -184,36 +188,34 @@ class GmshMesher():
             geoFilePath = self.geoData
             dim = 3 if is3D else 2 #In this case geoData is a path string, so the dimension must be supplied by the user.
             if not os.path.exists(geoFilePath):
-                directory = os.path.dirname(__file__)
-                geoFilePath = os.path.join(directory, geoFilePath) #Try relative path
+                geoFilePath = os.path.join(os.getcwd(), geoFilePath) #Try relative path
                 if not os.path.exists(geoFilePath):
                     raise IOError("Error: Could not find geo-file " + geoFilePath)
         else:
             dim = 3 if self.geoData.is3D else 2   #Get the dimension of the model from geoData.
             if not os.path.exists("./gmshMeshTemp"):
                 os.mkdir("./gmshMeshTemp")
-            geoFilePath = "gmshMeshTemp/tempGeometry.geo" #"gmshMeshTemp/tempGeometry.geo"
+            geoFilePath = os.path.normpath(os.path.join(os.getcwd(), "gmshMeshTemp/tempGeometry.geo"))#"gmshMeshTemp/tempGeometry.geo"
             self.geofile = open(geoFilePath, "w") #Create temp geometry file
-            self.writeGeoFile()#Write geoData to file            
+            self._writeGeoFile()#Write geoData to file            
             self.geofile.close()
         
-        mshFileName= os.getcwd() + '/gmshMeshTemp/' + 'meshFile.msh' #Filepath to the msh-file that will be generated.
+        mshFileName = os.path.normpath(os.path.join(os.getcwd(), 'gmshMeshTemp/meshFile.msh')) #Filepath to the msh-file that will be generated.
         #construct options string:
         options = ""
         options += ' -' + str(dim)
-        options += ' -clscale ' + str(self.elmSizeFactor) #scale factor [consider sticking this in an IF if it interferes with other options]
-        options += ' -o ' + mshFileName;
+        options += ' -clscale ' + str(self.elSizeFactor) #scale factor
+        options += ' -o \"%s\"' % mshFileName
         options += ' -clcurv' if self.clcurv else ''
         options += ' -clmin ' + str(self.minSize) if self.minSize is not None else ''
         options += ' -clmax ' + str(self.maxSize) if self.maxSize is not None else ''
         options += ' -algo ' + self.meshingAlgorithm if self.meshingAlgorithm is not None else ''
-        options += ' -bgm ' + self.bgmFile if self.bgmFile is not None else ''
-        options += ' -order 2' if self.elmType in self._2ndOrderElms else ''
+        options += ' -order 2' if self.elType in self._2ndOrderElms else ''
         options += ' ' + self.additionalOptions
         
         #Execute gmsh
-        #print(gmshExe + " " + geoFilePath + " " + options) #TEMP
-        os.system("%s %s %s" % (gmshExe, geoFilePath, options))
+        gmshExe = os.path.normpath(gmshExe)
+        os.system("%s \"%s\" %s" % (gmshExe, geoFilePath, options))
         
         #Read generated msh file:
         #print("Opening msh file " + mshFileName)#TEMP
@@ -225,7 +227,7 @@ class GmshMesher():
         while(ln != '$Nodes\n'): #Read until we find the nodes
             ln = mshFile.readline()
         nbrNodes = int(mshFile.readline())
-        allNodes = zeros([nbrNodes,dim], 'd')
+        allNodes = np.zeros([nbrNodes,dim], 'd')
         for i in range(nbrNodes):
             line = map(float, mshFile.readline().split())
             allNodes[i,:] = line[1:dim+1] #Grab the coordinates (1:3 if 2D, 1:4 if 3D)
@@ -248,22 +250,22 @@ class GmshMesher():
             entityID = line[4] #Fifth int  is the ID of the geometric entity (points, curves, etc) that the element belongs to
             nodes = line[3+nbrTags : len(line)] #The rest after tags are node indices.
             
-            if(eType == self.elmType): #If the element type is the kind of element we are looking for:
+            if(eType == self.elType): #If the element type is the kind of element we are looking for:
                 elements.append(nodes) #Add the nodes of the elements to the list.
                 elementmarkers.append(marker)#Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
             else: #If the element is not a "real" element we store its node at marker in bdof instead:
-                insertInSetDict(bdofs, marker, nodes)
+                _insertInSetDict(bdofs, marker, nodes)
                     
             #if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
             #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
             if eType in [1,8,26,27,28]: #If line
-                insertInSetDict(self.nodesOnCurve, entityID-1, offsetIndices(nodes,-1)) #insert nodes into nodesOnCurve
+                _insertInSetDict(self.nodesOnCurve, entityID-1, _offsetIndices(nodes,-1)) #insert nodes into nodesOnCurve
             elif eType in [2,3,9,10,16,20,21,22,23,24,25]: #If surfaceelement
-                insertInSetDict(self.nodesOnSurface, entityID-1, offsetIndices(nodes,-1)) #insert nodes into nodesOnSurface
+                _insertInSetDict(self.nodesOnSurface, entityID-1, _offsetIndices(nodes,-1)) #insert nodes into nodesOnSurface
             else: #if volume element.
-                insertInSetDict(self.nodesOnVolume, entityID-1, offsetIndices(nodes,-1))
+                _insertInSetDict(self.nodesOnVolume, entityID-1, _offsetIndices(nodes,-1))
                 
-        elements = array(elements) 
+        elements = np.array(elements) 
         for key in bdofs.keys(): #Convert the sets of boundary nodes to lists.
                 bdofs[key] = list(bdofs[key])
         for key in self.nodesOnCurve.keys(): #Convert set to list
@@ -276,10 +278,10 @@ class GmshMesher():
         #print("Closing msh file...")#TEMP        
         mshFile.close()
         
-        dofs = createdofs(size(allNodes,0), self.dofsPerNode)
+        dofs = createdofs(np.size(allNodes,0), self.dofsPerNode)
         
         if self.dofsPerNode>1: #This if-chunk copied from pycalfem_utils.py
-            expandedElements = zeros((size(elements,0),nodesPerElement*self.dofsPerNode),'i')
+            expandedElements = np.zeros((np.size(elements,0),nodesPerElement*self.dofsPerNode),'i')
             elIdx = 0
             for elementTopo in elements:        
                 for i in range(nodesPerElement):
@@ -294,13 +296,13 @@ class GmshMesher():
                         bVertsNew.append(dofs[bVerts[i]-1][j])
                 bdofs[keyID] = bVertsNew
                 
-            return allNodes, asarray(expandedElements), dofs, bdofs, elementmarkers
+            return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers
         
         return allNodes, elements, dofs, bdofs, elementmarkers
         
         
         
-    def writeGeoFile(self):
+    def _writeGeoFile(self):
         pointMarkers = {} #key is marker, value is a list of point indices (0-based) with that marker
         curveMarkers = {}
         surfaceMarkers = {}
@@ -308,32 +310,32 @@ class GmshMesher():
         
         # WRITE POINTS:
         for ID, [coords, elSize, marker] in self.geoData.points.items(): 
-            self.geofile.write("Point(%i) = {%s};\n" % (ID+1, formatList(coords + [elSize]) ))
-            insertInSetDict(pointMarkers, marker, ID)
+            self.geofile.write("Point(%i) = {%s};\n" % (ID+1, _formatList(coords + [elSize]) ))
+            _insertInSetDict(pointMarkers, marker, ID)
         
         # WRITE CURVES:
         for ID, [curveName, points, marker, elOnCurve, distributionString, distributionVal] in self.geoData.curves.items():
-            self.geofile.write("%s(%i) = {%s};\n" %  (curveName, ID+1, formatList(points, 1) ))
+            self.geofile.write("%s(%i) = {%s};\n" %  (curveName, ID+1, _formatList(points, 1) ))
             
             #Transfinite Line{2} = 20 Using Bump 0.05;
             if elOnCurve != None:
                 distribution = "" if distributionString==None else "Using %s %f" % (distributionString, distributionVal) 
                 self.geofile.write("Transfinite Line{%i} = %i %s;\n" % (ID+1, elOnCurve+1, distribution) ) 
                 #+1 on elOnCurve because gmsh actually takes the number of nodes on the curve, not elements on the curve.
-            insertInSetDict(curveMarkers, marker, ID)
+            _insertInSetDict(curveMarkers, marker, ID)
         
         # WRITE SURFACES:
         for ID, [surfName, outerLoop, holes, ID, marker, isStructured] in self.geoData.surfaces.items():
             #First we write line loops for the surface edge and holes (if there are any holes):
-            self.writeLineLoop(outerLoop, ID+1)
+            self._writeLineLoop(outerLoop, ID+1)
             holeIDs = []
             for hole, i in zip(holes, range(len(holes))):
                 #Create a hopefully unique ID-number for the line loop: Like 10015 or 1540035
                 holeID = 10000 * (ID+1) + 10 * i + 5 #(If gmsh uses 32-bit integers for IDs then IDs over 214'748 will break)
-                self.writeLineLoop(hole, holeID)
+                self._writeLineLoop(hole, holeID)
                 holeIDs.append(holeID)
             #Second, we write the surface itself: 
-            holeString = "" if not holeIDs else ", " + formatList(holeIDs) #If we have hole we want to include them in the surface.
+            holeString = "" if not holeIDs else ", " + _formatList(holeIDs) #If we have hole we want to include them in the surface.
             self.geofile.write("%s(%i) = {%s%s};\n" % (surfName, ID+1, ID+1, holeString)) #Like "Plane Surface(2) = {4, 2, 6, 8}
             #Lastly, we make the surface transfinite if it is a structured surface: 
             if isStructured:
@@ -343,64 +345,64 @@ class GmshMesher():
                     cornerPoints.add(curvePoints[0])
                     cornerPoints.add(curvePoints[-1])
                 cornerPoints = list(cornerPoints)
-                self.geofile.write("Transfinite Surface{%i} = {%s};\n" % (ID+1, formatList(cornerPoints, 1)))#Like Transfinite Surface{1} = {1,2,3,4};
+                self.geofile.write("Transfinite Surface{%i} = {%s};\n" % (ID+1, _formatList(cornerPoints, 1)))#Like Transfinite Surface{1} = {1,2,3,4};
                 #Transfinite Surface has an optional argument (about triangle orientation) that is not implemented here.
-            insertInSetDict(surfaceMarkers, marker, ID)
+            _insertInSetDict(surfaceMarkers, marker, ID)
         
         # WRITE VOLUMES:
         for ID, [outerLoop, holes, ID, marker, isStructured] in self.geoData.volumes.items():
             #Surface loops for the volume boundary and holes (if any):
-            self.writeSurfaceLoop(outerLoop, ID+1)
+            self._writeSurfaceLoop(outerLoop, ID+1)
             holeIDs = []
             for hole, i in zip(holes, range(len(holes))):
                 holeID = 10000 * (ID+1) + 10 * i + 7 # ID-number for the hole surface loop
-                self.writeSurfaceLoop(hole, holeID)
+                self._writeSurfaceLoop(hole, holeID)
                 holeIDs.append(holeID)
             #Write the volume itself: 
-            holeString = "" if not holeIDs else " , " + formatList(holeIDs) #If we have hole we want to include them in the surface.
+            holeString = "" if not holeIDs else " , " + _formatList(holeIDs) #If we have hole we want to include them in the surface.
             self.geofile.write("Volume(%i) = {%s%s};\n" % (ID+1, ID+1, holeString)) #Like "Plane Surface(2) = {4, 2, 6, 8}
             #Lastly, we make the volume transfinite if it is a structured volume: 
             if isStructured:
                 self.geofile.write("Transfinite Volume{%i} = {};\n" % (ID+1))
                 #We don't find the corner points of the structured volume like we did with the surfaces. Gmsh can actually
                 #find the corners automatically.
-            insertInSetDict(volumeMarkers, marker, ID)
+            _insertInSetDict(volumeMarkers, marker, ID)
         
         # MAYBE MAKE QUADS:
-        if(self.elmType in self._ElementsWithQuadFaces):#If we have quads surfaces on the elements
+        if(self.elType in self._ElementsWithQuadFaces):#If we have quads surfaces on the elements
             self.geofile.write("Mesh.RecombineAll = 1;\n")
         
         # WRITE POINT MARKERS:
         for marker, IDlist in pointMarkers.items():
             if marker != 0:
-                self.geofile.write("Physical Point(%i) = {%s};\n" % (marker, formatList(IDlist, 1) ))
+                self.geofile.write("Physical Point(%i) = {%s};\n" % (marker, _formatList(IDlist, 1) ))
         
         # WRITE CURVE MARKERS:
         for marker, IDlist in curveMarkers.items():
-            self.geofile.write("Physical Line(%i) = {%s};\n" % (marker, formatList(IDlist, 1) ))
+            self.geofile.write("Physical Line(%i) = {%s};\n" % (marker, _formatList(IDlist, 1) ))
             
         # WRITE SURFACE MARKERS:
         for marker, IDlist in surfaceMarkers.items():
-            self.geofile.write("Physical Surface(%i) = {%s};\n" % (marker, formatList(IDlist, 1) ))
+            self.geofile.write("Physical Surface(%i) = {%s};\n" % (marker, _formatList(IDlist, 1) ))
             
         # WRITE SURFACE MARKERS:
         for marker, IDlist in volumeMarkers.items():
-            self.geofile.write("Physical Volume(%i) = {%s};\n" % (marker, formatList(IDlist, 1) ))
+            self.geofile.write("Physical Volume(%i) = {%s};\n" % (marker, _formatList(IDlist, 1) ))
             
         # If the element type is of an incomplete second order type
         # (i.e it is an 2nd order element without nodes in the middle of the element face),
         # then we need to specify this in the geo-file:
-        if self.elmType in self._2dOrderIncompleteElms:
+        if self.elType in self._2dOrderIncompleteElms:
             self.geofile.write("Mesh.SecondOrderIncomplete=1;\n")
 
        
-    def writeLineLoop(self, lineIndices, loopID): 
+    def _writeLineLoop(self, lineIndices, loopID): 
         endPoints = [] #endPoints is used to keep track of at which points the curves start and end (i.e the direction of the curves)
         for i in lineIndices: #lineIndices is a list of curve indices (0-based here, but 1-based later in the method)
             curvePoints = self.geoData.curves[i][1]
             endPoints.append([curvePoints[0], curvePoints[-1]])
         
-        lineIndices = offsetIndices(lineIndices, 1) #We need the indices to be 1-based rather than 0-based in the next loop. (Some indices will be preceded by a minus-sign)
+        lineIndices = _offsetIndices(lineIndices, 1) #We need the indices to be 1-based rather than 0-based in the next loop. (Some indices will be preceded by a minus-sign)
         isFirstLine = True
         nbrLinesinLoop = len(lineIndices)
         for k in range(nbrLinesinLoop): # In this loop we reverse the direction of some lines in the LineLoop to make them conform to the format that Gmsh expects.
@@ -427,13 +429,13 @@ class GmshMesher():
         if not self.geoData.is3D: #If the model is in 2D we need to make all line loops counter-clockwise so surface normals point in the positive z-direction.
             lineIndices = self._makeCounterClockwise(lineIndices)
         
-        self.geofile.write("Line Loop(%i) = {%s};\n" % (loopID, formatList(lineIndices))) #(lineIndices are alreay 1-based here)
+        self.geofile.write("Line Loop(%i) = {%s};\n" % (loopID, _formatList(lineIndices))) #(lineIndices are alreay 1-based here)
         
     def _makeCounterClockwise(self, lineIndices):
         '''If the lineIndices describe a line loop that is not counterclockwise,
         this function will return a counterclockwise version of lineIndices
         (i.e. all indices multiplied by -1).
-        1-based line indices that may be negative, but not 0'''
+        lineIndices is a list of integers (1-based line indices) that may be negative, but not 0'''
         #Method described at http://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
         summa = 0.0 #Counter-clockwise if the sum ends up negative.
         for index in lineIndices:
@@ -448,29 +450,29 @@ class GmshMesher():
                     summa += (points[i+1][0] - points[i][0]) * (points[i+1][1] + points[i][1])   #(x2-x1)(y2+y1).
             elif curveType == 'Circle':
                 #We will find a point 'd' on the middle of the circle arc, and use a-d-c as approximation of the arc.
-                points = array([self.geoData.points[ID][0] for ID in pointIDs]) # 3-by-3 array. The rows are start-center-end points and columns are x,y,z.
+                points = np.array([self.geoData.points[ID][0] for ID in pointIDs]) # 3-by-3 array. The rows are start-center-end points and columns are x,y,z.
                 points = points if sign==1 else points[::-1] #Reverse the order of the points if the curve direction is reversed.
                 a = points[0,:] #start
                 b = points[1,:] #center
                 c = points[2,:] #end
-                r = linalg.norm(a-b) #radius
-                d = b + r * (a + 2*b + c) / linalg.norm(a + 2*b +c)
-                approxArc = vstack((a, d, c))
+                r = np.linalg.norm(a-b) #radius
+                d = b + r * (a + 2*b + c) / np.linalg.norm(a + 2*b +c)
+                approxArc = np.vstack((a, d, c))
                 for i in range(len(approxArc)-1):
                     summa += (approxArc[i+1, 0] - approxArc[i, 0]) * (approxArc[i+1, 1] + approxArc[i, 1])   #(x2-x1)(y2+y1).
             elif curveType == 'Ellipse':
                 #We will find a point 'd' near the middle of the circle arc, and use a-d-c as approximation of the arc.
                 # The only difference from the circle above, is that the radius at d is approximated as the mean distance between
                 # the center and the two other points.  
-                points = array([self.geoData.points[ID][0] for ID in pointIDs]) # 4-by-3 array. The rows are start-center-majAxis-end points and columns are x,y,z.
+                points = np.array([self.geoData.points[ID][0] for ID in pointIDs]) # 4-by-3 array. The rows are start-center-majAxis-end points and columns are x,y,z.
                 points = points[[0,1,3],:] #skip the major axis point (row 2)
                 points = points if sign==1 else points[::-1] #Reverse the order of the points if the curve direction is reversed.
                 a = points[0,:] #start
                 b = points[1,:] #center
                 c = points[2,:] #end
-                r = (linalg.norm(a-b) + linalg.norm(c-b)) / 2 #approximate radius
-                d = b + r * (a + 2*b + c) / linalg.norm(a + 2*b +c)
-                approxArc = vstack((a, d, c))
+                r = (np.linalg.norm(a-b) + np.linalg.norm(c-b)) / 2 #approximate radius
+                d = b + r * (a + 2*b + c) / np.linalg.norm(a + 2*b +c)
+                approxArc = np.vstack((a, d, c))
                 for i in range(len(approxArc)-1):
                     summa += (approxArc[i+1, 0] - approxArc[i, 0]) * (approxArc[i+1, 1] + approxArc[i, 1])   #(x2-x1)(y2+y1).
         if summa > 0: #If the sum is positive the loop (closed polygon) is clockwise, so reverse the direction of all curves:
@@ -479,6 +481,6 @@ class GmshMesher():
                 
              
         
-    def writeSurfaceLoop(self, outerLoop, ID):
-        self.geofile.write("Surface Loop(%i) = {%s};\n" % (ID, formatList(outerLoop, 1)))
+    def _writeSurfaceLoop(self, outerLoop, ID):
+        self.geofile.write("Surface Loop(%i) = {%s};\n" % (ID, _formatList(outerLoop, 1)))
        
