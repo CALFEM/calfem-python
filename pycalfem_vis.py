@@ -1,6 +1,3 @@
-#TODO: Add optional parameter GeoData to draw-functions. Use it to find points on surfaces, and exclude all faces that contain verts
-# that are not among the points on the surfaces. This would probably make drawing faster for big 3D meshes
-
 import visvis as vv
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
@@ -356,7 +353,7 @@ def drawGeometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoin
             P = _circleArc(*points, pointsOnCurve=N)
         if curveName == "Ellipse":
             P = _ellipseArc(*points, pointsOnCurve=N)
-        plotArgs = {'lc':'k', 'ms':None, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
+        plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
         if geoData.is3D:
             vv.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
         else:
