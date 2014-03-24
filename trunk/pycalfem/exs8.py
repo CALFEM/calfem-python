@@ -74,7 +74,7 @@ a,r = solveq(K,f,bcPrescr,bcVal)
 
 # ----- Compute element flux vector -----
 
-Ed = extract(Edof,a)
+Ed = extractEldisp(Edof,a)
 Es = zeros((8,2))
 for i in range(8):
     Es[i],Et = flw2qs(Ex[i],Ey[i],ep,D,Ed[i])

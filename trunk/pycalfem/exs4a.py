@@ -92,7 +92,7 @@ print("Reaction forces r:")
 
 # ----- Element forces -------------------------------------------
 
-ed=extract(Edof,a);
+ed=extractEldisp(Edof,a);
 N=zeros([Edof.shape[0]])
 
 print("Element forces:")

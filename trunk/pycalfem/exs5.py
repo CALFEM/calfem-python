@@ -51,7 +51,7 @@ bc=array([1,2,11])
 
 # ----- Section forces -------------------------------------------
 
-Ed=extract(Edof,a);
+Ed=extractEldisp(Edof,a);
 
 es1,ed1,ec1=beam2s(ex,ey,ep,Ed[0,:],np=10)
 es2,ed2,ec2=beam2s(ex,ey,ep,Ed[1,:],np=10)
