@@ -60,9 +60,9 @@ print(r)
 
 # ----- Element forces -------------------------------------------
 
-ed1=extract(Edof[0,:],a)
-ed2=extract(Edof[1,:],a)
-ed3=extract(Edof[2,:],a)
+ed1=extractEldisp(Edof[0,:],a)
+ed2=extractEldisp(Edof[1,:],a)
+ed3=extractEldisp(Edof[2,:],a)
 
 es1=spring1s(ep2,ed1)
 es2=spring1s(ep1,ed2)

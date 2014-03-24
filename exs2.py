@@ -71,11 +71,11 @@ print(r)
 
 # ----- Element flows -------------------------------------------
 
-ed1=extract(Edof[0,:],a)
-ed2=extract(Edof[1,:],a)
-ed3=extract(Edof[2,:],a)
-ed4=extract(Edof[3,:],a)
-ed5=extract(Edof[4,:],a)
+ed1=extractEldisp(Edof[0,:],a)
+ed2=extractEldisp(Edof[1,:],a)
+ed3=extractEldisp(Edof[2,:],a)
+ed4=extractEldisp(Edof[3,:],a)
+ed5=extractEldisp(Edof[4,:],a)
 
 q1=spring1s(ep1,ed1)
 q2=spring1s(ep2,ed2)

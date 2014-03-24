@@ -74,11 +74,11 @@ print(r)
 
 #----- Element forces -------------------------------------------
 
-ed1=extract(Edof[0,:],a);
+ed1=extractEldisp(Edof[0,:],a);
 N1=bar2s(ex1,ey1,ep1,ed1)
-ed2=extract(Edof[1,:],a);
+ed2=extractEldisp(Edof[1,:],a);
 N2=bar2s(ex2,ey2,ep2,ed2)
-ed3=extract(Edof[2,:],a);	
+ed3=extractEldisp(Edof[2,:],a);	
 N3=bar2s(ex3,ey3,ep3,ed3)
 
 print("N1 = "+str(N1))
