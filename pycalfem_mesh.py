@@ -2,7 +2,9 @@ import os, sys
 import numpy as np
 from pycalfem import createdofs
 from pycalfem_utils import which
-   
+
+def cmp(a, b):
+    return (a > b) - (a < b)  
 
 #def dofsFromNodes(listOfNodes, dofs):
 #        D = []
@@ -38,7 +40,7 @@ def _formatList(lst, offset=0):
 def _insertInSetDict(dictionary, key, values):
     '''inserts values at key in dictionary containing sets. Values may be
     a single value or iterable, in which case each value is inserted'''
-    if not dictionary.has_key(key):
+    if not key in dictionary:
         dictionary[key] = set()
     try:
         for v in values:
@@ -47,20 +49,20 @@ def _insertInSetDict(dictionary, key, values):
         dictionary[key].add(values)
     
     
-class GmshMesher():
+class GmshMeshGenerator:
     '''
     Meshes geometry in GeoData objects or geo-files by calling the Gmsh executable.
     This is done when the function create() is called.
     '''
     
-    def __init__(self, geoData, elType=2, elSizeFactor=1, dofsPerNode=1, 
+    def __init__(self, geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                 gmshExecPath=None, clcurv=False,
                 minSize = None, maxSize = None, meshingAlgorithm = None,
                 additionalOptions = ''):       
         '''        
         Parameters:
         
-            geoData        GeoData instance or string containing path to .geo-file
+            geometry        GeoData instance or string containing path to .geo-file
                             
             elType        Integer. Element type and order. 
                            See gmsh manual for details.
@@ -87,7 +89,7 @@ class GmshMesher():
                                parameters (See section 3.3 in the gmsh manual for a 
                                list of options)):
            '''
-        self.geoData = geoData
+        self.geometry = geometry
         self.elType = elType
         self.elSizeFactor = elSizeFactor
         self.dofsPerNode = dofsPerNode
@@ -184,15 +186,15 @@ class GmshMesher():
         if gmshExe==None:
             raise IOError("Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
         
-        if type(self.geoData) is str: #If geometry data is given as a .geo file we will just pass it on to gmsh later.
-            geoFilePath = self.geoData
+        if type(self.geometry) is str: #If geometry data is given as a .geo file we will just pass it on to gmsh later.
+            geoFilePath = self.geometry
             dim = 3 if is3D else 2 #In this case geoData is a path string, so the dimension must be supplied by the user.
             if not os.path.exists(geoFilePath):
                 geoFilePath = os.path.join(os.getcwd(), geoFilePath) #Try relative path
                 if not os.path.exists(geoFilePath):
                     raise IOError("Error: Could not find geo-file " + geoFilePath)
         else:
-            dim = 3 if self.geoData.is3D else 2   #Get the dimension of the model from geoData.
+            dim = 3 if self.geometry.is3D else 2   #Get the dimension of the model from geoData.
             if not os.path.exists("./gmshMeshTemp"):
                 os.mkdir("./gmshMeshTemp")
             geoFilePath = os.path.normpath(os.path.join(os.getcwd(), "gmshMeshTemp/tempGeometry.geo"))#"gmshMeshTemp/tempGeometry.geo"
@@ -229,7 +231,7 @@ class GmshMesher():
         nbrNodes = int(mshFile.readline())
         allNodes = np.zeros([nbrNodes,dim], 'd')
         for i in range(nbrNodes):
-            line = map(float, mshFile.readline().split())
+            line = list(map(float, mshFile.readline().split()))
             allNodes[i,:] = line[1:dim+1] #Grab the coordinates (1:3 if 2D, 1:4 if 3D)
             
         while(mshFile.readline() != '$Elements\n'): #Read until we find the elements
@@ -243,7 +245,7 @@ class GmshMesher():
         self.nodesOnSurface = {}   #dictionary surfID  : set of [nodeNumber]
         self.nodesOnVolume = {}    #dictionary volID   : set of [nodeNumber]
         for i in range(nbrElements): #Read all elements (points, surfaces, etc):
-            line = map(int, mshFile.readline().split())
+            line = list(map(int, mshFile.readline().split()))
             eType = line[1] #second int is the element type.
             nbrTags = line[2] #Third int is the nbr of tags on this element.
             marker = line[3]  #Fourth int (first tag) is the marker.
@@ -309,12 +311,12 @@ class GmshMesher():
         volumeMarkers = {}    
         
         # WRITE POINTS:
-        for ID, [coords, elSize, marker] in self.geoData.points.items(): 
+        for ID, [coords, elSize, marker] in self.geometry.points.items(): 
             self.geofile.write("Point(%i) = {%s};\n" % (ID+1, _formatList(coords + [elSize]) ))
             _insertInSetDict(pointMarkers, marker, ID)
         
         # WRITE CURVES:
-        for ID, [curveName, points, marker, elOnCurve, distributionString, distributionVal] in self.geoData.curves.items():
+        for ID, [curveName, points, marker, elOnCurve, distributionString, distributionVal] in self.geometry.curves.items():
             self.geofile.write("%s(%i) = {%s};\n" %  (curveName, ID+1, _formatList(points, 1) ))
             
             #Transfinite Line{2} = 20 Using Bump 0.05;
@@ -325,7 +327,7 @@ class GmshMesher():
             _insertInSetDict(curveMarkers, marker, ID)
         
         # WRITE SURFACES:
-        for ID, [surfName, outerLoop, holes, ID, marker, isStructured] in self.geoData.surfaces.items():
+        for ID, [surfName, outerLoop, holes, ID, marker, isStructured] in self.geometry.surfaces.items():
             #First we write line loops for the surface edge and holes (if there are any holes):
             self._writeLineLoop(outerLoop, ID+1)
             holeIDs = []
@@ -341,7 +343,7 @@ class GmshMesher():
             if isStructured:
                 cornerPoints = set() 
                 for c in outerLoop:#Find the corner points. This is possibly unnecessary since Gmsh can do this automatically.
-                    curvePoints = self.geoData.curves[c][1]
+                    curvePoints = self.geometry.curves[c][1]
                     cornerPoints.add(curvePoints[0])
                     cornerPoints.add(curvePoints[-1])
                 cornerPoints = list(cornerPoints)
@@ -350,7 +352,7 @@ class GmshMesher():
             _insertInSetDict(surfaceMarkers, marker, ID)
         
         # WRITE VOLUMES:
-        for ID, [outerLoop, holes, ID, marker, isStructured] in self.geoData.volumes.items():
+        for ID, [outerLoop, holes, ID, marker, isStructured] in self.geometry.volumes.items():
             #Surface loops for the volume boundary and holes (if any):
             self._writeSurfaceLoop(outerLoop, ID+1)
             holeIDs = []
@@ -399,7 +401,7 @@ class GmshMesher():
     def _writeLineLoop(self, lineIndices, loopID): 
         endPoints = [] #endPoints is used to keep track of at which points the curves start and end (i.e the direction of the curves)
         for i in lineIndices: #lineIndices is a list of curve indices (0-based here, but 1-based later in the method)
-            curvePoints = self.geoData.curves[i][1]
+            curvePoints = self.geometry.curves[i][1]
             endPoints.append([curvePoints[0], curvePoints[-1]])
         
         lineIndices = _offsetIndices(lineIndices, 1) #We need the indices to be 1-based rather than 0-based in the next loop. (Some indices will be preceded by a minus-sign)
@@ -426,7 +428,7 @@ class GmshMesher():
                 #If last line AND the last point of the last curve not equal the first point of the first curve:
                 raise Exception("ERROR: The last curve of a line-loop %i does not join up with the first curve" % loopID)
         
-        if not self.geoData.is3D: #If the model is in 2D we need to make all line loops counter-clockwise so surface normals point in the positive z-direction.
+        if not self.geometry.is3D: #If the model is in 2D we need to make all line loops counter-clockwise so surface normals point in the positive z-direction.
             lineIndices = self._makeCounterClockwise(lineIndices)
         
         self.geofile.write("Line Loop(%i) = {%s};\n" % (loopID, _formatList(lineIndices))) #(lineIndices are alreay 1-based here)
@@ -441,16 +443,16 @@ class GmshMesher():
         for index in lineIndices:
             sign = -1 if index < 0 else 1
             realIndex = sign*index - 1 #Make a copy of the line index that is positive and 0-based.
-            curveType = self.geoData.curves[realIndex][0]
-            pointIDs = self.geoData.curves[realIndex][1]
+            curveType = self.geometry.curves[realIndex][0]
+            pointIDs = self.geometry.curves[realIndex][1]
             if curveType in ['Spline', 'BSpline']:
-                points = [self.geoData.points[ID][0] for ID in pointIDs] # [[x,y,z], [x,y,z], ...]
+                points = [self.geometry.points[ID][0] for ID in pointIDs] # [[x,y,z], [x,y,z], ...]
                 points = points if sign==1 else points[::-1] #Reverse the order of the points if the curve direction is reversed.
                 for i in range(len(pointIDs)-1): #For every point along the curve except the last:
                     summa += (points[i+1][0] - points[i][0]) * (points[i+1][1] + points[i][1])   #(x2-x1)(y2+y1).
             elif curveType == 'Circle':
                 #We will find a point 'd' on the middle of the circle arc, and use a-d-c as approximation of the arc.
-                points = np.array([self.geoData.points[ID][0] for ID in pointIDs]) # 3-by-3 array. The rows are start-center-end points and columns are x,y,z.
+                points = np.array([self.geometry.points[ID][0] for ID in pointIDs]) # 3-by-3 array. The rows are start-center-end points and columns are x,y,z.
                 points = points if sign==1 else points[::-1] #Reverse the order of the points if the curve direction is reversed.
                 a = points[0,:] #start
                 b = points[1,:] #center
@@ -464,7 +466,7 @@ class GmshMesher():
                 #We will find a point 'd' near the middle of the circle arc, and use a-d-c as approximation of the arc.
                 # The only difference from the circle above, is that the radius at d is approximated as the mean distance between
                 # the center and the two other points.  
-                points = np.array([self.geoData.points[ID][0] for ID in pointIDs]) # 4-by-3 array. The rows are start-center-majAxis-end points and columns are x,y,z.
+                points = np.array([self.geometry.points[ID][0] for ID in pointIDs]) # 4-by-3 array. The rows are start-center-majAxis-end points and columns are x,y,z.
                 points = points[[0,1,3],:] #skip the major axis point (row 2)
                 points = points if sign==1 else points[::-1] #Reverse the order of the points if the curve direction is reversed.
                 a = points[0,:] #start

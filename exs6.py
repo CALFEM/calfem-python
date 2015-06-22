@@ -11,8 +11,8 @@
 #     Ola Dahlblom 2004-09-14
 #----------------------------------------------------------------
 
-from pycalfem import *
-from pycalfem_utils import *
+from calfem.core import *
+from calfem.utils import *
 
 # ----- Topology -------------------------------------------------
 
@@ -63,10 +63,10 @@ assem(Edof[2,:],K,Ke3,f,fe3);
 bc=array([1,2,3,10,11])
 a,r=solveq(K,f,bc)
 
-print "a="
-print a
-print "r="
-print r
+print("a=")
+print(a)
+print("r=")
+print(r)
 
 # ----- Section forces -------------------------------------------
 
@@ -76,24 +76,24 @@ es1,ed1,ec1=beam2s(ex1,ey1,ep1,Ed[0,:],eq1,np=21)
 es2,ed2,ec2=beam2s(ex2,ey2,ep1,Ed[1,:],eq2,np=21)
 es3,ed3,ec3=beam2s(ex3,ey3,ep3,Ed[2,:],eq3,np=21)
 
-print "es1="
-print es1
-print "es2="
-print es2
-print "es3="
-print es3
+print("es1=")
+print(es1)
+print("es2=")
+print(es2)
+print("es3=")
+print(es3)
 
 # ----- Draw deformed frame ---------------------------------------
 
-print ex1
+print(ex1)
 ex = array([
     ex1,ex2,ex3
 ])
-print ex
+print(ex)
 ey = array([
     ey1,ey2,ey3
 ])
-print ey
+print(ey)
 
 eldraw2(ex,ey)
 eldisp2(ex,ey,Ed)

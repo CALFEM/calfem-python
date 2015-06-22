@@ -6,29 +6,41 @@ import os, sys
 haveMatplotLib = True
 haveMlab = True
 haveWx = True
+haveQt = True
     
 globalWxApp = None
-       
+globalQtApp = None
+globalWindows = []
+
 try:
-    import wx
-    from pycalfem_classes import ElementView
-    globalWxApp = wx.App(0)
+    from PyQt4 import QtGui
+    from PyQt4.QtOpenGL import *
+    from pycalfem_classes_qt4 import ElementView
+    globalQtApp = QtGui.QApplication(["PyCalfem"])
 except:
-    haveWx = False
-    
+    haveQt = False    
+      
+if not haveQt:
+    try:
+        import wx
+        from pycalfem_classes import ElementView
+        globalWxApp = wx.App(0)
+    except: 
+        haveWx = False
+      
 from pycalfem import *
 
 def readInt(f):
     """
     Read a row from file, f, and return a list of integers.
     """
-    return map(int, f.readline().split())
+    return list(map(int, f.readline().split()))
     
 def readFloat(f):
     """
     Read a row from file, f, and return a list of floats.
     """
-    return map(float, f.readline().split())
+    return list(map(float, f.readline().split()))
     
 def readSingleInt(f):
     """
@@ -64,11 +76,11 @@ def which(filename):
     """
     Return complete path to executable given by filename.
     """
-    if not os.environ.has_key('PATH') or os.environ['PATH'] == '':
+    if not ('PATH' in os.environ) or os.environ['PATH'] == '':
         p = os.defpath
     else:
         p = os.environ['PATH']
-    
+                
     pathlist = p.split (os.pathsep)
     pathlist.append(".")
     
@@ -94,7 +106,7 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
                             
     """
 
-    if boundaryDofs.has_key(marker):
+    if marker in boundaryDofs:
         if (dimension==0):
             bcAdd = array(boundaryDofs[marker])
             bcAddVal = ones([size(bcAdd)])*value
@@ -107,7 +119,7 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
 
         return hstack([bcPrescr,bcAdd]), hstack([bcVal,bcAddVal])
     else:
-        print "Error: Boundary marker", marker, "does not exist."
+        print("Error: Boundary marker", marker, "does not exist.")
         
 def applybcnode(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
     
@@ -148,7 +160,7 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
                             
     """
 
-    if boundaryDofs.has_key(marker):
+    if marker in boundaryDofs:
         if dimension == 0:
             f[asarray(boundaryDofs[marker])-1] += value
         elif dimension == 1:
@@ -156,7 +168,7 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
         elif dimension == 2:
             f[asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value            
     else:
-        print "Error: Boundary marker", marker, "does not exist."
+        print("Error: Boundary marker", marker, "does not exist.")
     
 
 def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log", triangleExecutablePath=None):
@@ -228,7 +240,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
             triangleExecutable = None
             
     if triangleExecutable==None:
-        print "Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH)."
+        print("Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH).")
         return None, None, None, None
     
     # Create triangle options
@@ -255,15 +267,15 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
         
     filename = "./trimesh.temp/polyfile.poly"
     
-    if segments!=None:
+    if not segments is None:
         nSegments = len(segments)
     
-    if holes!=None:
+    if not holes is None:
         nHoles = len(holes)
     
     # Create a .poly file
     
-    polyFile = file(filename, "w")
+    polyFile = open(filename, "w")
     polyFile.write("%d 2 %d \n" % (nVertices, nAttribs))
     
     i = 0
@@ -302,19 +314,19 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     boundaryVertices = {}
     
     if os.path.exists(nodeFilename):
-        nodeFile = file(nodeFilename, "r")
-        nodeInfo = map(int, nodeFile.readline().split())
+        nodeFile = open(nodeFilename, "r")
+        nodeInfo = list(map(int, nodeFile.readline().split()))
         
         nNodes = nodeInfo[0]
         
         allVertices = zeros([nNodes,2], 'd')
         
         for i in range(nNodes):
-            vertexRow = map(float, nodeFile.readline().split())
+            vertexRow = list(map(float, nodeFile.readline().split()))
             
             boundaryMarker = int(vertexRow[3])
             
-            if not boundaryVertices.has_key(boundaryMarker):
+            if not (boundaryMarker in boundaryVertices):
                 boundaryVertices[boundaryMarker] = []
             
             allVertices[i,:] = [vertexRow[1], vertexRow[2]]
@@ -327,15 +339,15 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     elements = []
         
     if os.path.exists(elementFilename):
-        elementFile = file(elementFilename, "r")
-        elementInfo = map(int, elementFile.readline().split())
+        elementFile = open(elementFilename, "r")
+        elementInfo = list(map(int, elementFile.readline().split()))
         
         nElements = elementInfo[0]
         
         elements = zeros([nElements,3],'i')
         
         for i in range(nElements):
-            elementRow = map(int, elementFile.readline().split())
+            elementRow = list(map(int, elementFile.readline().split()))
             elements[i,:] = [elementRow[1]+1, elementRow[2]+1, elementRow[3]+1]
             
         elementFile.close()
@@ -390,9 +402,9 @@ def eldraw2(ex, ey):
         plotpar         (not implemented yet)
     
     """
-    if not haveWx:
-        print "wxPython not installed."
-        return
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
     
     #class ElDispApp(wx.App):
     #    def OnInit(self):
@@ -411,8 +423,8 @@ def eldraw2(ex, ey):
     mainWindow.ex = ex
     mainWindow.ey = ey
     mainWindow.showNodalValues = False
-    mainWindow.Show()
-    
+    mainWindow.Show()   
+    globalWindows.append(mainWindow)
     
 def eliso2(ex, ey, ed, showMesh=False):
     """
@@ -425,9 +437,9 @@ def eliso2(ex, ey, ed, showMesh=False):
         plotpar         (not implemented yet)
     
     """
-    if not haveWx:
-        print "wxPython not installed."
-        return
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
     
     #class ElDispApp(wx.App):
     #    def OnInit(self):
@@ -451,6 +463,7 @@ def eliso2(ex, ey, ed, showMesh=False):
     mainWindow.showMesh = showMesh
     mainWindow.showNodalValues = True
     mainWindow.Show()
+    globalWindows.append(mainWindow)
     
 def elval2(ex, ey, ev, showMesh=False):
     """
@@ -463,9 +476,9 @@ def elval2(ex, ey, ev, showMesh=False):
         plotpar         (not implemented yet)
     
     """
-    if not haveWx:
-        print "wxPython not installed."
-        return
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
     
     mainWindow = ElementView(None, -1, "")
     mainWindow.ex = ex
@@ -475,11 +488,12 @@ def elval2(ex, ey, ev, showMesh=False):
     mainWindow.showElementValues = True
     mainWindow.showNodalValues = False
     mainWindow.Show()
+    globalWindows.append(mainWindow)
     
 def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
-    if not haveWx:
-        print "wxPython not installed."
-        return
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
         
     mainWindow = ElementView(None, -1, "")
     mainWindow.dofsPerNode = 2
@@ -491,12 +505,20 @@ def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
     mainWindow.showDisplacements = True
     mainWindow.magnfac = magnfac
     mainWindow.Show()    
+    globalWindows.append(mainWindow)
            
 def waitDisplay():
-    globalWxApp.MainLoop()
+    if haveQt:
+        globalQtApp.exec_()        
+    else:
+        globalWxApp.MainLoop()
+        
 
 def show():
-    globalWxApp.MainLoop()
+    if haveQt:
+        globalQtApp.exec_()
+    else:
+        globalWxApp.MainLoop()
 
 def elmargin(scale=0.2):
     a = gca()
@@ -525,7 +547,7 @@ def scalfact2(ex,ey,ed,rat=0.2):
 
     nen = -1
     if ex.shape != ey.shape:
-        print "ex and ey shapes do not match."
+        print("ex and ey shapes do not match.")
         return 1.0
     
     dlmax = 0.

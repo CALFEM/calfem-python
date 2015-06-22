@@ -316,7 +316,7 @@ def beam2e(ex,ey,ep,eq=None):
     
     qx=0.
     qy=0.
-    if eq!=None:
+    if not eq is None:
         qx=eq[0]
         qy=eq[1]
         
@@ -343,7 +343,7 @@ def beam2e(ex,ey,ep,eq=None):
     Ke=G.T*Kle*G
     fe=G.T*fle
     
-    if eq==None:
+    if eq is None:
         return Ke
     else:
         return Ke,fe
@@ -396,7 +396,7 @@ def beam2s(ex,ey,ep,ed,eq=None,np=None):
     qx=0.
     qy=0.
     
-    if eq!=None:
+    if not eqNone:
         qx=eq[0]
         qy=eq[1] 
       
@@ -3409,7 +3409,7 @@ def stress2nodal(eseff, edof):
     """
     
     values = zeros(edof.max())
-    elnodes = size(edof,1) / 2
+    elnodes = int(size(edof,1) / 2)
     
     for etopo, eleseff in zip(edof, eseff):
         values[etopo-1] = values[etopo-1] + eleseff / elnodes

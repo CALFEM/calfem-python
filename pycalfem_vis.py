@@ -23,6 +23,10 @@ def getColorbar(axes=None):
         if type(obj) == Colorbar:
             return obj  
     return None
+    
+def colorBar(axes=None):
+    return getColorbar(axes)
+    
 
 def _makeColorBar(text, axes=None):
     '''
@@ -579,7 +583,7 @@ class _elementsWobject(vv.Wobject, Colormapable):
             elif valueIndex < 0:
                 valueIndex = 0
             color = self.mapData[valueIndex, :] #get colour from value
-            coords = self._verts[faceVerts, :] #get coordinates of the vertices of the face.
+            coords = self._verts[faceVerts.astype(int), :] #get coordinates of the vertices of the face.
             gl.glColor(*color)
             gl.glBegin(how)
             for (x,y,z) in coords:
@@ -588,7 +592,7 @@ class _elementsWobject(vv.Wobject, Colormapable):
             
     def _drawLines(self, how=gl.GL_LINE_LOOP, color=(0,0,0)):
         for faceVerts in self._faces:
-            coords = self._verts[faceVerts, :] #get coordinates of the vertices of the face.
+            coords = self._verts[faceVerts.astype(int), :] #get coordinates of the vertices of the face.
             gl.glColor(*color)
             gl.glBegin(how)
             for (x,y,z) in coords:

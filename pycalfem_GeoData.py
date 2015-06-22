@@ -1,6 +1,6 @@
 #TODO: Consider adding more checks whether entities exist.
 
-class GeoData():
+class GeoData:
     '''
     Instances of GeoData can hold geometric data and be passed to 
     GmshMesher in pycalfem_Mesh to mesh the geometry.
