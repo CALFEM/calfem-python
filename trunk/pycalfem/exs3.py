@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------
 
 from numpy import *
-from pycalfem import *
+from calfem.core import *
 
 # ----- Topology matrix Edof -------------------------------------
 

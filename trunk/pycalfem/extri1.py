@@ -1,7 +1,7 @@
 #!/bin/env python
 
-from pycalfem import *
-from pycalfem_utils import *
+from calfem.core import *
+from calfem.utils import *
 
 # ---- Problem constants
 
@@ -41,15 +41,15 @@ segments = array([
 
 # ---- Create element mesh
 
-print "Creating element mesh..."
+print("Creating element mesh...")
 
 coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
 
-print coords[0:8,:]
+print(coords[0:8,:])
 
 # ---- Assemble system matrix
 
-print "Assemblig system matrix..."
+print("Assemblig system matrix...")
 
 nDofs = size(dofs)
 ex, ey = coordxtr(edof, coords, dofs)
@@ -62,7 +62,7 @@ for eltopo, elx, ely in zip(edof, ex, ey):
 
 # ---- Solving equation system
 
-print "Solving equation system..."
+print("Solving equation system...")
 
 f = zeros([nDofs,1])
 
@@ -76,20 +76,20 @@ a,r = solveq(K,f,bc,bcVal)
 
 # ---- Compute element forces
 
-print "Computing element forces..."
+print("Computing element forces...")
 
 ed = extractEldisp(edof,a)
 qs, qt = flw2ts(ex, ey, D, ed)
 
 # ---- Visualise results
 
-print "Drawing element mesh..."
+print("Drawing element mesh...")
 
 eliso2(ex,ey,ed)    
 eldraw2(ex,ey)
 waitDisplay()
 
-print "Done."
+print("Done.")
 
 
 

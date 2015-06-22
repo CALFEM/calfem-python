@@ -1,11 +1,9 @@
 #!/bin/env python
 
-from pycalfem import *
-from pycalfem_utils import *
-from pycalfem_classes import *
+from calfem.core import *
+from calfem.utils import *
 
 def drawCustom(self, width, height):
-    print "drawCustom", width, height    
     glPushMatrix()
     glBegin(GL_LINES)
     glColor(1.0, 0.0, 0.0, 1.0)
@@ -49,13 +47,13 @@ segments = array([
 
 # ---- Create element mesh
 
-print "Creating element mesh..."
+print("Creating element mesh...")
 
 coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=0.00005, dofsPerNode=2)
 
 # ---- Assemble system matrix
 
-print "Assemblig system matrix..."
+print("Assemblig system matrix...")
 
 nDofs = size(dofs)
 ex, ey = coordxtr(edof, coords, dofs)
@@ -70,7 +68,7 @@ for eltopo, elx, ely in zip(edof, ex, ey):
 
 # ---- Solving equation system
 
-print "Solving equation system..."
+print("Solving equation system...")
 
 f = zeros([nDofs,1])
 
@@ -89,7 +87,7 @@ a,r = solveq(K,f,bc,bcVal)
 
 # ---- Compute element forces
 
-print "Computing element forces..."
+print("Computing element forces...")
 
 ed = extractEldisp(edof,a)
 es, et = plants(ex, ey, ep, D, ed)
@@ -98,7 +96,7 @@ esnv = stress2nodal(ev, edof)
 
 # ---- Visualise results
 
-print "Drawing element mesh..."
+print("Drawing element mesh...")
 
 eldisp2(ex, ey, ed)
 elval2(ex, ey, ev)
@@ -116,7 +114,7 @@ elementView.Show()
 
 waitDisplay()
 
-print "Done."
+print("Done.")
 
 
 

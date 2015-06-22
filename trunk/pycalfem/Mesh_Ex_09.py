@@ -1,4 +1,5 @@
 '''Example 09
+
 Shows how to embed visvis figures in a wxPython GUI.
 Visvis can also be embedded in Qt4 (PyQt), GTK, and FLTK.
 Based on http://code.google.com/p/visvis/wiki/example_embeddingInWx
@@ -13,6 +14,7 @@ import visvis as vv
 
 # Create a visvis app instance, which wraps a wx application object.
 # This needs to be done *before* instantiating the main window. 
+
 app = vv.use('wx')
 
 

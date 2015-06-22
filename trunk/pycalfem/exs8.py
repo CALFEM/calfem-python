@@ -10,8 +10,7 @@
 #----------------------------------------------------------------
 
 from numpy import *
-from TEMP import *
-from pycalfem import *
+from calfem.core import *
 
 # ----- System matrices -----
 

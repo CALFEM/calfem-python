@@ -1,14 +1,17 @@
 '''Example 05
+
 This example shows how to make an unstructured 3D mesh (tetrahedron elements, which calfem cant actually use).
 It also demonstrates how to do subplots and create two axes that are viewed from the same camera.
 ''' 
 
-from pycalfem_GeoData import *
-from pycalfem_mesh import *
-import pycalfem_vis as pcv
+import calfem.geometry as cfg
+import calfem.mesh as cfm
+import calfem.vis as cfv
 import visvis as vv
 
-g = GeoData()
+# ---- Define geometry ------------------------------------------------------
+
+g = cfg.Geometry()
 
 g.addPoint([0, 0, 0],      0)
 g.addPoint([1, 0, 0],      1)
@@ -32,31 +35,40 @@ g.addRuledSurface([2,3,4])
 
 g.addVolume([0,1,2,3])
 
-elType = 4 #Element type 4 is tetrahedron. (See user manual for more element types).
-dofsPerNode= 1 #Degrees of freedom per node.
+# ---- Create mesh ----------------------------------------------------------
 
-mesher = GmshMesher(geoData = g,
-                    gmshExecPath = None,
-                    elType = elType,
-                    elSizeFactor = 0.3,
-                    dofsPerNode= dofsPerNode)
+# Element type 4 is tetrahedron. (See user manual for more element types).
 
-#Mesh the geometry:
-coords, edof, dofs, bdofs, elementmarkers = mesher.create()
+elType = 4 
 
-#VISUALISATION:
+# Degrees of freedom per node.
 
-#Create two axes that are viewed from the same camera:
+dofsPerNode= 1 
+
+# Create mesh
+
+coords, edof, dofs, bdofs, elementmarkers = cfm.createGmshMesh(geometry=g,
+                                                               elType = elType,
+                                                               elSizeFactor = 0.3,
+                                                               dofsPerNode = dofsPerNode)
+
+# ---- Visualise mesh -------------------------------------------------------
+
+# Create two axes that are viewed from the same camera:
+
 vv.figure()
 a1 = vv.subplot(121)
 a2 = vv.subplot(122)
 cam = vv.cameras.ThreeDCamera()
 a1.camera = a2.camera = cam
-#Draw:
-pcv.drawGeometry(g, axes=a1)#Draws the geometry.
-pcv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=False, axes=a2) #Draws the mesh.
 
-# Enter main loop:
+# Draw geometry and mesh
+
+cfv.drawGeometry(g, axes=a1)
+cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=False, axes=a2)
+
+# Enter main loop
+
 app = vv.use()
 app.Create()
 app.Run()
