@@ -1,5 +1,7 @@
 #TODO: Consider adding more checks whether entities exist.
 
+import numpy as np
+
 class Geometry:
     '''
     Instances of GeoData can hold geometric data and be passed to 
@@ -114,6 +116,18 @@ class Geometry:
                 theSet.update(hole)
         return theSet
         
+    def addPoints(self, points, markers = None, ids = None, elSizes = None):
+        '''
+        Add points from a numpy-array
+        '''
+        nPoints, dims = points.shape
+        
+        if dims == 2:
+            for row in points:
+                self.addPoint(row.tolist())
+        elif dims == 3:
+            for row in points:
+                self.addPoint(row.tolist())
     
     def addPoint(self, coord, ID=None, marker=0, elSize=1):
         '''
@@ -148,7 +162,20 @@ class Geometry:
             self._pointIDspecified = True
             
         self.points[ID] = [coord, elSize, marker]
-    
+        
+    def addSplines(self, points):
+        '''
+        Add splines from numpy array
+        '''
+        nPoints, dims = points.shape
+        
+        if dims == 2:
+            for row in points:
+                self.addSpline(row.tolist())
+        elif dims == 3:
+            for row in points:
+                splineDef = row.tolist()
+                self.addSpline(splineDef[:-1], marker = splineDef[2])
     
     def addSpline(self, points, ID=None, marker=0, elOnCurve=None, elDistribType=None, elDistribVal=None):
         '''
@@ -553,3 +580,15 @@ class Geometry:
         for i in range(len(dictionary)):
             if sortedkeys[i] != i:
                 return i
+                
+    point = addPoint
+    spline = addSpline
+    bspline = addBSpline
+    circle = addCircle
+    ellipse = addEllipse
+    surface = addSurface
+    ruledSurface = addRuledSurface
+    structuredSurface = addStructuredSurface
+    volume = addVolume
+    structuredVolume = addStructuredVolume
+    

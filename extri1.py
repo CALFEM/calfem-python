@@ -2,6 +2,8 @@
 
 from calfem.core import *
 from calfem.utils import *
+from calfem.vis import *
+from calfem.mesh import *
 
 # ---- Problem constants
 
@@ -87,7 +89,7 @@ print("Drawing element mesh...")
 
 eliso2(ex,ey,ed)    
 eldraw2(ex,ey)
-waitDisplay()
+showAndWait()
 
 print("Done.")
 

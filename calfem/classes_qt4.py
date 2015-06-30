@@ -3,7 +3,7 @@
 
 from OpenGL.GL import *
 from OpenGL.GLUT import *
-from PyQt4.QtOpenGL import *
+from PyQt import QtGui, QtCore, QtOpenGL
 
 import colorsys
 
@@ -27,7 +27,7 @@ def floatRgb(mag, cmin, cmax):
     red, green, blue = colorsys.hsv_to_rgb(x*240./360, 1.0, 1.0)
     return (red, green, blue)
 
-class OpenGLFrame(QGLWidget):
+class OpenGLFrame(QtOpenGL.QGLWidget):
     def __init__(self, parent = None):
         super(OpenGLFrame, self).__init__(parent)
 
