@@ -57,17 +57,17 @@ points = [
 ]
 
 for p in points:
-    g.addPoint(p)
+    g.point(p)
 
 # Add Splines:
 
-g.addSpline([1,2], marker=2, elOnCurve=4)
-g.addSpline([3,4], elOnCurve=4)
-g.addCircle([1,0,3], elOnCurve = 10)
-g.addCircle([2,0,4], elOnCurve = 10)
-g.addSpline([3,5], elOnCurve = 6)
-g.addSpline([5,6], marker=3, elOnCurve = 4)
-g.addSpline([6,4], elOnCurve = 6)
+g.spline([1,2], marker=2, elOnCurve=4)
+g.spline([3,4], elOnCurve=4)
+g.circle([1,0,3], elOnCurve = 10)
+g.circle([2,0,4], elOnCurve = 10)
+g.spline([3,5], elOnCurve = 6)
+g.spline([5,6], marker=3, elOnCurve = 4)
+g.spline([6,4], elOnCurve = 6)
 
 # Add Surfaces:
 #
@@ -75,8 +75,8 @@ g.addSpline([6,4], elOnCurve = 6)
 # region an element is in via the list 'elementmarkers', which is returned by 
 # GmshMesher.create()
 
-g.addStructuredSurface([0,2,1,3], marker = 10)
-g.addStructuredSurface([1,4,5,6], marker = 11)
+g.structuredSurface([0,2,1,3], marker = 10)
+g.structuredSurface([1,4,5,6], marker = 11)
 
 # Element type 16 is 8-node-quad. (See gmsh manual for more element types)
 

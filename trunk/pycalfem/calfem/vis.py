@@ -7,6 +7,26 @@ from numpy import sin, cos, pi
 from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
+from PyQt import QtGui
+
+globalWindows = [] # For supporting ElementView:s for eldraw ...
+
+from calfem.classes_qt4 import ElementView
+globalQtApp = QtGui.QApplication(["PyCalfem"])
+
+global globalVisVisApp
+
+def figure():
+    f = vv.figure()
+    f._widget.show()
+    f._widget.raise_()
+    return f
+        
+def showAndWait():
+    global globalVisVisApp
+    globalVisVisApp = vv.use()
+    globalVisVisApp.Create()
+    globalVisVisApp.Run()
 
 def getColorbar(axes=None):
     '''
@@ -647,3 +667,133 @@ class _elementsWobject(vv.Wobject, Colormapable):
     def _SetColormap(self, value):
         self._colormap.SetMap(value)
         self.mapData = self._colormap.GetData()
+        
+def eldraw2(ex, ey):
+    """
+    Draw elements in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        plotpar         (not implemented yet)
+    
+    """
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
+    
+    #class ElDispApp(wx.App):
+    #    def OnInit(self):
+    #        wx.InitAllImageHandlers()
+    #        mainWindow = ElementView(None, -1, "")
+    #        mainWindow.ex = ex
+    #        mainWindow.ey = ey
+    #        mainWindow.showNodalValues = False
+    #        self.SetTopWindow(mainWindow)
+    #        mainWindow.Show()
+    #        return 1
+    #
+    #app = ElDispApp(0)
+    #app.MainLoop()
+    mainWindow = ElementView(None, -1, "")
+    mainWindow.ex = ex
+    mainWindow.ey = ey
+    mainWindow.showNodalValues = False
+    mainWindow.Show()   
+    globalWindows.append(mainWindow)
+    
+def eliso2(ex, ey, ed, showMesh=False):
+    """
+    Draw nodal values in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        ed              Element nodal values
+        plotpar         (not implemented yet)
+    
+    """
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
+    
+    #class ElDispApp(wx.App):
+    #    def OnInit(self):
+    #        wx.InitAllImageHandlers()
+    #        mainWindow = ElementView(None, -1, "")
+    #        mainWindow.ex = ex
+    #        mainWindow.ey = ey
+    #        mainWindow.ed = ed
+    #        mainWindow.showMesh = showMesh
+    #        mainWindow.showNodalValues = True
+    #        self.SetTopWindow(mainWindow)
+    #        mainWindow.Show()
+    #        return 1   
+    #
+    #app = ElDispApp(0)
+    #app.MainLoop()
+    mainWindow = ElementView(None, -1, "")
+    mainWindow.ex = ex
+    mainWindow.ey = ey
+    mainWindow.ed = ed
+    mainWindow.showMesh = showMesh
+    mainWindow.showNodalValues = True
+    mainWindow.Show()
+    globalWindows.append(mainWindow)
+    
+def elval2(ex, ey, ev, showMesh=False):
+    """
+    Draw elements values in 2d.
+    
+    Parameters:
+    
+        ex, ey          Element coordinates
+        ev              Element values (scalar)
+        plotpar         (not implemented yet)
+    
+    """
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
+    
+    mainWindow = ElementView(None, -1, "")
+    mainWindow.ex = ex
+    mainWindow.ey = ey
+    mainWindow.ev = ev
+    mainWindow.showMesh = showMesh
+    mainWindow.showElementValues = True
+    mainWindow.showNodalValues = False
+    mainWindow.Show()
+    globalWindows.append(mainWindow)
+    
+def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
+    #if not haveWx:
+    #    print("wxPython not installed.")
+    #    return
+        
+    mainWindow = ElementView(None, -1, "")
+    mainWindow.dofsPerNode = 2
+    mainWindow.ex = ex
+    mainWindow.ey = ey
+    mainWindow.ed = ed
+    mainWindow.showMesh = showMesh
+    mainWindow.showNodalValues = False
+    mainWindow.showDisplacements = True
+    mainWindow.magnfac = magnfac
+    mainWindow.Show()    
+    globalWindows.append(mainWindow)
+    
+def waitDisplayNative():
+    if haveQt:
+        globalQtApp.exec_()        
+    else:
+        globalWxApp.MainLoop()
+        
+
+def showAndWaitNative():
+    if haveQt:
+        globalQtApp.exec_()
+    else:
+        globalWxApp.MainLoop()
+
+

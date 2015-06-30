@@ -4,15 +4,19 @@ The use case from the user manual.
 The example does not contain anything that is not covered in the previous examples.
 '''
 
+import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
 import calfem.utils as cfu
-import visvis as vv
 
-from calfem.core import *
+import numpy as np
+
+from scipy.sparse import lil_matrix
 
 # ---- General parameters ---------------------------------------------------
+
+cfu.enableLogging()
 
 t = 0.2
 v = 0.35
@@ -20,25 +24,27 @@ E1 = 2e9
 E2 = 0.2e9
 ptype = 1
 ep = [ptype,t]
+D1 = cfc.hooke(ptype, E1, v)
+D2 = cfc.hooke(ptype, E2, v)
 
-# Calc element stiffness matrix: Conductivity matrix D is taken 
-#  from Ddict and depends on which region (which marker) the element is in.
+# Define marker constants instead of using numbers in the code
 
-D1 = hooke(ptype, E1, v)
-D2 = hooke(ptype, E2, v)
-Ddict = {55 : D1, 66 : D2} 
+markE1 = 55
+markE2 = 66
+markFixed = 70
+markLoad = 90
 
-# Element size factor is 0.04
+# Create dictionary for the different element properties
 
-elSizeFactor = 0.04
+elprop = {}
+elprop[markE1] = [ep, D1]
+elprop[markE2] = [ep, D2]
 
-# Element type 3 is quad.
+# Parameters controlling mesh
 
-elType = 3
-
-# Degrees of freedom per node.
-
-dofsPerNode = 2
+elSizeFactor = 0.04    # Element size factor
+elType = 2             # Triangle element
+dofsPerNode = 2        # Dof per node
 
 # ---- Create Geometry ------------------------------------------------------
 
@@ -48,37 +54,37 @@ g = cfg.Geometry()
 
 # Add points:
 
-g.addPoint([0, 0])		#0
-g.addPoint([1, 0])		#1
-g.addPoint([1, 1])		#2
-g.addPoint([0, 1])		#3
-g.addPoint([0.2, 0.2])	#4
-g.addPoint([0.8, 0.2])	#5
-g.addPoint([0.8, 0.8])	#6
-g.addPoint([0.2, 0.8])	#7
+g.point([0, 0])		#0
+g.point([1, 0])		#1
+g.point([1, 1])		#2
+g.point([0, 1])		#3
+g.point([0.2, 0.2])	#4
+g.point([0.8, 0.2])	#5
+g.point([0.8, 0.8])	#6
+g.point([0.2, 0.8])	#7
 
 # Add curves:
 
-g.addSpline([0, 1], marker=70)        #0
-g.addSpline([2, 1])                   #1
-g.addSpline([3, 2], marker=90)        #2
-g.addSpline([0, 3])                   #3
-g.addSpline([4, 5])                 #4
-g.addSpline([5, 6])                 #5
-g.addSpline([6, 7])                 #6
-g.addSpline([7, 4])                 #7
+g.spline([0, 1], marker = markFixed) #0
+g.spline([2, 1])                     #1
+g.spline([3, 2], marker = markLoad)  #2
+g.spline([0, 3])                     #3
+g.spline([4, 5])                     #4
+g.spline([5, 6])                     #5
+g.spline([6, 7])                     #6
+g.spline([7, 4])                     #7
 
 # Add surfaces:
 
-g.addSurface([0,1,2,3], holes=[[4,5,6,7]], marker = 55)
-g.addSurface([4,5,6,7], marker = 66)
+g.surface([0,1,2,3], holes = [[4,5,6,7]], marker = markE1)
+g.surface([4,5,6,7], marker = markE2)
 
 # ---- Create Mesh ----------------------------------------------------------
 
 meshGen = cfm.GmshMeshGenerator(g)
-meshGen.elSizeFactor = 0.04
-meshGen.elType = 3
-meshGen.dofsPerNode = 2
+meshGen.elSizeFactor = elSizeFactor
+meshGen.elType = elType
+meshGen.dofsPerNode = dofsPerNode
 
 # Mesh the geometry:
 #  The first four return values are the same as those that trimesh2d() returns.
@@ -89,47 +95,86 @@ coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
 # ---- Solve problem --------------------------------------------------------
 
-nDofs = size(dofs)
-K = zeros([nDofs,nDofs])
-ex, ey = coordxtr(edof, coords, dofs)
+nDofs = np.size(dofs)
+K = lil_matrix((nDofs,nDofs))
+ex, ey = cfc.coordxtr(edof, coords, dofs)
+
+print("Assembling K... ("+str(nDofs)+")")
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
-    Ke = planqe(elx, ely, ep, Ddict[elMarker])
-    assem(eltopo, K, Ke)
 
-bc = array([],'i')
-bcVal = array([],'i')
-bc, bcVal = cfu.applybc(bdofs,bc,bcVal, 70, 0.0)
+    if elType == 2:
+        Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+    else:
+        Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+        
+    cfc.assem(eltopo, K, Ke)
+    
+print("Applying bc and loads...")
 
-f = zeros([nDofs,1])
-cfu.applyforce(bdofs, f, 90, value = -10e5, dimension=2)
-a,r = solveq(K,f,bc,bcVal)
+bc = np.array([],'i')
+bcVal = np.array([],'i')
 
-ed = extractEldisp(edof,a)
+bc, bcVal = cfu.applybc(bdofs, bc, bcVal, markFixed, 0.0)
+
+f = np.zeros([nDofs,1])
+
+cfu.applyforcetotal(bdofs, f, markLoad, value = -10e5, dimension=2)
+
+print("Solving system...")
+
+a,r = cfc.spsolveq(K, f, bc, bcVal)
+
+ed = cfc.extractEldisp(edof, a)
 vonMises = []
 
-# Determine element stresses and strains in the element.
+# ---- Calculate elementr stresses and strains ------------------------------
 
-for i in range(edof.shape[0]): 
-    es, et = planqs(ex[i,:], ey[i,:], ep, Ddict[elementmarkers[i]], ed[i,:]) 
-    vonMises.append( math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) ) )
+for i in range(edof.shape[0]):
+    
+    # Handle triangle elements
+        
+    if elType == 2: 
+        es, et = cfc.plants(ex[i,:], ey[i,:], 
+                        elprop[elementmarkers[i]][0], 
+                        elprop[elementmarkers[i]][1], 
+                        ed[i,:])
+        
+        vonMises.append( np.math.sqrt( pow(es[0,0],2) - es[0,0]*es[0,1] + pow(es[0,1],2) + 3*pow(es[0,2],2) ) )
 
+    else:
+        
+        # Handle quad elements
+        
+        es, et = cfc.planqs(ex[i,:], ey[i,:], 
+                        elprop[elementmarkers[i]][0], 
+                        elprop[elementmarkers[i]][1], 
+                        ed[i,:])
+        
+        vonMises.append( np.math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) ) )
+        
 # ---- Visualise results ----------------------------------------------------
+
+print("Drawing results...")
 
 cfv.drawGeometry(g, title="Geometry")
 
-vv.figure() 
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=True, title="Mesh") #Draws the mesh.
+cfv.figure() 
+cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, 
+             filled=True, title="Mesh") #Draws the mesh.
 
-vv.figure()
-cfv.drawDisplacements(a, coords, edof, dofsPerNode, elType, doDrawUndisplacedMesh=False, title="Displacements")
+cfv.figure()
+cfv.drawDisplacements(a, coords, edof, dofsPerNode, elType, 
+                      doDrawUndisplacedMesh=False, title="Displacements", 
+                      magnfac=25.0)
 
-vv.figure()
-cfv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Effective Stress")
+cfv.figure()
+cfv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a, 
+                      doDrawMesh=True, doDrawUndisplacedMesh=False, 
+                      title="Effective Stress", magnfac=25.0)
+                      
 cfv.colorBar().SetLabel("Effective stress")
 
-# Enter main loop:
+print("Done drawing...")
 
-app = vv.use()
-app.Create()
-app.Run()
+cfv.showAndWait()

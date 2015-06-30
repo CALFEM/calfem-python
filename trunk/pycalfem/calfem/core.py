@@ -2,6 +2,19 @@
 
 from numpy import *
 
+from scipy.sparse.linalg import dsolve
+import numpy as np
+import logging as cflog
+import sys
+
+def cferror(msg):
+    currFunc = sys._getframe().f_code.co_name
+    cfinfo("%s() Error : %s" % (currFunc, msg))
+
+def cfinfo(msg):
+    currFunc = sys._getframe().f_code.co_name
+    cfinfo("%s() Information : %s" % (currFunc, msg))
+
 def spring1e(ep):
     """
     Compute element stiffness matrix for spring element.
@@ -396,7 +409,7 @@ def beam2s(ex,ey,ep,ed,eq=None,np=None):
     qx=0.
     qy=0.
     
-    if not eqNone:
+    if not eq is None:
         qx=eq[0]
         qy=eq[1] 
       
@@ -729,7 +742,7 @@ def beam2ws(ex,ey,ep,ed,eq=None):
               [N2, V2, M2]]     element forces, local direction
     """
     if asmatrix(ed).shape[0] > 1:
-        print("Only one row is allowed in the ed matrix !!!")
+        cferror("Only one row is allowed in the ed matrix !!!")
         return
 
     b = mat([
@@ -812,7 +825,7 @@ def beam2g(ex,ey,ep,N,eq=None):
     """
     if eq != None:
         if size(eq) > 1:
-            print("eq should be a scalar !!!")
+            cferror("eq should be a scalar !!!")
             return
         else:
             q = eq[0]
@@ -1638,7 +1651,7 @@ def flw2i4e(ex,ey,ep,D,eq=None):
             [ w1, w1]
         ])
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
     wp = multiply(w[:,0],w[:,1])
     
     xsi = gp[:,0]
@@ -1668,7 +1681,7 @@ def flw2i4e(ex,ey,ep,D,eq=None):
         indx = array([2*(i+1)-1,2*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobi determinant == 0")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
@@ -1760,7 +1773,7 @@ def flw2i4s(ex,ey,ep,D,ed):
             [ w1, w1]
         ])
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
     wp = multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -1794,7 +1807,7 @@ def flw2i4s(ex,ey,ep,D,ed):
         indx = array([2*(i+1)-1,2*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobi determinatn == 0")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -1884,7 +1897,7 @@ def flw2i8e(ex,ey,ep,D,eq=None):
             [ w1, w1]
         ])
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
     wp = multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -1926,7 +1939,7 @@ def flw2i8e(ex,ey,ep,D,eq=None):
         indx = array([2*(i+1)-1,2*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobideterminanten lika med noll!")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
@@ -2018,7 +2031,7 @@ def flw2i8s(ex,ey,ep,D,ed):
             [ w1, w1]
         ])
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
     wp = multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -2064,7 +2077,7 @@ def flw2i8s(ex,ey,ep,D,ed):
         indx = array([2*(i+1)-1,2*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobi determinant == 0")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -2152,7 +2165,7 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
         w[:,2] = mat([I3,I2,I3]).reshape(27,1)*w1
         w[:,2] = mat([I2,I3,I2]).reshape(27,1)*w2+w[:,2]
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
         return
 
     wp = multiply(multiply(w[:,0],w[:,1]),w[:,2])
@@ -2206,7 +2219,7 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
         indx = array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobi determinant == 0")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
@@ -2298,7 +2311,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
         w[:,2] = mat([I3,I2,I3]).reshape(27,1)*w1
         w[:,2] = mat([I2,I3,I2]).reshape(27,1)*w2+w[:,2]
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
         return
 
     wp = multiply(multiply(w[:,0],w[:,1]),w[:,2])
@@ -2356,7 +2369,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
         indx = array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = linalg.det(JT[indx-1,:])
         if detJ < 10*finfo(float).eps:
-            print("Jacobideterminanten lika med noll!")
+            cfinfo("Jacobideterminanten lika med noll!")
         JTinv = linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -2464,7 +2477,7 @@ def plante(ex,ey,ep,D,eq=None):
             return Ke,fe.T
 
     else:
-        print("Error ! Check first argument, ptype=1 or 2 allowed")
+        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
         if eq == None:
             return None
         else:
@@ -2557,7 +2570,7 @@ def plants(ex,ey,ep,D,ed):
             es[ie,:] = ss.T
     
             ie = ie + incie
-            
+                    
         return es, et
     
 def plantf(ex,ey,ep,es):
@@ -2655,7 +2668,7 @@ def plantf(ex,ey,ep,es):
         return reshape(asarray(ef),6)
   
     else:
-        print("Error ! Check first argument, ptype=1 or 2 allowed")
+        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
         return None
 
 def platre(ex,ey,ep,D,eq=None):
@@ -2947,7 +2960,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             [ w2, w1],
             [ w1, w1]])
     else:
-        print("Used number of integration points not implemented")
+        cfinfo("Used number of integration points not implemented")
     wp = multiply(w[:,0],w[:,1])
     xsi = gp[:,0]
     eta = gp[:,1]
@@ -2987,7 +3000,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             indx = array([2*(i+1)-1,2*(i+1)])
             detJ = linalg.det(JT[indx-1,:])
             if detJ < 10*finfo(float).eps:
-                print("Jacobideterminant equal or less than zero!")
+                cfinfo("Jacobi determinant equal or less than zero!")
             JTinv = linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
 #   
@@ -3027,7 +3040,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             indx = array([2*(i+1)-1,2*(i+1)])
             detJ = linalg.det(JT[indx-1,:])
             if detJ < 10*finfo(float).eps:
-                print("Jacobideterminant equal or less than zero!")
+                cfinfo("Jacobideterminant equal or less than zero!")
             JTinv = linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
 #   
@@ -3054,7 +3067,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             fe1 = fe1+N2.T*q*detJ*asscalar(wp[i])*t
         return Ke1,fe1
     else:
-        print("Error ! Check first argument, ptype=1 or 2 allowed")
+        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
         
         
 def assem(edof,K,Ke,f=None,fe=None):
@@ -3140,6 +3153,69 @@ def solveq(K,f,bcPrescr,bcVal=None):
     
     return (asmatrix(a),Q)
     
+def spsolveq(K,f,bcPrescr,bcVal=None):
+    """
+    Solve static FE-equations considering boundary conditions.
+    
+    Parameters:
+    
+        K           global stiffness matrix, dim(K)= nd x nd
+        f           global load vector, dim(f)= nd x 1
+    
+        bcPrescr    1-dim integer array containing prescribed dofs.
+        bcVal       1-dim float array containing prescribed values.
+                    If not given all prescribed dofs are assumed 0.
+        
+    Returns:
+    
+        a           solution including boundary values
+        Q           reaction force vector
+                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
+    
+    """    
+    
+    nDofs = K.shape[0]
+    nPdofs = bcPrescr.shape[0]
+    
+    if bcVal is None:
+        bcVal = zeros([nPdofs],'d')
+    
+    bc = ones(nDofs, 'bool')    
+    bcDofs = arange(nDofs)
+    
+    bc[ix_(bcPrescr-1)] = False
+    bcDofs = bcDofs[bc]
+    
+    bcVal_m = asmatrix(bcVal).reshape(nPdofs,1)
+    
+    cflog.info("Preparing system matrix...")
+    
+    mask = np.ones(K.shape[0], dtype=bool)
+    mask[bcDofs] = False
+    
+    cflog.info("step 1... converting K->CSR")
+    Kcsr = K.asformat("csr")    
+    cflog.info("step 2... Kt")
+    Kt = K[ix_((bcDofs),(bcPrescr-1))]
+    cflog.info("step 3... fsys")
+    fsys = f[bcDofs]-Kt*bcVal_m
+    cflog.info("step 4... Ksys")
+    Ksys = Kcsr[ix_((bcDofs),(bcDofs))]
+    cflog.info ("done...")
+    
+    cflog.info("Solving system...")
+    asys = dsolve.spsolve(Ksys, fsys);
+    
+    cflog.info("Reconstructing full a...")
+    a = zeros([nDofs,1])
+    a[ix_(bcPrescr-1)] = bcVal_m
+    a[ix_(bcDofs)] = asmatrix(asys).transpose()
+    
+    a_m = asmatrix(a)
+    Q=K*a_m-f
+    cflog.info("done...")
+    return (a_m,Q)
+
 def extractEldisp(edof,a):
     """
     Extract element displacements from the global displacement
@@ -3352,7 +3428,7 @@ def hooke(ptype,E,v):
              [0, 0, 0, 0, 0, (1-2*v)/2]]
             )/(1+v)/(1-2*v)
     else:
-        print("ptype not supported.")
+        cfinfo("ptype not supported.")
         
     return D
 
