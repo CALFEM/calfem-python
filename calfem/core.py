@@ -5,7 +5,7 @@ from numpy import *
 from scipy.sparse.linalg import dsolve
 import numpy as np
 import logging as cflog
-import sys
+import sys, gc
 
 from numba import jit
 
@@ -2486,7 +2486,6 @@ def plante(ex,ey,ep,D,eq=None):
         else:
             return None,None
 
-@jit
 def plants(ex,ey,ep,D,ed):
     """
     Calculate element normal and shear stress for a
@@ -2765,7 +2764,6 @@ def platre(ex,ey,ep,D,eq=None):
     else:
         return Keq
 
-@jit        
 def planqe(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a quadrilateral
@@ -2810,7 +2808,6 @@ def planqe(ex,ey,ep,D,eq=None):
         return Ke,fe
         
 
-@jit
 def planqs(ex,ey,ep,D,ed,eq=None):
     """
     Calculate element normal and shear stress for a quadrilateral 
@@ -3074,7 +3071,8 @@ def plani4e(ex,ey,ep,D,eq=None):
     else:
         cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
         
- 
+
+@jit(void(int8[:], float64[:,:], float64[:,:], float64[:], float64[:]))
 def assem(edof,K,Ke,f=None,fe=None):
     """
     Assemble element matrices Ke ( and fe ) into the global
@@ -3097,22 +3095,22 @@ def assem(edof,K,Ke,f=None,fe=None):
     
     """
     
-    if rank(edof) == 1:
+    if edof.ndim == 1:
         idx = edof-1
-        K[ix_(idx,idx)] = K[ix_(idx,idx)] + Ke
-        if (not f is None) and (not fe is None):
-            f[ix_(idx)] = f[ix_(idx)] + fe
+        K[np.ix_(idx,idx)] = K[np.ix_(idx,idx)] + Ke
+        if (f is not None) and (fe is not None):
+            f[np.ix_(idx)] = f[np.ix_(idx)] + fe
     else:
         for row in edof:
             idx = row-1
-            K[ix_(idx,idx)] = K[ix_(idx,idx)] + Ke
-            if (not f is None) and (not fe is None):
-                f[ix_(idx)] = f[ix_(idx)] + fe
+            K[np.ix_(idx,idx)] = K[np.ix_(idx,idx)] + Ke
+            if (f is not None) and (fe is not None):
+                f[np.ix_(idx)] = f[np.ix_(idx)] + fe
             
-    if f is None:
-        return K
-    else:
-        return K,f
+#    if f is None:
+#        return K
+#    else:
+#        return K,f
             
 def solveq(K,f,bcPrescr,bcVal=None):
     """
@@ -3199,21 +3197,32 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     mask[bcDofs] = False
     
     cflog.info("step 1... converting K->CSR")
+
     Kcsr = K.asformat("csr")    
+
     cflog.info("step 2... Kt")
+
     #Kt1 = K[bcDofs]
     #Kt = Kt1[:,bcPrescr]
     Kt = K[ix_((bcDofs),(bcPrescr-1))]
+
     cflog.info("step 3... fsys")
+
     fsys = f[bcDofs]-Kt*bcVal_m
+
     cflog.info("step 4... Ksys")
+
     Ksys1 = Kcsr[bcDofs]
     Ksys = Ksys1[:,bcDofs]
+
+    gc.collect()
     #Ksys = Kcsr[ix_((bcDofs),(bcDofs))]
     cflog.info ("done...")
     
     cflog.info("Solving system...")
     asys = dsolve.spsolve(Ksys, fsys);
+    print(Ksys.shape, K.shape)
+    print(asys)
     
     cflog.info("Reconstructing full a...")
     a = zeros([nDofs,1])
