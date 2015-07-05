@@ -14,6 +14,22 @@ import numpy as np
 
 from scipy.sparse import lil_matrix
 
+from numba import jit
+
+@jit
+def assemElements(K, edof, ex, ey, elementmarkers, elprop, elType):
+    
+    for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
+    
+        if elType == 2:
+            Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+        else:
+            Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+            
+        cfc.assem(eltopo, K, Ke)
+
+
+
 # ---- General parameters ---------------------------------------------------
 
 cfu.enableLogging()
@@ -42,8 +58,8 @@ elprop[markE2] = [ep, D2]
 
 # Parameters controlling mesh
 
-elSizeFactor = 0.04    # Element size factor
-elType = 2             # Triangle element
+elSizeFactor = 0.02    # Element size factor
+elType = 3             # Triangle element
 dofsPerNode = 2        # Dof per node
 
 # ---- Create Geometry ------------------------------------------------------
@@ -83,7 +99,7 @@ g.surface([4,5,6,7], marker = markE2)
 
 meshGen = cfm.GmshMeshGenerator(g)
 meshGen.elSizeFactor = elSizeFactor
-meshGen.elType = elType
+meshGen.elType = elType  
 meshGen.dofsPerNode = dofsPerNode
 
 # Mesh the geometry:
@@ -101,14 +117,16 @@ ex, ey = cfc.coordxtr(edof, coords, dofs)
 
 print("Assembling K... ("+str(nDofs)+")")
 
-for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
+assemElements(K, edof, ex, ey, elementmarkers, elprop, elType)
 
-    if elType == 2:
-        Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-    else:
-        Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-        
-    cfc.assem(eltopo, K, Ke)
+#for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
+#
+#    if elType == 2:
+#        Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+#    else:
+#        Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+#        
+#    cfc.assem(eltopo, K, Ke)
     
 print("Applying bc and loads...")
 
@@ -125,10 +143,14 @@ print("Solving system...")
 
 a,r = cfc.spsolveq(K, f, bc, bcVal)
 
+print("Extracting ed...")
+
 ed = cfc.extractEldisp(edof, a)
 vonMises = []
 
 # ---- Calculate elementr stresses and strains ------------------------------
+
+print("Element forces... ")
 
 for i in range(edof.shape[0]):
     
