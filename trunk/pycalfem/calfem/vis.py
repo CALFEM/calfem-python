@@ -633,7 +633,8 @@ class _elementsWobject(vv.Wobject, Colormapable):
         """ 
         if self.doDrawMesh:
             gl.glDisable(gl.GL_LINE_SMOOTH)
-            gl.glLineWidth(2)
+            #gl.glEnable(gl.GL_BLEND)
+            gl.glLineWidth(1)
             self._drawLines(gl.GL_LINE_LOOP, (0,0,0))
         if self.verticesPerFace == 3:
             self._drawFaces(gl.GL_TRIANGLES)

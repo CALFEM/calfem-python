@@ -7,6 +7,8 @@ import numpy as np
 import logging as cflog
 import sys
 
+from numba import jit
+
 def cferror(msg):
     currFunc = sys._getframe().f_code.co_name
     cfinfo("%s() Error : %s" % (currFunc, msg))
@@ -2379,6 +2381,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
 
     return es,et,eci
 
+@jit
 def plante(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
@@ -2483,6 +2486,7 @@ def plante(ex,ey,ep,D,eq=None):
         else:
             return None,None
 
+@jit
 def plants(ex,ey,ep,D,ed):
     """
     Calculate element normal and shear stress for a
@@ -2761,7 +2765,7 @@ def platre(ex,ey,ep,D,eq=None):
     else:
         return Keq
 
-        
+@jit        
 def planqe(ex,ey,ep,D,eq=None):
     """
     Calculate the stiffness matrix for a quadrilateral
@@ -2806,6 +2810,7 @@ def planqe(ex,ey,ep,D,eq=None):
         return Ke,fe
         
 
+@jit
 def planqs(ex,ey,ep,D,ed,eq=None):
     """
     Calculate element normal and shear stress for a quadrilateral 
@@ -3069,7 +3074,7 @@ def plani4e(ex,ey,ep,D,eq=None):
     else:
         cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
         
-        
+ 
 def assem(edof,K,Ke,f=None,fe=None):
     """
     Assemble element matrices Ke ( and fe ) into the global
@@ -3196,11 +3201,15 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     cflog.info("step 1... converting K->CSR")
     Kcsr = K.asformat("csr")    
     cflog.info("step 2... Kt")
+    #Kt1 = K[bcDofs]
+    #Kt = Kt1[:,bcPrescr]
     Kt = K[ix_((bcDofs),(bcPrescr-1))]
     cflog.info("step 3... fsys")
     fsys = f[bcDofs]-Kt*bcVal_m
     cflog.info("step 4... Ksys")
-    Ksys = Kcsr[ix_((bcDofs),(bcDofs))]
+    Ksys1 = Kcsr[bcDofs]
+    Ksys = Ksys1[:,bcDofs]
+    #Ksys = Kcsr[ix_((bcDofs),(bcDofs))]
     cflog.info ("done...")
     
     cflog.info("Solving system...")
