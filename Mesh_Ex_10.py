@@ -4,8 +4,6 @@ The use case from the user manual.
 The example does not contain anything that is not covered in the previous examples.
 '''
 
-import sys, time
-
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
@@ -16,24 +14,6 @@ import numpy as np
 
 from scipy.sparse import lil_matrix
 
-from numba import jit
-
-useNumba = True
-
-@jit
-def assemElements(K, edof, ex, ey, elementmarkers, elprop, elType):
-    
-    for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
-    
-        if elType == 2:
-            Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-        else:
-            Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-            
-        cfc.assem(eltopo, K, Ke)
-
-
-
 # ---- General parameters ---------------------------------------------------
 
 cfu.enableLogging()
@@ -42,7 +22,6 @@ t = 0.2
 v = 0.35
 E1 = 2e9
 E2 = 0.2e9
-#E2 = 2e9
 ptype = 1
 ep = [ptype,t]
 D1 = cfc.hooke(ptype, E1, v)
@@ -64,7 +43,7 @@ elprop[markE2] = [ep, D2]
 # Parameters controlling mesh
 
 elSizeFactor = 0.02    # Element size factor
-elType = 2             # Triangle element
+elType = 3             # Triangle element
 dofsPerNode = 2        # Dof per node
 
 # ---- Create Geometry ------------------------------------------------------
@@ -118,34 +97,18 @@ coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
 nDofs = np.size(dofs)
 K = lil_matrix((nDofs,nDofs))
-#K = np.zeros((nDofs, nDofs))
 ex, ey = cfc.coordxtr(edof, coords, dofs)
 
 print("Assembling K... ("+str(nDofs)+")")
 
-t0 = 0
-t1 = 0
+for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
-if useNumba:
-    t0 = time.time()
-    assemElements(K, edof, ex, ey, elementmarkers, elprop, elType)
-    t1 = time.time()
-    total = t1 - t0
-    print("Numba assem = ", total)
-else:
-    t0 = time.time()
-    for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
-    
-        if elType == 2:
-            Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-        else:
-            Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
-                       
-        cfc.assem(eltopo, K, Ke)
-    t1 = time.time()
-    total = t1 - t0
-    print("Normal assem = ", total)
+    if elType == 2:
+        Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
+    else:
+        Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
         
+    cfc.assem(eltopo, K, Ke)
     
 print("Applying bc and loads...")
 
@@ -160,8 +123,7 @@ cfu.applyforcetotal(bdofs, f, markLoad, value = -10e5, dimension=2)
 
 print("Solving system...")
 
-a, r = cfc.spsolveq(K, f, bc, bcVal)
-#a,r = cfc.solveq(K, f, bc, bcVal)
+a,r = cfc.spsolveq(K, f, bc, bcVal)
 
 print("Extracting ed...")
 
@@ -194,13 +156,12 @@ for i in range(edof.shape[0]):
                         ed[i,:])
         
         vonMises.append( np.math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) ) )
-              
+        
 # ---- Visualise results ----------------------------------------------------
-
-#sys.exit(0)
 
 print("Drawing results...")
 
+cfv.figure() 
 cfv.drawGeometry(g, title="Geometry")
 
 cfv.figure() 
