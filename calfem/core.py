@@ -7,8 +7,6 @@ import numpy as np
 import logging as cflog
 import sys
 
-from numba import jit
-
 def cferror(msg):
     currFunc = sys._getframe().f_code.co_name
     cfinfo("%s() Error : %s" % (currFunc, msg))
