@@ -60,7 +60,8 @@ def _select_qt_binding(binding_name=None, binding_order=None):
 
     required_modules = [
         'QtCore',
-        'QtGui'
+        'QtGui',
+        'uic',
     ]
     optional_modules = [
         'QtDeclarative',
@@ -75,6 +76,7 @@ def _select_qt_binding(binding_name=None, binding_order=None):
         'QtWebKit',
         'QtXml',
         'QtXmlPatterns',
+        'QtUiTools',
     ]
 
     # try to load preferred bindings
@@ -266,3 +268,7 @@ _select_qt_binding(
     getattr(sys, 'SELECT_QT_BINDING', None),
     getattr(sys, 'SELECT_QT_BINDING_ORDER', None),
 )
+
+print("Selected Qt version :", QT_BINDING)
+print("Loaded Qt modules   :", QT_BINDING_MODULES.keys())
+print("Qt binding version  :", QT_BINDING_VERSION)

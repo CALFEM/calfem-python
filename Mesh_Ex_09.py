@@ -15,7 +15,7 @@ import visvis as vv
 # Create a visvis app instance, which wraps a wx application object.
 # This needs to be done *before* instantiating the main window. 
 
-app = vv.use('wx')
+app = vv.use('qt')
 
 
 class MainWindow(wx.Frame):
