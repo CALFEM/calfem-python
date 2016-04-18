@@ -22,14 +22,20 @@ def figure(figure=None):
     if figure == None:
         f = vv.figure()
     else:
-        f = vv.figure(figure)
-        
+        try:
+            f = vv.figure(figure)
+        except:
+            f = vv.figure() 
+
     f._widget.show()
     f._widget.raise_()
     return f
     
 def closeAll():
     vv.closeAll()
+    
+def clf():
+    vv.clf()
         
 def showAndWait():
     global globalVisVisApp
