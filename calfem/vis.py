@@ -16,11 +16,20 @@ globalQtApp = QtGui.QApplication(["PyCalfem"])
 
 global globalVisVisApp
 
-def figure():
-    f = vv.figure()
+def figure(figure=None):
+    f = None
+    
+    if figure == None:
+        f = vv.figure()
+    else:
+        f = vv.figure(figure)
+        
     f._widget.show()
     f._widget.raise_()
     return f
+    
+def closeAll():
+    vv.closeAll()
         
 def showAndWait():
     global globalVisVisApp
