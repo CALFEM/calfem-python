@@ -295,6 +295,7 @@ class GmshMeshGenerator:
         dofs = createdofs(np.size(allNodes,0), self.dofsPerNode)
         
         if self.dofsPerNode>1: #This if-chunk copied from pycalfem_utils.py
+            self.topo = elements 
             expandedElements = np.zeros((np.size(elements,0),nodesPerElement*self.dofsPerNode),'i')
             elIdx = 0
             for elementTopo in elements:        
