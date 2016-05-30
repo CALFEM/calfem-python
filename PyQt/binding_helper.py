@@ -269,6 +269,18 @@ _select_qt_binding(
     getattr(sys, 'SELECT_QT_BINDING_ORDER', None),
 )
 
+print("-----------------------------")
+print("Checking installed Qt version")
+print("-----------------------------")
+print()
+
 print("Selected Qt version :", QT_BINDING)
-print("Loaded Qt modules   :", QT_BINDING_MODULES.keys())
+
+print("Loaded Qt modules   :")
+print()
+for qtmodule in QT_BINDING_MODULES.keys():
+    print("\t"+qtmodule)
+    
+print()
 print("Qt binding version  :", QT_BINDING_VERSION)
+print()

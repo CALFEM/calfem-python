@@ -143,7 +143,7 @@ def bar2g(ex,ey,ep,N):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     
     n = np.asarray(b.T/L).reshape(2,)
 
@@ -193,7 +193,7 @@ def bar2s(ex,ey,ep,ed):
     b = np.mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
     L = np.asscalar(np.sqrt(b.T*b))
     
-    Kle = np.mat([[1.,-1.],[-1.,1.]])*E*A/L
+    #Kle = np.mat([[1.,-1.],[-1.,1.]])*E*A/L
     
     n = np.asarray(b.T/L).reshape(2,) 
     
@@ -232,7 +232,7 @@ def bar3e(ex,ey,ez,ep):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     
     n = np.asarray(b.T/L).reshape(3)
 
@@ -276,7 +276,7 @@ def bar3s(ex,ey,ez,ep,ed):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     
     n = np.asarray(b.T/L).reshape(3)
 
@@ -285,10 +285,10 @@ def bar3s(ex,ey,ez,ep,ed):
         [ 0.  , 0.  , 0.  , n[0], n[1], n[2]]
     ])
     
-    Kle = E*A/L*np.mat([
-        [ 1,-1],
-        [-1, 1]
-    ])
+    #Kle = E*A/L*np.mat([
+    #    [ 1,-1],
+    #    [-1, 1]
+    #])
 
     u = np.asmatrix(ed).T
     N = E*A/L*np.mat([[-1.,1.]])*G*u
@@ -487,7 +487,7 @@ def beam2t(ex,ey,ep,eq=None):
     """
 
     b = np.mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b.T/L).reshape(2)
     
     E = ep[0]
@@ -579,7 +579,7 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b.T/L).reshape(2)
     
     qx = 0.
@@ -611,29 +611,29 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
         [ 0.,   0.,   0., 0.,   0.,   1.]
     ])
     
-    M = ravel(C.I*(G*np.asmatrix(ed).T-np.mat([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI)-qy*L**2/(2*GAK), qy*L**3/(6*EI)]).T))
+    M = np.ravel(C.I*(G*np.asmatrix(ed).T-np.mat([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI)-qy*L**2/(2*GAK), qy*L**3/(6*EI)]).T))
     C2 = np.mat([M[0], M[3]]).T
     C4 = np.mat([M[1], M[2], M[4], M[5]]).T
     
-    x = np.asmatrix(arange(0., L+L/(ne-1), L/(ne-1))).T
-    zero = np.asmatrix(zeros([len(x)])).T
-    one = np.asmatrix(ones([len(x)])).T
+    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    zero = np.asmatrix(np.zeros([len(x)])).T
+    one = np.asmatrix(np.ones([len(x)])).T
     
-    u = concatenate((x,one),1)*C2-qx/(2*EA)*power(x,2)
-    du = concatenate((one,zero),1)*C2-qx*x/EA
+    u = np.concatenate((x,one),1)*C2-qx/(2*EA)*np.power(x,2)
+    du = np.concatenate((one,zero),1)*C2-qx*x/EA
     
-    v = concatenate((power(x,3),power(x,2),x,one),1)*C4+qy/(24*EI)*power(x,4)-qy/(2*GAK)*power(x,2)
-    dv = concatenate((3*power(x,2),2*x,one,zero),1)*C4+qy*power(x,3)/(6*EI)-qy*x/GAK
+    v = np.concatenate((np.power(x,3),np.power(x,2),x,one),1)*C4+qy/(24*EI)*np.np.power(x,4)-qy/(2*GAK)*np.power(x,2)
+    dv = np.concatenate((3*np.power(x,2),2*x,one,zero),1)*C4+qy*np.power(x,3)/(6*EI)-qy*x/GAK
     
-    teta = concatenate((3*(power(x,2)+2*alfa*one),2*x,one,zero),1)*C4+qy*power(x,3)/(6*EI)
-    dteta = concatenate((6*x,2*one,zero,zero),1)*C4+qy*power(x,2)/(2*EI)
+    teta = np.concatenate((3*(np.power(x,2)+2*alfa*one),2*x,one,zero),1)*C4+qy*np.power(x,3)/(6*EI)
+    dteta = np.concatenate((6*x,2*one,zero,zero),1)*C4+qy*np.power(x,2)/(2*EI)
     
     N = EA*du
     M = EI*dteta
     V = GAK*(dv-teta)
     
-    es = concatenate((N,V,M),1)
-    edi = concatenate((u,v,teta),1)
+    es = np.concatenate((N,V,M),1)
+    edi = np.concatenate((u,v,teta),1)
     eci = x
 
     if np != None:
@@ -667,7 +667,7 @@ def beam2w(ex,ey,ep,eq=None):
         fe                  element load vector (6 x 1)
     """
     b = np.mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b/L).reshape(2)
     
     E,A,I,ka,kt = ep
@@ -741,7 +741,7 @@ def beam2ws(ex,ey,ep,ed,eq=None):
         es = [[N1, V1, M1],
               [N2, V2, M2]]     element forces, local direction
     """
-    if asmatrix(ed).shape[0] > 1:
+    if np.asmatrix(ed).shape[0] > 1:
         cferror("Only one row is allowed in the ed matrix !!!")
         return
 
@@ -749,7 +749,7 @@ def beam2ws(ex,ey,ep,ed,eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b/L).reshape(2,)
     
     E,A,I,ka,kt = ep
@@ -824,7 +824,7 @@ def beam2g(ex,ey,ep,N,eq=None):
         fe                      element load vector (6 x 1)
     """
     if eq != None:
-        if size(eq) > 1:
+        if np.size(eq) > 1:
             cferror("eq should be a scalar !!!")
             return
         else:
@@ -836,29 +836,29 @@ def beam2g(ex,ey,ep,N,eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b/L).reshape(2,)
     
     E,A,I = ep
     
-    rho = -N*L**2/(pi**2*E*I)
+    rho = -N*L**2/(np.pi**2*E*I)
     
-    kL = pi*sqrt(abs(rho))+finfo(float).eps
+    kL = np.pi*np.sqrt(abs(rho))+np.finfo(float).eps
 
     if rho > 0:
-        f1 = (kL/2)/tan(kL/2)
+        f1 = (kL/2)/np.tan(kL/2)
         f2 = (1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-        h = 6*(2/kL**2-(1+cos(kL))/(kL*sin(kL)))
+        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
     elif rho < 0:
-        f1 = (kL/2)/tanh(kL/2)
+        f1 = (kL/2)/np.tanh(kL/2)
         f2 = -(1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-        h = -6*(2/kL**2-(1+cosh(kL))/(kL*sinh(kL)))
+        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
     else:
         f1 = f2 = f3 = f4 = f5 = h = 1
 
@@ -925,30 +925,30 @@ def beam2gs(ex,ey,ep,ed,N,eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b/L).reshape(2,)
     
     E,A,I = ep
     
-    rho = -N*L**2/(pi**2*E*I)
+    rho = -N*L**2/(np.pi**2*E*I)
     
     eps = 2.2204e-16
-    kL = pi*sqrt(abs(rho))+eps
+    kL = np.pi*np.sqrt(abs(rho))+eps
 
     if rho > 0:
-        f1 = (kL/2)/tan(kL/2)
+        f1 = (kL/2)/np.tan(kL/2)
         f2 = (1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-        h = 6*(2/kL**2-(1+cos(kL))/(kL*sin(kL)))
+        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
     elif rho < 0:
-        f1 = (kL/2)/tanh(kL/2)
+        f1 = (kL/2)/np.tanh(kL/2)
         f2 = -(1/12.)*kL**2/(1-f1)
         f3 = f1/4+3*f2/4
         f4 = -f1/2+3*f2/2
         f5 = f1*f2
-        h = -6*(2/kL**2-(1+cosh(kL))/(kL*sinh(kL)))
+        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
     else:
         f1 = f2 = f3 = f4 = f5 = h = 1
     
@@ -1011,14 +1011,14 @@ def beam2d(ex,ey,ep):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n = np.asarray(b/L).reshape(2,)
     
     a = 0
     b = 0
-    if size(ep) == 4:
+    if np.size(ep) == 4:
         E,A,I,m = ep
-    elif size(ep) == 6:
+    elif np.size(ep) == 6:
         E,A,I,m,a,b = ep
     
     Kle = np.mat([
@@ -1054,9 +1054,9 @@ def beam2d(ex,ey,ep):
     Me = G.T*Mle*G
     Ce = G.T*Cle*G
     
-    if size(ep) == 4:
+    if np.size(ep) == 4:
         return Ke,Me
-    elif size(ep) == 6:
+    elif np.size(ep) == 6:
         return Ke,Me,Ce
 
 def beam3e(ex,ey,ez,eo,ep,eq=None):
@@ -1094,11 +1094,11 @@ def beam3e(ex,ey,ez,eo,ep,eq=None):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
         ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n1 = np.asarray(b.T/L).reshape(3,)
     
     eo = np.asmatrix(eo)
-    lc = np.asscalar(sqrt(eo*eo.T))
+    lc = np.asscalar(np.sqrt(eo*eo.T))
     n3 = np.asarray(eo/lc).reshape(3,)
     
     E,Gs,A,Iy,Iz,Kv = ep
@@ -1141,7 +1141,7 @@ def beam3e(ex,ey,ez,eo,ep,eq=None):
     n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
     n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
 
-    #An = append([n1,n2],[n3],0)
+    #An = np.append([n1,n2],[n3],0)
 
     G = np.mat([
         [ n1[0], n1[1], n1[2], 0,     0,     0,     0,     0,     0,     0,     0,     0    ],
@@ -1219,11 +1219,11 @@ def beam3s(ex,ey,ez,eo,ep,ed,eq=None,n=None):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(sqrt(b.T*b))
+    L = np.asscalar(np.sqrt(b.T*b))
     n1 = np.asarray(b.T/L).reshape(3,)
     
     eo = np.asmatrix(eo)
-    lc = np.asscalar(sqrt(eo*eo.T))
+    lc = np.asscalar(np.sqrt(eo*eo.T))
     n3 = np.asarray(eo/lc).reshape(3,)
 
     EA = ep[0]*ep[2]
@@ -1653,18 +1653,18 @@ def flw2i4e(ex,ey,ep,D,eq=None):
         ])
     else:
         cfinfo("Used number of integration points not implemented")
-    wp = multiply(w[:,0],w[:,1])
+    wp = np.multiply(w[:,0],w[:,1])
     
     xsi = gp[:,0]
     eta = gp[:,1]
     r2 = ngp*2
 
-    N = multiply((1-xsi),(1-eta))/4.
-    N = append(N,multiply((1+xsi),(1-eta))/4.,axis=1)
-    N = append(N,multiply((1+xsi),(1+eta))/4.,axis=1)
-    N = append(N,multiply((1-xsi),(1+eta))/4.,axis=1)
+    N = np.multiply((1-xsi),(1-eta))/4.
+    N = np.append(N,np.multiply((1+xsi),(1-eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1+xsi),(1+eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1-xsi),(1+eta))/4.,axis=1)
     
-    dNr = np.mat(zeros((r2,4)))
+    dNr = np.mat(np.zeros((r2,4)))
     dNr[0:r2:2,0] = -(1-eta)/4.
     dNr[0:r2:2,1] = (1-eta)/4.
     dNr[0:r2:2,2] = (1+eta)/4.
@@ -1674,18 +1674,18 @@ def flw2i4e(ex,ey,ep,D,eq=None):
     dNr[1:r2+1:2,2] = (1+xsi)/4.
     dNr[1:r2+1:2,3] = (1-xsi)/4.
 
-    Ke1 = np.mat(zeros((4,4)))
-    fe1 = np.mat(zeros((4,1)))
+    Ke1 = np.mat(np.zeros((4,4)))
+    fe1 = np.mat(np.zeros((4,1)))
     JT = dNr*np.mat([ex,ey]).T
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
-        Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
         fe1 = fe1+N[i,:].T*detJ*wp[i]
 
     if eq == None:
@@ -1775,18 +1775,18 @@ def flw2i4s(ex,ey,ep,D,ed):
         ])
     else:
         cfinfo("Used number of integration points not implemented")
-    wp = multiply(w[:,0],w[:,1])
+    wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
     eta = gp[:,1]
     r2 = ngp*2
 
-    N = multiply((1-xsi),(1-eta))/4.
-    N = append(N,multiply((1+xsi),(1-eta))/4.,axis=1)
-    N = append(N,multiply((1+xsi),(1+eta))/4.,axis=1)
-    N = append(N,multiply((1-xsi),(1+eta))/4.,axis=1)
+    N = np.multiply((1-xsi),(1-eta))/4.
+    N = np.append(N,np.multiply((1+xsi),(1-eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1+xsi),(1+eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1-xsi),(1+eta))/4.,axis=1)
     
-    dNr = np.mat(zeros((r2,4)))
+    dNr = np.mat(np.zeros((r2,4)))
     dNr[0:r2:2,0] = -(1-eta)/4.
     dNr[0:r2:2,1] = (1-eta)/4.
     dNr[0:r2:2,2] = (1+eta)/4.
@@ -1800,15 +1800,15 @@ def flw2i4s(ex,ey,ep,D,ed):
     if ed.ndim == 1:
         ed = np.array([ed])
         
-    red,ced = shape(ed)
+    red,ced = np.shape(ed)
     JT = dNr*np.mat([ex,ey]).T
     
-    es = np.mat(zeros((ngp*red,2)))
-    et = np.mat(zeros((ngp*red,2)))
+    es = np.mat(np.zeros((ngp*red,2)))
+    et = np.mat(np.zeros((ngp*red,2)))
     for i in range(ngp):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobi determinatn == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
@@ -1900,51 +1900,51 @@ def flw2i8e(ex,ey,ep,D,eq=None):
         ])
     else:
         cfinfo("Used number of integration points not implemented")
-    wp = multiply(w[:,0],w[:,1])
+    wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
     eta = gp[:,1]
     r2 = ngp*2
 
-    N = multiply(multiply(-(1-xsi),(1-eta)),(1+xsi+eta))/4.
-    N = append(N,multiply(multiply(-(1+xsi),(1-eta)),(1-xsi+eta))/4.,axis=1)
-    N = append(N,multiply(multiply(-(1+xsi),(1+eta)),(1-xsi-eta))/4.,axis=1)
-    N = append(N,multiply(multiply(-(1-xsi),(1+eta)),(1+xsi-eta))/4.,axis=1)
-    N = append(N,multiply((1-multiply(xsi,xsi)),(1-eta))/2.,axis=1)
-    N = append(N,multiply((1+xsi),(1-multiply(eta,eta)))/2.,axis=1)
-    N = append(N,multiply((1-multiply(xsi,xsi)),(1+eta))/2.,axis=1)
-    N = append(N,multiply((1-xsi),(1-multiply(eta,eta)))/2.,axis=1)
+    N = np.multiply(np.multiply(-(1-xsi),(1-eta)),(1+xsi+eta))/4.
+    N = np.append(N,np.multiply(np.multiply(-(1+xsi),(1-eta)),(1-xsi+eta))/4.,axis=1)
+    N = np.append(N,np.multiply(np.multiply(-(1+xsi),(1+eta)),(1-xsi-eta))/4.,axis=1)
+    N = np.append(N,np.multiply(np.multiply(-(1-xsi),(1+eta)),(1+xsi-eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1-np.multiply(xsi,xsi)),(1-eta))/2.,axis=1)
+    N = np.append(N,np.multiply((1+xsi),(1-np.multiply(eta,eta)))/2.,axis=1)
+    N = np.append(N,np.multiply((1-np.multiply(xsi,xsi)),(1+eta))/2.,axis=1)
+    N = np.append(N,np.multiply((1-xsi),(1-np.multiply(eta,eta)))/2.,axis=1)
 
-    dNr = np.mat(zeros((r2,8)))
-    dNr[0:r2:2,0] = -(-multiply((1-eta),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
-    dNr[0:r2:2,1] = -(multiply((1-eta),(1-xsi+eta))-multiply((1+xsi),(1-eta)))/4.
-    dNr[0:r2:2,2] = -(multiply((1+eta),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
-    dNr[0:r2:2,3] = -(-multiply((1+eta),(1+xsi-eta))+multiply((1-xsi),(1+eta)))/4.
-    dNr[0:r2:2,4] = -multiply(xsi,(1-eta))
-    dNr[0:r2:2,5] = (1-multiply(eta,eta))/2.
-    dNr[0:r2:2,6] = -multiply(xsi,(1+eta))
-    dNr[0:r2:2,7] = -(1-multiply(eta,eta))/2.
-    dNr[1:r2+1:2,0] = -(-multiply((1-xsi),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
-    dNr[1:r2+1:2,1] = -(-multiply((1+xsi),(1-xsi+eta))+multiply((1+xsi),(1-eta)))/4.
-    dNr[1:r2+1:2,2] = -(multiply((1+xsi),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
-    dNr[1:r2+1:2,3] = -(multiply((1-xsi),(1+xsi-eta))-multiply((1-xsi),(1+eta)))/4.
-    dNr[1:r2+1:2,4] = -(1-multiply(xsi,xsi))/2.
-    dNr[1:r2+1:2,5] = -multiply(eta,(1+xsi))
-    dNr[1:r2+1:2,6] = (1-multiply(xsi,xsi))/2.
-    dNr[1:r2+1:2,7] = -multiply(eta,(1-xsi))
+    dNr = np.mat(np.zeros((r2,8)))
+    dNr[0:r2:2,0] = -(-np.multiply((1-eta),(1+xsi+eta))+np.multiply((1-xsi),(1-eta)))/4.
+    dNr[0:r2:2,1] = -(np.multiply((1-eta),(1-xsi+eta))-np.multiply((1+xsi),(1-eta)))/4.
+    dNr[0:r2:2,2] = -(np.multiply((1+eta),(1-xsi-eta))-np.multiply((1+xsi),(1+eta)))/4.
+    dNr[0:r2:2,3] = -(-np.multiply((1+eta),(1+xsi-eta))+np.multiply((1-xsi),(1+eta)))/4.
+    dNr[0:r2:2,4] = -np.multiply(xsi,(1-eta))
+    dNr[0:r2:2,5] = (1-np.multiply(eta,eta))/2.
+    dNr[0:r2:2,6] = -np.multiply(xsi,(1+eta))
+    dNr[0:r2:2,7] = -(1-np.multiply(eta,eta))/2.
+    dNr[1:r2+1:2,0] = -(-np.multiply((1-xsi),(1+xsi+eta))+np.multiply((1-xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,1] = -(-np.multiply((1+xsi),(1-xsi+eta))+np.multiply((1+xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,2] = -(np.multiply((1+xsi),(1-xsi-eta))-np.multiply((1+xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,3] = -(np.multiply((1-xsi),(1+xsi-eta))-np.multiply((1-xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,4] = -(1-np.multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,5] = -np.multiply(eta,(1+xsi))
+    dNr[1:r2+1:2,6] = (1-np.multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,7] = -np.multiply(eta,(1-xsi))
 
-    Ke1 = np.mat(zeros((8,8)))
-    fe1 = np.mat(zeros((8,1)))
+    Ke1 = np.mat(np.zeros((8,8)))
+    fe1 = np.mat(np.zeros((8,1)))
     JT = dNr*np.mat([ex,ey]).T
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
-        Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
         fe1 = fe1+N[i,:].T*detJ*wp[i]
     
     if eq != None:
@@ -2034,51 +2034,51 @@ def flw2i8s(ex,ey,ep,D,ed):
         ])
     else:
         cfinfo("Used number of integration points not implemented")
-    wp = multiply(w[:,0],w[:,1])
+    wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
     eta = gp[:,1]
     r2 = ngp*2
 
-    N = multiply(multiply(-(1-xsi),(1-eta)),(1+xsi+eta))/4.
-    N = append(N,multiply(multiply(-(1+xsi),(1-eta)),(1-xsi+eta))/4.,axis=1)
-    N = append(N,multiply(multiply(-(1+xsi),(1+eta)),(1-xsi-eta))/4.,axis=1)
-    N = append(N,multiply(multiply(-(1-xsi),(1+eta)),(1+xsi-eta))/4.,axis=1)
-    N = append(N,multiply((1-multiply(xsi,xsi)),(1-eta))/2.,axis=1)
-    N = append(N,multiply((1+xsi),(1-multiply(eta,eta)))/2.,axis=1)
-    N = append(N,multiply((1-multiply(xsi,xsi)),(1+eta))/2.,axis=1)
-    N = append(N,multiply((1-xsi),(1-multiply(eta,eta)))/2.,axis=1)
+    N = np.multiply(np.multiply(-(1-xsi),(1-eta)),(1+xsi+eta))/4.
+    N = np.append(N,np.multiply(np.multiply(-(1+xsi),(1-eta)),(1-xsi+eta))/4.,axis=1)
+    N = np.append(N,np.multiply(np.multiply(-(1+xsi),(1+eta)),(1-xsi-eta))/4.,axis=1)
+    N = np.append(N,np.multiply(np.multiply(-(1-xsi),(1+eta)),(1+xsi-eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1-np.multiply(xsi,xsi)),(1-eta))/2.,axis=1)
+    N = np.append(N,np.multiply((1+xsi),(1-np.multiply(eta,eta)))/2.,axis=1)
+    N = np.append(N,np.multiply((1-np.multiply(xsi,xsi)),(1+eta))/2.,axis=1)
+    N = np.append(N,np.multiply((1-xsi),(1-np.multiply(eta,eta)))/2.,axis=1)
 
-    dNr = np.mat(zeros((r2,8)))
-    dNr[0:r2:2,0] = -(-multiply((1-eta),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
-    dNr[0:r2:2,1] = -(multiply((1-eta),(1-xsi+eta))-multiply((1+xsi),(1-eta)))/4.
-    dNr[0:r2:2,2] = -(multiply((1+eta),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
-    dNr[0:r2:2,3] = -(-multiply((1+eta),(1+xsi-eta))+multiply((1-xsi),(1+eta)))/4.
-    dNr[0:r2:2,4] = -multiply(xsi,(1-eta))
-    dNr[0:r2:2,5] = (1-multiply(eta,eta))/2.
-    dNr[0:r2:2,6] = -multiply(xsi,(1+eta))
-    dNr[0:r2:2,7] = -(1-multiply(eta,eta))/2.
-    dNr[1:r2+1:2,0] = -(-multiply((1-xsi),(1+xsi+eta))+multiply((1-xsi),(1-eta)))/4.
-    dNr[1:r2+1:2,1] = -(-multiply((1+xsi),(1-xsi+eta))+multiply((1+xsi),(1-eta)))/4.
-    dNr[1:r2+1:2,2] = -(multiply((1+xsi),(1-xsi-eta))-multiply((1+xsi),(1+eta)))/4.
-    dNr[1:r2+1:2,3] = -(multiply((1-xsi),(1+xsi-eta))-multiply((1-xsi),(1+eta)))/4.
-    dNr[1:r2+1:2,4] = -(1-multiply(xsi,xsi))/2.
-    dNr[1:r2+1:2,5] = -multiply(eta,(1+xsi))
-    dNr[1:r2+1:2,6] = (1-multiply(xsi,xsi))/2.
-    dNr[1:r2+1:2,7] = -multiply(eta,(1-xsi))
+    dNr = np.mat(np.zeros((r2,8)))
+    dNr[0:r2:2,0] = -(-np.multiply((1-eta),(1+xsi+eta))+np.multiply((1-xsi),(1-eta)))/4.
+    dNr[0:r2:2,1] = -(np.multiply((1-eta),(1-xsi+eta))-np.multiply((1+xsi),(1-eta)))/4.
+    dNr[0:r2:2,2] = -(np.multiply((1+eta),(1-xsi-eta))-np.multiply((1+xsi),(1+eta)))/4.
+    dNr[0:r2:2,3] = -(-np.multiply((1+eta),(1+xsi-eta))+np.multiply((1-xsi),(1+eta)))/4.
+    dNr[0:r2:2,4] = -np.multiply(xsi,(1-eta))
+    dNr[0:r2:2,5] = (1-np.multiply(eta,eta))/2.
+    dNr[0:r2:2,6] = -np.multiply(xsi,(1+eta))
+    dNr[0:r2:2,7] = -(1-np.multiply(eta,eta))/2.
+    dNr[1:r2+1:2,0] = -(-np.multiply((1-xsi),(1+xsi+eta))+np.multiply((1-xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,1] = -(-np.multiply((1+xsi),(1-xsi+eta))+np.multiply((1+xsi),(1-eta)))/4.
+    dNr[1:r2+1:2,2] = -(np.multiply((1+xsi),(1-xsi-eta))-np.multiply((1+xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,3] = -(np.multiply((1-xsi),(1+xsi-eta))-np.multiply((1-xsi),(1+eta)))/4.
+    dNr[1:r2+1:2,4] = -(1-np.multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,5] = -np.multiply(eta,(1+xsi))
+    dNr[1:r2+1:2,6] = (1-np.multiply(xsi,xsi))/2.
+    dNr[1:r2+1:2,7] = -np.multiply(eta,(1-xsi))
 
     eci = N*np.mat([ex,ey]).T
     if ed.ndim == 1:
         ed = np.array([ed])
-    red,ced = shape(ed)
+    red,ced = np.shape(ed)
     JT = dNr*np.mat([ex,ey]).T
     
-    es = np.mat(zeros((ngp*red,2)))
-    et = np.mat(zeros((ngp*red,2)))
+    es = np.mat(np.zeros((ngp*red,2)))
+    et = np.mat(np.zeros((ngp*red,2)))
     for i in range(ngp):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
@@ -2135,14 +2135,14 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
             [ 1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.mat(ones((8,3)))*w1
+        w = np.mat(np.ones((8,3)))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat(zeros((27,3)))
-        w = np.mat(zeros((27,3)))
+        gp = np.mat(np.zeros((27,3)))
+        w = np.mat(np.zeros((27,3)))
         I1 = np.array([-1,0,1,-1,0,1,-1,0,1])
         I2 = np.array([0,-1,0,0,1,0,0,1,0])
         gp[:,0] = np.mat([I1,I1,I1]).reshape(27,1)*g1
@@ -2170,61 +2170,61 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
         cfinfo("Used number of integration points not implemented")
         return
 
-    wp = multiply(multiply(w[:,0],w[:,1]),w[:,2])
+    wp = np.multiply(np.multiply(w[:,0],w[:,1]),w[:,2])
 
     xsi = gp[:,0]
     eta = gp[:,1]
     zet = gp[:,2]
     r2 = ngp*3
     
-    N = multiply(multiply((1-xsi),(1-eta)),(1-zet))/8.
-    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1-eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1+zet))/8.,axis=1)
+    N = np.multiply(np.multiply((1-xsi),(1-eta)),(1-zet))/8.
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1-eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1+eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1+eta)),(1+zet))/8.,axis=1)
     
-    dNr = np.mat(zeros((r2,8)))
-    dNr[0:r2:3,0]= multiply(-(1-eta),(1-zet))
-    dNr[0:r2:3,1]= multiply((1-eta),(1-zet))
-    dNr[0:r2:3,2]= multiply((1+eta),(1-zet))
-    dNr[0:r2:3,3]= multiply(-(1+eta),(1-zet))
-    dNr[0:r2:3,4]= multiply(-(1-eta),(1+zet))
-    dNr[0:r2:3,5]= multiply((1-eta),(1+zet))
-    dNr[0:r2:3,6]= multiply((1+eta),(1+zet))
-    dNr[0:r2:3,7]= multiply(-(1+eta),(1+zet))
-    dNr[1:r2+1:3,0] = multiply(-(1-xsi),(1-zet))
-    dNr[1:r2+1:3,1] = multiply(-(1+xsi),(1-zet))
-    dNr[1:r2+1:3,2] = multiply((1+xsi),(1-zet))
-    dNr[1:r2+1:3,3] = multiply((1-xsi),(1-zet))
-    dNr[1:r2+1:3,4] = multiply(-(1-xsi),(1+zet))
-    dNr[1:r2+1:3,5] = multiply(-(1+xsi),(1+zet))
-    dNr[1:r2+1:3,6] = multiply((1+xsi),(1+zet))
-    dNr[1:r2+1:3,7] = multiply((1-xsi),(1+zet))
-    dNr[2:r2+2:3,0] = multiply(-(1-xsi),(1-eta))
-    dNr[2:r2+2:3,1] = multiply(-(1+xsi),(1-eta))
-    dNr[2:r2+2:3,2] = multiply(-(1+xsi),(1+eta))
-    dNr[2:r2+2:3,3] = multiply(-(1-xsi),(1+eta))
-    dNr[2:r2+2:3,4] = multiply((1-xsi),(1-eta))
-    dNr[2:r2+2:3,5] = multiply((1+xsi),(1-eta))
-    dNr[2:r2+2:3,6] = multiply((1+xsi),(1+eta))
-    dNr[2:r2+2:3,7] = multiply((1-xsi),(1+eta))
+    dNr = np.mat(np.zeros((r2,8)))
+    dNr[0:r2:3,0]= np.multiply(-(1-eta),(1-zet))
+    dNr[0:r2:3,1]= np.multiply((1-eta),(1-zet))
+    dNr[0:r2:3,2]= np.multiply((1+eta),(1-zet))
+    dNr[0:r2:3,3]= np.multiply(-(1+eta),(1-zet))
+    dNr[0:r2:3,4]= np.multiply(-(1-eta),(1+zet))
+    dNr[0:r2:3,5]= np.multiply((1-eta),(1+zet))
+    dNr[0:r2:3,6]= np.multiply((1+eta),(1+zet))
+    dNr[0:r2:3,7]= np.multiply(-(1+eta),(1+zet))
+    dNr[1:r2+1:3,0] = np.multiply(-(1-xsi),(1-zet))
+    dNr[1:r2+1:3,1] = np.multiply(-(1+xsi),(1-zet))
+    dNr[1:r2+1:3,2] = np.multiply((1+xsi),(1-zet))
+    dNr[1:r2+1:3,3] = np.multiply((1-xsi),(1-zet))
+    dNr[1:r2+1:3,4] = np.multiply(-(1-xsi),(1+zet))
+    dNr[1:r2+1:3,5] = np.multiply(-(1+xsi),(1+zet))
+    dNr[1:r2+1:3,6] = np.multiply((1+xsi),(1+zet))
+    dNr[1:r2+1:3,7] = np.multiply((1-xsi),(1+zet))
+    dNr[2:r2+2:3,0] = np.multiply(-(1-xsi),(1-eta))
+    dNr[2:r2+2:3,1] = np.multiply(-(1+xsi),(1-eta))
+    dNr[2:r2+2:3,2] = np.multiply(-(1+xsi),(1+eta))
+    dNr[2:r2+2:3,3] = np.multiply(-(1-xsi),(1+eta))
+    dNr[2:r2+2:3,4] = np.multiply((1-xsi),(1-eta))
+    dNr[2:r2+2:3,5] = np.multiply((1+xsi),(1-eta))
+    dNr[2:r2+2:3,6] = np.multiply((1+xsi),(1+eta))
+    dNr[2:r2+2:3,7] = np.multiply((1-xsi),(1+eta))
     dNr = dNr/8.
 
-    Ke1 = np.mat(zeros((8,8)))
-    fe1 = np.mat(zeros((8,1)))
+    Ke1 = np.mat(np.zeros((8,8)))
+    fe1 = np.mat(np.zeros((8,1)))
     JT = dNr*np.mat([ex,ey,ez]).T
     
     for i in range(ngp):
         indx = np.array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
-        Ke1 = Ke1+B.T*D*B*detJ*asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
         fe1 = fe1+N[i,:].T*detJ*wp[i]
 
     if eq != None:
@@ -2281,14 +2281,14 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
             [ 1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.mat(ones((8,3)))*w1
+        w = np.mat(np.ones((8,3)))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat(zeros((27,3)))
-        w = np.mat(zeros((27,3)))
+        gp = np.mat(np.zeros((27,3)))
+        w = np.mat(np.zeros((27,3)))
         I1 = np.array([-1,0,1,-1,0,1,-1,0,1])
         I2 = np.array([0,-1,0,0,1,0,0,1,0])
         gp[:,0] = np.mat([I1,I1,I1]).reshape(27,1)*g1
@@ -2316,61 +2316,61 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
         cfinfo("Used number of integration points not implemented")
         return
 
-    wp = multiply(multiply(w[:,0],w[:,1]),w[:,2])
+    wp = np.multiply(np.multiply(w[:,0],w[:,1]),w[:,2])
     
     xsi = gp[:,0]
     eta = gp[:,1]
     zet = gp[:,2]
     r2 = ngp*3
     
-    N = multiply(multiply((1-xsi),(1-eta)),(1-zet))/8.
-    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1-zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1-eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1-eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1+xsi),(1+eta)),(1+zet))/8.,axis=1)
-    N = append(N,multiply(multiply((1-xsi),(1+eta)),(1+zet))/8.,axis=1)
+    N = np.multiply(np.multiply((1-xsi),(1-eta)),(1-zet))/8.
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1-eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1+eta)),(1-zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1-eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1+xsi),(1+eta)),(1+zet))/8.,axis=1)
+    N = np.append(N,np.multiply(np.multiply((1-xsi),(1+eta)),(1+zet))/8.,axis=1)
     
-    dNr = np.mat(zeros((r2,8)))
-    dNr[0:r2:3,0]= multiply(-(1-eta),(1-zet))
-    dNr[0:r2:3,1]= multiply((1-eta),(1-zet))
-    dNr[0:r2:3,2]= multiply((1+eta),(1-zet))
-    dNr[0:r2:3,3]= multiply(-(1+eta),(1-zet))
-    dNr[0:r2:3,4]= multiply(-(1-eta),(1+zet))
-    dNr[0:r2:3,5]= multiply((1-eta),(1+zet))
-    dNr[0:r2:3,6]= multiply((1+eta),(1+zet))
-    dNr[0:r2:3,7]= multiply(-(1+eta),(1+zet))
-    dNr[1:r2+1:3,0] = multiply(-(1-xsi),(1-zet))
-    dNr[1:r2+1:3,1] = multiply(-(1+xsi),(1-zet))
-    dNr[1:r2+1:3,2] = multiply((1+xsi),(1-zet))
-    dNr[1:r2+1:3,3] = multiply((1-xsi),(1-zet))
-    dNr[1:r2+1:3,4] = multiply(-(1-xsi),(1+zet))
-    dNr[1:r2+1:3,5] = multiply(-(1+xsi),(1+zet))
-    dNr[1:r2+1:3,6] = multiply((1+xsi),(1+zet))
-    dNr[1:r2+1:3,7] = multiply((1-xsi),(1+zet))
-    dNr[2:r2+2:3,0] = multiply(-(1-xsi),(1-eta))
-    dNr[2:r2+2:3,1] = multiply(-(1+xsi),(1-eta))
-    dNr[2:r2+2:3,2] = multiply(-(1+xsi),(1+eta))
-    dNr[2:r2+2:3,3] = multiply(-(1-xsi),(1+eta))
-    dNr[2:r2+2:3,4] = multiply((1-xsi),(1-eta))
-    dNr[2:r2+2:3,5] = multiply((1+xsi),(1-eta))
-    dNr[2:r2+2:3,6] = multiply((1+xsi),(1+eta))
-    dNr[2:r2+2:3,7] = multiply((1-xsi),(1+eta))
+    dNr = np.mat(np.zeros((r2,8)))
+    dNr[0:r2:3,0]= np.multiply(-(1-eta),(1-zet))
+    dNr[0:r2:3,1]= np.multiply((1-eta),(1-zet))
+    dNr[0:r2:3,2]= np.multiply((1+eta),(1-zet))
+    dNr[0:r2:3,3]= np.multiply(-(1+eta),(1-zet))
+    dNr[0:r2:3,4]= np.multiply(-(1-eta),(1+zet))
+    dNr[0:r2:3,5]= np.multiply((1-eta),(1+zet))
+    dNr[0:r2:3,6]= np.multiply((1+eta),(1+zet))
+    dNr[0:r2:3,7]= np.multiply(-(1+eta),(1+zet))
+    dNr[1:r2+1:3,0] = np.multiply(-(1-xsi),(1-zet))
+    dNr[1:r2+1:3,1] = np.multiply(-(1+xsi),(1-zet))
+    dNr[1:r2+1:3,2] = np.multiply((1+xsi),(1-zet))
+    dNr[1:r2+1:3,3] = np.multiply((1-xsi),(1-zet))
+    dNr[1:r2+1:3,4] = np.multiply(-(1-xsi),(1+zet))
+    dNr[1:r2+1:3,5] = np.multiply(-(1+xsi),(1+zet))
+    dNr[1:r2+1:3,6] = np.multiply((1+xsi),(1+zet))
+    dNr[1:r2+1:3,7] = np.multiply((1-xsi),(1+zet))
+    dNr[2:r2+2:3,0] = np.multiply(-(1-xsi),(1-eta))
+    dNr[2:r2+2:3,1] = np.multiply(-(1+xsi),(1-eta))
+    dNr[2:r2+2:3,2] = np.multiply(-(1+xsi),(1+eta))
+    dNr[2:r2+2:3,3] = np.multiply(-(1-xsi),(1+eta))
+    dNr[2:r2+2:3,4] = np.multiply((1-xsi),(1-eta))
+    dNr[2:r2+2:3,5] = np.multiply((1+xsi),(1-eta))
+    dNr[2:r2+2:3,6] = np.multiply((1+xsi),(1+eta))
+    dNr[2:r2+2:3,7] = np.multiply((1-xsi),(1+eta))
     dNr = dNr/8.
 
     eci = N*np.mat([ex,ey,ez]).T
     if ed.ndim == 1:
         ed = np.array([ed])
-        red,ced = shape(ed)
+        red,ced = np.shape(ed)
     JT = dNr*np.mat([ex,ey,ez]).T
 
-    es = np.mat(zeros((ngp*red,3)))
-    et = np.mat(zeros((ngp*red,3)))
+    es = np.mat(np.zeros((ngp*red,3)))
+    et = np.mat(np.zeros((ngp*red,3)))
     for i in range(ngp):
         indx = np.array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
-        if detJ < 10*finfo(float).eps:
+        if detJ < 10*np.finfo(float).eps:
             cfinfo("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
@@ -2442,7 +2442,7 @@ def plante(ex,ey,ep,D,eq=None):
         
         if colD > 3:
             Cm = np.linalg.inv(D)
-            Dm = np.linalg.inv(Cm[ix_((0,1,3),(0,1,3))])
+            Dm = np.linalg.inv(Cm[np.ix_((0,1,3),(0,1,3))])
         else:
             Dm = D
             
@@ -2466,7 +2466,7 @@ def plante(ex,ey,ep,D,eq=None):
         colD = D.shape[1]
         
         if colD > 3:
-            Dm = D[ix_((0,1,3),(0,1,3))]
+            Dm = D[np.ix_((0,1,3),(0,1,3))]
         else:
             Dm = D
 
@@ -2510,11 +2510,11 @@ def plants(ex,ey,ep,D,ed):
 
     ptype=ep[0]
     
-    if ndim(ex) == 1:
+    if np.ndim(ex) == 1:
         ex = np.array([ex])
-    if ndim(ey) == 1:
+    if np.ndim(ey) == 1:
         ey = np.array([ey])
-    if ndim(ed) == 1:
+    if np.ndim(ed) == 1:
         ed = np.array([ed])
 
     rowed=ed.shape[0]
@@ -2528,7 +2528,7 @@ def plants(ex,ey,ep,D,ed):
 
         if colD>3:
             Cm = np.linalg.inv(D)
-            Dm = np.linalg.inv(Cm[ix_((0,1,3),(0,1,3))])
+            Dm = np.linalg.inv(Cm[np.ix_((0,1,3),(0,1,3))])
         else:
             Dm = D
             
@@ -2539,13 +2539,13 @@ def plants(ex,ey,ep,D,ed):
         else:
             incie=1
       
-        et=zeros([rowed,colD])
-        es=zeros([rowed,colD])
+        et=np.zeros([rowed,colD])
+        es=np.zeros([rowed,colD])
         
         ie=0
         
         for i in range(rowed):
-            C = matrix(
+            C = np.matrix(
                 [[1, ex[ie,0], ey[ie,0], 0, 0, 0 ], 
                  [0, 0, 0, 1, ex[ie,0], ey[ie,0] ],
                  [1, ex[ie,1], ey[ie,1], 0, 0, 0 ],
@@ -2554,7 +2554,7 @@ def plants(ex,ey,ep,D,ed):
                  [0, 0, 0, 1, ex[ie,2], ey[ie,2] ]]
                 )
             
-            B = matrix([
+            B = np.matrix([
                 [0,1,0,0,0,0],
                 [0,0,0,0,0,1],
                 [0,0,1,0,1,0]])*np.linalg.inv(C)
@@ -2562,7 +2562,7 @@ def plants(ex,ey,ep,D,ed):
             ee=B*np.asmatrix(ed[ie,:]).T
 
             if colD>3:
-                ss=zeros([colD,1])
+                ss=np.zeros([colD,1])
                 ss[[0,1,3]]=Dm*ee
                 ee=Cm*ss
             else:
@@ -2627,13 +2627,13 @@ def plantf(ex,ey,ep,es):
         ])*np.linalg.inv(C)
     
         if colD > 3:
-            stress = np.asmatrix(es[ix_((0,1,3))])
+            stress = np.asmatrix(es[np.ix_((0,1,3))])
         else:
             stress = np.asmatrix(es)
 
         ef = (A*t*B.T*stress.T).T
         
-        return reshape(np.asarray(ef),6)
+        return np.reshape(np.asarray(ef),6)
 
     #--------- plane strain --------------------------------------
     
@@ -2661,13 +2661,13 @@ def plantf(ex,ey,ep,es):
         ])*np.linalg.inv(C)
 
         if colD > 3:
-            stress = np.asmatrix(es[ix_((1,2,4))])
+            stress = np.asmatrix(es[np.ix_((1,2,4))])
         else:
             stress = np.asmatrix(es)
 
         ef = (A*t*B.T*stress.T).T
         
-        return reshape(np.asarray(ef),6)
+        return np.reshape(np.asarray(ef),6)
   
     else:
         cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
@@ -2735,7 +2735,7 @@ def platre(ex,ey,ep,D,eq=None):
     C20 = 1/3.*A8*D[0,0]+2/15.*A9*D[2,2]
     C21 = D[0,1]
 
-    Keq = np.mat(zeros((12,12)))
+    Keq = np.mat(np.zeros((12,12)))
     Keq[0,0:13] = C1,C5,-C6,C2,C9,-C8,C4,C11,-C12,C3,C7,-C10
     Keq[1,1:13] = C13,-C21,C9,C15,0,-C11,C19,0,-C7,C17,0
     Keq[2,2:13] = C14,C8,0,C18,C12,0,C20,-C10,0,C16
@@ -2748,7 +2748,7 @@ def platre(ex,ey,ep,D,eq=None):
     Keq[9,9:13] = C1,-C5,-C6
     Keq[10,10:13] = C13,C21
     Keq[11,11] = C14
-    Keq = Keq.T+Keq-diag(diag(Keq))
+    Keq = Keq.T+Keq-np.diag(np.diag(Keq))
 
     if eq != None:
         q = eq
@@ -2783,8 +2783,8 @@ def planqe(ex,ey,ep,D,eq=None):
     OUTPUT: Ke :  element stiffness matrix (8 x 8)
             fe : equivalent nodal forces (row array)
     """
-    K=zeros((10,10))
-    f=zeros((10,1))
+    K=np.zeros((10,10))
+    f=np.zeros((10,1))
     
     xm=sum(ex)/4.
     ym=sum(ey)/4.
@@ -2859,10 +2859,10 @@ def planqs(ex,ey,ep,D,ed,eq=None):
     ke1, fe1 = plante(ex4, ey4, ep, D, b1)
     K, f = assem(np.array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
     
-    A1 = 0.5 * np.linalg.det( hstack([ones((3,1)), np.mat(ex1).T, np.mat(ey1).T]) )
-    A2 = 0.5 * np.linalg.det( hstack([ones((3,1)), np.mat(ex2).T, np.mat(ey2).T]) )
-    A3 = 0.5 * np.linalg.det( hstack([ones((3,1)), np.mat(ex3).T, np.mat(ey3).T]) )
-    A4 = 0.5 * np.linalg.det( hstack([ones((3,1)), np.mat(ex4).T, np.mat(ey4).T]) )
+    A1 = 0.5 * np.linalg.det( np.hstack([np.ones((3,1)), np.mat(ex1).T, np.mat(ey1).T]) )
+    A2 = 0.5 * np.linalg.det( np.hstack([np.ones((3,1)), np.mat(ex2).T, np.mat(ey2).T]) )
+    A3 = 0.5 * np.linalg.det( np.hstack([np.ones((3,1)), np.mat(ex3).T, np.mat(ey3).T]) )
+    A4 = 0.5 * np.linalg.det( np.hstack([np.ones((3,1)), np.mat(ex4).T, np.mat(ey4).T]) )
     Atot = A1+A2+A3+A4;
     
     
@@ -2872,12 +2872,12 @@ def planqs(ex,ey,ep,D,ed,eq=None):
 #    a = np.mat(empty((10,ni)))
 #    for i in range(ni):
 #        a[:,i] = solveq(K, f, np.array(range(1,9)), ed[i,:])[0]
-#        #a = hstack([a, solveq(K, f, hstack([matrix(range(1,9)).T, ed[i,:].T]) ) ])
+#        #a = np.hstack([a, solveq(K, f, np.hstack([matrix(range(1,9)).T, ed[i,:].T]) ) ])
     
-    s1, t1 = plants(ex1, ey1, ep, D, hstack([a[[0, 1, 2, 3, 8, 9], :].T]) );
-    s2, t2 = plants(ex2, ey2, ep, D, hstack([a[[2, 3, 4, 5, 8, 9], :].T]) );
-    s3, t3 = plants(ex3, ey3, ep, D, hstack([a[[4, 5, 6, 7, 8, 9], :].T]) );
-    s4, t4 = plants(ex4, ey4, ep, D, hstack([a[[6, 7, 0, 1, 8, 9], :].T]) );
+    s1, t1 = plants(ex1, ey1, ep, D, np.hstack([a[[0, 1, 2, 3, 8, 9], :].T]) );
+    s2, t2 = plants(ex2, ey2, ep, D, np.hstack([a[[2, 3, 4, 5, 8, 9], :].T]) );
+    s3, t3 = plants(ex3, ey3, ep, D, np.hstack([a[[4, 5, 6, 7, 8, 9], :].T]) );
+    s4, t4 = plants(ex4, ey4, ep, D, np.hstack([a[[6, 7, 0, 1, 8, 9], :].T]) );
     
     es = (s1*A1+s2*A2+s3*A3+s4*A4)/Atot;
     et = (t1*A1+t2*A2+t3*A3+t4*A4)/Atot;
@@ -2915,7 +2915,7 @@ def plani4e(ex,ey,ep,D,eq=None):
     if eq == None:
         q = np.zeros((2,1))
     else:
-        q = reshape(eq, (2,1))
+        q = np.reshape(eq, (2,1))
 #--------- gauss points --------------------------------------    
     if ir == 1:
         g1 = 0.0
@@ -2962,17 +2962,17 @@ def plani4e(ex,ey,ep,D,eq=None):
             [ w1, w1]])
     else:
         cfinfo("Used number of integration points not implemented")
-    wp = multiply(w[:,0],w[:,1])
+    wp = np.multiply(w[:,0],w[:,1])
     xsi = gp[:,0]
     eta = gp[:,1]
     r2 = ngp*2
     # Shape Functions
-    N = multiply((1-xsi),(1-eta))/4.
-    N = append(N,multiply((1+xsi),(1-eta))/4.,axis=1)
-    N = append(N,multiply((1+xsi),(1+eta))/4.,axis=1)
-    N = append(N,multiply((1-xsi),(1+eta))/4.,axis=1)
+    N = np.multiply((1-xsi),(1-eta))/4.
+    N = np.append(N,np.multiply((1+xsi),(1-eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1+xsi),(1+eta))/4.,axis=1)
+    N = np.append(N,np.multiply((1-xsi),(1+eta))/4.,axis=1)
     
-    dNr = np.mat(zeros((r2,4)))
+    dNr = np.mat(np.zeros((r2,4)))
     dNr[0:r2:2,0] = -(1-eta)/4.
     dNr[0:r2:2,1] = (1-eta)/4.
     dNr[0:r2:2,2] = (1+eta)/4.
@@ -2983,24 +2983,24 @@ def plani4e(ex,ey,ep,D,eq=None):
     dNr[1:r2+1:2,3] = (1-xsi)/4.
 
 #
-    Ke1 = np.mat(zeros((8,8)))
-    fe1 = np.mat(zeros((8,1)))
+    Ke1 = np.mat(np.zeros((8,8)))
+    fe1 = np.mat(np.zeros((8,1)))
     JT = dNr*np.mat([ex,ey]).T 
     # --------- plane stress --------------------------------------
     if ptype==1:
-        colD=shape(D)[0]
+        colD=np.shape(D)[0]
         if colD>3:
-            Cm=linalg.inv(D)
-            Dm=linalg.inv(Cm[ ix_([0,1,3],[0,1,3]) ])
+            Cm=np.linalg.inv(D)
+            Dm=np.linalg.inv(Cm[ np.ix_([0,1,3],[0,1,3]) ])
         else:
             Dm=D          
 #
-        B=np.matrix(zeros((3,8)))
-        N2=np.matrix(zeros((2,8)))
+        B=np.matrix(np.zeros((3,8)))
+        N2=np.matrix(np.zeros((2,8)))
         for i in range(ngp):
             indx = np.array([2*(i+1)-1,2*(i+1)])
             detJ = np.linalg.det(JT[indx-1,:])
-            if detJ < 10*finfo(float).eps:
+            if detJ < 10*np.finfo(float).eps:
                 cfinfo("Jacobi determinant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
@@ -3022,25 +3022,25 @@ def plani4e(ex,ey,ep,D,eq=None):
                 N2[1,index]  =N[i,counter]
                 counter=counter+1
 #   
-            Ke1 = Ke1+B.T*Dm*B*detJ*asscalar(wp[i])*t
+            Ke1 = Ke1+B.T*Dm*B*detJ*np.asscalar(wp[i])*t
             fe1 = fe1 + N2.T * q * detJ * np.asscalar(wp[i]) * t
 
         return Ke1,fe1
 #--------- plane strain --------------------------------------
     elif ptype==2:
 #      
-        colD=shape(D)[0]
+        colD=np.shape(D)[0]
         if colD>3:
-            Dm = D[ix_([0,1,3],[0,1,3])]
+            Dm = D[np.ix_([0,1,3],[0,1,3])]
         else:
             Dm = D
 #
-        B=np.matrix(zeros((3,8)))
-        N2=np.matrix(zeros((2,8)))
+        B=np.matrix(np.zeros((3,8)))
+        N2=np.matrix(np.zeros((2,8)))
         for i in range(ngp):
             indx = np.array([2*(i+1)-1,2*(i+1)])
             detJ = np.linalg.det(JT[indx-1,:])
-            if detJ < 10*finfo(float).eps:
+            if detJ < 10*np.finfo(float).eps:
                 cfinfo("Jacobideterminant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
@@ -3065,7 +3065,7 @@ def plani4e(ex,ey,ep,D,eq=None):
                 counter=counter+1
 #   
             Ke1 = Ke1 + B.T * Dm * B * detJ * np.asscalar(wp[i]) * t
-            fe1 = fe1+N2.T*q*detJ*asscalar(wp[i])*t
+            fe1 = fe1+N2.T*q*detJ*np.asscalar(wp[i])*t
         return Ke1,fe1
     else:
         cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
@@ -3184,7 +3184,7 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     bc = np.ones(nDofs, 'bool')    
     bcDofs = np.arange(nDofs)
     
-    bc[ix_(bcPrescr-1)] = False
+    bc[np.ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
     
     bcVal_m = np.asmatrix(bcVal).reshape(nPdofs,1)
@@ -3199,13 +3199,13 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     cflog.info("step 2... Kt")
     #Kt1 = K[bcDofs]
     #Kt = Kt1[:,bcPrescr]
-    Kt = K[ix_((bcDofs),(bcPrescr-1))]
+    Kt = K[np.ix_((bcDofs),(bcPrescr-1))]
     cflog.info("step 3... fsys")
     fsys = f[bcDofs]-Kt*bcVal_m
     cflog.info("step 4... Ksys")
     Ksys1 = Kcsr[bcDofs]
     Ksys = Ksys1[:,bcDofs]
-    #Ksys = Kcsr[ix_((bcDofs),(bcDofs))]
+    #Ksys = Kcsr[np.ix_((bcDofs),(bcDofs))]
     cflog.info ("done...")
     
     cflog.info("Solving system...")
@@ -3213,8 +3213,8 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     
     cflog.info("Reconstructing full a...")
     a = np.zeros([nDofs,1])
-    a[ix_(bcPrescr-1)] = bcVal_m
-    a[ix_(bcDofs)] = np.asmatrix(asys).transpose()
+    a[np.ix_(bcPrescr-1)] = bcVal_m
+    a[np.ix_(bcDofs)] = np.asmatrix(asys).transpose()
     
     a_m = np.asmatrix(a)
     Q=K*a_m-f
@@ -3293,7 +3293,7 @@ def statcon(K,f,cd):
     return K1,f1
 
 def c_mul(a, b):
-    return eval(hex((long(a) * b) & 0xFFFFFFFF)[:-1])
+    return eval(hex((np.long(a) * b) & 0xFFFFFFFF)[:-1])
 
 def dofHash(dof):
     if len(dof)==1:
@@ -3459,8 +3459,8 @@ def effmises(es,ptype):
     
     """
     
-    nel = size(es,0)
-    escomps = size(es, 1)
+    nel = np.size(es,0)
+    escomps = np.size(es, 1)
     
     eseff = np.zeros([nel])
      
@@ -3468,7 +3468,7 @@ def effmises(es,ptype):
         sigxx = es[:,0]
         sigyy = es[:,1]
         sigxy = es[:,2]
-        eseff = sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
+        eseff = np.sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
         return eseff
     
 def stress2nodal(eseff, edof):
@@ -3490,7 +3490,7 @@ def stress2nodal(eseff, edof):
     """
     
     values = np.zeros(edof.max())
-    elnodes = int(size(edof,1) / 2)
+    elnodes = int(np.size(edof,1) / 2)
     
     for etopo, eleseff in zip(edof, eseff):
         values[etopo-1] = values[etopo-1] + eleseff / elnodes
