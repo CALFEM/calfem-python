@@ -1554,7 +1554,7 @@ def flw2qs(ex,ey,ep,D,ed,eq=None):
         k1,f1 = flw2te(ex4,ey4,ep,D,q)
         K,f = assem(En[3],K,k1,f,f1)
     
-    if rank(ed)==1:
+    if ndim(ed)==1:
         ed = array([ed])
     ni,nj = shape(ed)
 
@@ -1796,7 +1796,7 @@ def flw2i4s(ex,ey,ep,D,ed):
     dNr[1:r2+1:2,3] = (1-xsi)/4.
 
     eci = N*mat([ex,ey]).T
-    if rank(ed) == 1:
+    if ndim(ed) == 1:
         ed = array([ed])
     red,ced = shape(ed)
     JT = dNr*mat([ex,ey]).T
@@ -2066,7 +2066,7 @@ def flw2i8s(ex,ey,ep,D,ed):
     dNr[1:r2+1:2,7] = -multiply(eta,(1-xsi))
 
     eci = N*mat([ex,ey]).T
-    if rank(ed) == 1:
+    if ndim(ed) == 1:
         ed = array([ed])
     red,ced = shape(ed)
     JT = dNr*mat([ex,ey]).T
@@ -2358,7 +2358,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
     dNr = dNr/8.
 
     eci = N*mat([ex,ey,ez]).T
-    if rank(ed) == 1:
+    if ndim(ed) == 1:
         ed = array([ed])
         red,ced = shape(ed)
     JT = dNr*mat([ex,ey,ez]).T
@@ -3091,7 +3091,7 @@ def assem(edof,K,Ke,f=None,fe=None):
     
     """
     
-    if rank(edof) == 1:
+    if ndim(edof) == 1:
         idx = edof-1
         K[ix_(idx,idx)] = K[ix_(idx,idx)] + Ke
         if (not f is None) and (not fe is None):
@@ -3237,7 +3237,7 @@ def extractEldisp(edof,a):
 
     ed = None
     
-    if rank(edof)==1:
+    if ndim(edof)==1:
         nDofs = len(edof)
         ed = zeros([nDofs])
         idx = edof-1
