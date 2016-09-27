@@ -5,30 +5,37 @@ Created on Tue May 31 00:18:15 2016
 @author: Jonas Lindemann
 """
 
+import numpy as np
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
+import calfem.vis as cfv
 
 class Shape:
     """Base class for shapes"""
     
-    def __init__(self):
-        self.maxArea = 1.0
-        self.elementType = 3
-        self.dofsPerNode = 1
+    def __init__(self, elementType = 3, dofsPerNode = 1, maxArea = 1.0):
+        self.maxArea = maxArea
+        self.elementType = elementType
+        self.dofsPerNode = dofsPerNode
     
     def geometry(self):
         """Return geometry of shape"""
         return None
     
-    
+          
 class Rectangle(Shape):
     """Rectangle geometry"""
-    def __init__(self, width, height):
-        Shape.__init__(self)
+    def __init__(self, width=1.0, height=1.0, elementType = 3, dofsPerNode = 1, maxArea = -1):
+        Shape.__init__(self, elementType, dofsPerNode, maxArea)
         self.width = width
         self.height = height
-        self.maxArea = self.width * self.height * 0.05
+
+        if (maxArea<0):
+            self.maxArea = self.width * self.height * 0.05
+        else:
+            self.maxArea = maxArea
+
         self.leftId = 101
         self.rightId = 102
         self.topId = 103
@@ -36,30 +43,32 @@ class Rectangle(Shape):
         
     def geometry(self):
         """Return geometry of shape"""
-        g = cfg.Geometry()
+        self.g = cfg.Geometry()
         
         w = self.width
         h = self.height
 
-        g.point([0, 0])
-        g.point([w, 0])
-        g.point([w, h])
-        g.point([0, h])
+        self.g.point([0, 0])
+        self.g.point([w, 0])
+        self.g.point([w, h])
+        self.g.point([0, h])
         
-        g.spline([0, 1], marker=self.bottomId)
-        g.spline([1, 2], marker=self.rightId)
-        g.spline([2, 3], marker=self.topId)
-        g.spline([3, 0], marker=self.leftId)
+        self.g.spline([0, 1], marker=self.bottomId)
+        self.g.spline([1, 2], marker=self.rightId)
+        self.g.spline([2, 3], marker=self.topId)
+        self.g.spline([3, 0], marker=self.leftId)
         
-        g.surface([0,1,2,3])
+        self.g.surface([0,1,2,3])
         
-        return g
-        
-class ShapeMesher:
+        return self.g
+               
+class ShapeMesh:
     """Mesh generator for shapes"""
     def __init__(self, shape):
         """Initialise mesh generator"""
         self.shape = shape
+        
+        self.create()
         
     def create(self):
         meshGen = cfm.GmshMeshGenerator(self.shape.geometry())
@@ -68,24 +77,29 @@ class ShapeMesher:
         meshGen.dofsPerNode = self.shape.dofsPerNode
         
         self.coords, self.edof, self.dofs, self.bdofs, self.markers = meshGen.create()
-        #self.topo = meshGen.topo
     
         # --- Beräkna element koordinater
         
         self.ex, self.ey = cfc.coordxtr(self.edof, self.coords, self.dofs)        
+        self.pointDofs = self.dofs[list(self.shape.g.points.keys()),:]
 
 if __name__ == "__main__":
     
+    
     print("Creating rectangle")
-    rect = Rectangle(2.0, 1.0)
+    rect = Rectangle(5.0, 1.0, elementType=3, dofsPerNode=2, maxArea=0.05)
     
     print("Creating mesh...")
 
-    mesher = ShapeMesher(rect)    
-    mesher.create()
+    mesh = ShapeMesh(rect)    
       
-    print(mesher.edof)
-    print(mesher.bdofs[rect.leftId])
-
+    print(mesh.edof)
+    print(mesh.dofs)
+    print(mesh.bdofs[rect.leftId])
+    print(mesh.bdofs[rect.rightId])
+    print(mesh.bdofs[rect.topId])
+    print(mesh.bdofs[rect.bottomId])
+    print(mesh.pointDofs)
     
+
     
