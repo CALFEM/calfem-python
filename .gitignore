@@ -4,3 +4,5 @@
 *.msh
 
 *.geo
+
+docs/build
