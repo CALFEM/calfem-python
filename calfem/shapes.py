@@ -29,10 +29,6 @@ class Rectangle(Shape):
         self.width = width
         self.height = height
         self.maxArea = self.width * self.height * 0.05
-        self.leftId = 101
-        self.rightId = 102
-        self.topId = 103
-        self.bottomId = 104
         
     def geometry(self):
         """Return geometry of shape"""
@@ -46,10 +42,10 @@ class Rectangle(Shape):
         g.point([w, h])
         g.point([0, h])
         
-        g.spline([0, 1], marker=self.bottomId)
-        g.spline([1, 2], marker=self.rightId)
-        g.spline([2, 3], marker=self.topId)
-        g.spline([3, 0], marker=self.leftId)
+        g.spline([0, 1])
+        g.spline([1, 2])
+        g.spline([2, 3])
+        g.spline([3, 0])
         
         g.surface([0,1,2,3])
         
@@ -83,9 +79,8 @@ if __name__ == "__main__":
 
     mesher = ShapeMesher(rect)    
     mesher.create()
-      
+    
     print(mesher.edof)
-    print(mesher.bdofs[rect.leftId])
 
     
     
