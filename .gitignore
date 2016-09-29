@@ -6,3 +6,4 @@
 *.geo
 
 docs/build
+calfem/shapes - kopia.py
