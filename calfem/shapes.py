@@ -67,6 +67,7 @@ class ShapeMesh:
 
     def create(self):
         meshGen = cfm.GmshMeshGenerator(self.shape.geometry())
+        meshGen.elType = self.shape.elementType
         meshGen.elSizeFactor = self.shape.maxArea
         meshGen.dofsPerNode = self.shape.dofsPerNode
 

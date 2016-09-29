@@ -39,7 +39,7 @@ mesh = cfs.ShapeMesh(rect)
 
 nDofs = np.size(mesh.dofs)
 K = lil_matrix((nDofs,nDofs))
-ex, ey = cfc.coordxtr(mesh.edof, mesh.coords, mesh.dofs)
+#ex, ey = cfc.coordxtr(mesh.edof, mesh.coords, mesh.dofs)
 
 print("Assembling K... ("+str(nDofs)+")")
 
@@ -49,6 +49,7 @@ for eltopo, elx, ely in zip(mesh.edof, mesh.ex, mesh.ey):
         Ke = cfc.plante(elx, ely, ep, D)
     else:
         Ke = cfc.planqe(elx, ely, ep, D)
+        
         
     cfc.assem(eltopo, K, Ke)
     
