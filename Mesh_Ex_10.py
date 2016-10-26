@@ -42,7 +42,7 @@ elprop[markE2] = [ep, D2]
 
 # Parameters controlling mesh
 
-elSizeFactor = 0.02    # Element size factor
+elSizeFactor = 0.05    # Element size factor
 elType = 3             # Triangle element
 dofsPerNode = 2        # Dof per node
 

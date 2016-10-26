@@ -7,12 +7,12 @@ from numpy import sin, cos, pi
 from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
-from PyQt import QtGui
+#from PyQt import QtGui
 
 globalWindows = [] # For supporting ElementView:s for eldraw ...
 
-from calfem.classes_qt4 import ElementView
-globalQtApp = QtGui.QApplication(["PyCalfem"])
+#from calfem.classes_qt4 import ElementView
+#globalQtApp = QtGui.QApplication(["PyCalfem"])
 
 global globalVisVisApp
 
