@@ -7,9 +7,17 @@ Created on Thu Sep 29 23:22:20 2016
 
 import calfem.core as cfc
 import calfem.utils as cfu
+import logging as cflog
 
 import numpy as np
 from scipy.sparse import lil_matrix
+
+def error(msg):
+    cflog.error(" calfem.solver: "+msg)
+
+def info(msg):
+    cflog.info(" calfem.solver: "+msg)
+
 
 class Results:
     pass
@@ -31,16 +39,16 @@ class Solver:
         return 1
                        
     def execute(self):
-        print("Assembling K... ("+str(self.nDofs)+")")
+        info("Assembling K... ("+str(self.nDofs)+")")
         self.assem()
         
-        print("Solving system...")        
+        info("Solving system...")        
         self.results.a, self.results.r = cfc.spsolveq(self.K, self.f, self.bc, self.bcVal)
         
-        print("Extracting ed...")        
+        info("Extracting ed...")        
         self.results.ed = cfc.extractEldisp(self.mesh.edof, self.results.a)
         
-        print("Element forces... ")
+        info("Element forces... ")
         self.calcElementForces()
         
         return self.results

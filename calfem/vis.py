@@ -7,6 +7,9 @@ from numpy import sin, cos, pi
 from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
+import logging as cflog
+
+
 #from PyQt import QtGui
 
 globalWindows = [] # For supporting ElementView:s for eldraw ...
@@ -15,6 +18,13 @@ globalWindows = [] # For supporting ElementView:s for eldraw ...
 #globalQtApp = QtGui.QApplication(["PyCalfem"])
 
 global globalVisVisApp
+
+def error(msg):
+    cflog.error(msg)
+
+def info(msg):
+    cflog.info(msg)
+
 
 def figure(figure=None):
     f = None

@@ -7,13 +7,11 @@ import numpy as np
 import logging as cflog
 import sys
 
-def cferror(msg):
-    currFunc = sys._getframe().f_code.co_name
-    cfinfo("%s() Error : %s" % (currFunc, msg))
+def error(msg):
+    cflog.error(" calfem.core: "+msg)
 
-def cfinfo(msg):
-    currFunc = sys._getframe().f_code.co_name
-    cfinfo("%s() Information : %s" % (currFunc, msg))
+def info(msg):
+    cflog.info(" calfem.core: "+msg)
 
 def spring1e(ep):
     """
@@ -3189,36 +3187,36 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     
     bcVal_m = np.asmatrix(bcVal).reshape(nPdofs,1)
     
-    cflog.info("Preparing system matrix...")
+    info("Preparing system matrix...")
     
     mask = np.ones(K.shape[0], dtype=bool)
     mask[bcDofs] = False
     
-    cflog.info("step 1... converting K->CSR")
+    info("step 1... converting K->CSR")
     Kcsr = K.asformat("csr")    
-    cflog.info("step 2... Kt")
+    info("step 2... Kt")
     #Kt1 = K[bcDofs]
     #Kt = Kt1[:,bcPrescr]
     Kt = K[np.ix_((bcDofs),(bcPrescr-1))]
-    cflog.info("step 3... fsys")
+    info("step 3... fsys")
     fsys = f[bcDofs]-Kt*bcVal_m
-    cflog.info("step 4... Ksys")
+    info("step 4... Ksys")
     Ksys1 = Kcsr[bcDofs]
     Ksys = Ksys1[:,bcDofs]
     #Ksys = Kcsr[np.ix_((bcDofs),(bcDofs))]
-    cflog.info ("done...")
+    info ("done...")
     
-    cflog.info("Solving system...")
+    info("Solving system...")
     asys = dsolve.spsolve(Ksys, fsys);
     
-    cflog.info("Reconstructing full a...")
+    info("Reconstructing full a...")
     a = np.zeros([nDofs,1])
     a[np.ix_(bcPrescr-1)] = bcVal_m
     a[np.ix_(bcDofs)] = np.asmatrix(asys).transpose()
     
     a_m = np.asmatrix(a)
     Q=K*a_m-f
-    cflog.info("done...")
+    info("done...")
     return (a_m,Q)
 
 def extractEldisp(edof,a):

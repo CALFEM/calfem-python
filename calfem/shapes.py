@@ -4,6 +4,15 @@ import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
 
+import logging as cflog
+
+def error(msg):
+    cflog.error("calfem.shapes: "+msg)
+
+def info(msg):
+    cflog.info("calfem.shapes: "+msg)
+
+
 class Shape:
     """Base class for shapes"""
 

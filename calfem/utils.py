@@ -10,6 +10,13 @@ import logging as cflog
 haveMatplotLib = True
 haveMlab = True
 
+def error(msg):
+    cflog.error(" "+msg)
+
+def info(msg):
+    cflog.info(" "+msg)
+
+
 #haveWx = True
 #haveQt = True
     

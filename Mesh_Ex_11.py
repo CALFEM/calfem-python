@@ -16,7 +16,7 @@ cfu.enableLogging()
 
 # Define marker constants instead of using numbers in the code
 
-print("Creating rectangle")
+cfu.info("Creating rectangle")
 
 rect = cfs.Rectangle(5.0, 1.0, elementType=3, dofsPerNode=2, maxArea=0.08)
 rect.t = 0.2
@@ -26,7 +26,7 @@ rect.ptype = 1
 rect.ep = [rect.ptype, rect.t]
 rect.D = cfc.hooke(rect.ptype, rect.E, rect.v)
 
-print("Creating mesh...")
+cfu.info("Creating mesh...")
 
 mesh = cfs.ShapeMesh(rect)    
 
@@ -41,7 +41,7 @@ results = solver.execute()
        
 # ---- Visualise results ----------------------------------------------------
 
-print("Drawing results...")
+cfu.info("Drawing results...")
 
 cfv.figure() 
 cfv.drawGeometry(rect.geometry(), title="Geometry")
@@ -62,6 +62,6 @@ cfv.drawElementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode
                       
 #cfv.colorBar().SetLabel("Effective stress")
 
-print("Done drawing...")
+cfu.info("Done drawing...")
 
 cfv.showAndWait()
