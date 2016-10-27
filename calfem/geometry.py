@@ -498,16 +498,22 @@ class Geometry:
             self._volumeIDspecified = True
         self.volumes[ID] = [outerSurfaces, holes, ID, marker, isStructured] 
         
-        
+    def pointMarker(self, ID, marker):
+        self.setPointMarker(ID, marker)
+    
     def setPointMarker(self, ID, marker):
         '''Sets the marker of the point with the ID'''
         self.points[ID][2] = marker
     
+    def curveMarker(self, ID, marker):
+        self.setCurveMarker(ID, marker)
     
     def setCurveMarker(self, ID, marker):
         '''Sets the marker of the curve with the ID'''
         self.curves[ID][2] = marker
-        
+
+    def surfaceMarker(self, ID, marker):
+        self.setSurfaceMarker(ID, marker)    
         
     def setSurfaceMarker(self, ID, marker):
         '''Sets the marker of the surface with the ID'''

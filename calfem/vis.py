@@ -7,9 +7,12 @@ from numpy import sin, cos, pi
 from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
+<<<<<<< Updated upstream
 import logging as cflog
 
 
+=======
+>>>>>>> Stashed changes
 #from PyQt import QtGui
 
 globalWindows = [] # For supporting ElementView:s for eldraw ...
@@ -46,6 +49,9 @@ def closeAll():
     
 def clf():
     vv.clf()
+
+def showGrid(flag = True):
+    vv.gca().axis.showGrid = flag    
         
 def showAndWait():
     global globalVisVisApp
@@ -112,7 +118,10 @@ def addLabel(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=N
     label.bgcolor = bgcolor
     label.textAngle = angle
     return label
-    
+
+def label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+    return addLabel(text, pos, angle, fontName, fontSize, color, bgcolor, axes)    
+
 def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a text in the world space. Returns the Text object.
@@ -135,6 +144,9 @@ def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=No
     text.bgcolor = bgcolor
     text.textAngle = angle
     return text
+
+def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+    return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)    
 
 
 def drawMesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 

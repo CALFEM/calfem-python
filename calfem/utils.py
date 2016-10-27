@@ -109,6 +109,10 @@ def which(filename):
                 
     pathlist = p.split (os.pathsep)
     pathlist.append(".")
+    pathlist.append("/bin")
+    pathlist.append("/usr/bin")
+    pathlist.append("/usr/local/bin")
+    pathlist.append("/opt/local/bin")
     
     for path in pathlist:
         f = os.path.join(path, filename)
