@@ -598,3 +598,5 @@ class Geometry:
     volume = addVolume
     structuredVolume = addStructuredVolume
     
+def geometry():
+    return Geometry()

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 01
 
 Shows how to create simple geometry from splines and ellipse arcs, and how to mesh a quad mesh in GmshMesher.

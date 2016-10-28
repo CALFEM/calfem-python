@@ -7,12 +7,8 @@ from numpy import sin, cos, pi
 from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
-<<<<<<< Updated upstream
 import logging as cflog
 
-
-=======
->>>>>>> Stashed changes
 #from PyQt import QtGui
 
 globalWindows = [] # For supporting ElementView:s for eldraw ...
@@ -49,6 +45,15 @@ def closeAll():
     
 def clf():
     vv.clf()
+    
+def gca():
+    return vv.gca()
+    
+def subplot(*args):
+    return vv.subplot(*args)
+    
+def camera3d():
+    return vv.cameras.ThreeDCamera()
 
 def showGrid(flag = True):
     vv.gca().axis.showGrid = flag    

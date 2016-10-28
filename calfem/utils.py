@@ -16,7 +16,6 @@ def error(msg):
 def info(msg):
     cflog.info(" "+msg)
 
-
 #haveWx = True
 #haveQt = True
     

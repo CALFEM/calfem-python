@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 07
 
 Meshing 8-node-isoparametric elements (second order incomplete quads).
@@ -9,9 +11,8 @@ import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
 import calfem.utils as cfu
-import visvis as vv
-
-from calfem.core import *
+import calfem.core as cfc
+import numpy as np
 
 # ---- Problem constants ----------------------------------------------------
 
@@ -26,11 +27,11 @@ t = 1.0
 n = 2 
 ep = [t, n]
 
-D1 = matrix([
+D1 = np.matrix([
     [kx1, 0.],
     [0., ky1]
 ])
-D2 = matrix([
+D2 = np.matrix([
     [kx2, 0.],
     [0., ky2]
 ])
@@ -42,7 +43,7 @@ Ddict = {10 : D1, 11 : D2}
 
 # ---- Create Geometry ------------------------------------------------------
 
-g = cfg.Geometry()
+g = cfg.geometry()
 
 # Add Points:
 
@@ -92,9 +93,7 @@ dofsPerNode = 1
 # If None then the system PATH variable is queried. 
 # Relative and absolute paths work.
 
-meshGen = cfm.GmshMeshGenerator(geometry = g,
-                                elType = elType,
-                                dofsPerNode = dofsPerNode) 
+meshGen = cfm.GmshMeshGenerator(g, elType, dofsPerNode) 
 
 coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
@@ -102,39 +101,39 @@ coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
 print("Assembling system matrix...")
 
-nDofs = size(dofs)
-ex, ey = coordxtr(edof, coords, dofs)
+nDofs = np.size(dofs)
+ex, ey = cfc.coordxtr(edof, coords, dofs)
 
-K = zeros([nDofs,nDofs])
+K = np.zeros([nDofs,nDofs])
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
     # Calc element stiffness matrix: Conductivity matrix D is taken 
     # from Ddict and depends on which region (which marker) the element is in.
 
-    Ke = flw2i8e(elx, ely, ep, Ddict[elMarker]) 
-    assem(eltopo, K, Ke)
+    Ke = cfc.flw2i8e(elx, ely, ep, Ddict[elMarker]) 
+    cfc.assem(eltopo, K, Ke)
 
 print("Solving equation system...")
 
-f = zeros([nDofs,1])
+f = np.zeros([nDofs,1])
 
-bc = array([],'i')
-bcVal = array([],'i')
+bc = np.array([],'i')
+bcVal = np.array([],'i')
 
 bc, bcVal = cfu.applybc(bdofs,bc,bcVal,2,30.0)
 bc, bcVal = cfu.applybc(bdofs,bc,bcVal,3,0.0)
 
-a,r = solveq(K,f,bc,bcVal)
+a,r = cfc.solveq(K,f,bc,bcVal)
 
 # ---- Compute element forces -----------------------------------------------
 
 print("Computing element forces...")
 
-ed = extractEldisp(edof,a)
+ed = cfc.extractEldisp(edof,a)
 
-for i in range(shape(ex)[0]):
-    es, et, eci = flw2i8s(ex[i,:], ey[i,:], ep, Ddict[elementmarkers[i]], ed[i,:])
+for i in range(np.shape(ex)[0]):
+    es, et, eci = cfc.flw2i8s(ex[i,:], ey[i,:], ep, Ddict[elementmarkers[i]], ed[i,:])
 
     # Do something with es, et, eci here.
    
@@ -144,13 +143,13 @@ print("Visualising...")
 
 cfv.drawGeometry(g, title="Geometry")
 
-vv.figure()
+cfv.figure()
 
 # 8-node quads are drawn as simple quads.
 
 cfv.drawMesh(coords, edof, dofsPerNode, elType, filled=False)
 
-vv.figure()
+cfv.figure()
 cfv.drawNodalValues(a, coords, edof, dofsPerNode, elType, title="Example 7")
 cfv.getColorbar().SetLabel("Temperature")
 cfv.addText("The bend has high conductivity", (125,125))
@@ -158,9 +157,7 @@ cfv.addText("This part has low conductivity", (160,-50))
 
 # Enter main loop
 
-app = vv.use()
-app.Create()
-app.Run()
+cfv.showAndWait()
 
 print("Done.")
 

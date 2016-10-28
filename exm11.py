@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 10
 
 The use case from the user manual. 
@@ -9,10 +11,10 @@ import calfem.vis as cfv
 import calfem.utils as cfu
 import calfem.shapes as cfs
 import calfem.solver as cfslv
-  
-# ---- General parameters ---------------------------------------------------
 
 cfu.enableLogging()
+  
+# ---- General parameters ---------------------------------------------------
 
 # Define marker constants instead of using numbers in the code
 

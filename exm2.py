@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 Example 02
 Creating geometry from B-Splines and circle arcs.
@@ -7,7 +9,6 @@ Also shows how to set ID numbers for geometry entities and how to specify elemen
 import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
-import visvis as vv
 
 # ---- Define geometry ------------------------------------------------------
 

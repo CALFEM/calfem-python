@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 10
 
 The use case from the user manual. 
@@ -9,14 +11,13 @@ import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
 import calfem.utils as cfu
-
 import numpy as np
 
 from scipy.sparse import lil_matrix
 
-# ---- General parameters ---------------------------------------------------
-
 cfu.enableLogging()
+
+# ---- General parameters ---------------------------------------------------
 
 t = 0.2
 v = 0.35
@@ -99,7 +100,7 @@ nDofs = np.size(dofs)
 K = lil_matrix((nDofs,nDofs))
 ex, ey = cfc.coordxtr(edof, coords, dofs)
 
-print("Assembling K... ("+str(nDofs)+")")
+cfu.info("Assembling K... ("+str(nDofs)+")")
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
@@ -110,7 +111,7 @@ for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
         
     cfc.assem(eltopo, K, Ke)
     
-print("Applying bc and loads...")
+cfu.info("Applying bc and loads...")
 
 bc = np.array([],'i')
 bcVal = np.array([],'i')
@@ -121,18 +122,18 @@ f = np.zeros([nDofs,1])
 
 cfu.applyforcetotal(bdofs, f, markLoad, value = -10e5, dimension=2)
 
-print("Solving system...")
+cfu.info("Solving system...")
 
 a,r = cfc.spsolveq(K, f, bc, bcVal)
 
-print("Extracting ed...")
+cfu.info("Extracting ed...")
 
 ed = cfc.extractEldisp(edof, a)
 vonMises = []
 
 # ---- Calculate elementr stresses and strains ------------------------------
 
-print("Element forces... ")
+cfu.info("Element forces... ")
 
 for i in range(edof.shape[0]):
     
@@ -159,7 +160,7 @@ for i in range(edof.shape[0]):
         
 # ---- Visualise results ----------------------------------------------------
 
-print("Drawing results...")
+cfu.info("Drawing results...")
 
 cfv.figure() 
 cfv.drawGeometry(g, title="Geometry")
@@ -180,6 +181,6 @@ cfv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a,
                       
 cfv.colorBar().SetLabel("Effective stress")
 
-print("Done drawing...")
+cfu.info("Done drawing...")
 
 cfv.showAndWait()

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 03
 
 Shows structured meshing in 2D.
