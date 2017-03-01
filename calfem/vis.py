@@ -1,6 +1,8 @@
 import visvis as vv
 
-vv.use('qt5') # use qt4
+global visApp
+
+visApp = vv.use('qt5') # use qt4
 
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
@@ -19,13 +21,20 @@ globalWindows = [] # For supporting ElementView:s for eldraw ...
 global globalVisVisApp
 
 def error(msg):
+    """Log error message"""
     cflog.error(msg)
 
 def info(msg):
+    """Log information message"""
     cflog.info(msg)
 
+def figureClass():
+    """Return visvis Figure class."""
+    global visApp
+    return visApp.GetFigureClass()
 
-def figure(figure=None):
+def figure(figure=None, show=True):
+    """Create a visvis figure with extras."""
     f = None
     
     if figure == None:
@@ -36,29 +45,38 @@ def figure(figure=None):
         except:
             f = vv.figure() 
 
-    f._widget.show()
-    f._widget.raise_()
+    if show:
+        f._widget.show()
+        f._widget.raise_()
+        
     return f
-    
+
 def closeAll():
+    """Close all visvis windows."""
     vv.closeAll()
     
 def clf():
+    """Clear visvis figure"""
     vv.clf()
     
 def gca():
+    """Get current axis of the current visvis figure."""
     return vv.gca()
     
 def subplot(*args):
+    """Create a visvis subplot."""
     return vv.subplot(*args)
     
 def camera3d():
+    """Get visvis 3D camera."""
     return vv.cameras.ThreeDCamera()
 
 def showGrid(flag = True):
+    """Show grid."""
     vv.gca().axis.showGrid = flag    
         
 def showAndWait():
+    """Show visvis windows and enter application loop."""
     global globalVisVisApp
     globalVisVisApp = vv.use()
     globalVisVisApp.Create()
@@ -81,6 +99,7 @@ def getColorbar(axes=None):
     return None
     
 def colorBar(axes=None):
+    """Short form of getColorbar"""
     return getColorbar(axes)
     
 

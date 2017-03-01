@@ -24,15 +24,23 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        print("Hello")
         loadUi('exmqt1.ui', self)
+        
+        Figure = cfv.figureClass()
+        
+        self.fig1 = Figure(self)
+        self.fig2 = Figure(self)
+        
+        self.gridLayout.addWidget(self.fig1._widget, 0, 0)
+        self.gridLayout.addWidget(self.fig2._widget, 0, 1)
+        
       
     @pyqtSlot()
     def on_executeButton_clicked(self):
-        print("Hello")
         self.solveProblem()        
-        self.gridLayout.addWidget(self.drawGeometry(), 0, 0)
-        self.gridLayout.addWidget(self.drawMesh(), 0, 1)
+        self.drawGeometry()
+        self.drawMesh()
+        
         
     def solveProblem(self):
                 
@@ -72,13 +80,13 @@ class MainWindow(QMainWindow):
         self.g = g
                
     def drawGeometry(self):
-        fig = cfv.figure() 
+        cfv.figure(self.fig1.nr) 
+        cfv.clf()
         cfv.drawGeometry(self.g)
-        
-        return fig._widget
     
     def drawMesh(self):
-        fig = cfv.figure()
+        cfv.figure(self.fig2.nr) 
+        cfv.clf()
         cfv.drawMesh(
             coords=self.coords, 
             edof=self.edof, 
@@ -94,8 +102,6 @@ class MainWindow(QMainWindow):
         ourLabel.text = "Label, changed." #We can change the attributes of labels and texts, such as color, text, and position.
         ourLabel.textColor = 'r'  #Make it red. (1,0,0) would also have worked.
         ourLabel.position = (20,30)
-        
-        return fig._widget
         
         
 if __name__ == "__main__":
