@@ -2072,6 +2072,7 @@ def flw2i8s(ex,ey,ep,D,ed):
     
     es = np.mat(np.zeros((ngp*red,2)))
     et = np.mat(np.zeros((ngp*red,2)))
+
     for i in range(ngp):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
