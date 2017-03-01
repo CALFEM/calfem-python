@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''Example 04.
 
 Structured 3D meshing. Adding texts and labels to figures. Altering axis properties.
@@ -6,48 +8,47 @@ Structured 3D meshing. Adding texts and labels to figures. Altering axis propert
 import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis as cfv
-import visvis as vv
 
 # ---- Define geometry ------------------------------------------------------
 
-g = cfg.Geometry()
+g = cfg.geometry()
 
 # Add Points
 
-g.addPoint([0, 0, 0], ID=0)
-g.addPoint([0.5, -0.3, -0.3], 1)
-g.addPoint([1, 0, 0], 2)
-g.addPoint([1, 1, 0], 3)
-g.addPoint([0, 1, 0], 4, marker = 11) # Set some markers no reason.
-g.addPoint([0, 0, 1], 5, marker = 11) # (markers can be given to points as well
+g.point([0, 0, 0], ID=0)
+g.point([0.5, -0.3, -0.3], 1)
+g.point([1, 0, 0], 2)
+g.point([1, 1, 0], 3)
+g.point([0, 1, 0], 4, marker = 11) # Set some markers no reason.
+g.point([0, 0, 1], 5, marker = 11) # (markers can be given to points as well
                                       # as curves and surfaces)
-g.addPoint([1, 0, 1], 6, marker = 11)
-g.addPoint([1, 1, 1], 7)
-g.addPoint([0, 1, 1], 8)
+g.point([1, 0, 1], 6, marker = 11)
+g.point([1, 1, 1], 7)
+g.point([0, 1, 1], 8)
 
 # Add splines
 
-g.addSpline([0, 1, 2], 0, marker = 33, elOnCurve = 5)
-g.addSpline([2, 3], 1, marker = 23, elOnCurve = 5)
-g.addSpline([3, 4], 2, marker = 23, elOnCurve = 5)
-g.addSpline([4, 0], 3, elOnCurve = 5)
-g.addSpline([0, 5], 4, elOnCurve = 5)
-g.addSpline([2, 6], 5, elOnCurve = 5)
-g.addSpline([3, 7], 6, elOnCurve = 5)
-g.addSpline([4, 8], 7, elOnCurve = 5)
-g.addSpline([5, 6], 8, elOnCurve = 5)
-g.addSpline([6, 7], 9, elOnCurve = 5)
-g.addSpline([7, 8], 10, elOnCurve = 5)
-g.addSpline([8, 5], 11, elOnCurve = 5)
+g.spline([0, 1, 2], 0, marker = 33, elOnCurve = 5)
+g.spline([2, 3], 1, marker = 23, elOnCurve = 5)
+g.spline([3, 4], 2, marker = 23, elOnCurve = 5)
+g.spline([4, 0], 3, elOnCurve = 5)
+g.spline([0, 5], 4, elOnCurve = 5)
+g.spline([2, 6], 5, elOnCurve = 5)
+g.spline([3, 7], 6, elOnCurve = 5)
+g.spline([4, 8], 7, elOnCurve = 5)
+g.spline([5, 6], 8, elOnCurve = 5)
+g.spline([6, 7], 9, elOnCurve = 5)
+g.spline([7, 8], 10, elOnCurve = 5)
+g.spline([8, 5], 11, elOnCurve = 5)
 
 # Add surfaces
 
-g.addStructuredSurface([0, 1, 2, 3], 0, marker=45)
-g.addStructuredSurface([8, 9, 10, 11], 1)
-g.addStructuredSurface([0, 4, 8, 5], 2, marker=55)
-g.addStructuredSurface([1, 5, 9, 6], 3, marker=55)
-g.addStructuredSurface([2, 6, 10, 7], 4)
-g.addStructuredSurface([3, 4, 11, 7], 5)
+g.structuredSurface([0, 1, 2, 3], 0, marker=45)
+g.structuredSurface([8, 9, 10, 11], 1)
+g.structuredSurface([0, 4, 8, 5], 2, marker=55)
+g.structuredSurface([1, 5, 9, 6], 3, marker=55)
+g.structuredSurface([2, 6, 10, 7], 4)
+g.structuredSurface([3, 4, 11, 7], 5)
 
 # Add Volume:
 #  addStructuredVolume() takes three args. The first is a list of surface IDs 
@@ -57,7 +58,7 @@ g.addStructuredSurface([3, 4, 11, 7], 5)
 #  CALFEM handles. The two optional parameters are the volume ID and 
 #  volume marker.
 
-g.addStructuredVolume([0,1,2,3,4,5], 0, marker=90)
+g.structuredVolume([0,1,2,3,4,5], 0, marker=90)
 
 # ---- Create mesh ----------------------------------------------------------
 
@@ -71,8 +72,7 @@ dofsPerNode= 1
 
 # Create mesh
 
-coords, edof, dofs, bdofs, _ = cfm.createGmshMesh(geometry = g, elType = elType,
-                                              dofsPerNode = dofsPerNode)
+coords, edof, dofs, bdofs, _ = cfm.mesh(g, elType, dofsPerNode)
 
 # ---- Visualise mesh -------------------------------------------------------
 
@@ -88,7 +88,7 @@ cfv.drawGeometry(g, drawPoints=False)
 
 # Draw mesh
 
-vv.figure()
+cfv.figure()
 cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=True)
 
 # Add a text in world space
@@ -109,14 +109,12 @@ ourLabel.textColor = 'r'
 
 # Matlab style axes (three axes in the background instead of a cube)
 
-vv.gca().axis.showBox = 0 
+cfv.gca().axis.showBox = 0 
 
 #Change the limits of the axes.
 
-vv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02) 
+cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02) 
 
 # Enter main loop
 
-app = vv.use()
-app.Create()
-app.Run()
+cfv.showAndWait()

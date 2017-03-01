@@ -60,6 +60,9 @@ def createGmshMesh(geometry, elType=2, elSizeFactor=1, dofsPerNode=1,
                      
     
     return meshGen.create()
+
+createMesh = createGmshMesh
+mesh = createGmshMesh
     
 class GmshMeshGenerator:
     '''

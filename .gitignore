@@ -4,3 +4,8 @@
 *.msh
 
 *.geo
+
+docs/build
+calfem/shapes - kopia.py
+
+.vscode/launch.json
