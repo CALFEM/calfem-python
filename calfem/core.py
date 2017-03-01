@@ -5,7 +5,6 @@
 from scipy.sparse.linalg import dsolve
 import numpy as np
 import logging as cflog
-import sys
 
 def error(msg):
     cflog.error(" calfem.core: "+msg)

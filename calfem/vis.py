@@ -1,20 +1,20 @@
 import visvis as vv
+
+vv.use('qt5') # use qt4
+
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
 from visvis.wobjects.textures import minmax
+
 import numpy as np
+import OpenGL.GL as gl #@UnresolvedImport
+
 from numpy import sin, cos, pi
 from math import atan2
-import OpenGL.GL as gl #@UnresolvedImport
 
 import logging as cflog
 
-#from PyQt import QtGui
-
 globalWindows = [] # For supporting ElementView:s for eldraw ...
-
-#from calfem.classes_qt4 import ElementView
-#globalQtApp = QtGui.QApplication(["PyCalfem"])
 
 global globalVisVisApp
 
