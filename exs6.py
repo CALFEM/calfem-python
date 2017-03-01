@@ -11,12 +11,14 @@
 #     Ola Dahlblom 2004-09-14
 #----------------------------------------------------------------
 
-from calfem.core import *
-from calfem.utils import *
+import numpy as np
+import calfem.core as cfc
+import calfem.utils as cfu
+import calfem.vis as cfv
 
 # ----- Topology -------------------------------------------------
 
-Edof = array([
+Edof = np.array([
     [4,  5,  6, 1,  2,  3],
     [7,  8,  9, 10, 11, 12],
     [4,  5,  6,  7,  8,  9]      
@@ -24,80 +26,80 @@ Edof = array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K=matrix(zeros((12,12)))
-f=matrix(zeros((12,1)))
-f[3]=2e+3
+K = np.matrix(np.zeros((12,12)))
+f = np.matrix(np.zeros((12,1)))
+f[3] = 2e+3
 
 # ----- Element stiffness and element load matrices  -------------
 
-E=200e9
-A1=2e-3
-A2=6e-3
-I1=1.6e-5
-I2=5.4e-5
+E = 200e9
+A1 = 2e-3
+A2 = 6e-3
+I1 = 1.6e-5
+I2 = 5.4e-5
 
-ep1=array([E, A1, I1])
-ep3=array([E, A2, I2])
-ex1=array([0, 0])
-ex2=array([6, 6])
-ex3=array([0, 6])
-ey1=array([4, 0])
-ey2=array([4, 0])
-ey3=array([4, 4])
-eq1=array([0, 0])
-eq2=array([0, 0])
-eq3=array([0, -10e+3])
+ep1 = np.array([E, A1, I1])
+ep3 = np.array([E, A2, I2])
+ex1 = np.array([0, 0])
+ex2 = np.array([6, 6])
+ex3 = np.array([0, 6])
+ey1 = np.array([4, 0])
+ey2 = np.array([4, 0])
+ey3 = np.array([4, 4])
+eq1 = np.array([0, 0])
+eq2 = np.array([0, 0])
+eq3 = np.array([0, -10e+3])
 
-Ke1=beam2e(ex1,ey1,ep1)
-Ke2=beam2e(ex2,ey2,ep1)
-Ke3,fe3=beam2e(ex3,ey3,ep3,eq3)
+Ke1 = cfc.beam2e(ex1, ey1, ep1)
+Ke2 = cfc.beam2e(ex2, ey2, ep1)
+Ke3, fe3 = cfc.beam2e(ex3, ey3, ep3, eq3)
 
 # ----- Assemble Ke into K ---------------------------------------
 
-assem(Edof[0,:],K,Ke1);
-assem(Edof[1,:],K,Ke2);
-assem(Edof[2,:],K,Ke3,f,fe3);
+cfc.assem(Edof[0,:], K, Ke1);
+cfc.assem(Edof[1,:], K, Ke2);
+cfc.assem(Edof[2,:], K, Ke3, f, fe3);
 
 # ----- Solve the system of equations and compute reactions ------
 
-bc=array([1,2,3,10,11])
-a,r=solveq(K,f,bc)
+bc = np.array([1,2,3,10,11])
+a, r = cfc.solveq(K,f,bc)
 
-print("a=")
+print("a = ")
 print(a)
-print("r=")
+print("r = ")
 print(r)
 
 # ----- Section forces -------------------------------------------
 
-Ed=extractEldisp(Edof,a);
+Ed = cfc.extractEldisp(Edof,a);
 
-es1,ed1,ec1=beam2s(ex1,ey1,ep1,Ed[0,:],eq1,np=21)
-es2,ed2,ec2=beam2s(ex2,ey2,ep1,Ed[1,:],eq2,np=21)
-es3,ed3,ec3=beam2s(ex3,ey3,ep3,Ed[2,:],eq3,np=21)
+es1, ed1, ec1 = cfc.beam2s(ex1, ey1, ep1, Ed[0,:], eq1, nep=21)
+es2, ed2, ec2 = cfc.beam2s(ex2, ey2, ep1, Ed[1,:], eq2, nep=21)
+es3, ed3, ec3 = cfc.beam2s(ex3, ey3, ep3, Ed[2,:], eq3, nep=21)
 
-print("es1=")
+print("es1 = ")
 print(es1)
-print("es2=")
+print("es2 = ")
 print(es2)
-print("es3=")
+print("es3 = ")
 print(es3)
 
 # ----- Draw deformed frame ---------------------------------------
 
-print(ex1)
-ex = array([
-    ex1,ex2,ex3
+ex = np.array([
+    ex1, ex2, ex3
 ])
 print(ex)
-ey = array([
-    ey1,ey2,ey3
+
+ey = np.array([
+    ey1, ey2, ey3
 ])
 print(ey)
 
-eldraw2(ex,ey)
-eldisp2(ex,ey,Ed)
-waitDisplay()
+cfv.eldraw2(ex, ey)
+cfv.eldisp2(ex, ey, Ed)
+cfv.showAndWait()
 
 #figure(1)
 #plotpar=[2 1 0];

@@ -10,6 +10,12 @@ import logging as cflog
 haveMatplotLib = True
 haveMlab = True
 
+def error(msg):
+    cflog.error(" "+msg)
+
+def info(msg):
+    cflog.info(" "+msg)
+
 #haveWx = True
 #haveQt = True
     
@@ -102,6 +108,10 @@ def which(filename):
                 
     pathlist = p.split (os.pathsep)
     pathlist.append(".")
+    pathlist.append("/bin")
+    pathlist.append("/usr/bin")
+    pathlist.append("/usr/local/bin")
+    pathlist.append("/opt/local/bin")
     
     for path in pathlist:
         f = os.path.join(path, filename)

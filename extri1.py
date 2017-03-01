@@ -1,9 +1,11 @@
 #!/bin/env python
 
-from calfem.core import *
-from calfem.utils import *
-from calfem.vis import *
-from calfem.mesh import *
+import numpy as np
+import calfem.core as cfc
+import calfem.utils as cfu
+import calfem.vis as cfv
+import calfem.mesh as cfm
+
 
 # ---- Problem constants
 
@@ -12,14 +14,14 @@ ky = 50
 t = 1.0
 ep = [t]
 
-D = matrix([
+D = np.matrix([
     [kx, 0.],
     [0., ky]
 ])
 
 # ---- Problem geometry
 
-vertices = array([
+vertices = np.array([
     [0.0, 0.0],
     [200., 0.0],
     [200., 70.0],
@@ -30,7 +32,7 @@ vertices = array([
     [0.0, 70.0]
 ])
 
-segments = array([
+segments = np.array([
     [0,1,1],
     [1,2,1],
     [2,3,2],
@@ -45,7 +47,7 @@ segments = array([
 
 print("Creating element mesh...")
 
-coords, edof, dofs, bdofs = trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
+coords, edof, dofs, bdofs = cfm.trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
 
 print(coords[0:8,:])
 
@@ -53,43 +55,43 @@ print(coords[0:8,:])
 
 print("Assemblig system matrix...")
 
-nDofs = size(dofs)
-ex, ey = coordxtr(edof, coords, dofs)
+nDofs = np.size(dofs)
+ex, ey = cfc.coordxtr(edof, coords, dofs)
 
-K = zeros([nDofs,nDofs])
+K = np.zeros([nDofs,nDofs])
 
 for eltopo, elx, ely in zip(edof, ex, ey):
-    Ke = flw2te(elx, ely, ep, D)
-    assem(eltopo, K, Ke)
+    Ke = cfc.flw2te(elx, ely, ep, D)
+    cfc.assem(eltopo, K, Ke)
 
 # ---- Solving equation system
 
 print("Solving equation system...")
 
-f = zeros([nDofs,1])
+f = np.zeros([nDofs,1])
 
-bc = array([],'i')
-bcVal = array([],'i')
+bc = np.array([],'i')
+bcVal = np.array([],'i')
 
-bc, bcVal = applybc(bdofs,bc,bcVal,2,30.0)
-bc, bcVal = applybc(bdofs,bc,bcVal,3,0.0)
+bc, bcVal = cfu.applybc(bdofs,bc,bcVal,2,30.0)
+bc, bcVal = cfu.applybc(bdofs,bc,bcVal,3,0.0)
 
-a,r = solveq(K,f,bc,bcVal)
+a, r = cfc.solveq(K,f,bc,bcVal)
 
 # ---- Compute element forces
 
 print("Computing element forces...")
 
-ed = extractEldisp(edof,a)
-qs, qt = flw2ts(ex, ey, D, ed)
+ed = cfc.extractEldisp(edof,a)
+qs, qt = cfc.flw2ts(ex, ey, D, ed)
 
 # ---- Visualise results
 
 print("Drawing element mesh...")
 
-eliso2(ex,ey,ed)    
-eldraw2(ex,ey)
-showAndWait()
+cfv.eliso2(ex,ey,ed)    
+cfv.eldraw2(ex,ey)
+cfv.showAndWait()
 
 print("Done.")
 

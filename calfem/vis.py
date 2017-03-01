@@ -1,20 +1,29 @@
 import visvis as vv
+
+vv.use('qt5') # use qt4
+
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
 from visvis.wobjects.textures import minmax
+
 import numpy as np
-from numpy import sin, cos, pi
-from math import atan2
 import OpenGL.GL as gl #@UnresolvedImport
 
-from PyQt import QtGui
+from numpy import sin, cos, pi
+from math import atan2
+
+import logging as cflog
 
 globalWindows = [] # For supporting ElementView:s for eldraw ...
 
-from calfem.classes_qt4 import ElementView
-globalQtApp = QtGui.QApplication(["PyCalfem"])
-
 global globalVisVisApp
+
+def error(msg):
+    cflog.error(msg)
+
+def info(msg):
+    cflog.info(msg)
+
 
 def figure(figure=None):
     f = None
@@ -36,6 +45,18 @@ def closeAll():
     
 def clf():
     vv.clf()
+    
+def gca():
+    return vv.gca()
+    
+def subplot(*args):
+    return vv.subplot(*args)
+    
+def camera3d():
+    return vv.cameras.ThreeDCamera()
+
+def showGrid(flag = True):
+    vv.gca().axis.showGrid = flag    
         
 def showAndWait():
     global globalVisVisApp
@@ -102,7 +123,10 @@ def addLabel(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=N
     label.bgcolor = bgcolor
     label.textAngle = angle
     return label
-    
+
+def label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+    return addLabel(text, pos, angle, fontName, fontSize, color, bgcolor, axes)    
+
 def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a text in the world space. Returns the Text object.
@@ -125,6 +149,9 @@ def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=No
     text.bgcolor = bgcolor
     text.textAngle = angle
     return text
+
+def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+    return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)    
 
 
 def drawMesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 

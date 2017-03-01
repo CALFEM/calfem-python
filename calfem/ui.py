@@ -7,6 +7,11 @@ Created on Mon Apr 11 09:44:29 2016
 
 import os, sys
 
+print("------------------------------------")
+print("CALFEM/Python ui module initialising")
+print("------------------------------------")
+print()
+
 from PyQt import QtGui, QtCore, uic
 
 g_inSpyder = False
