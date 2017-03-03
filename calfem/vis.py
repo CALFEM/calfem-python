@@ -1,7 +1,6 @@
 import visvis as vv
 
 global visApp
-
 visApp = vv.use('qt5') # use qt4
 
 from visvis.wibjects.colorWibjects import Colorbar
