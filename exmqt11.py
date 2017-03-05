@@ -1,0 +1,129 @@
+# -*- coding: utf-8 -*-
+
+'''Example 10
+
+The use case from the user manual. 
+The example does not contain anything that is not covered in the previous examples.
+'''
+
+import sys
+
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
+from PyQt5.QtGui import QPixmap
+from PyQt5.uic import loadUi
+
+import calfem.core as cfc
+import calfem.vis as cfv
+import calfem.utils as cfu
+import calfem.shapes as cfs
+import calfem.solver as cfslv
+
+cfu.enableLogging()
+
+class PlaneStress2DProblem(object):
+    def __init__(self, width=5.0, height=1.0, t=1.0, v=0.2, E=2e9, maxArea=0.08):
+        self.w = width
+        self.h = height
+        self.t = t
+        self.v = v
+        self.E = E
+        self.maxArea = 0.08
+        
+    def updateGeometry(self):
+        rect = cfs.Rectangle(self.w, self.h, elementType=3, dofsPerNode=2, maxArea=self.maxArea)
+        rect.t = self.t
+        rect.v = self.v
+        rect.E = self.E
+
+        rect.ptype = 1
+        rect.ep = [rect.ptype, rect.t]
+        rect.D = cfc.hooke(rect.ptype, rect.E, rect.v)
+        
+        self.rect = rect
+        
+    def updateMesh(self):
+        self.updateGeometry()
+        self.mesh = cfs.ShapeMesh(self.rect)    
+        
+    def solve(self):
+        solver = cfslv.Plan2DSolver(mesh)
+        
+        solver.addBC(rect.leftId, 0.0)
+        solver.addForceTotal(rect.topId, -10e5, dimension=2)
+        
+        self.results = solver.execute()       
+        
+    def drawGeometry(self, figGeometry):
+        cfv.figure(figGeometry.nr) 
+        cfv.clf()
+        cfv.drawGeometry(self.rect.geometry(), title="Geometry")
+        
+    def drawMesh(self, figMesh):
+        cfv.figure(figMesh.nr)
+        cfv.clf()
+        cfv.drawMesh(self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
+                     filled=True, title="Mesh") #Draws the mesh.
+        
+    def drawDisplacements(self, figDisplacements):
+        cfv.figure(figDisplacements.nr)
+        cfv.clf()
+        cfv.drawDisplacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
+                              doDrawUndisplacedMesh=False, title="Displacements", 
+                              magnfac=1)
+        
+    def drawElementValues(self, figElementValues):
+        cfv.figure(figElementValues.nr)
+        cfv.clf()
+        cfv.drawElementValues(self.results.elForces, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, self.results.a, 
+                              doDrawMesh=True, doDrawUndisplacedMesh=False, 
+                              title="Effective Stress", magnfac=1)
+                      
+
+class MainWindow(QMainWindow):
+    """Main window class of our UI"""
+    def __init__(self):
+        """Constructor"""
+        super(MainWindow, self).__init__()
+
+        # Load user interface from UI-file
+
+        loadUi('exmqt11.ui', self)
+
+        # Query for figure class name
+
+        Figure = cfv.figureClass()
+
+        # Create figure widgets to insert in UI
+
+        self.figGeometry = Figure(self)
+        self.figMesh = Figure(self)
+        self.figElementValues = Figure(self)
+        self.figDisplacements = Figure(self)
+
+        # Insert widgets in gridLayout
+
+        self.middleLayout.addWidget(self.figGeometry._widget, 20)
+        #self.gridLayout.addWidget(self.figElementValues._widget, 0, 1)
+        #self.gridLayout.addWidget(self.figDisplacements._widget, 1, 0)
+
+        # Create our problem instance
+
+        self.problem = PlaneStress2DProblem()
+
+    @pyqtSlot()
+    def on_updateButton_clicked(self):
+        """Execute calculation"""
+        
+        self.problem.updateMesh()
+
+        # Draw geometry
+
+        self.problem.drawGeometry(self.figGeometry)
+
+if __name__ == "__main__":
+
+    app = QApplication(sys.argv)
+    widget = MainWindow()
+    widget.show()
+    sys.exit(app.exec_())
