@@ -55,6 +55,10 @@ class ElementProperties(object):
 
 def enableLogging():
     cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.DEBUG)
+    
+def disableLogging():
+    cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.NOTSET)
+    
 
 
 def readInt(f):

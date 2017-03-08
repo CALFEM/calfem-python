@@ -1,7 +1,6 @@
-import visvis as vv
+# -*- coding: utf-8 -*-
 
-global visApp
-visApp = vv.use('qt5') # use qt4
+import visvis as vv
 
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
@@ -18,6 +17,10 @@ import logging as cflog
 globalWindows = [] # For supporting ElementView:s for eldraw ...
 
 global globalVisVisApp
+
+global visApp
+visApp = vv.use('qt5') # use qt4
+
 
 def error(msg):
     """Log error message"""
@@ -857,4 +860,5 @@ def showAndWaitNative():
     else:
         globalWxApp.MainLoop()
 
-
+if __name__ == "__main__":
+    print("Testing")

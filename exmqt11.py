@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-'''Example 10
+'''Example 11
 
-The use case from the user manual. 
-The example does not contain anything that is not covered in the previous examples.
+Simple example illustrating how to integrate calfem for Python in 
+a complex Qt user interface.
 '''
 
 import sys
@@ -19,10 +19,9 @@ import calfem.utils as cfu
 import calfem.shapes as cfs
 import calfem.solver as cfslv
 
-cfu.enableLogging()
-
 class PlaneStress2DProblem(object):
     def __init__(self, width=5.0, height=1.0, t=1.0, v=0.2, E=2e9, maxArea=0.08):
+        """Init model parameters"""
         self.w = width
         self.h = height
         self.t = t
@@ -31,6 +30,7 @@ class PlaneStress2DProblem(object):
         self.maxArea = 0.08
         
     def updateGeometry(self):
+        """Update geometry from set parameters"""        
         rect = cfs.Rectangle(self.w, self.h, elementType=3, dofsPerNode=2, maxArea=self.maxArea)
         rect.t = self.t
         rect.v = self.v
@@ -43,29 +43,40 @@ class PlaneStress2DProblem(object):
         self.rect = rect
         
     def updateMesh(self):
+        """Generate mesh"""
         self.updateGeometry()
         self.mesh = cfs.ShapeMesh(self.rect)    
         
     def solve(self):
-        solver = cfslv.Plan2DSolver(mesh)
+        """Solve problem"""
         
-        solver.addBC(rect.leftId, 0.0)
-        solver.addForceTotal(rect.topId, -10e5, dimension=2)
+        cfu.enableLogging()
+        
+        solver = cfslv.Plan2DSolver(self.mesh)
+        
+        solver.addBC(self.rect.leftId, 0.0)
+        solver.addForceTotal(self.rect.topId, -10e5, dimension=2)
         
         self.results = solver.execute()       
         
+        cfu.disableLogging()
+
+        
     def drawGeometry(self, figGeometry):
+        """Draw geometry in provided figure"""
         cfv.figure(figGeometry.nr) 
         cfv.clf()
         cfv.drawGeometry(self.rect.geometry(), title="Geometry")
         
     def drawMesh(self, figMesh):
+        """Draw mesh in provided figure"""
         cfv.figure(figMesh.nr)
         cfv.clf()
         cfv.drawMesh(self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
                      filled=True, title="Mesh") #Draws the mesh.
         
     def drawDisplacements(self, figDisplacements):
+        """Draw displacements in provided figure"""
         cfv.figure(figDisplacements.nr)
         cfv.clf()
         cfv.drawDisplacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
@@ -73,6 +84,7 @@ class PlaneStress2DProblem(object):
                               magnfac=1)
         
     def drawElementValues(self, figElementValues):
+        """Draw element values in provided figure"""
         cfv.figure(figElementValues.nr)
         cfv.clf()
         cfv.drawElementValues(self.results.elForces, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, self.results.a, 
@@ -104,22 +116,74 @@ class MainWindow(QMainWindow):
         # Insert widgets in gridLayout
 
         self.middleLayout.addWidget(self.figGeometry._widget, 20)
+        self.middleLayout.addWidget(self.figMesh._widget, 20)
+        self.resultLayout.addWidget(self.figElementValues._widget, 20)
+        self.resultLayout.addWidget(self.figDisplacements._widget, 20)
         #self.gridLayout.addWidget(self.figElementValues._widget, 0, 1)
         #self.gridLayout.addWidget(self.figDisplacements._widget, 1, 0)
 
         # Create our problem instance
 
         self.problem = PlaneStress2DProblem()
-
+        self.updateView()
+        
+    def updateView(self):
+        """Update controls with values from problem"""
+        self.lengthEdit.setText(str(self.problem.w))
+        self.heightEdit.setText(str(self.problem.h))
+        self.thicknessEdit.setText(str(self.problem.t))
+        self.elasticModulusEdit.setText(str(self.problem.E))
+        self.youngEdit.setText(str(self.problem.v))
+        self.maxAreaEdit.setText(str(self.problem.maxArea))
+        
+    def updateProblem(self):
+        """Update problem with values from controls"""
+        self.problem.w = float(self.lengthEdit.text())
+        self.problem.h = float(self.heightEdit.text())
+        self.problem.t = float(self.thicknessEdit.text())
+        self.problem.E = float(self.elasticModulusEdit.text())
+        self.problem.v = float(self.youngEdit.text())
+        self.problem.maxArea = float(self.maxAreaEdit.text())
+        
     @pyqtSlot()
     def on_updateButton_clicked(self):
-        """Execute calculation"""
-        
+        """Update geometry"""
+
+        self.updateProblem()        
         self.problem.updateMesh()
 
         # Draw geometry
 
         self.problem.drawGeometry(self.figGeometry)
+        
+        # Draw mesh
+        
+        self.problem.drawMesh(self.figMesh)
+        
+    @pyqtSlot(int)
+    def on_tabWidget_currentChanged(self, tabIndex):
+        """Handle tab change"""
+
+        if tabIndex == 1:        
+            
+            # Only calculate when on tab 1 (results)
+       
+            self.updateProblem()        
+            self.problem.updateMesh()
+            self.problem.solve()
+            
+            # Draw geometry
+    
+            self.problem.drawGeometry(self.figGeometry)
+            
+            # Draw mesh
+            
+            self.problem.drawMesh(self.figMesh)
+            
+            # Draw results
+            
+            self.problem.drawElementValues(self.figElementValues)
+            self.problem.drawDisplacements(self.figDisplacements)
 
 if __name__ == "__main__":
 

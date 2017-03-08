@@ -25,7 +25,7 @@ import calfem.utils as cfu
 import calfem.core as cfc
 
 
-cfu.enableLogging()
+#cfu.enableLogging()
 
 class PlaneStress2DProblem(object):
     """Encapsulates our plane stress problem in a single class"""
