@@ -12,7 +12,12 @@ print("CALFEM/Python ui module initialising")
 print("------------------------------------")
 print()
 
-from PyQt import QtGui, QtCore, uic
+#from PyQt import QtGui, QtCore, uic
+
+#from PyQt5.QtCore import pyqtSlot, pyqtSignal
+#from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
+#from PyQt5.QtGui import QPixmap
+#from PyQt5.uic import loadUi
 
 g_inSpyder = False
 

@@ -11,10 +11,7 @@ drawElementValues(). Shows use of GmshMesher attribute 'nodesOnCurve'
 import sys
 from math import sqrt
 
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
-from PyQt5.QtGui import QPixmap
-from PyQt5.uic import loadUi
+from calfem.qt5 import *
 
 import numpy as np
 
@@ -23,7 +20,6 @@ import calfem.mesh as cfm
 import calfem.vis as cfv
 import calfem.utils as cfu
 import calfem.core as cfc
-
 
 #cfu.enableLogging()
 
