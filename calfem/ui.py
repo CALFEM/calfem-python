@@ -12,7 +12,13 @@ print("CALFEM/Python ui module initialising")
 print("------------------------------------")
 print()
 
-from PyQt import QtGui, QtCore, uic
+from PyQt5.QtCore import pyqtSlot, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
+from PyQt5.QtGui import QPixmap
+from PyQt5.uic import loadUi
+
+#from PyQt import QtGui, QtCore, uic
+
 
 g_inSpyder = False
 
@@ -34,18 +40,9 @@ else:
     
 def loadUiWidget(uifilename, parent=None):
     """Load user interface file and return object model"""
-    if False:
-        loader = QtUiTools.QUiLoader()
-        uifile = QtCore.QFile(uifilename)
-        uifile.open(QtCore.QFile.ReadOnly)
-        ui = loader.load(uifile, parent)
-        uifile.close()
-        return ui    
-    else:
-        ui = uic.loadUi(uifilename, parent)
-        return ui    
+    ui = loadUi(uifilename, parent)
+    return ui    
         
-
 def appInstance(useVisVis=True):
     """Create a suitable application instance"""
     print("Creating application instance...")

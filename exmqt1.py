@@ -34,6 +34,8 @@ class MainWindow(QMainWindow):
         self.gridLayout.addWidget(self.fig1._widget, 0, 0)
         self.gridLayout.addWidget(self.fig2._widget, 0, 1)
         
+        print(self.fig1._widget)
+        
       
     @pyqtSlot()
     def on_executeButton_clicked(self):
