@@ -8,10 +8,7 @@ Created on Wed Mar  1 16:23:37 2017
 import sys
 import time
 
-from PyQt5.QtCore import pyqtSlot, QThread, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
-from PyQt5.QtGui import QPixmap
-from PyQt5.uic import loadUi
+from calfem.qt5 import *
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
