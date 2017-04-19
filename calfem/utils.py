@@ -149,8 +149,12 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         else:
             bcAdd = boundaryDofs[marker][(dimension-1)::2]
             bcAddVal = np.ones([np.size(bcAdd)])*value
-
-        return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
+                              
+        newBcPrescr, prescrIdx = np.unique(np.hstack([bcPrescr,bcAdd]), return_index=True)
+        newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
+         
+        return newBcPrescr, newBcVal                     
+        #return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
     else:
         print("Error: Boundary marker", marker, "does not exist.")
         

@@ -80,7 +80,10 @@ class Solver:
     def calcElementForces(self):
         for i in range(self.mesh.edof.shape[0]):
             elForce = self.onCalcElForce(self.mesh.ex[i,:], self.mesh.ey[i,:], self.results.ed[i,:], self.mesh.shape.elementType)
-            self.results.elForces[i,:] = elForce
+            if len(elForce)==1:
+                self.results.elForces[i,:] = elForce
+            else:
+                pass
             
             
     def onCalcElForce(self, ex, ey, ed, elementType):
@@ -115,3 +118,24 @@ class Plan2DSolver(Solver):
             elMises = np.math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) )
         
         return elMises
+
+class Flow2DSolver(Solver):
+        
+    def onCreateKe(self, elx, ely, elementType):
+        Ke = None
+        if self.mesh.shape.elementType == 2:
+            Ke = cfc.flw2te(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
+        else:
+            Ke = cfc.flw2i4e(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
+            
+        return Ke
+                    
+    def onCalcElForce(self, ex, ey, ed, elementType):
+        es = None
+        et = None
+        if elementType == 2: 
+            es, et = cfc.flw2ts(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)
+        else:
+            es, et, temp = cfc.flw2i4s(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)
+        
+        return [es, et]

@@ -7,7 +7,10 @@ Created on Mon Apr 11 09:44:29 2016
 
 import sys
 
-from calfem.qt5 import *
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QMetaObject
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QPixmap
+from PyQt5.uic import loadUi
 
 class MainWindow(QMainWindow):
     """Main window class of our UI"""
