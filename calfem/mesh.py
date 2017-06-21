@@ -232,7 +232,8 @@ class GmshMeshGenerator:
         
         #Execute gmsh
         gmshExe = os.path.normpath(gmshExe)
-        os.system("%s \"%s\" %s" % (gmshExe, geoFilePath, options))
+        print('"%s" "%s" %s' % (gmshExe, geoFilePath, options))
+        os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         
         #Read generated msh file:
         #print("Opening msh file " + mshFileName)#TEMP

@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 
+#import sys, os
+
+if getattr(sys, 'frozen', False):
+    # we are running in a |PyInstaller| bundle
+    basedir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    basedir = os.path.dirname(__file__)
+
 '''Example 06
 
 Solves a plane stress 2D problem using a structured mesh.
