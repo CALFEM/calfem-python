@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, tempfile, shutil
 import numpy as np
 from calfem.core import createdofs
 from calfem.utils import which
@@ -73,7 +73,7 @@ class GmshMeshGenerator:
     def __init__(self, geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                 gmshExecPath=None, clcurv=False,
                 minSize = None, maxSize = None, meshingAlgorithm = None,
-                additionalOptions = ''):       
+                additionalOptions = '', meshDir = ''):       
         '''        
         Parameters:
         
@@ -114,6 +114,7 @@ class GmshMeshGenerator:
         self.maxSize = maxSize
         self.meshingAlgorithm = meshingAlgorithm
         self.additionalOptions = additionalOptions
+        self.meshDir = meshDir
         
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93] #gmsh elements that have rectangle faces
         self._2ndOrderElms = [ 8,  9, 10, 11, 12,
@@ -200,6 +201,15 @@ class GmshMeshGenerator:
               
         if gmshExe==None:
             raise IOError("Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
+            
+        # Create a temporary directory for GMSH
+
+        oldStyleTempDir = False        
+
+        if self.meshDir != "":              
+            tempMeshDir = self.meshDir
+        else:
+            tempMeshDir = tempfile.mkdtemp()
         
         if type(self.geometry) is str: #If geometry data is given as a .geo file we will just pass it on to gmsh later.
             geoFilePath = self.geometry
@@ -210,14 +220,22 @@ class GmshMeshGenerator:
                     raise IOError("Error: Could not find geo-file " + geoFilePath)
         else:
             dim = 3 if self.geometry.is3D else 2   #Get the dimension of the model from geoData.
-            if not os.path.exists("./gmshMeshTemp"):
-                os.mkdir("./gmshMeshTemp")
-            geoFilePath = os.path.normpath(os.path.join(os.getcwd(), "gmshMeshTemp/tempGeometry.geo"))#"gmshMeshTemp/tempGeometry.geo"
+            
+            if oldStyleTempDir:
+                if not os.path.exists("./gmshMeshTemp"):
+                    os.mkdir("./gmshMeshTemp")
+                geoFilePath = os.path.normpath(os.path.join(os.getcwd(), "gmshMeshTemp/tempGeometry.geo"))#"gmshMeshTemp/tempGeometry.geo"
+            else:
+                geoFilePath = os.path.normpath(os.path.join(tempMeshDir, 'tempGeometry.geo'))
+                
             self.geofile = open(geoFilePath, "w") #Create temp geometry file
             self._writeGeoFile()#Write geoData to file            
             self.geofile.close()
-        
-        mshFileName = os.path.normpath(os.path.join(os.getcwd(), 'gmshMeshTemp/meshFile.msh')) #Filepath to the msh-file that will be generated.
+
+        if oldStyleTempDir:
+            mshFileName = os.path.normpath(os.path.join(os.getcwd(), 'gmshMeshTemp/meshFile.msh')) #Filepath to the msh-file that will be generated.
+        else:
+            mshFileName = os.path.normpath(os.path.join(tempMeshDir, 'meshFile.msh'))
 
         #construct options string:
 
@@ -277,6 +295,7 @@ class GmshMeshGenerator:
                     
             #if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
             #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
+            
             if eType in [1,8,26,27,28]: #If line
                 _insertInSetDict(self.nodesOnCurve, entityID-1, _offsetIndices(nodes,-1)) #insert nodes into nodesOnCurve
             elif eType in [2,3,9,10,16,20,21,22,23,24,25]: #If surfaceelement
@@ -294,8 +313,12 @@ class GmshMeshGenerator:
         for key in self.nodesOnVolume.keys(): #Convert set to list
                 self.nodesOnVolume[key] = list(self.nodesOnVolume[key])
                 
-        #print("Closing msh file...")#TEMP        
         mshFile.close()
+        
+        # Remove temporary mesh directory if not explicetly specified.
+        
+        if self.meshDir == "":
+            shutil.rmtree(tempMeshDir)        
         
         dofs = createdofs(np.size(allNodes,0), self.dofsPerNode)
         
