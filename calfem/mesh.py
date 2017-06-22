@@ -218,7 +218,9 @@ class GmshMeshGenerator:
             self.geofile.close()
         
         mshFileName = os.path.normpath(os.path.join(os.getcwd(), 'gmshMeshTemp/meshFile.msh')) #Filepath to the msh-file that will be generated.
+
         #construct options string:
+
         options = ""
         options += ' -' + str(dim)
         options += ' -clscale ' + str(self.elSizeFactor) #scale factor
@@ -232,7 +234,6 @@ class GmshMeshGenerator:
         
         #Execute gmsh
         gmshExe = os.path.normpath(gmshExe)
-        print('"%s" "%s" %s' % (gmshExe, geoFilePath, options))
         os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         
         #Read generated msh file:
