@@ -41,13 +41,13 @@ def mlwireframe2d(coords, edof):
 def eldisp2(ex,ey,ed,rat=0.2):
     nen = -1
     if ex.shape != ey.shape:
-        print("ex and ey shapes do not match.")
+        print "ex and ey shapes do not match."
         return 1.0
     
     dlmax = 0.
     edmax = 1.
     
-    print(rank(ex))
+    print rank(ex)
 
     if rank(ex)==1:
         nen = ex.shape[0]
