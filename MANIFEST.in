@@ -1,5 +1,5 @@
 include *.md
 include *.rst
-include examples/exm1.py
+recursive-include examples *.py
 graft examples
 global-exclude *.py[co]

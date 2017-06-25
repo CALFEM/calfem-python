@@ -88,10 +88,10 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['numpy', 'visvis', 'PyQt5'],
-    #include_package_data=True
+    include_package_data=True
     #package_data={'calfem': ['examples/*']}
     
-    data_files=gen_data_files("examples", "doc")
+    #data_files=gen_data_files("examples", "doc")
     
     #package_data={
     #    'calfem': ['examples/*.py', 'examples/*.ui']
