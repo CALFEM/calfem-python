@@ -11,13 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   calfem_core
-   calfem_geometry
-   calfem_mesh
-   calfem_vis
-   calfem_ui
-   calfem_utils
+   calfem_reference
+   calfem_examples
 
+==================
 Indices and tables
 ==================
 
