@@ -172,8 +172,11 @@ def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=No
     return text
 
 def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-    return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)    
+    return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)   
 
+def drawElements(ex, ey):
+    # Display two lines (values obtained via vv.ginput())
+    vv.plot(ex, ey, ms='.', mw=4, lw=2)
 
 def drawMesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 
              title=None, color=(0,0,0), faceColor=(1,1,1), filled=False):

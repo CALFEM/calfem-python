@@ -11,14 +11,15 @@
 #     Ola Dahlblom 2004-09-14
 #----------------------------------------------------------------
 
-from numpy import *
-from calfem.core import *
+import numpy as np
+import calfem.vis as cfv
+import calfem.core as cfc
 
 # ----- System matrices -----
 
-K = zeros((15,15))
-f = zeros((15,1))
-Coord = array([
+K = np.zeros((15,15))
+f = np.zeros((15,1))
+Coord = np.array([
     [0,     0    ],[0.025, 0    ],
     [0.05,  0    ],[0,     0.025],
     [0.025, 0.025],[0.05,  0.025],
@@ -29,7 +30,7 @@ Coord = array([
     [0.05,  0.1  ]
 ])
 
-Dof = array([
+Dof = np.array([
     [1 ],[2 ],[3 ],
     [4 ],[5 ],[6 ],
     [7 ],[8 ],[9 ],
@@ -39,12 +40,12 @@ Dof = array([
 
 # ----- Element properties, topology and coordinates -----
 
-ep = array([1])
-D = array([
+ep = np.array([1])
+D = np.array([
     [1, 0],
     [0, 1]
 ])
-Edof = array([
+Edof = np.array([
     [ 1, 2, 5, 4],
     [ 2, 3, 6, 5],
     [ 4, 5, 8, 7],
@@ -54,7 +55,7 @@ Edof = array([
     [10,11,14,13],
     [11,12,15,14],
 ])
-Ex,Ey = coordxtr(Edof,Coord,Dof)
+Ex,Ey = cfc.coordxtr(Edof,Coord,Dof)
 
 # ----- Generate FE-mesh -----
 
@@ -64,26 +65,28 @@ Ex,Ey = coordxtr(Edof,Coord,Dof)
 # ----- Create and assemble element matrices -----
 
 for i in range(8):
-    Ke = flw2qe(Ex[i],Ey[i],ep,D)
-    K = assem(Edof[i],K,Ke)
+    Ke = cfc.flw2qe(Ex[i],Ey[i],ep,D)
+    K = cfc.assem(Edof[i],K,Ke)
 
 # ----- Solve equation system -----
 
-bcPrescr = array([1,2,3,4,7,10,13,14,15])
-bcVal = array([0,0,0,0,0,0,0.5e-3,1e-3,1e-3])
-a,r = solveq(K,f,bcPrescr,bcVal)
+bcPrescr = np.array([1,2,3,4,7,10,13,14,15])
+bcVal = np.array([0,0,0,0,0,0,0.5e-3,1e-3,1e-3])
+a,r = cfc.solveq(K,f,bcPrescr,bcVal)
 
 # ----- Compute element flux vector -----
 
-Ed = extractEldisp(Edof,a)
-Es = zeros((8,2))
+Ed = cfc.extractEldisp(Edof,a)
+Es = np.zeros((8,2))
 for i in range(8):
-    Es[i],Et = flw2qs(Ex[i],Ey[i],ep,D,Ed[i])
+    Es[i],Et = cfc.flw2qs(Ex[i],Ey[i],ep,D,Ed[i])
 
 # ----- Draw flux vectors and contourlines -----
 
+cfv.drawElements(Ex, Ey)
+cfv.showAndWait()
 #sfac=scalfact2(Ex,Ey,Es,0.5);
-#eldraw2(Ex,Ey,[1,3,0]); 
+#eldraw2(Ex,Ey); 
 #elflux2(Ex,Ey,Es,[1,4],sfac); 
 #pltscalb2(sfac,[2e-2 0.06 0.01],4);
 #disp('PRESS ENTER TO CONTINUE'); pause; clf;
