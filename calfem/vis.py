@@ -7,6 +7,8 @@ from visvis import Colormapable
 from visvis.wobjects.textures import minmax
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 import OpenGL.GL as gl #@UnresolvedImport
 
 from numpy import sin, cos, pi
@@ -83,6 +85,9 @@ def showAndWait():
     globalVisVisApp = vv.use()
     globalVisVisApp.Create()
     globalVisVisApp.Run()
+    
+def showAndWaitMpl():
+    plt.show()
 
 def getColorbar(axes=None):
     '''
@@ -822,7 +827,110 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
         if draw_element_numbers:
             text(str(elnum[i]), [xm, ym])
             i += 1
+            
+def eldraw2_mpl(ex, ey, plotpar=[1, 2, 1], elnum=[]):
+    """
+    eldraw2(ex,ey,plotpar,elnum)
+    eldraw2(ex,ey,plotpar)
+    eldraw2(ex,ey)
+    
+     PURPOSE 
+       Draw the undeformed 2D mesh for a number of elements of 
+       the same type. Supported elements are:
+    
+       1) -> bar element              2) -> beam el.  
+       3) -> triangular 3 node el.    4) -> quadrilateral 4 node el. 
+       5) -> 8-node isopar. elemen
+    
+     INPUT  
+        ex,ey:.......... nen:   number of element nodes
+                         nel:   number of elements
+        plotpar=[ linetype, linecolor, nodemark]
+    
+                 linetype=1 -> solid    linecolor=1 -> black
+                          2 -> dashed             2 -> blue
+                          3 -> dotted             3 -> magenta
+                                                  4 -> red
+    
+                 nodemark=1 -> circle       
+                          2 -> star              
+                          0 -> no mark 
+                   
+        elnum=edof(:,1) ; i.e. the first column in the topology matrix
+             
+        Rem. Default is solid white lines with circles at nodes.
+    """    
+    
+    line_type = plotpar[0]
+    line_color = plotpar[1]
+    node_mark = plotpar[2]
+    
+    # Translate CALFEM plotpar to visvis
+    
+    vv_line_type = '-'
+    vv_line_color = 'b'
+    vv_node_mark = 'o'
+    
+    if line_type == 1:
+        vv_line_type = '-'
+    elif line_type == 2:
+        vv_line_type = '--'
+    elif line_type == 3:
+        vv_line_type = ':'
         
+    if line_color == 1:
+        vv_line_color = 'k'
+    elif line_color == 2:
+        vv_line_color = 'b'
+    elif line_color == 3:
+        vv_line_color = 'm'
+    elif line_color == 4:
+        vv_line_color = 'r'
+        
+    if node_mark == 1:
+        vv_node_mark = 'o'
+    elif node_mark == 2:
+        vv_node_mark = 'x'
+    elif node_mark == 0:
+        vv_node_mark = ''
+        
+    vv_marker_color = vv_line_color
+
+    plt.axis('equal')
+    
+    draw_element_numbers = False
+    
+    if len(elnum) == ex.shape[0]:
+        draw_element_numbers = True
+
+    i = 0
+
+    for elx, ely in zip(ex, ey):
+        x = elx.tolist()
+        x.append(elx[0])
+        y = ely.tolist()
+        y.append(ely[0])
+        
+        xm = sum(x)/len(x)
+        ym = sum(y)/len(y)
+        
+        plt.plot(x, y, vv_line_color + vv_node_mark + vv_line_type)
+        #vv.plot(x, y, ls=vv_line_type, lc = vv_line_color, ms = vv_node_mark, mc = vv_marker_color)
+        
+        #if draw_element_numbers:
+        #    text(str(elnum[i]), [xm, ym])
+        #    i += 1          
+            
+def eliso2_mpl(ex, ey, ed):
+
+    plt.axis('equal')
+
+    plt.contour(ex, ey, ed)
+
+    #for elx, ely, scl in zip(ex, ey, ed):
+    #    x = elx.tolist()
+    #    y = ely.tolist()
+    #    z = scl.tolist()
         
 def eldraw2_old(ex, ey):
     """
@@ -858,7 +966,7 @@ def eldraw2_old(ex, ey):
     mainWindow.Show()   
     globalWindows.append(mainWindow)
     
-def eliso2(ex, ey, ed, showMesh=False):
+def eliso2_old(ex, ey, ed, showMesh=False):
     """
     Draw nodal values in 2d.
     
