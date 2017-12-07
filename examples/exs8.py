@@ -83,7 +83,10 @@ for i in range(8):
 
 # ----- Draw flux vectors and contourlines -----
 
-cfv.drawElements(Ex, Ey)
+print(Ex)
+print(Ey)
+
+cfv.eldraw2(Ex, Ey, [3, 2, 1], range(1,Ex.shape[0]+1))
 cfv.showAndWait()
 #sfac=scalfact2(Ex,Ey,Es,0.5);
 #eldraw2(Ex,Ey); 
