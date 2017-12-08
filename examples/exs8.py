@@ -89,6 +89,9 @@ print(Ey)
 cfv.eldraw2_mpl(Ex, Ey, [1, 2, 1], range(1,Ex.shape[0]+1))
 cfv.eliso2_mpl(Ex,Ey,Ed);
 cfv.showAndWaitMpl()
+
+print(a)
+print(Ed)
 #cfv.showAndWait()
 #sfac=scalfact2(Ex,Ey,Es,0.5);
 #eldraw2(Ex,Ey); 

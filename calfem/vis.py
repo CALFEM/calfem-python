@@ -924,13 +924,25 @@ def eldraw2_mpl(ex, ey, plotpar=[1, 2, 1], elnum=[]):
 def eliso2_mpl(ex, ey, ed):
 
     plt.axis('equal')
+    
+    print(np.shape(ex))    
+    print(np.shape(ey))
+    print(np.shape(ed))
+    
+    gx = []
+    gy = []
+    gz = []
 
-    plt.contour(ex, ey, ed)
 
-    #for elx, ely, scl in zip(ex, ey, ed):
-    #    x = elx.tolist()
-    #    y = ely.tolist()
-    #    z = scl.tolist()
+    for elx, ely, scl in zip(ex, ey, ed):
+        for x in elx:
+           gx.append(x) 
+        for y in ely:
+           gy.append(y) 
+        for z in ely:
+           gz.append(y) 
+
+    plt.tricontour(gx, gy, gz, 5)
         
 def eldraw2_old(ex, ey):
     """
