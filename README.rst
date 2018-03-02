@@ -1,25 +1,12 @@
-A sample Python project
-=======================
+CALFEM for Python
+=================
 
-A sample project that exists as an aid to the `Python Packaging User Guide
-<https://packaging.python.org>`_'s `Tutorial on Packaging and Distributing
-Projects <https://packaging.python.org/en/latest/distributing.html>`_.
+Background
+----------
 
-This projects does not aim to cover best practices for Python project
-development as a whole. For example, it does not provide guidance or tool
-recommendations for version control, documentation, or testing.
+The computer program CALFEM is written for the software MATLAB and is an interactive tool for learning the finite element method. CALFEM is an abbreviation of ”Computer Aided Learning of the Finite Element Method” and been developed by the Division of Structural Mechanics at Lund University since the late 70’s.
 
-----
+Why CALFEM for Python? 
+----------------------
 
-This is the README file for the project.
-
-The file should use UTF-8 encoding and be written using `reStructuredText
-<http://docutils.sourceforge.net/rst.html>`_. It
-will be used to generate the project webpage on PyPI and will be displayed as
-the project homepage on common code-hosting services, and should be written for
-that purpose.
-
-Typical contents for this file would include an overview of the project, basic
-usage examples, etc. Generally, including the project changelog in here is not
-a good idea, although a simple "What's New" section for the most recent version
-may be appropriate.
+Unlike MATLAB, which have expensive licenses, Python is free to use and distribute both for personal and commercial use. An implementation to Py
