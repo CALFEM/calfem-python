@@ -12,3 +12,6 @@ calfem/shapes - kopia.py
 *.project
 .pydevproject
 *.prefs
+calfem-python.pyproj
+*.suo
+calfem-python.sln
