@@ -527,6 +527,8 @@ class GmshMeshGenerator:
     def _writeSurfaceLoop(self, outerLoop, ID):
         self.geofile.write("Surface Loop(%i) = {%s};\n" % (ID, _formatList(outerLoop, 1)))
         
+GmshMesh = GmshMeshGenerator
+        
 def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log", triangleExecutablePath=None):
     """
     Triangulates an area described by a number vertices (vertices) and a set

@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   calfem_mesh_guide
    calfem_reference
    calfem_examples
 

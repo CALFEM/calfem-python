@@ -15,3 +15,6 @@ calfem/shapes - kopia.py
 calfem-python.pyproj
 *.suo
 calfem-python.sln
+build/
+calfem_python.egg-info/
+dist/

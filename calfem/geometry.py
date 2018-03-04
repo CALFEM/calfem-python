@@ -589,6 +589,7 @@ class Geometry:
                 
     point = addPoint
     spline = addSpline
+    line = addSpline
     bspline = addBSpline
     circle = addCircle
     ellipse = addEllipse
