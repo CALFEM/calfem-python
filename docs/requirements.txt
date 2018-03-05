@@ -1,3 +1,3 @@
 visvis
-pyqt
+PyQt5
 pyvtk
