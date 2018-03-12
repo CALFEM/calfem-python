@@ -48,7 +48,13 @@ def _insertInSetDict(dictionary, key, values):
             dictionary[key].add(v)
     except TypeError: #Exception if values is not an iterable - insert values itself instead.
         dictionary[key].add(values)
-        
+
+def _insertBoundaryElement(dictionary, eType, key, nodes):
+    if not key in dictionary:
+        dictionary[key] = []
+    dictionary[key].append({'elm-type':eType,'node-number-list':nodes})
+
+
 def createGmshMesh(geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                      gmshExecPath=None, clcurv=False,
                      minSize = None, maxSize = None, meshingAlgorithm = None,
@@ -275,6 +281,7 @@ class GmshMeshGenerator:
         elements = []
         elementmarkers = []
         bdofs = {} #temp dictionary of sets. Key:MarkerID. Value:Set. The sets will be converted to lists.
+        boundaryElements = {}
         #nodeOnPoint = {}  #dictionary pointID : nodeNumber
         self.nodesOnCurve = {}    #dictionary lineID  : set of [nodeNumber]
         self.nodesOnSurface = {}   #dictionary surfID  : set of [nodeNumber]
@@ -292,6 +299,9 @@ class GmshMeshGenerator:
                 elementmarkers.append(marker)#Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
             else: #If the element is not a "real" element we store its node at marker in bdof instead:
                 _insertInSetDict(bdofs, marker, nodes)
+
+                # We also store the full information as 'boundary elements'
+                _insertBoundaryElement(boundaryElements, eType, marker, nodes)
                     
             #if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
             #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
@@ -339,9 +349,9 @@ class GmshMeshGenerator:
                         bVertsNew.append(dofs[bVerts[i]-1][j])
                 bdofs[keyID] = bVertsNew
                 
-            return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers
+            return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers, boundaryElements
         
-        return allNodes, elements, dofs, bdofs, elementmarkers
+        return allNodes, elements, dofs, bdofs, elementmarkers, boundaryElements
         
         
         
