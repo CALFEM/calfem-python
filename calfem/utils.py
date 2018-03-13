@@ -246,6 +246,7 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
+
 def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
     """
     Apply traction on part of boundarty with marker.
@@ -265,24 +266,32 @@ def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
 
     """
     q = np.matrix(q).T
-    xi = [-1/np.sqrt(3), 1/np.sqrt(3)]
-    wi = [1, 1]
-    Ni = [[1-(1+xi[0])/2, (1+xi[0])/2], [1-(1+xi[1])/2, (1+xi[1])/2]]
+
+    # Integration points and weights:
+    Xi = [-1/np.sqrt(3), 1/np.sqrt(3)]
+    W = [1, 1]
+
+    # Shape functions:
+    N1 = lambda x: 1-(1+x)/2
+    N2 = lambda x: (1+x)/2
 
     if marker in boundaryElements:
         for element in boundaryElements[marker]:
             if element['elm-type'] != 1:
                 print("Error: Wrong element type.")
                 return
-            f = np.zeros([4,1])
-            for i, w in enumerate(wi):
-                N = np.matrix([[Ni[i][0],        0, Ni[i][1],        0],
-                               [       0, Ni[i][0],        0, Ni[i][1]]] )
+
+            # Loop through integration points:
+            f = np.zeros([4, 1])
+            for xi, w in zip(Xi,W):
+                N = np.matrix([[N1(xi),      0, N2(xi),        0],
+                               [     0, N1(xi),        0, N2(xi)]] )
                 coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
                 v1 = coord[0, :]
                 v2 = coord[1, :]
                 J = np.linalg.norm(v1-v2) / 2
                 f += w * N.T * q * J
+
             idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
             F[idx] += f
     else:
