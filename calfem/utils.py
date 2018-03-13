@@ -246,33 +246,25 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
-def _nodeToDof2D(node):
-    return (np.array([0, 1], dtype=np.int32) + 2 * node)
-
-def _nodesToDofs2D(nodes):
-    dofs = np.array([], dtype=np.int32)
-    for node in nodes:
-        dof = _nodeToDof2D(node)
-        dofs = np.hstack((dofs,dof))
-    return dofs
-
-def applyTractionLinearElement(boundaryElements, coords, F, marker, value=[0.0, 0.0]):
+def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
     """
-    Apply boundary force to F matrix. The value is
-    added to all boundaryDofs defined by marker. Applicable
-    to 2D problems with 2 dofs per node.
+    Apply traction on part of boundarty with marker.
+    q is added to all boundaryDofs defined by marker. Applicable
+    to 2D problems with 2 dofs per node. The function works with linear
+    line elements. (elm-type 1 in GMSH).
 
     Parameters:
 
-        boundaryDofs        Dictionary with boundary dofs.
+        boundaryElements    Dictionary with boundary elements, the key is a marker and the values are lists of elements.
+        coords              Coordinates matrix
+        dofs                Dofs matrix
         F                   force matrix.
         marker              Boundary marker to assign boundary condition.
-        value               Value to assign boundary condition.
+        q                   Value to assign boundary condition.
                             shape = [qx qy] in global coordinates
-                            If not given 0.0 is assigned.
 
     """
-    value = np.matrix(value).T
+    q = np.matrix(q).T
     xi = [-1/np.sqrt(3), 1/np.sqrt(3)]
     wi = [1, 1]
     Ni = [[1-(1+xi[0])/2, (1+xi[0])/2], [1-(1+xi[1])/2, (1+xi[1])/2]]
@@ -284,15 +276,15 @@ def applyTractionLinearElement(boundaryElements, coords, F, marker, value=[0.0, 
                 return
             f = np.zeros([4,1])
             for i, w in enumerate(wi):
-                N = np.matrix( [[Ni[i][0],0,Ni[i][1],0],[0,Ni[i][0],0,Ni[i][1]]] )
+                N = np.matrix([[Ni[i][0],        0, Ni[i][1],        0],
+                               [       0, Ni[i][0],        0, Ni[i][1]]] )
                 coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
                 v1 = coord[0, :]
                 v2 = coord[1, :]
                 J = np.linalg.norm(v1-v2) / 2
-                f += w * N.T * value * J
-            dofs = _nodesToDofs2D(np.array(element['node-number-list'])-1)
-            print(dofs)
-            F[dofs] += f
+                f += w * N.T * q * J
+            idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
+            F[idx] += f
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 

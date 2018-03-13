@@ -49,10 +49,23 @@ def _insertInSetDict(dictionary, key, values):
     except TypeError: #Exception if values is not an iterable - insert values itself instead.
         dictionary[key].add(values)
 
-def _insertBoundaryElement(dictionary, eType, key, nodes):
-    if not key in dictionary:
-        dictionary[key] = []
-    dictionary[key].append({'elm-type':eType,'node-number-list':nodes})
+def _insertBoundaryElement(boundaryElements, elementType, marker, nodes):
+    """
+    Insert an element to the boundaryElements dict.
+
+    Parameters:
+
+        boundaryElements  Dictionary of boundary elements
+
+        elementType       'elm-type' according to GMSH
+
+        marker            Boundary marker
+
+        nodes             List of element nodes, order according to GMSH
+    """
+    if not marker in boundaryElements:
+        boundaryElements[marker] = []
+    boundaryElements[marker].append({'elm-type':elementType, 'node-number-list':nodes})
 
 
 def createGmshMesh(geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
@@ -79,7 +92,7 @@ class GmshMeshGenerator:
     def __init__(self, geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                 gmshExecPath=None, clcurv=False,
                 minSize = None, maxSize = None, meshingAlgorithm = None,
-                additionalOptions = '', meshDir = ''):       
+                additionalOptions = '', meshDir = '', returnBoundaryElements = False):
         '''        
         Parameters:
         
@@ -104,6 +117,9 @@ class GmshMeshGenerator:
             meshingAlgorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
                               'front2d',  'del3d', 'front3d', ...). 
                               See the gmsh manual for more info.
+
+            returnBoundaryElements  Flag for returning dictionary with boundary element
+                                    information. Useful for applying loads on boundary.
             
             additionalOptions  String containing additional command line args for gmsh.
                                Use this if a gmsh option is not covered by the above 
@@ -121,6 +137,7 @@ class GmshMeshGenerator:
         self.meshingAlgorithm = meshingAlgorithm
         self.additionalOptions = additionalOptions
         self.meshDir = meshDir
+        self.returnBoundaryElements = returnBoundaryElements
         
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93] #gmsh elements that have rectangle faces
         self._2ndOrderElms = [ 8,  9, 10, 11, 12,
@@ -165,6 +182,10 @@ class GmshMeshGenerator:
             elementmarkers  List of integer markers. Row i contains the marker of
                             element i. Markers are similar to boundary markers and
                             can be used to identify in which region an element lies.
+
+            boundaryElements  (optional) returned if self.returnBoundaryElements is true.
+                              Contains dictionary with boundary elements. The keys are markers
+                              and the values are lists of elements for that marker.
                             
     Running this function also creates object variables:
             
@@ -348,10 +369,14 @@ class GmshMeshGenerator:
                     for j in range(self.dofsPerNode):
                         bVertsNew.append(dofs[bVerts[i]-1][j])
                 bdofs[keyID] = bVertsNew
-                
-            return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers, boundaryElements
-        
-        return allNodes, elements, dofs, bdofs, elementmarkers, boundaryElements
+
+            if self.returnBoundaryElements:
+                return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers, boundaryElements
+            return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers
+
+        if self.returnBoundaryElements:
+            return allNodes, elements, dofs, bdofs, elementmarkers, boundaryElements
+        return allNodes, elements, dofs, bdofs, elementmarkers
         
         
         
