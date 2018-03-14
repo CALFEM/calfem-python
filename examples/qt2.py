@@ -16,7 +16,7 @@ import sys
 
 from PyQt5.QtWidgets import *
 
-class MyWindow(QMainWindow):
+class MyWindow(QWidget):
     """Main Window class for our application"""
 
     def __init__(self):
