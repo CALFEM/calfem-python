@@ -1,29 +1,28 @@
 # -*- coding: iso-8859-15 -*-
+"""
+CALFEM Core module
 
-#from numpy import *
+Contains all the functions implementing CALFEM standard functionality
+"""
 
 from scipy.sparse.linalg import dsolve
 import numpy as np
 import logging as cflog
 
 def error(msg):
+    """Write ``msg`` to error log."""
     cflog.error(" calfem.core: "+msg)
 
 def info(msg):
+    """Write ``msg`` to info log."""
     cflog.info(" calfem.core: "+msg)
 
 def spring1e(ep):
     """
     Compute element stiffness matrix for spring element.
     
-    Parameters:
-    
-        ep = k          spring stiffness or analog quantity
-        
-    Returns:
-    
-        Ke              stiffness matrix, dim(Ke)= 2 x 2
-        
+    :param list ep: spring stiffness or analog quantity (ep = k).
+    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
     """
     k = ep
     return np.mat([[k,-k],[-k,k]],'d')
