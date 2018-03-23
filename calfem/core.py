@@ -65,7 +65,7 @@ def bar2e(ex,ey,ep):
     
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
-    :param list ep: [E, A]: E Young's modulus, A: Cross section area
+    :param list ep: [E, A]: E - Young's modulus, A - Cross section area
     :return mat Ke: stiffness matrix, [4 x 4]
     """
     E=ep[0]
@@ -92,7 +92,7 @@ def bar2g(ex,ey,ep,N):
     
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A], E: Young's modulus, A: Cross section area
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
     :param float N: normal force
     :return mat Ke: stiffness matrix [4 x 4]
     """
@@ -134,7 +134,7 @@ def bar2s(ex,ey,ep,ed):
     
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A], E: Young's modulus, A: Cross section area
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
     :param list ed: element displacements [u1, u2, u3, u4]    
     :return float N: element foce [N]    
     """
@@ -164,7 +164,7 @@ def bar3e(ex,ey,ez,ep):
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
     :param list ez: element z coordinates [z1, z2]
-    :param list ep: element properties [E, A], E: Young's modulus, A: Cross section area
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
     :return mat Ke: stiffness matrix, [6 x 6]
     """
     E = ep[0]
@@ -198,7 +198,7 @@ def bar3s(ex,ey,ez,ep,ed):
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
     :param list ez: element z coordinates [z1, z2]
-    :param list ep: element properties [E, A], E: Young's modulus, A: Cross section area   
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area   
     :param list ed: element displacements [u1, ..., u6]
     :return float N: normal force
     """
@@ -235,7 +235,7 @@ def beam2e(ex,ey,ep,eq=None):
     
     :param list ex: element x coordinates [x1, x2]
     :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A, I], E: Young's modulus, A: Cross section area, I: Moment of inertia   
+    :param list ep: element properties [E, A, I], E - Young's modulus, A - Cross section area, I - Moment of inertia   
     :param list eq: distributed loads, local directions [qx, qy]
     :return mat Ke: element stiffness matrix [6 x 6]
     :return mat fe: element stiffness matrix [6 x 1] (if eq!=None)
