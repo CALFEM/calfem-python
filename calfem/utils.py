@@ -348,7 +348,7 @@ def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
             nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
-        elif dimension == [1,2]:
+        elif dimension in [1,2]:
             nDofs = len(boundaryDofs[marker][(dimension-1)::2])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += valuePerDof
@@ -380,7 +380,7 @@ def applyforcetotal3D(boundaryDofs, f, marker, value=0.0, dimension=0):
             nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
-        elif dimension == [1,2,3]:
+        elif dimension in [1,2,3]:
             nDofs = len(boundaryDofs[marker][(dimension-1)::3])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += valuePerDof
