@@ -163,19 +163,12 @@ def bar3e(ex,ey,ez,ep):
     """
     Compute element stiffness matrix for three dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-        ez = [z1 z2]
-        
-        ep = [E A]          E: Young's modulus
-                            A: Cross sections area
-        
-    Returns:
-    
-        Ke                  stiffness matrix, dim(Ke) = 6 x 6
-        
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E: Young's modulus, 
+    A: Cross section area
+    :return mat Ke: stiffness matrix, [6 x 6]
     """
     E = ep[0]
     A = ep[1]
@@ -205,21 +198,13 @@ def bar3s(ex,ey,ez,ep,ed):
     """
     Compute normal force in three dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-        ez = [z1 z2]
-        
-        ep = [E A]          E: Young's modulus
-                            A: Cross sections area
-        
-        ed = [u1 ... u6]    element displacements
-        
-    Returns:
-    
-        es = [N]            normal force
-
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E: Young's modulus, 
+    A: Cross section area   
+    :param list ed: element displacements [u1, ..., u6]
+    :return float N: normal force
     """
     E = ep[0]
     A = ep[1]
@@ -252,24 +237,13 @@ def beam2e(ex,ey,ep,eq=None):
     """
     Compute the stiffness matrix for a two dimensional beam element.
     
-    Parameters:
-     
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-    
-        ep = [E A I]        element properties
-                            E: Young's modulus
-                            A: Cross section area
-                            I: Moment of inertia
-    
-        eq = [qx qy]        distributed loads, local directions
-        
-    Returns:
-     
-        Ke                  element stiffness matrix (6 x 6)
-    
-        fe                  element load vector (6 x 1)
-    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A, I], E: Young's modulus, 
+    A: Cross section area, I: Moment of inertia   
+    :param list eq: distributed loads, local directions [qx, qy]
+    :return mat Ke: element stiffness matrix [6 x 6]
+    :return mat fe: element stiffness matrix [6 x 1] (if eq!=None)
     """
 
     b=np.mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])
