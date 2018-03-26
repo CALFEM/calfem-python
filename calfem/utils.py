@@ -111,16 +111,18 @@ def which(filename):
         p = os.environ['PATH']
                 
     pathlist = p.split (os.pathsep)
-    pathlist.append(".")
-    pathlist.append("/bin")
-    pathlist.append("/usr/bin")
-    pathlist.append("/usr/local/bin")
-    pathlist.append("/opt/local/bin")
+    pathlist.insert(0,".")
+    pathlist.insert(0,"/bin")
+    pathlist.insert(0,"/usr/bin")
+    pathlist.insert(0,"/opt/local/bin")
+    pathlist.insert(0,"/usr/local/bin")
+    pathlist.insert(0,"/Applications/Gmsh.app/Contents/MacOS")
     
     for path in pathlist:
         f = os.path.join(path, filename)
         if os.access(f, os.X_OK):
             return f
+
     return None
 
 def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
