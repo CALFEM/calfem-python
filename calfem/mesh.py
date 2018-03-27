@@ -1,4 +1,4 @@
-import os, sys, tempfile, shutil
+import os, sys, tempfile, shutil, subprocess
 import numpy as np
 from calfem.core import createdofs
 from calfem.utils import which
@@ -283,8 +283,9 @@ class GmshMeshGenerator:
         print(gmshExe)
         #print('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         #os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
-        os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
-
+        #retval = os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
+        
+        output = subprocess.Popen(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()        
         
         #Read generated msh file:
         #print("Opening msh file " + mshFileName)#TEMP
