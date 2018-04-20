@@ -139,6 +139,11 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         value               Value to assign boundary condition.
                             If not given 0.0 is assigned.
         dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y
+
+    Returns:
+
+        bcPresc             Updated 1-dim integer array containing prescribed dofs.
+        bcVal               Updated 1-dim float array containing prescribed values.
                             
     """
 
@@ -157,7 +162,6 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
          
         return newBcPrescr, newBcVal                     
-        #return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
     else:
         print("Error: Boundary marker", marker, "does not exist.")
         
@@ -176,6 +180,11 @@ def applybc3D(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
                             If not given 0.0 is assigned.
         dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y,
                             3 - z
+
+    Returns:
+
+        bcPresc             Updated 1-dim integer array containing prescribed dofs.
+        bcVal               Updated 1-dim float array containing prescribed values.
                             
     """
 
@@ -194,7 +203,6 @@ def applybc3D(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
          
         return newBcPrescr, newBcVal                     
-        #return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
     else:
         print("Error: Boundary marker", marker, "does not exist.")
         
@@ -267,6 +275,14 @@ def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
                             shape = [qx qy] in global coordinates
 
     """
+    if marker not in boundaryElements:
+        print("Error: Boundary marker", marker, "does not exist.")
+        return
+    for element in boundaryElements[marker]:
+        if element['elm-type'] != 1:
+            print("Error: Wrong element type.")
+            return
+
     q = np.matrix(q).T
 
     # Integration points and weights:
@@ -277,27 +293,20 @@ def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
     N1 = lambda x: 1-(1+x)/2
     N2 = lambda x: (1+x)/2
 
-    if marker in boundaryElements:
-        for element in boundaryElements[marker]:
-            if element['elm-type'] != 1:
-                print("Error: Wrong element type.")
-                return
+    for element in boundaryElements[marker]:
+        # Loop through integration points:
+        f = np.zeros([4, 1])
+        for xi, w in zip(Xi,W):
+            N = np.matrix([[N1(xi),      0,  N2(xi),       0],
+                           [     0, N1(xi),        0, N2(xi)]] )
+            coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
+            v1 = coord[0, :]
+            v2 = coord[1, :]
+            J = np.linalg.norm(v1-v2) / 2
+            f += w * N.T * q * J
 
-            # Loop through integration points:
-            f = np.zeros([4, 1])
-            for xi, w in zip(Xi,W):
-                N = np.matrix([[N1(xi),      0, N2(xi),        0],
-                               [     0, N1(xi),        0, N2(xi)]] )
-                coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
-                v1 = coord[0, :]
-                v2 = coord[1, :]
-                J = np.linalg.norm(v1-v2) / 2
-                f += w * N.T * q * J
-
-            idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
-            F[idx] += f
-    else:
-        print("Error: Boundary marker", marker, "does not exist.")
+        idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
+        F[idx] += f
 
 
 def applyforce3D(boundaryDofs, f, marker, value=0.0, dimension=0):
