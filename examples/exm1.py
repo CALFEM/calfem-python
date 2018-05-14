@@ -72,9 +72,9 @@ meshGen = cfm.GmshMeshGenerator(g)
 # Element type 3 is quad. 
 # (2 is triangle. See user manual for more element types)
 
-meshGen.elType = 3 # Degrees of freedom per node.
-meshGen.dofsPerNode = 1 # Factor that changes element sizes.
-meshGen.elSizeFactor = 0.05     
+meshGen.elType = 2 
+meshGen.dofsPerNode = 1 # Degrees of freedom per node. 
+meshGen.elSizeFactor = 0.10 # Factor that changes element sizes.    
 
 # Mesh the geometry:
 #
