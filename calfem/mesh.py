@@ -1,4 +1,4 @@
-import os, sys, tempfile, shutil
+import os, sys, tempfile, shutil, subprocess
 import numpy as np
 from calfem.core import createdofs
 from calfem.utils import which
@@ -13,7 +13,7 @@ def cmp(a, b):
 #            D.extend(dofs[node])
 #        return D
                 
-def _offsetIndices(lst, offset=0):
+def _offsetIndices(lst, offset=0):  
     '''Shifts the indices by offset. 
     Positive offsets move the indices away from 0.
     Negative offsets move the indices towards 0.
@@ -48,7 +48,26 @@ def _insertInSetDict(dictionary, key, values):
             dictionary[key].add(v)
     except TypeError: #Exception if values is not an iterable - insert values itself instead.
         dictionary[key].add(values)
-        
+
+def _insertBoundaryElement(boundaryElements, elementType, marker, nodes):
+    """
+    Insert an element to the boundaryElements dict.
+
+    Parameters:
+
+        boundaryElements  Dictionary of boundary elements
+
+        elementType       'elm-type' according to GMSH
+
+        marker            Boundary marker
+
+        nodes             List of element nodes, order according to GMSH
+    """
+    if not marker in boundaryElements:
+        boundaryElements[marker] = []
+    boundaryElements[marker].append({'elm-type':elementType, 'node-number-list':nodes})
+
+
 def createGmshMesh(geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                      gmshExecPath=None, clcurv=False,
                      minSize = None, maxSize = None, meshingAlgorithm = None,
@@ -73,7 +92,7 @@ class GmshMeshGenerator:
     def __init__(self, geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
                 gmshExecPath=None, clcurv=False,
                 minSize = None, maxSize = None, meshingAlgorithm = None,
-                additionalOptions = '', meshDir = ''):       
+                additionalOptions = '', meshDir = '', returnBoundaryElements = False):
         '''        
         Parameters:
         
@@ -98,6 +117,9 @@ class GmshMeshGenerator:
             meshingAlgorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
                               'front2d',  'del3d', 'front3d', ...). 
                               See the gmsh manual for more info.
+
+            returnBoundaryElements  Flag for returning dictionary with boundary element
+                                    information. Useful for applying loads on boundary.
             
             additionalOptions  String containing additional command line args for gmsh.
                                Use this if a gmsh option is not covered by the above 
@@ -115,6 +137,7 @@ class GmshMeshGenerator:
         self.meshingAlgorithm = meshingAlgorithm
         self.additionalOptions = additionalOptions
         self.meshDir = meshDir
+        self.returnBoundaryElements = returnBoundaryElements
         
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93] #gmsh elements that have rectangle faces
         self._2ndOrderElms = [ 8,  9, 10, 11, 12,
@@ -159,6 +182,10 @@ class GmshMeshGenerator:
             elementmarkers  List of integer markers. Row i contains the marker of
                             element i. Markers are similar to boundary markers and
                             can be used to identify in which region an element lies.
+
+            boundaryElements  (optional) returned if self.returnBoundaryElements is true.
+                              Contains dictionary with boundary elements. The keys are markers
+                              and the values are lists of elements for that marker.
                             
     Running this function also creates object variables:
             
@@ -251,8 +278,14 @@ class GmshMeshGenerator:
         options += ' ' + self.additionalOptions
         
         #Execute gmsh
+        
         gmshExe = os.path.normpath(gmshExe)
-        os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
+        print(gmshExe)
+        #print('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
+        #os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
+        #retval = os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
+        
+        output = subprocess.Popen(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()        
         
         #Read generated msh file:
         #print("Opening msh file " + mshFileName)#TEMP
@@ -275,6 +308,7 @@ class GmshMeshGenerator:
         elements = []
         elementmarkers = []
         bdofs = {} #temp dictionary of sets. Key:MarkerID. Value:Set. The sets will be converted to lists.
+        boundaryElements = {}
         #nodeOnPoint = {}  #dictionary pointID : nodeNumber
         self.nodesOnCurve = {}    #dictionary lineID  : set of [nodeNumber]
         self.nodesOnSurface = {}   #dictionary surfID  : set of [nodeNumber]
@@ -292,6 +326,9 @@ class GmshMeshGenerator:
                 elementmarkers.append(marker)#Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
             else: #If the element is not a "real" element we store its node at marker in bdof instead:
                 _insertInSetDict(bdofs, marker, nodes)
+
+                # We also store the full information as 'boundary elements'
+                _insertBoundaryElement(boundaryElements, eType, marker, nodes)
                     
             #if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
             #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
@@ -338,9 +375,13 @@ class GmshMeshGenerator:
                     for j in range(self.dofsPerNode):
                         bVertsNew.append(dofs[bVerts[i]-1][j])
                 bdofs[keyID] = bVertsNew
-                
+
+            if self.returnBoundaryElements:
+                return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers, boundaryElements
             return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers
-        
+
+        if self.returnBoundaryElements:
+            return allNodes, elements, dofs, bdofs, elementmarkers, boundaryElements
         return allNodes, elements, dofs, bdofs, elementmarkers
         
         

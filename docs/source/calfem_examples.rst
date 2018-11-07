@@ -1,5 +1,5 @@
-Examples
-========
+Using CALFEM for Python
+=======================
 
 Connected springs (exs1.m)
 --------------------------

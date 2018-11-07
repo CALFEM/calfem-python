@@ -1,29 +1,28 @@
 # -*- coding: iso-8859-15 -*-
+"""
+CALFEM Core module
 
-#from numpy import *
+Contains all the functions implementing CALFEM standard functionality
+"""
 
 from scipy.sparse.linalg import dsolve
 import numpy as np
 import logging as cflog
 
 def error(msg):
+    """Write ``msg`` to error log."""
     cflog.error(" calfem.core: "+msg)
 
 def info(msg):
+    """Write ``msg`` to info log."""
     cflog.info(" calfem.core: "+msg)
 
 def spring1e(ep):
     """
     Compute element stiffness matrix for spring element.
     
-    Parameters:
-    
-        ep = k          spring stiffness or analog quantity
-        
-    Returns:
-    
-        Ke              stiffness matrix, dim(Ke)= 2 x 2
-        
+    :param float ep: spring stiffness or analog quantity (ep = k).
+    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
     """
     k = ep
     return np.mat([[k,-k],[-k,k]],'d')
@@ -32,15 +31,9 @@ def spring1s(ep,ed):
     """
     Compute element force in spring element (spring1e).
     
-    Parameters:
-    
-        ep = k          spring stiffness or analog quantity
-        ed = [u1 u2]    element displacements
-                        u1, u2: nodal displacements
-                        
-    Returns:
-    
-        es              element force [N]
+    :param float ep: spring stiffness or analog quantity
+    :param list ed: element displacements [d0, d1]
+    :return float es: element force [N]
     """
     k = ep
     return k*(ed[1]-ed[0]);   
@@ -49,14 +42,8 @@ def bar1e(ep):
     """
     Compute element stiffness matrix for spring element.
     
-    Parameters:
-    
-        ep = k          spring stiffness or analog quantity
-        
-    Returns:
-    
-        Ke              stiffness matrix, dim(Ke)= 2 x 2
-    
+    :param ep float: spring stiffness or analog quantity
+    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
     """
     k = ep
     return np.mat([[k,-k],[-k,k]],'d')
@@ -65,16 +52,9 @@ def bar1s(ep,ed):
     """
     Compute element force in spring element (spring1e).
     
-    Parameters:
-    
-        ep = k          spring stiffness or analog quantity
-        ed = [u1 u2]    element displacements
-                        u1, u2: nodal displacements
-                        
-    Returns:
-    
-        es              element force [N]
-    
+    :param float ep: spring stiffness or analog quantity
+    :param list ed: element displacements [d0, d1]
+    :return float es: element force
     """
     k = ep
     return k*(ed[1]-ed[0]);   
@@ -83,18 +63,10 @@ def bar2e(ex,ey,ep):
     """
     Compute the element stiffness matrix for two dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]    element node coordinates
-    
-        ep = [E A]      E: Young's modulus
-                        A: Cross section area
-                        
-    Returns:
-    
-        Ke              stiffness matrix, dim(Ke)= 4 x 4
-    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: [E, A]: E - Young's modulus, A - Cross section area
+    :return mat Ke: stiffness matrix, [4 x 4]
     """
     E=ep[0]
     A=ep[1]
@@ -118,20 +90,11 @@ def bar2g(ex,ey,ep,N):
     Compute element stiffness matrix for two dimensional geometric
     nonlinear bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-        
-        ep = [E A]          E: Young's modulus
-                            A: Cross sections area
-                            
-        N                   normal force
-        
-    Returns:
-    
-        Ke                  stiffness matrix, dim(Ke) = 4 x 4
-        
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :param float N: normal force
+    :return mat Ke: stiffness matrix [4 x 4]
     """
     E = ep[0]
     A = ep[1]
@@ -169,20 +132,11 @@ def bar2s(ex,ey,ep,ed):
     """
     Compute normal force in two dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element coordinates
-    
-        ep = [E A]          E : Young's modulus
-                            A : Cross section area
-    
-        ed = [u1 u2 u3 u4]  element displacement vector
-        
-    Returns:
-    
-        es                  element force [N]
-    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :param list ed: element displacements [u1, u2, u3, u4]    
+    :return float N: element foce [N]    
     """
     E=ep[0]
     A=ep[1]
@@ -207,19 +161,11 @@ def bar3e(ex,ey,ez,ep):
     """
     Compute element stiffness matrix for three dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-        ez = [z1 z2]
-        
-        ep = [E A]          E: Young's modulus
-                            A: Cross sections area
-        
-    Returns:
-    
-        Ke                  stiffness matrix, dim(Ke) = 6 x 6
-        
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :return mat Ke: stiffness matrix, [6 x 6]
     """
     E = ep[0]
     A = ep[1]
@@ -249,21 +195,12 @@ def bar3s(ex,ey,ez,ep,ed):
     """
     Compute normal force in three dimensional bar element.
     
-    Parameters:
-    
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-        ez = [z1 z2]
-        
-        ep = [E A]          E: Young's modulus
-                            A: Cross sections area
-        
-        ed = [u1 ... u6]    element displacements
-        
-    Returns:
-    
-        es = [N]            normal force
-
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area   
+    :param list ed: element displacements [u1, ..., u6]
+    :return float N: normal force
     """
     E = ep[0]
     A = ep[1]
@@ -296,24 +233,12 @@ def beam2e(ex,ey,ep,eq=None):
     """
     Compute the stiffness matrix for a two dimensional beam element.
     
-    Parameters:
-     
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-    
-        ep = [E A I]        element properties
-                            E: Young's modulus
-                            A: Cross section area
-                            I: Moment of inertia
-    
-        eq = [qx qy]        distributed loads, local directions
-        
-    Returns:
-     
-        Ke                  element stiffness matrix (6 x 6)
-    
-        fe                  element load vector (6 x 1)
-    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A, I], E - Young's modulus, A - Cross section area, I - Moment of inertia   
+    :param list eq: distributed loads, local directions [qx, qy]
+    :return mat Ke: element stiffness matrix [6 x 6]
+    :return mat fe: element stiffness matrix [6 x 1] (if eq!=None)
     """
 
     b=np.mat([[ex[1]-ex[0]],[ey[1]-ey[0]]])

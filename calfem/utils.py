@@ -111,21 +111,24 @@ def which(filename):
         p = os.environ['PATH']
                 
     pathlist = p.split (os.pathsep)
-    pathlist.append(".")
-    pathlist.append("/bin")
-    pathlist.append("/usr/bin")
-    pathlist.append("/usr/local/bin")
-    pathlist.append("/opt/local/bin")
+    pathlist.insert(0,".")
+    pathlist.insert(0,"/bin")
+    pathlist.insert(0,"/usr/bin")
+    pathlist.insert(0,"/opt/local/bin")
+    pathlist.insert(0,"/usr/local/bin")
+    pathlist.insert(0,"/Applications/Gmsh.app/Contents/MacOS")
     
     for path in pathlist:
         f = os.path.join(path, filename)
         if os.access(f, os.X_OK):
             return f
+
     return None
 
 def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
-    Apply boundary condition to bcPresc and bcVal matrices.
+    Apply boundary condition to bcPresc and bcVal matrices. For 2D problems
+    with 2 dofs per node.
     
     Parameters:
     
@@ -134,8 +137,13 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         bcVal               1-dim float array containing prescribed values.
         marker              Boundary marker to assign boundary condition.
         value               Value to assign boundary condition.
-                            If not giben 0.0 is assigned.
+                            If not given 0.0 is assigned.
         dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y
+
+    Returns:
+
+        bcPresc             Updated 1-dim integer array containing prescribed dofs.
+        bcVal               Updated 1-dim float array containing prescribed values.
                             
     """
 
@@ -143,18 +151,58 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
         if (dimension==0):
             bcAdd = np.array(boundaryDofs[marker])
             bcAddVal = np.ones([np.size(bcAdd)])*value
-        elif (dimension==1):
+        elif dimension in [1,2]:
             bcAdd = boundaryDofs[marker][(dimension-1)::2]
             bcAddVal = np.ones([np.size(bcAdd)])*value
         else:
-            bcAdd = boundaryDofs[marker][(dimension-1)::2]
-            bcAddVal = np.ones([np.size(bcAdd)])*value
+            print("Error: wrong dimension, ", dimension)
+
                               
         newBcPrescr, prescrIdx = np.unique(np.hstack([bcPrescr,bcAdd]), return_index=True)
         newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
          
         return newBcPrescr, newBcVal                     
-        #return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
+    else:
+        print("Error: Boundary marker", marker, "does not exist.")
+        
+def applybc3D(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
+    """
+    Apply boundary condition to bcPresc and bcVal matrices. For 3D problems
+    with 3 dofs per node.
+    
+    Parameters:
+    
+        boundaryDofs        Dictionary with boundary dofs.
+        bcPresc             1-dim integer array containing prescribed dofs.
+        bcVal               1-dim float array containing prescribed values.
+        marker              Boundary marker to assign boundary condition.
+        value               Value to assign boundary condition.
+                            If not given 0.0 is assigned.
+        dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y,
+                            3 - z
+
+    Returns:
+
+        bcPresc             Updated 1-dim integer array containing prescribed dofs.
+        bcVal               Updated 1-dim float array containing prescribed values.
+                            
+    """
+
+    if marker in boundaryDofs:
+        if (dimension==0):
+            bcAdd = np.array(boundaryDofs[marker])
+            bcAddVal = np.ones([np.size(bcAdd)])*value
+        elif dimension in [1,2,3]:
+            bcAdd = boundaryDofs[marker][(dimension-1)::3]
+            bcAddVal = np.ones([np.size(bcAdd)])*value
+        else:
+            print("Error: wrong dimension, ", dimension)
+
+                              
+        newBcPrescr, prescrIdx = np.unique(np.hstack([bcPrescr,bcAdd]), return_index=True)
+        newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
+         
+        return newBcPrescr, newBcVal                     
     else:
         print("Error: Boundary marker", marker, "does not exist.")
         
@@ -163,12 +211,11 @@ def applybcnode(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
     if (dimension==0):
         bcAdd = np.asarray(dofs[nodeIdx])
         bcAddVal = np.ones([np.size(bcAdd)])*value
-    elif (dimension==1):
+    elif dimension in [1,2,3]:
         bcAdd = np.asarray(dofs[nodeIdx,dimension-1])
         bcAddVal = np.ones([np.size(bcAdd)])*value
     else:
-        bcAdd = np.asarray(dofs[nodeIdx,dimension-1])
-        bcAddVal = np.ones([np.size(bcAdd)])*value
+        print("Error: wrong dimension, ", dimension)
 
     return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
     
@@ -184,7 +231,9 @@ def applyforcenode(nodeIdx, dofs, f, value=0.0, dimension=0):
         
 def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
-    Apply boundary condition to bcPresc and bcVal matrices.
+    Apply boundary force to f matrix. The value is
+    added to all boundaryDofs defined by marker. Applicable
+    to 2D problems with 2 dofs per node.
     
     Parameters:
     
@@ -192,7 +241,7 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
         f                   force matrix.
         marker              Boundary marker to assign boundary condition.
         value               Value to assign boundary condition.
-                            If not giben 0.0 is assigned.
+                            If not given 0.0 is assigned.
         dimension           dimension to apply force. 0 - all, 1 - x, 2 - y
                             
     """
@@ -200,17 +249,99 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     if marker in boundaryDofs:
         if dimension == 0:
             f[np.asarray(boundaryDofs[marker])-1] += value
-        elif dimension == 1:
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value
-        elif dimension == 2:
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value            
+        elif dimension in [1,2]:
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value  
+        else:
+            print("Error: The dimension, ", dimension,", is invalid")
+    else:
+        print("Error: Boundary marker", marker, "does not exist.")
+
+
+def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
+    """
+    Apply traction on part of boundarty with marker.
+    q is added to all boundaryDofs defined by marker. Applicable
+    to 2D problems with 2 dofs per node. The function works with linear
+    line elements. (elm-type 1 in GMSH).
+
+    Parameters:
+
+        boundaryElements    Dictionary with boundary elements, the key is a marker and the values are lists of elements.
+        coords              Coordinates matrix
+        dofs                Dofs matrix
+        F                   force matrix.
+        marker              Boundary marker to assign boundary condition.
+        q                   Value to assign boundary condition.
+                            shape = [qx qy] in global coordinates
+
+    """
+    if marker not in boundaryElements:
+        print("Error: Boundary marker", marker, "does not exist.")
+        return
+    for element in boundaryElements[marker]:
+        if element['elm-type'] != 1:
+            print("Error: Wrong element type.")
+            return
+
+    q = np.matrix(q).T
+
+    # Integration points and weights:
+    Xi = [-1/np.sqrt(3), 1/np.sqrt(3)]
+    W = [1, 1]
+
+    # Shape functions:
+    N1 = lambda x: 1-(1+x)/2
+    N2 = lambda x: (1+x)/2
+
+    for element in boundaryElements[marker]:
+        # Loop through integration points:
+        f = np.zeros([4, 1])
+        for xi, w in zip(Xi,W):
+            N = np.matrix([[N1(xi),      0,  N2(xi),       0],
+                           [     0, N1(xi),        0, N2(xi)]] )
+            coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
+            v1 = coord[0, :]
+            v2 = coord[1, :]
+            J = np.linalg.norm(v1-v2) / 2
+            f += w * N.T * q * J
+
+        idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
+        F[idx] += f
+
+
+def applyforce3D(boundaryDofs, f, marker, value=0.0, dimension=0):
+    """
+    Apply boundary force to f matrix. The value is
+    added to all boundaryDofs defined by marker. Applicable
+    to 3D problems with 3 dofs per node.
+    
+    Parameters:
+    
+        boundaryDofs        Dictionary with boundary dofs.
+        f                   force matrix.
+        marker              Boundary marker to assign boundary condition.
+        value               Value to assign boundary condition.
+                            If not given 0.0 is assigned.
+        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y, 
+                            3 - z
+                            
+    """
+
+    if marker in boundaryDofs:
+        if dimension == 0:
+            f[np.asarray(boundaryDofs[marker])-1] += value
+        elif dimension in [1,2,3]:
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += value  
+        else:
+            print("Error: The dimension, ", dimension,", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
 def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
     Apply boundary force to f matrix. Total force, value, is
-    distributed over all boundaryDofs defined by marker.
+    distributed over all boundaryDofs defined by marker. Applicable
+    to 2D problems with 2 dofs per node.
     
     Parameters:
     
@@ -218,7 +349,7 @@ def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
         f                   force matrix.
         marker              Boundary marker to assign boundary condition.
         value               Total force value to assign boundary condition.
-                            If not giben 0.0 is assigned.
+                            If not given 0.0 is assigned.
         dimension           dimension to apply force. 0 - all, 1 - x, 2 - y
                             
     """
@@ -228,14 +359,44 @@ def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
             nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
-        elif dimension == 1:
+        elif dimension in [1,2]:
             nDofs = len(boundaryDofs[marker][(dimension-1)::2])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += valuePerDof
-        elif dimension == 2:
-            nDofs = len(boundaryDofs[marker][(dimension-1)::2])
+        else:
+            print("Error: The dimension, ", dimension,", is invalid")
+    else:
+        print("Error: Boundary marker", marker, "does not exist.")
+
+def applyforcetotal3D(boundaryDofs, f, marker, value=0.0, dimension=0):
+    """
+    Apply boundary force to f matrix. Total force, value, is
+    distributed over all boundaryDofs defined by marker. Applicable
+    to 3D problems with 3 dofs per node.
+    
+    Parameters:
+    
+        boundaryDofs        Dictionary with boundary dofs.
+        f                   force matrix.
+        marker              Boundary marker to assign boundary condition.
+        value               Total force value to assign boundary condition.
+                            If not given 0.0 is assigned.
+        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y,
+                            3 - z
+                            
+    """
+
+    if marker in boundaryDofs:
+        if dimension == 0:
+            nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += valuePerDof
+            f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
+        elif dimension in [1,2,3]:
+            nDofs = len(boundaryDofs[marker][(dimension-1)::3])
+            valuePerDof = value / nDofs
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += valuePerDof
+        else:
+            print("Error: The dimension, ", dimension,", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
                

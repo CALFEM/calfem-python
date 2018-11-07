@@ -18,5 +18,9 @@ calfem-python.sln
 build/
 calfem_python.egg-info/
 dist/
+<<<<<<< HEAD
 *.xml
 *.iml
+=======
+.idea/
+>>>>>>> 91100c9458e7559d6eda068b4a09f67589698c65
