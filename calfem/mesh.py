@@ -68,19 +68,20 @@ def _insertBoundaryElement(boundaryElements, elementType, marker, nodes):
     boundaryElements[marker].append({'elm-type':elementType, 'node-number-list':nodes})
 
 
-def createGmshMesh(geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
-                     gmshExecPath=None, clcurv=False,
-                     minSize = None, maxSize = None, meshingAlgorithm = None,
-                     additionalOptions = ''):
+def createGmshMesh(geometry, el_type=2, el_size_factor=1, dofs_per_node=1, 
+                     gmsh_exec_path=None, clcurv=False,
+                     min_size = None, max_size = None, meshing_algorithm = None,
+                     additional_options = ''):
 
-    meshGen = GmshMeshGenerator(geometry, elType, elSizeFactor, dofsPerNode, 
-                     gmshExecPath, clcurv, minSize, maxSize, meshingAlgorithm,
-                     additionalOptions)
+    meshGen = GmshMeshGenerator(geometry, el_type, el_size_factor, dofs_per_node, 
+                     gmsh_exec_path, clcurv, min_size, max_size, meshing_algorithm,
+                     additional_options)
                      
     
     return meshGen.create()
 
 createMesh = createGmshMesh
+create_mesh = createGmshMesh
 mesh = createGmshMesh
     
 class GmshMeshGenerator:
@@ -89,55 +90,55 @@ class GmshMeshGenerator:
     This is done when the function create() is called.
     '''
     
-    def __init__(self, geometry, elType=2, elSizeFactor=1, dofsPerNode=1, 
-                gmshExecPath=None, clcurv=False,
-                minSize = None, maxSize = None, meshingAlgorithm = None,
-                additionalOptions = '', meshDir = '', returnBoundaryElements = False):
+    def __init__(self, geometry, el_type=2, el_size_factor=1, dofs_per_node=1, 
+                gmsh_exec_path=None, clcurv=False,
+                min_size = None, max_size = None, meshing_algorithm = None,
+                additional_options = '', mesh_dir = '', return_boundary_elements = False):
         '''        
         Parameters:
         
             geometry        GeoData instance or string containing path to .geo-file
                             
-            elType        Integer. Element type and order. 
+            el_type        Integer. Element type and order. 
                            See gmsh manual for details.
             
-            elSizeFactor  Float. Factor by which the element sizes are multiplied.
+            el_size_factor  Float. Factor by which the element sizes are multiplied.
             
-            dofsPerNode    Number of degrees of freedom per node.
+            dofs_per_node    Number of degrees of freedom per node.
             
-            gmshExecPath   File path to where the gmsh executable is located.
+            gmsh_exec_path   File path to where the gmsh executable is located.
             
             clcurv         Set to true to make elements smaller at high curvatures. 
                            (Experimental option according to the gmsh manual)
             
-            minSize        Minimum element size
+            min_size        Minimum element size
             
-            maxSize        Maximum element size
+            max_size        Maximum element size
             
-            meshingAlgorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
+            meshing_algorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
                               'front2d',  'del3d', 'front3d', ...). 
                               See the gmsh manual for more info.
 
-            returnBoundaryElements  Flag for returning dictionary with boundary element
+            return_boundary_elements  Flag for returning dictionary with boundary element
                                     information. Useful for applying loads on boundary.
             
-            additionalOptions  String containing additional command line args for gmsh.
+            additional_options  String containing additional command line args for gmsh.
                                Use this if a gmsh option is not covered by the above 
                                parameters (See section 3.3 in the gmsh manual for a 
                                list of options)):
            '''
         self.geometry = geometry
-        self.elType = elType
-        self.elSizeFactor = elSizeFactor
-        self.dofsPerNode = dofsPerNode
-        self.gmshExecPath = gmshExecPath
+        self.el_type = el_type
+        self.el_size_factor = el_size_factor
+        self.dofs_per_node = dofs_per_node
+        self.gmsh_exec_path = gmsh_exec_path
         self.clcurv = clcurv
-        self.minSize = minSize
-        self.maxSize = maxSize
-        self.meshingAlgorithm = meshingAlgorithm
-        self.additionalOptions = additionalOptions
-        self.meshDir = meshDir
-        self.returnBoundaryElements = returnBoundaryElements
+        self.min_size = min_size
+        self.max_size = max_size
+        self.meshing_algorithm = meshing_algorithm
+        self.additional_options = additional_options
+        self.mesh_dir = mesh_dir
+        self.return_boundary_elements = return_boundary_elements
         
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93] #gmsh elements that have rectangle faces
         self._2ndOrderElms = [ 8,  9, 10, 11, 12,
@@ -147,7 +148,39 @@ class GmshMeshGenerator:
                                        16, 17, 18, 19]
         #Apart from 16 the 2nd orders are totally untested. Only 16 (8-node quad)
         #is implemented in pycalfem though, so it does not matter.
+
+    @property
+    def elType(self):
+        return self.el_type
+    
+    @elType.setter
+    def elType(self, value):
+        self.el_type = value
         
+    @property
+    def elSizeFactor(self):
+        return self.el_size_factor
+    
+    @elSizeFactor.setter
+    def elSizeFactor(self, value):
+        self.el_size_factor = value
+
+    @property
+    def dofsPerNode(self):
+        return self.dofs_per_node
+    
+    @dofsPerNode.setter
+    def dofsPerNode(self, value):
+        self.dofs_per_node = value
+
+    @property
+    def gmshExecPath(self):
+        return self.gmsh_exec_path
+    
+    @gmshExecPath.setter
+    def dofsPerNode(self, value):
+        self.gmsh_exec_path = value
+
     def create(self, is3D=False):
         '''
         Meshes a surface or volume defined by the geometry in geoData.
@@ -183,7 +216,7 @@ class GmshMeshGenerator:
                             element i. Markers are similar to boundary markers and
                             can be used to identify in which region an element lies.
 
-            boundaryElements  (optional) returned if self.returnBoundaryElements is true.
+            boundaryElements  (optional) returned if self.return_boundary_elements is true.
                               Contains dictionary with boundary elements. The keys are markers
                               and the values are lists of elements for that marker.
                             
@@ -210,10 +243,10 @@ class GmshMeshGenerator:
                            21:10, 22:12, 23:15, 24:15, 25:21,
                            26:4,  27:5,  28:6,  29:20, 30:35,
                            31:56, 92:64, 93:125}
-        nodesPerElement = nodesPerElmDict[self.elType]        
+        nodesPerElement = nodesPerElmDict[self.el_type]        
         
         # Check for GMSH executable [NOTE]Mostly copied from trimesh2d(). TODO: Test on different systems
-        gmshExe = self.gmshExecPath
+        gmshExe = self.gmsh_exec_path
         if gmshExe == None:    
             gmshExe = ""
             if sys.platform == "win32":
@@ -222,7 +255,7 @@ class GmshMeshGenerator:
                 gmshExe = which("gmsh")
         else:
             if not os.path.exists(gmshExe):
-                gmshExe = os.path.join(os.getcwd(), self.gmshExecPath) #Try relative path
+                gmshExe = os.path.join(os.getcwd(), self.gmsh_exec_path) #Try relative path
                 if not os.path.exists(gmshExe):
                     gmshExe = None #Relative path didnt work either
               
@@ -233,8 +266,8 @@ class GmshMeshGenerator:
 
         oldStyleTempDir = False        
 
-        if self.meshDir != "":              
-            tempMeshDir = self.meshDir
+        if self.mesh_dir != "":              
+            tempMeshDir = self.mesh_dir
         else:
             tempMeshDir = tempfile.mkdtemp()
         
@@ -268,14 +301,14 @@ class GmshMeshGenerator:
 
         options = ""
         options += ' -' + str(dim)
-        options += ' -clscale ' + str(self.elSizeFactor) #scale factor
+        options += ' -clscale ' + str(self.el_size_factor) #scale factor
         options += ' -o \"%s\"' % mshFileName
         options += ' -clcurv' if self.clcurv else ''
-        options += ' -clmin ' + str(self.minSize) if self.minSize is not None else ''
-        options += ' -clmax ' + str(self.maxSize) if self.maxSize is not None else ''
-        options += ' -algo ' + self.meshingAlgorithm if self.meshingAlgorithm is not None else ''
-        options += ' -order 2' if self.elType in self._2ndOrderElms else ''
-        options += ' ' + self.additionalOptions
+        options += ' -clmin ' + str(self.min_size) if self.min_size is not None else ''
+        options += ' -clmax ' + str(self.max_size) if self.max_size is not None else ''
+        options += ' -algo ' + self.meshing_algorithm if self.meshing_algorithm is not None else ''
+        options += ' -order 2' if self.el_type in self._2ndOrderElms else ''
+        options += ' ' + self.additional_options
         
         #Execute gmsh
         
@@ -321,7 +354,7 @@ class GmshMeshGenerator:
             entityID = line[4] #Fifth int  is the ID of the geometric entity (points, curves, etc) that the element belongs to
             nodes = line[3+nbrTags : len(line)] #The rest after tags are node indices.
             
-            if(eType == self.elType): #If the element type is the kind of element we are looking for:
+            if(eType == self.el_type): #If the element type is the kind of element we are looking for:
                 elements.append(nodes) #Add the nodes of the elements to the list.
                 elementmarkers.append(marker)#Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
             else: #If the element is not a "real" element we store its node at marker in bdof instead:
@@ -354,33 +387,33 @@ class GmshMeshGenerator:
         
         # Remove temporary mesh directory if not explicetly specified.
         
-        if self.meshDir == "":
+        if self.mesh_dir == "":
             shutil.rmtree(tempMeshDir)        
         
-        dofs = createdofs(np.size(allNodes,0), self.dofsPerNode)
+        dofs = createdofs(np.size(allNodes,0), self.dofs_per_node)
         
-        if self.dofsPerNode>1: #This if-chunk copied from pycalfem_utils.py
+        if self.dofs_per_node>1: #This if-chunk copied from pycalfem_utils.py
             self.topo = elements 
-            expandedElements = np.zeros((np.size(elements,0),nodesPerElement*self.dofsPerNode),'i')
+            expandedElements = np.zeros((np.size(elements,0),nodesPerElement*self.dofs_per_node),'i')
             elIdx = 0
             for elementTopo in elements:        
                 for i in range(nodesPerElement):
-                    expandedElements[elIdx,i*self.dofsPerNode:(i*self.dofsPerNode+self.dofsPerNode)] = dofs[elementTopo[i]-1,:]
+                    expandedElements[elIdx,i*self.dofs_per_node:(i*self.dofs_per_node+self.dofs_per_node)] = dofs[elementTopo[i]-1,:]
                 elIdx += 1
                 
             for keyID in bdofs.keys():
                 bVerts = bdofs[keyID]
                 bVertsNew = []
                 for i in range(len(bVerts)):
-                    for j in range(self.dofsPerNode):
+                    for j in range(self.dofs_per_node):
                         bVertsNew.append(dofs[bVerts[i]-1][j])
                 bdofs[keyID] = bVertsNew
 
-            if self.returnBoundaryElements:
+            if self.return_boundary_elements:
                 return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers, boundaryElements
             return allNodes, np.asarray(expandedElements), dofs, bdofs, elementmarkers
 
-        if self.returnBoundaryElements:
+        if self.return_boundary_elements:
             return allNodes, elements, dofs, bdofs, elementmarkers, boundaryElements
         return allNodes, elements, dofs, bdofs, elementmarkers
         
@@ -453,7 +486,7 @@ class GmshMeshGenerator:
             _insertInSetDict(volumeMarkers, marker, ID)
         
         # MAYBE MAKE QUADS:
-        if(self.elType in self._ElementsWithQuadFaces):#If we have quads surfaces on the elements
+        if(self.el_type in self._ElementsWithQuadFaces):#If we have quads surfaces on the elements
             self.geofile.write("Mesh.RecombineAll = 1;\n")
         
         # WRITE POINT MARKERS:
@@ -476,7 +509,7 @@ class GmshMeshGenerator:
         # If the element type is of an incomplete second order type
         # (i.e it is an 2nd order element without nodes in the middle of the element face),
         # then we need to specify this in the geo-file:
-        if self.elType in self._2dOrderIncompleteElms:
+        if self.el_type in self._2dOrderIncompleteElms:
             self.geofile.write("Mesh.SecondOrderIncomplete=1;\n")
 
        
@@ -570,7 +603,7 @@ class GmshMeshGenerator:
         
 GmshMesh = GmshMeshGenerator
         
-def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofsPerNode=1, logFilename="tri.log", triangleExecutablePath=None):
+def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=True, dofs_per_node=1, logFilename="tri.log", triangleExecutablePath=None):
     """
     Triangulates an area described by a number vertices (vertices) and a set
     of segments that describes a closed polygon. 
@@ -595,7 +628,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
         
         quality             If true, triangles are prevented having angles < 30 degrees. (True)
         
-        dofsPerNode         Number of degrees of freedom per node.
+        dofs_per_node         Number of degrees of freedom per node.
         
         logFilename         Filename for triangle output ("tri.log")
         
@@ -764,24 +797,24 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
     
     # Add dofs in edof and bcVerts
     
-    dofs = cfc.createdofs(np.size(allVertices,0),dofsPerNode)
+    dofs = cfc.createdofs(np.size(allVertices,0),dofs_per_node)
     
-    if dofsPerNode>1:
-        expandedElements = np.zeros((np.size(elements,0),3*dofsPerNode),'i')
-        dofs = cfc.createdofs(np.size(allVertices,0),dofsPerNode)
+    if dofs_per_node>1:
+        expandedElements = np.zeros((np.size(elements,0),3*dofs_per_node),'i')
+        dofs = cfc.createdofs(np.size(allVertices,0),dofs_per_node)
         
         elIdx = 0
         
         for elementTopo in elements:        
             for i in range(3):
-                expandedElements[elIdx,i*dofsPerNode:(i*dofsPerNode+dofsPerNode)] = dofs[elementTopo[i]-1,:]
+                expandedElements[elIdx,i*dofs_per_node:(i*dofs_per_node+dofs_per_node)] = dofs[elementTopo[i]-1,:]
             elIdx += 1
             
         for bVertIdx in boundaryVertices.keys():
             bVert = boundaryVertices[bVertIdx]
             bVertNew = []
             for i in range(len(bVert)):
-                for j in range(dofsPerNode):
+                for j in range(dofs_per_node):
                     bVertNew.append(dofs[bVert[i]-1][j])
                     
             boundaryVertices[bVertIdx] = bVertNew

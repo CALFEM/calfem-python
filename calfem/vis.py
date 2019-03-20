@@ -59,6 +59,8 @@ def closeAll():
     """Close all visvis windows."""
     vv.closeAll()
     
+close_all = closeAll
+    
 def clf():
     """Clear visvis figure"""
     vv.clf()
