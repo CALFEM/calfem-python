@@ -595,9 +595,13 @@ class Geometry:
     ellipse = addEllipse
     surface = addSurface
     ruledSurface = addRuledSurface
+    ruled_surface = addRuledSurface
     structuredSurface = addStructuredSurface
+    structured_surface = addStructuredSurface
     volume = addVolume
     structuredVolume = addStructuredVolume
+    structured_volume = addStructuredVolume
+    
     
 def geometry():
     return Geometry()
