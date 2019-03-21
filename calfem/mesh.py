@@ -149,38 +149,6 @@ class GmshMeshGenerator:
         #Apart from 16 the 2nd orders are totally untested. Only 16 (8-node quad)
         #is implemented in pycalfem though, so it does not matter.
 
-    @property
-    def elType(self):
-        return self.el_type
-    
-    @elType.setter
-    def elType(self, value):
-        self.el_type = value
-        
-    @property
-    def elSizeFactor(self):
-        return self.el_size_factor
-    
-    @elSizeFactor.setter
-    def elSizeFactor(self, value):
-        self.el_size_factor = value
-
-    @property
-    def dofsPerNode(self):
-        return self.dofs_per_node
-    
-    @dofsPerNode.setter
-    def dofsPerNode(self, value):
-        self.dofs_per_node = value
-
-    @property
-    def gmshExecPath(self):
-        return self.gmsh_exec_path
-    
-    @gmshExecPath.setter
-    def dofsPerNode(self, value):
-        self.gmsh_exec_path = value
-
     def create(self, is3D=False):
         '''
         Meshes a surface or volume defined by the geometry in geoData.
@@ -596,10 +564,92 @@ class GmshMeshGenerator:
             lineIndices = [-x for x in lineIndices]
         return lineIndices
                 
-             
-        
+       
     def _writeSurfaceLoop(self, outerLoop, ID):
         self.geofile.write("Surface Loop(%i) = {%s};\n" % (ID, _formatList(outerLoop, 1)))
+        
+    # --- Compatibility properties
+        
+    @property
+    def elType(self):
+        return self.el_type
+    
+    @elType.setter
+    def elType(self, value):
+        self.el_type = value
+        
+    @property
+    def elSizeFactor(self):
+        return self.el_size_factor
+    
+    @elSizeFactor.setter
+    def elSizeFactor(self, value):
+        self.el_size_factor = value
+
+    @property
+    def dofsPerNode(self):
+        return self.dofs_per_node
+    
+    @dofsPerNode.setter
+    def dofsPerNode(self, value):
+        self.dofs_per_node = value
+
+    @property
+    def gmshExecPath(self):
+        return self.gmsh_exec_path
+    
+    @gmshExecPath.setter
+    def gmshExecPath(self, value):
+        self.gmsh_exec_path = value
+
+    @property
+    def minSize(self):
+        return self.min_size
+    
+    @minSize.setter
+    def minSize(self, value):
+        self.min_size = value
+
+    @property
+    def maxSize(self):
+        return self.max_size
+    
+    @maxSize.setter
+    def maxSize(self, value):
+        self.max_size = value
+
+    @property
+    def meshingAlgorithm(self):
+        return self.meshing_algorithm
+    
+    @meshingAlgorithm.setter
+    def meshingAlgorithm(self, value):
+        self.meshing_algorithm = value
+
+    @property
+    def additionalOptions(self):
+        return self.additional_options
+    
+    @additionalOptions.setter
+    def additionalOptions(self, value):
+        self.additional_options = value
+
+    @property
+    def meshDir(self):
+        return self.mesh_dir
+    
+    @meshDir.setter
+    def meshDir(self, value):
+        self.mesh_dir = value
+
+    @property
+    def returnBoundaryElements(self):
+        return self.return_boundary_elements
+    
+    @returnBoundaryElements.setter
+    def returnBoundaryElements(self, value):
+        self.return_boundary_elements = value
+        
         
 GmshMesh = GmshMeshGenerator
         
@@ -823,4 +873,3 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
         
     
     return allVertices, elements, dofs, boundaryVertices
-       

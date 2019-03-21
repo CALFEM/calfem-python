@@ -32,10 +32,12 @@ def info(msg):
     """Log information message"""
     cflog.info(msg)
 
-def figureClass():
+def figure_class():
     """Return visvis Figure class."""
     global visApp
     return visApp.GetFigureClass()
+
+figureClass = figure_class
 
 def figure(figure=None, show=True):
     """Create a visvis figure with extras."""
@@ -55,11 +57,11 @@ def figure(figure=None, show=True):
         
     return f
 
-def closeAll():
+def close_all():
     """Close all visvis windows."""
     vv.closeAll()
     
-close_all = closeAll
+closeAll = close_all
     
 def clf():
     """Clear visvis figure"""
@@ -77,21 +79,27 @@ def camera3d():
     """Get visvis 3D camera."""
     return vv.cameras.ThreeDCamera()
 
-def showGrid(flag = True):
+def show_grid(flag = True):
     """Show grid."""
     vv.gca().axis.showGrid = flag    
+    
+showGrid = show_grid
         
-def showAndWait():
+def show_and_wait():
     """Show visvis windows and enter application loop."""
     global globalVisVisApp
     globalVisVisApp = vv.use()
     globalVisVisApp.Create()
     globalVisVisApp.Run()
     
-def showAndWaitMpl():
+showAndWait = show_and_wait
+    
+def show_and_wait_mpl():
     plt.show()
+    
+showAndWaitMpl = show_and_wait_mpl
 
-def getColorbar(axes=None):
+def get_color_bar(axes=None):
     '''
     Returns the Colorbar.
     If axes is None the colorbar in the current axes will be found.
@@ -106,10 +114,14 @@ def getColorbar(axes=None):
         if type(obj) == Colorbar:
             return obj  
     return None
+
+getColorbar = get_color_bar
     
-def colorBar(axes=None):
+def color_bar(axes=None):
     """Short form of getColorbar"""
     return getColorbar(axes)
+
+colorBar = color_bar
     
 
 def _makeColorBar(text, axes=None):
@@ -128,7 +140,7 @@ def _makeColorBar(text, axes=None):
     else:
         colBar.SetLabel(text)# A colorbar already exists, Change label.
 
-def addLabel(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a label inside the axes. Returns the Label object.
     Parameters:
@@ -152,10 +164,12 @@ def addLabel(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=N
     label.textAngle = angle
     return label
 
+addLabel = add_label
+
 def label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     return addLabel(text, pos, angle, fontName, fontSize, color, bgcolor, axes)    
 
-def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+def add_text(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a text in the world space. Returns the Text object.
     Parameters:
@@ -178,10 +192,12 @@ def addText(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=No
     text.textAngle = angle
     return text
 
+addText = add_text
+
 def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
     return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)   
 
-def drawMesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 
+def draw_mesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 
              title=None, color=(0,0,0), faceColor=(1,1,1), filled=False):
     '''
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
@@ -224,8 +240,9 @@ def drawMesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True,
     vv.title(title, axes)
     return m
     
+drawMesh = draw_mesh
     
-def drawNodalValues(nodeVals, coords, edof, dofsPerNode, elType, clim=None, axes=None, axesAdjust=True, doDrawMesh=True, title=None):
+def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, axes=None, axesAdjust=True, doDrawMesh=True, title=None):
     '''
     Draws scalar nodal values in 2D or 3D. Returns the Mesh object that represents
     the mesh.
@@ -278,8 +295,10 @@ def drawNodalValues(nodeVals, coords, edof, dofsPerNode, elType, clim=None, axes
     
     vv.title(title, axes)
     return m
+
+drawNodalValues = draw_nodal_values
     
-def drawElementValues(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None, 
+def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None, 
                       axesAdjust=True, doDrawMesh=True, doDrawUndisplacedMesh=False, magnfac=1.0, title=None):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object 
@@ -346,8 +365,10 @@ def drawElementValues(ev, coords, edof, dofsPerNode, elType, displacements=None,
     
     vv.title(title, axes)
     return c
+
+drawElementValues = draw_element_values
     
-def drawDisplacements(displacements, coords, edof, dofsPerNode, elType, nodeVals=None, clim=None, axes=None, 
+def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVals=None, clim=None, axes=None, 
                       axesAdjust=True, doDrawUndisplacedMesh=True, magnfac=1.0,  title=None):
     '''
     Draws mesh with displacements in 2D or 3D. Scalar nodal values can also be 
@@ -396,8 +417,10 @@ def drawDisplacements(displacements, coords, edof, dofsPerNode, elType, nodeVals
     if title != None:
         vv.title(title, axes)
     return m
+
+drawDisplacements = draw_displacements
     
-def drawGeometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoints=True, labelCurves=True, title=None, fontSize=11, N=20):
+def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoints=True, labelCurves=True, title=None, fontSize=11, N=20):
     '''
     Draws the geometry (points and curves) in geoData
     Parameters:
@@ -467,7 +490,8 @@ def drawGeometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoin
         _adjustaxes(axes, geoData.is3D)
     axes.daspectAuto = False
     axes.daspect = (1,1,1)
-
+    
+drawGeometry = draw_geometry
 
 def _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
