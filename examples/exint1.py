@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 
-def parse_vars(v):
+import calfem.intvis as iv
 
-    for key, value in v.items():
-        if type(value) is int:
-            print("integer : ", key, "=", value)
-        if type(value) is float:
-            print("float   : ", key, "=", value)
-        if type(value) is list:
-            print("list    : ", key, "=", value)
-        if type(value) is bool:
-            print("bool    : ", key, "=", value)
+# --- Parametrar som kan ändras
 
-if __name__ == "__main__":
+a = 1
+b = 2.0
+c = [1, 2, 3]
+d = True
 
-    a = 1
-    b = 2.0
-    c = [1, 2, 3]
-    d = True
+# --- Redigera parametrar interaktivt
 
-    parse_vars(vars())
+iv.edit_params(vars())
+
+# --- Redigera geometri
+
+iv.edit_geometry(g)
+
