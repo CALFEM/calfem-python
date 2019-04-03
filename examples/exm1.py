@@ -74,7 +74,7 @@ meshGen = cfm.GmshMeshGenerator(g)
 
 meshGen.elType = 2 
 meshGen.dofsPerNode = 1 # Degrees of freedom per node. 
-meshGen.elSizeFactor = 0.10 # Factor that changes element sizes.    
+meshGen.elSizeFactor = 0.10 # Factor that changes element sizes.
 
 # Mesh the geometry:
 #

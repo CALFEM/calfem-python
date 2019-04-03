@@ -236,6 +236,7 @@ class GmshMeshGenerator:
 
         if self.mesh_dir != "":              
             tempMeshDir = self.mesh_dir
+            os.mkdir(tempMeshDir)
         else:
             tempMeshDir = tempfile.mkdtemp()
         
@@ -276,12 +277,13 @@ class GmshMeshGenerator:
         options += ' -clmax ' + str(self.max_size) if self.max_size is not None else ''
         options += ' -algo ' + self.meshing_algorithm if self.meshing_algorithm is not None else ''
         options += ' -order 2' if self.el_type in self._2ndOrderElms else ''
+        options += ' -format msh22'
         options += ' ' + self.additional_options
         
         #Execute gmsh
         
         gmshExe = os.path.normpath(gmshExe)
-        print(gmshExe)
+        print("GMSH binary: "+gmshExe)
         #print('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         #os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         #retval = os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
@@ -292,6 +294,7 @@ class GmshMeshGenerator:
         #print("Opening msh file " + mshFileName)#TEMP
         
         mshFile = open(mshFileName, 'r')
+        print("Mesh file  : "+mshFileName)
         
         #print("Reading msh file...")#TEMP
         ln = mshFile.readline()
