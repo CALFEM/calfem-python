@@ -46,19 +46,19 @@ results = solver.execute()
 cfu.info("Drawing results...")
 
 cfv.figure() 
-cfv.drawGeometry(rect.geometry(), title="Geometry")
+cfv.draw_geometry(rect.geometry(), title="Geometry")
 
 cfv.figure() 
-cfv.drawMesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
+cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure()
-cfv.drawDisplacements(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
+cfv.draw_displacements(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
                       doDrawUndisplacedMesh=False, title="Displacements", 
                       magnfac=1)
 
 cfv.figure()
-cfv.drawElementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, results.a, 
+cfv.draw_elementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, results.a, 
                       doDrawMesh=True, doDrawUndisplacedMesh=False, 
                       title="Effective Stress", magnfac=1)
                       
@@ -66,4 +66,4 @@ cfv.drawElementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode
 
 cfu.info("Done drawing...")
 
-cfv.showAndWait()
+cfv.show_and_wait()

@@ -51,18 +51,19 @@ for curveID in [2, 4]:
 
 # ---- Generate mesh --------------------------------------------------------
 
-meshGen = cfm.GmshMeshGenerator(g)
+mesh = cfm.GmshMesh(g)
 
 # Element type 2 is triangle. (3 is quad. See user manual for more element types)
 
-meshGen.elType = 2
+mesh.el_type = 2
 
 # Degrees of freedom per node.
 
-meshGen.dofsPerNode = 2
-meshGen.elSizeFactor = 0.05
+mesh.dofs_per_node = 2
+mesh.el_size_factor = 0.05
+# mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Visualise mesh -------------------------------------------------------
 
@@ -71,7 +72,7 @@ coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
 # Draw the geometry.
 
-cfv.drawGeometry(g, labelCurves=True)
+cfv.draw_geometry(g, labelCurves=True)
 
 # New figure window
 
@@ -79,19 +80,19 @@ cfv.figure()
 
 # Draws the mesh. 
 
-cfv.drawMesh(
+cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode = meshGen.dofsPerNode, 
-    elType=meshGen.elType, 
+    dofsPerNode = mesh.dofs_per_node, 
+    elType=mesh.el_type, 
     filled=True, 
     title="Example 02"
     ) 
 
 # Show grid
 
-cfv.showGrid() 
+cfv.show_grid()
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()

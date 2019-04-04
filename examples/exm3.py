@@ -47,29 +47,31 @@ g.surface([4,1])
 
 # ---- Create mesh ----------------------------------------------------------
 
-meshGen = cfm.GmshMeshGenerator(g)
+mesh = cfm.GmshMesh(g)
 
 # Element type 3 is quad. (2 is triangle. See user manual for more element types)
 
-meshGen.elType = 3 
+mesh.el_type = 3 
 
 # Degrees of freedom per node.
 
-meshGen.dofsPerNode = 1 
+mesh.dofs_per_node = 1 
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+# mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
+
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Visualise mesh -------------------------------------------------------
 
 # Draw geometry
 
-cfv.drawGeometry(g)
+cfv.draw_geometry(g)
 
 # Draw mesh
 
 cfv.figure()
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=meshGen.dofsPerNode, elType=meshGen.elType, filled=True)
+cfv.draw_mesh(coords=coords, edof=edof, dofsPerNode=mesh.dofs_per_node, elType=mesh.el_type, filled=True)
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()

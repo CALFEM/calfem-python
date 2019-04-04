@@ -30,22 +30,22 @@ D2 = cfc.hooke(ptype, E2, v)
 
 # Define marker constants instead of using numbers in the code
 
-markE1 = 55
-markE2 = 66
-markFixed = 70
-markLoad = 90
+mark_E1 = 55
+mark_E2 = 66
+mark_fixed = 70
+mark_load = 90
 
 # Create dictionary for the different element properties
 
 elprop = {}
-elprop[markE1] = [ep, D1]
-elprop[markE2] = [ep, D2]
+elprop[mark_E1] = [ep, D1]
+elprop[mark_E2] = [ep, D2]
 
 # Parameters controlling mesh
 
-elSizeFactor = 0.05    # Element size factor
-elType = 3             # Triangle element
-dofsPerNode = 2        # Dof per node
+el_size_factor = 0.05    # Element size factor
+el_type = 3             # Triangle element
+dofs_per_node = 2        # Dof per node
 
 # ---- Create Geometry ------------------------------------------------------
 
@@ -66,9 +66,9 @@ g.point([0.2, 0.8])	#7
 
 # Add curves:
 
-g.spline([0, 1], marker = markFixed) #0
+g.spline([0, 1], marker = mark_fixed) #0
 g.spline([2, 1])                     #1
-g.spline([3, 2], marker = markLoad)  #2
+g.spline([3, 2], marker = mark_load)  #2
 g.spline([0, 3])                     #3
 g.spline([4, 5])                     #4
 g.spline([5, 6])                     #5
@@ -77,22 +77,22 @@ g.spline([7, 4])                     #7
 
 # Add surfaces:
 
-g.surface([0,1,2,3], holes = [[4,5,6,7]], marker = markE1)
-g.surface([4,5,6,7], marker = markE2)
+g.surface([0,1,2,3], holes = [[4,5,6,7]], marker = mark_E1)
+g.surface([4,5,6,7], marker = mark_E2)
 
 # ---- Create Mesh ----------------------------------------------------------
 
-meshGen = cfm.GmshMeshGenerator(g)
-meshGen.elSizeFactor = elSizeFactor
-meshGen.elType = elType  
-meshGen.dofsPerNode = dofsPerNode
+mesh = cfm.GmshMeshGenerator(g)
+mesh.el_size_factor = el_size_factor
+mesh.el_type = el_type  
+mesh.dofs_per_node = dofs_per_node
 
 # Mesh the geometry:
 #  The first four return values are the same as those that trimesh2d() returns.
 #  value elementmarkers is a list of markers, and is used for finding the 
 #  marker of a given element (index).
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Solve problem --------------------------------------------------------
 
@@ -104,7 +104,7 @@ cfu.info("Assembling K... ("+str(nDofs)+")")
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
-    if elType == 2:
+    if el_type == 2:
         Ke = cfc.plante(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
     else:
         Ke = cfc.planqe(elx, ely, elprop[elMarker][0], elprop[elMarker][1])
@@ -116,11 +116,11 @@ cfu.info("Applying bc and loads...")
 bc = np.array([],'i')
 bcVal = np.array([],'i')
 
-bc, bcVal = cfu.applybc(bdofs, bc, bcVal, markFixed, 0.0)
+bc, bcVal = cfu.applybc(bdofs, bc, bcVal, mark_fixed, 0.0)
 
 f = np.zeros([nDofs,1])
 
-cfu.applyforcetotal(bdofs, f, markLoad, value = -10e5, dimension=2)
+cfu.applyforcetotal(bdofs, f, mark_load, value = -10e5, dimension=2)
 
 cfu.info("Solving system...")
 
@@ -129,7 +129,7 @@ a,r = cfc.spsolveq(K, f, bc, bcVal)
 cfu.info("Extracting ed...")
 
 ed = cfc.extractEldisp(edof, a)
-vonMises = []
+von_mises = []
 
 # ---- Calculate elementr stresses and strains ------------------------------
 
@@ -139,13 +139,13 @@ for i in range(edof.shape[0]):
     
     # Handle triangle elements
         
-    if elType == 2: 
+    if el_type == 2: 
         es, et = cfc.plants(ex[i,:], ey[i,:], 
                         elprop[elementmarkers[i]][0], 
                         elprop[elementmarkers[i]][1], 
                         ed[i,:])
         
-        vonMises.append( np.math.sqrt( pow(es[0,0],2) - es[0,0]*es[0,1] + pow(es[0,1],2) + 3*pow(es[0,2],2) ) )
+        von_mises.append( np.math.sqrt( pow(es[0,0],2) - es[0,0]*es[0,1] + pow(es[0,1],2) + 3*pow(es[0,2],2) ) )
 
     else:
         
@@ -156,7 +156,7 @@ for i in range(edof.shape[0]):
                         elprop[elementmarkers[i]][1], 
                         ed[i,:])
         
-        vonMises.append( np.math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) ) )
+        von_mises.append( np.math.sqrt( pow(es[0],2) - es[0]*es[1] + pow(es[1],2) + 3*pow(es[2],2) ) )
         
 # ---- Visualise results ----------------------------------------------------
 
@@ -166,16 +166,16 @@ cfv.figure()
 cfv.drawGeometry(g, title="Geometry")
 
 cfv.figure() 
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, 
+cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofs_per_node, elType=el_type, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure()
-cfv.drawDisplacements(a, coords, edof, dofsPerNode, elType, 
+cfv.drawDisplacements(a, coords, edof, dofs_per_node, el_type, 
                       doDrawUndisplacedMesh=False, title="Displacements", 
                       magnfac=25.0)
 
 cfv.figure()
-cfv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a, 
+cfv.drawElementValues(von_mises, coords, edof, dofs_per_node, el_type, a, 
                       doDrawMesh=True, doDrawUndisplacedMesh=False, 
                       title="Effective Stress", magnfac=25.0)
                       

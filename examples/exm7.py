@@ -81,11 +81,11 @@ g.structuredSurface([1,4,5,6], marker = 11)
 
 # Element type 16 is 8-node-quad. (See gmsh manual for more element types)
 
-elType = 16 
+el_type = 16 
 
 #Degrees of freedom per node.
 
-dofsPerNode = 1 
+dofs_per_node = 1 
 
 # ---- Generate mesh --------------------------------------------------------
 
@@ -93,18 +93,18 @@ dofsPerNode = 1
 # If None then the system PATH variable is queried. 
 # Relative and absolute paths work.
 
-meshGen = cfm.GmshMeshGenerator(g, elType, dofsPerNode) 
+mesh = cfm.GmshMeshGenerator(g, el_type, dofs_per_node) 
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Solve problem --------------------------------------------------------
 
 print("Assembling system matrix...")
 
-nDofs = np.size(dofs)
+n_dofs = np.size(dofs)
 ex, ey = cfc.coordxtr(edof, coords, dofs)
 
-K = np.zeros([nDofs,nDofs])
+K = np.zeros([n_dofs,n_dofs])
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
@@ -116,15 +116,15 @@ for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
 
 print("Solving equation system...")
 
-f = np.zeros([nDofs,1])
+f = np.zeros([n_dofs,1])
 
 bc = np.array([],'i')
-bcVal = np.array([],'i')
+bc_val = np.array([],'i')
 
-bc, bcVal = cfu.applybc(bdofs,bc,bcVal,2,30.0)
-bc, bcVal = cfu.applybc(bdofs,bc,bcVal,3,0.0)
+bc, bc_val = cfu.applybc(bdofs,bc,bc_val,2,30.0)
+bc, bc_val = cfu.applybc(bdofs,bc,bc_val,3,0.0)
 
-a,r = cfc.solveq(K,f,bc,bcVal)
+a,r = cfc.solveq(K,f,bc,bc_val)
 
 # ---- Compute element forces -----------------------------------------------
 
@@ -147,17 +147,17 @@ cfv.figure()
 
 # 8-node quads are drawn as simple quads.
 
-cfv.drawMesh(coords, edof, dofsPerNode, elType, filled=False)
+cfv.drawMesh(coords, edof, dofs_per_node, el_type, filled=False)
 
 cfv.figure()
-cfv.drawNodalValues(a, coords, edof, dofsPerNode, elType, title="Example 7")
-cfv.getColorbar().SetLabel("Temperature")
-cfv.addText("The bend has high conductivity", (125,125))
-cfv.addText("This part has low conductivity", (160,-50))
+cfv.draw_nodal_values(a, coords, edof, dofs_per_node, el_type, title="Example 7")
+cfv.get_color_bar().SetLabel("Temperature")
+cfv.add_text("The bend has high conductivity", (125,125))
+cfv.add_text("This part has low conductivity", (160,-50))
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()
 
 print("Done.")
 

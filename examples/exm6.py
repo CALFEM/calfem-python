@@ -87,18 +87,13 @@ g.structuredSurface([32, 17, 18, 25]) #11
 
 cfu.info("Meshing geometry...")
 
-# 3 Quads
-
-elType = 3 
-dofsPerNode = 2
-
 # Create mesh
 
-meshGen = cfm.GmshMeshGenerator(geometry = g)
-meshGen.elType = elType
-meshGen.dofsPerNode = dofsPerNode
+mesh = cfm.GmshMesh(geometry = g)
+mesh.el_type = 3
+mesh.dofs_per_node = 2
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Solve problem --------------------------------------------------------
 
@@ -151,10 +146,10 @@ cfu.info("Visualising...")
 cfv.drawGeometry(g, drawPoints=False, labelCurves=True)
 
 cfv.figure()
-cfv.drawElementValues(vonMises, coords, edof, dofsPerNode, elType, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
+cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
 
 cfv.figure()
-cfv.drawDisplacements(a, coords, edof, dofsPerNode, elType, doDrawUndisplacedMesh=True, title="Example 06")
+cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, doDrawUndisplacedMesh=True, title="Example 06")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on 
 # the right hand side of the mesh:
@@ -167,7 +162,7 @@ for curveID in [4,5]:
 
     # Get the nodes, without duplicates.
 
-    rightSideNodes = rightSideNodes.union(set(meshGen.nodesOnCurve[curveID])) 
+    rightSideNodes = rightSideNodes.union(set(mesh.nodesOnCurve[curveID])) 
     
 for i in rightSideNodes:
 
@@ -182,6 +177,6 @@ for i in rightSideNodes:
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()
 
 print("Done.")

@@ -67,14 +67,15 @@ g.surface([4,3,2,1], [[7], [5,6,0]])
 
 # ---- Generate mesh --------------------------------------------------------
 
-meshGen = cfm.GmshMeshGenerator(g)
+mesh = cfm.GmshMesh(g)
 
 # Element type 3 is quad. 
 # (2 is triangle. See user manual for more element types)
 
-meshGen.elType = 2 
-meshGen.dofsPerNode = 1 # Degrees of freedom per node. 
-meshGen.elSizeFactor = 0.10 # Factor that changes element sizes.
+mesh.el_type = 2 
+mesh.dofs_per_node = 1 # Degrees of freedom per node. 
+mesh.el_size_factor = 0.10 # Factor that changes element sizes.
+# mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
 # Mesh the geometry:
 #
@@ -85,7 +86,7 @@ meshGen.elSizeFactor = 0.10 # Factor that changes element sizes.
 # markers). elementmarkers is a list of markers, and is used for finding the
 # marker of a given element (index).
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Visualise mesh -------------------------------------------------------
 
@@ -106,8 +107,8 @@ cfv.figure()
 cfv.drawMesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode=meshGen.dofsPerNode, 
-    elType=meshGen.elType, 
+    dofsPerNode=mesh.dofs_per_node, 
+    elType=mesh.el_type, 
     filled=True, 
     title="Example 01"
     ) 

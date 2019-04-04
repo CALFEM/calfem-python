@@ -64,15 +64,18 @@ g.structuredVolume([0,1,2,3,4,5], 0, marker=90)
 
 # Element type 5 is hexahedron. (See user manual for more element types)
 
-elType = 5 
+el_type = 5 
 
 # Degrees of freedom per node.
 
-dofsPerNode= 1 
+dofs_per_node = 1 
 
 # Create mesh
 
-coords, edof, dofs, bdofs, _ = cfm.mesh(g, elType, dofsPerNode)
+coords, edof, dofs, bdofs, _ = cfm.mesh(g, el_type, dofs_per_node)
+
+#coords, edof, dofs, bdofs, _ = cfm.mesh(
+#        g, el_type, dofs_per_node, gmsh_exec_path="D:\\vsmn20-software\\gmsh\gmsh.exe")
 
 # ---- Visualise mesh -------------------------------------------------------
 
@@ -84,28 +87,28 @@ coords, edof, dofs, bdofs, _ = cfm.mesh(g, elType, dofsPerNode)
 
 # Draw geometry
 
-cfv.drawGeometry(g, drawPoints=False)
+cfv.draw_geometry(g, drawPoints=False)
 
 # Draw mesh
 
 cfv.figure()
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=True)
+cfv.draw_mesh(coords=coords, edof=edof, dofsPerNode=dofs_per_node, elType=el_type, filled=True)
 
 # Add a text in world space
 
-cfv.addText("This is a Text", pos=(1, 0.5, 0.5), angle=45)  
+cfv.add_text("This is a Text", pos=(1, 0.5, 0.5), angle=45)  
 
 # Add a label in the screen space
 
-ourLabel = cfv.addLabel("This is a Label", pos=(20,30), angle=-45) 
+our_label = cfv.add_label("This is a Label", pos=(20,30), angle=-45) 
 
 # We can change the attributes of labels and texts, such as color and position.
 
-ourLabel.text = "Label, changed." 
+our_label.text = "Label, changed." 
 
 # Make it red. (1,0,0) would also have worked.
 
-ourLabel.textColor = 'r'  
+our_label.textColor = 'r'  
 
 # Matlab style axes (three axes in the background instead of a cube)
 
@@ -117,4 +120,4 @@ cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02)
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()

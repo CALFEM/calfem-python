@@ -40,15 +40,19 @@ g.volume([0,1,2,3])
 
 # Element type 4 is tetrahedron. (See user manual for more element types).
 
-elType = 4 
+el_type = 4 
 
 # Degrees of freedom per node.
 
-dofsPerNode= 1 
+dofs_per_node = 1 
 
 # Create mesh
 
-coords, edof, dofs, bdofs, elementmarkers = cfm.mesh(g, elType, 0.3, dofsPerNode)
+coords, edof, dofs, bdofs, elementmarkers = cfm.mesh(g, el_type, 0.3, dofs_per_node)
+
+#coords, edof, dofs, bdofs, _ = cfm.mesh(
+#        g, el_type, 0.3, dofs_per_node, gmsh_exec_path="D:\\vsmn20-software\\gmsh\gmsh.exe")
+
 
 # ---- Visualise mesh -------------------------------------------------------
 
@@ -62,9 +66,9 @@ a1.camera = a2.camera = cam
 
 # Draw geometry and mesh
 
-cfv.drawGeometry(g, axes=a1)
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofsPerNode, elType=elType, filled=False, axes=a2)
+cfv.draw_geometry(g, axes=a1)
+cfv.draw_mesh(coords=coords, edof=edof, dofsPerNode=dofs_per_node, elType=el_type, filled=False, axes=a2)
 
 # Enter main loop
 
-cfv.showAndWait()
+cfv.show_and_wait()
