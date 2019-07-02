@@ -40,6 +40,7 @@ g.point([1.7, 0.7])
 #  are undefined so the curves are automatically assigned IDs. The markers can 
 #  be used for identifying regions/boundaries in the model.
 
+
 g.ellipse([7,8,9,10], marker=50)      # 0 - An ellipse arc. Read the function 
                                       #     doc for more information. The four 
                                       #     points are 
@@ -72,9 +73,9 @@ mesh = cfm.GmshMesh(g)
 # Element type 3 is quad. 
 # (2 is triangle. See user manual for more element types)
 
-mesh.el_type = 2 
+mesh.el_type = 3 
 mesh.dofs_per_node = 1 # Degrees of freedom per node. 
-mesh.el_size_factor = 0.10 # Factor that changes element sizes.
+mesh.el_size_factor = 0.05 # Factor that changes element sizes.
 # mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
 # Mesh the geometry:
