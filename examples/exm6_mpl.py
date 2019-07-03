@@ -153,10 +153,11 @@ cfv.draw_mesh(coords, edof, dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_ty
 
 cfv.figure()
 
-cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, draw_mesh=False, draw_undisplaced_mesh=False, title="Example 6 - Effective stress")
+cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, None, draw_mesh=False, draw_undisplaced_mesh=False, title="Example 6 - Effective stress")
 
-#cfv.figure()
-#cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, doDrawUndisplacedMesh=True, title="Example 06")
+cfv.figure()
+
+cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06 - Displacements")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on 
 # the right hand side of the mesh:

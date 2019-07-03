@@ -363,7 +363,8 @@ drawMesh = draw_mesh
 
 # drawNodalValues = draw_nodal_values
 
-def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, clim=None,                  draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
+
+def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, clim=None, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
@@ -396,6 +397,14 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     title       - String. Changes title of the figure. Default "Element Values".
     '''
 
+    if draw_undisplaced_mesh:
+        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.5, 0.5, 0.5))
+
+    if displacements is not None:
+        if displacements.shape[1] != coords.shape[1]:
+            displacements = np.reshape(displacements, (-1, coords.shape[1]))
+            coords = np.asarray(coords + magnfac * displacements)
+
     verts, faces, vertices_per_face, is_3d = ce2vf(
         coords, edof, dofs_per_node, el_type)
 
@@ -421,9 +430,11 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     ax.set_aspect('equal')
 
     if draw_mesh:
-        pc = quatplot(y, z, faces, values, ax=ax, edgecolor=color, cmap="rainbow")
+        pc = quatplot(y, z, faces, values, ax=ax,
+                      edgecolor=color, cmap="rainbow")
     else:
-        pc = quatplot(y, z, faces, values, ax=ax, edgecolor=None, cmap="rainbow")
+        pc = quatplot(y, z, faces, values, ax=ax,
+                      edgecolor=None, cmap="rainbow")
 
     #pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
     #         edgecolor="crimson", cmap="rainbow")
@@ -433,6 +444,96 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     if title != None:
         ax.set(title=title)
 
+
+def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=-1.0, magscale=0.25, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
+    '''
+    Draws scalar element values in 2D or 3D. Returns the world object
+    elementsWobject that represents the mesh.
+    Parameters:
+    ev          - An N-by-1 array or a list of scalars. The Scalar values of the
+                  elements. ev[i] should be the value of element i.
+    coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
+                  of node i.
+    edof        - An E-by-L array. Element topology. (E is the number of elements
+                  and L is the number of dofs per element)
+    dofsPerNode - Integer. Dofs per node.
+    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
+                  for triangles or 3 for quadrangles.
+    displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
+                    displacements of node i.
+    clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
+                  the colorbar. Defaults to None, in which case min/max are set to
+                  min/max of nodeVals.
+    axes        - Visvis Axes. The Axes where the model will be drawn.
+                  If unspecified the current Axes will be used, or a new Axes will
+                  be created if none exist.
+    axesAdjust  - Boolean. True if the view should be changed to show the whole
+                  model. Default True.
+    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
+    doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh
+                  should be drawn on top of the displaced mesh. Default False.
+                  Use only if displacements != None.
+    magnfac     - Float. Magnification factor. Displacements are multiplied by
+                  this value. Use this to make small displacements more visible.
+    title       - String. Changes title of the figure. Default "Element Values".
+    '''
+
+    if draw_undisplaced_mesh:
+        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.8, 0.8, 0.8))
+
+    if a is not None:
+        if a.shape[1] != coords.shape[1]:
+            a = np.reshape(a, (-1, coords.shape[1]))
+
+            x_max = np.max(coords[:, 0])
+            x_min = np.min(coords[:, 0])
+
+            y_max = np.max(coords[:, 1])
+            y_min = np.min(coords[:, 1])
+
+            x_size = x_max - x_min
+            y_size = y_max - y_min
+
+            if x_size > y_size:
+                max_size = x_size
+            else:
+                max_size = y_size
+
+            if magnfac < 0:
+                magnfac = 0.25*max_size
+
+            coords = np.asarray(coords + magnfac * a)
+
+    verts, faces, vertices_per_face, is_3d = ce2vf(
+        coords, edof, dofs_per_node, el_type)
+
+    y = verts[:, 0]
+    z = verts[:, 1]
+
+    values = []
+
+    def quatplot(y, z, quatrangles, values=[], ax=None, **kwargs):
+
+        if not ax:
+            ax = plt.gca()
+        yz = np.c_[y, z]
+        v = yz[quatrangles]
+        pc = matplotlib.collections.PolyCollection(
+            v, **kwargs)
+
+        ax.add_collection(pc)
+        ax.autoscale()
+        return pc
+
+    fig = plt.gcf()
+    ax = plt.gca()
+    ax.set_aspect('equal')
+
+    pc = quatplot(y, z, faces, values, ax=ax, edgecolor=(
+        0.3, 0.3, 0.3), facecolor='none')
+
+    if title != None:
+        ax.set(title=title)
 
 # def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None,
 #                       axesAdjust=True, doDrawMesh=True, doDrawUndisplacedMesh=False, magnfac=1.0, title=None):
@@ -582,18 +683,21 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
     ax.set_aspect('equal')
 
     if draw_points:
-        P = np.array(geometry.getPointCoords()) #M-by-3 list of M points.
+        P = np.array(geometry.getPointCoords())  # M-by-3 list of M points.
         #plotArgs = {'mc':'r', 'mw':5, 'lw':0, 'ms':'o', 'axesAdjust':False, 'axes':axes}
-        plotArgs = {"marker":"o", "ls":""}
+        plotArgs = {"marker": "o", "ls": ""}
         if geometry.is3D:
-            plt.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
+            plt.plot(P[:, 0], P[:, 1], P[:, 2], **plotArgs)
         else:
-            plt.plot(P[:,0], P[:,1], **plotArgs)
+            plt.plot(P[:, 0], P[:, 1], **plotArgs)
 
-        if label_points: #Write text label at the points:
-           for (ID, (xyz, el_size, marker)) in geometry.points.items(): #[[x, y, z], elSize, marker]
-               text = "  " + str(ID) + ("[%s]"%marker if marker is not 0 else '')
-               plt.text(xyz[0], xyz[1], text, fontsize=font_size, color=(0.5, 0, 0.5))
+        if label_points:  # Write text label at the points:
+           # [[x, y, z], elSize, marker]
+           for (ID, (xyz, el_size, marker)) in geometry.points.items():
+               text = "  " + str(ID) + ("[%s]" %
+                                        marker if marker is not 0 else '')
+               plt.text(xyz[0], xyz[1], text,
+                        fontsize=font_size, color=(0.5, 0, 0.5))
 
     for(ID, (curveName, pointIDs, marker, elementsOnCurve, _, _)) in geometry.curves.items():
         points = geometry.getPointCoords(pointIDs)
@@ -607,20 +711,23 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
             P = _ellipseArc(*points, pointsOnCurve=N)
         #plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
 
-        plotArgs = {"color":"black"} #Args for plot style. Black lines with no symbols at points.
+        # Args for plot style. Black lines with no symbols at points.
+        plotArgs = {"color": "black"}
 
         if geometry.is3D:
-            plt.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
+            plt.plot(P[:, 0], P[:, 1], P[:, 2], **plotArgs)
         else:
-            plt.plot(P[:,0], P[:,1], **plotArgs)
+            plt.plot(P[:, 0], P[:, 1], **plotArgs)
 
         if label_curves:
-           midP = P[int(P.shape[0]*7.0/12), :].tolist() # Sort of midpoint along the curve. Where the text goes.
+           # Sort of midpoint along the curve. Where the text goes.
+           midP = P[int(P.shape[0]*7.0/12), :].tolist()
            #Create the text for the curve. Includes ID, elementsOnCurve, and marker:
            text = " "+str(ID)
-           text += "(%s)"%(elementsOnCurve) if elementsOnCurve is not None else ''
-           text += "[%s]"%(marker) if marker is not 0 else '' #Something like "4(5)[8]"
-           plt.text(midP[0], midP[1], text, fontsize = font_size)
+           text += "(%s)" % (elementsOnCurve) if elementsOnCurve is not None else ''
+           # Something like "4(5)[8]"
+           text += "[%s]" % (marker) if marker is not 0 else ''
+           plt.text(midP[0], midP[1], text, fontsize=font_size)
 
     if title != None:
         plt.title(title, axes)
@@ -703,20 +810,22 @@ def _catmullspline(controlPoints, pointsOnEachSegment=10):
                         If there are n control points and k samplesPerSegment,
                         then there will be (n+1)*k numeric points on the curve.
     """
-    controlPoints = np.asarray(controlPoints) #Convert to array if input is a list.
-    if (controlPoints[0,:] == controlPoints[-1,:]).all():
+    controlPoints = np.asarray(
+        controlPoints)  # Convert to array if input is a list.
+    if (controlPoints[0, :] == controlPoints[-1, :]).all():
         #If the curve is closed we extend each opposite endpoint to the other side
-        CPs = np.asmatrix(np.vstack((controlPoints[-2,:],
-                                controlPoints,
-                                controlPoints[1,:])))
-    else: #Else make mirrored endpoints:
-        CPs = np.asmatrix(np.vstack((2*controlPoints[0,:] - controlPoints[1,:],
-                                controlPoints,
-                                2*controlPoints[-1,:] - controlPoints[-2,:])))
-    M = 0.5 * np.matrix([[ 0,  2,  0,  0],[-1,  0,  1,  0],[ 2, -5,  4, -1],[-1,  3, -3,  1]])
+        CPs = np.asmatrix(np.vstack((controlPoints[-2, :],
+                                     controlPoints,
+                                     controlPoints[1, :])))
+    else:  # Else make mirrored endpoints:
+        CPs = np.asmatrix(np.vstack((2*controlPoints[0, :] - controlPoints[1, :],
+                                     controlPoints,
+                                     2*controlPoints[-1, :] - controlPoints[-2, :])))
+    M = 0.5 * np.matrix([[0,  2,  0,  0], [-1,  0,  1,  0],
+                         [2, -5,  4, -1], [-1,  3, -3,  1]])
     t = np.linspace(0, 1, pointsOnEachSegment)
-    T = np.matrix([[1, s, pow(s,2), pow(s,3)] for s in t])
-    return np.asarray( np.vstack( T * M * CPs[j-1:j+3,:] for j in range( 1, len(CPs)-2 ) ) )
+    T = np.matrix([[1, s, pow(s, 2), pow(s, 3)] for s in t])
+    return np.asarray(np.vstack(T * M * CPs[j-1:j+3, :] for j in range(1, len(CPs)-2)))
 
 
 def _bspline(controlPoints, pointsOnCurve=20):
@@ -736,26 +845,29 @@ def _bspline(controlPoints, pointsOnCurve=20):
     http://www.siggraph.org/education/materials/HyperGraph/modeling/splines/b_spline.htm
     http://en.wikipedia.org/wiki/B-spline#Uniform_cubic_B-splines
     '''
-    controlPoints = np.asarray(controlPoints) #Convert to array if input is a list.
-    if (controlPoints[0,:] == controlPoints[-1,:]).all():
+    controlPoints = np.asarray(
+        controlPoints)  # Convert to array if input is a list.
+    if (controlPoints[0, :] == controlPoints[-1, :]).all():
         #If the curve is closed we extend each opposite endpoint to the other side
-        CPs = np.asmatrix(np.vstack((controlPoints[-2,:],
-                                controlPoints,
-                                controlPoints[1,:])))
-    else:#Else make mirrored endpoints:
-        CPs = np.asmatrix(np.vstack((2*controlPoints[0,:] - controlPoints[1,:],
-                                controlPoints,
-                                2*controlPoints[-1,:] - controlPoints[-2,:])))
+        CPs = np.asmatrix(np.vstack((controlPoints[-2, :],
+                                     controlPoints,
+                                     controlPoints[1, :])))
+    else:  # Else make mirrored endpoints:
+        CPs = np.asmatrix(np.vstack((2*controlPoints[0, :] - controlPoints[1, :],
+                                     controlPoints,
+                                     2*controlPoints[-1, :] - controlPoints[-2, :])))
     M = (1.0/6) * np.matrix([[-1,  3, -3, 1],
-                          [ 3, -6,  3, 0],
-                          [-3,  0,  3, 0],
-                          [ 1,  4,  1, 0]])
+                             [3, -6,  3, 0],
+                             [-3,  0,  3, 0],
+                             [1,  4,  1, 0]])
     t = np.linspace(0, 1, pointsOnCurve)
-    T = np.matrix([[pow(s,3), pow(s,2), s, 1] for s in t])
-    return np.asarray( np.vstack( T * M * CPs[i-1 : i+3, :] for i in range( 1, len(CPs)-2 ) ) )
+    T = np.matrix([[pow(s, 3), pow(s, 2), s, 1] for s in t])
+    return np.asarray(np.vstack(T * M * CPs[i-1: i+3, :] for i in range(1, len(CPs)-2)))
+
 
 def _circleArc(start, center, end, pointsOnCurve=20):
     return _ellipseArc(start, center, start, end, pointsOnCurve)
+
 
 def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     '''Input are 3D 1-by-3 numpy arrays or vectors'''
@@ -763,48 +875,67 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     #the XY-plane with the center at the origin and the major axis of the ellipse along the X-axis.
 
     #convert to arrays in case inputs are lists:
-    start, center, majAxP, end, = np.asarray(start), np.asarray(center), np.asarray(majAxP), np.asarray(end)
+    start, center, majAxP, end, = np.asarray(start), np.asarray(
+        center), np.asarray(majAxP), np.asarray(end)
 
     zPrim = np.cross(start-center, end-center)
     zPrim = zPrim / np.linalg.norm(zPrim)
     xPrim = (majAxP-center) / np.linalg.norm(majAxP-center)
     yPrim = np.cross(zPrim, xPrim)
 
-    R = np.vstack((xPrim, yPrim, zPrim)).T #Rotation matrix from ordinary coords to system where ellipse is in the XY-plane. (Actually hstack)
-    T = np.hstack((R, np.asmatrix(center).T))   #Building Transformation matrix. -center is translation vector from ellipse center to origin.
-    T = np.mat( np.vstack((T, [0,0,0,1])) ) #Transformation matrix for homogenous coordinates.
+    # Rotation matrix from ordinary coords to system where ellipse is in the XY-plane. (Actually hstack)
+    R = np.vstack((xPrim, yPrim, zPrim)).T
+    # Building Transformation matrix. -center is translation vector from ellipse center to origin.
+    T = np.hstack((R, np.asmatrix(center).T))
+    # Transformation matrix for homogenous coordinates.
+    T = np.mat(np.vstack((T, [0, 0, 0, 1])))
 
-    startHC = np.vstack((np.matrix(start).T, [1])) #
-    endHC = np.vstack((np.matrix(end).T, [1]))     # start and end points as column vectors in homogenous coordinates
+    startHC = np.vstack((np.matrix(start).T, [1]))
+    # start and end points as column vectors in homogenous coordinates
+    endHC = np.vstack((np.matrix(end).T, [1]))
 
-    s = np.linalg.inv(T) * startHC #
-    e = np.linalg.inv(T) * endHC   # start and end points in the new coordinate system
+    s = np.linalg.inv(T) * startHC
+    # start and end points in the new coordinate system
+    e = np.linalg.inv(T) * endHC
 
-    xs, ys = s[0,0], s[1,0] #
-    xe, ye = e[0,0], e[1,0] # Just extract x & y from the new start and endpoints
+    xs, ys = s[0, 0], s[1, 0]
+    # Just extract x & y from the new start and endpoints
+    xe, ye = e[0, 0], e[1, 0]
 
-    a = np.sqrt( (pow(ye*xs,2) - pow(xe*ys,2)) / (pow(ye,2) - pow(ys,2)) )
-    b = np.sqrt( (pow(ye*xs,2) - pow(xe*ys,2)) / ( (pow(ye,2) - pow(ys,2)) * ((pow(xe,2) - pow(xs,2)) / (pow(ys,2) - pow(ye,2)) ) ) )
+    a = np.sqrt((pow(ye*xs, 2) - pow(xe*ys, 2)) / (pow(ye, 2) - pow(ys, 2)))
+    b = np.sqrt((pow(ye*xs, 2) - pow(xe*ys, 2)) / ((pow(ye, 2) - pow(ys, 2))
+                                                   * ((pow(xe, 2) - pow(xs, 2)) / (pow(ys, 2) - pow(ye, 2)))))
 
-    ts = atan2(ys/b, xs/a) #atan2 is a function that goes from -pi to pi. It gives the signed angle from the X-axis to point (y,x)
-    te = atan2(ye/b, xe/a) #We can't use the (transformed) start- and endpoints directly, but we divide x and y by the
+    # atan2 is a function that goes from -pi to pi. It gives the signed angle from the X-axis to point (y,x)
+    ts = atan2(ys/b, xs/a)
+    # We can't use the (transformed) start- and endpoints directly, but we divide x and y by the
+    te = atan2(ye/b, xe/a)
     # ellipse minor&major axes to get the parameter t that corresponds to the point on the ellipse.
     # See ellipse formula: x = a * cos (t), y = b * sin(t).
     # So ts and te are the parameter values of the start- and endpoints (in the transformed coordinate system).
 
     if ts > te:
-        ts, te = te, ts #swap if the start point comes before the endpoint in the parametric parameter that goes around the ellipse.
+        # swap if the start point comes before the endpoint in the parametric parameter that goes around the ellipse.
+        ts, te = te, ts
     if te - ts < np.pi:
-        times = np.linspace(ts, te, pointsOnCurve) #parameter of ellipse curve. NOT angle to point on curve (like it could be for a circle).
-    else: #the shortest parameter distance between start- and end-point stradles the discontinuity that jumps from pi to -pi.
-        ps1 = round(pointsOnCurve * (pi-te)/(2*pi-te+ts)) #number of points on the first length.
-        ps2 = round(pointsOnCurve * (ts+pi)/(2*pi-te+ts)) #number of points on the first length.
-        times = np.concatenate((np.linspace(te, pi, ps1), np.linspace(-pi, ts, ps2)))
+        # parameter of ellipse curve. NOT angle to point on curve (like it could be for a circle).
+        times = np.linspace(ts, te, pointsOnCurve)
+    # the shortest parameter distance between start- and end-point stradles the discontinuity that jumps from pi to -pi.
+    else:
+        # number of points on the first length.
+        ps1 = round(pointsOnCurve * (pi-te)/(2*pi-te+ts))
+        # number of points on the first length.
+        ps2 = round(pointsOnCurve * (ts+pi)/(2*pi-te+ts))
+        times = np.concatenate(
+            (np.linspace(te, pi, ps1), np.linspace(-pi, ts, ps2)))
 
-    ellArc = np.array([[a*cos(t), b*sin(t)] for t in times]).T #points on arc (in 2D)
-    ellArc = np.vstack((ellArc, np.repeat(np.matrix([[0],[1]]), ellArc.shape[1], 1))) #Make 3D homogenous coords by adding rows of 0s and 1s.
-    ellArc = T * ellArc #Transform back to the original coordinate system
-    return np.asarray(ellArc.T[:,0:3]) #return points as an N-by-3 array.
+    ellArc = np.array([[a*cos(t), b*sin(t)]
+                       for t in times]).T  # points on arc (in 2D)
+    # Make 3D homogenous coords by adding rows of 0s and 1s.
+    ellArc = np.vstack(
+        (ellArc, np.repeat(np.matrix([[0], [1]]), ellArc.shape[1], 1)))
+    ellArc = T * ellArc  # Transform back to the original coordinate system
+    return np.asarray(ellArc.T[:, 0:3])  # return points as an N-by-3 array.
 
 # class _elementsWobject(vv.Wobject, Colormapable):
 #     '''
