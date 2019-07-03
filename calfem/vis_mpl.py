@@ -234,9 +234,7 @@ def ce2vf(coords, edof, dofs_per_node, el_type):
     return verts, np.asarray(faces, dtype=int), vertices_per_face, is_3d
 
 
-def draw_mesh(coords, edof, dofs_per_node, el_type, axes=None, axes_adjust=True,
-              title=None, color=(0, 0, 0), face_color=(0.8, 0.8, 0.8), node_color=(0, 0, 0),
-              filled=False, show_nodes=False):
+def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0), face_color=(0.8, 0.8, 0.8), node_color=(0, 0, 0), filled=False, show_nodes=False):
     '''
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
@@ -365,6 +363,77 @@ drawMesh = draw_mesh
 
 # drawNodalValues = draw_nodal_values
 
+def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, clim=None,                  draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
+    '''
+    Draws scalar element values in 2D or 3D. Returns the world object
+    elementsWobject that represents the mesh.
+    Parameters:
+    ev          - An N-by-1 array or a list of scalars. The Scalar values of the
+                  elements. ev[i] should be the value of element i.
+    coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
+                  of node i.
+    edof        - An E-by-L array. Element topology. (E is the number of elements
+                  and L is the number of dofs per element)
+    dofsPerNode - Integer. Dofs per node.
+    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
+                  for triangles or 3 for quadrangles.
+    displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
+                    displacements of node i.
+    clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
+                  the colorbar. Defaults to None, in which case min/max are set to
+                  min/max of nodeVals.
+    axes        - Visvis Axes. The Axes where the model will be drawn.
+                  If unspecified the current Axes will be used, or a new Axes will
+                  be created if none exist.
+    axesAdjust  - Boolean. True if the view should be changed to show the whole
+                  model. Default True.
+    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
+    doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh
+                  should be drawn on top of the displaced mesh. Default False.
+                  Use only if displacements != None.
+    magnfac     - Float. Magnification factor. Displacements are multiplied by
+                  this value. Use this to make small displacements more visible.
+    title       - String. Changes title of the figure. Default "Element Values".
+    '''
+
+    verts, faces, vertices_per_face, is_3d = ce2vf(
+        coords, edof, dofs_per_node, el_type)
+
+    y = verts[:, 0]
+    z = verts[:, 1]
+
+    def quatplot(y, z, quatrangles, values=[], ax=None, **kwargs):
+
+        if not ax:
+            ax = plt.gca()
+        yz = np.c_[y, z]
+        v = yz[quatrangles]
+        pc = matplotlib.collections.PolyCollection(
+            v, **kwargs)
+
+        pc.set_array(np.asarray(values))
+        ax.add_collection(pc)
+        ax.autoscale()
+        return pc
+
+    fig = plt.gcf()
+    ax = plt.gca()
+    ax.set_aspect('equal')
+
+    if draw_mesh:
+        pc = quatplot(y, z, faces, values, ax=ax, edgecolor=color, cmap="rainbow")
+    else:
+        pc = quatplot(y, z, faces, values, ax=ax, edgecolor=None, cmap="rainbow")
+
+    #pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
+    #         edgecolor="crimson", cmap="rainbow")
+
+    fig.colorbar(pc, ax=ax)
+
+    if title != None:
+        ax.set(title=title)
+
+
 # def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None,
 #                       axesAdjust=True, doDrawMesh=True, doDrawUndisplacedMesh=False, magnfac=1.0, title=None):
 #     '''
@@ -487,7 +556,7 @@ drawMesh = draw_mesh
 
 # drawDisplacements = draw_displacements
 
-def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoints=True, labelCurves=True, title=None, fontSize=11, N=20):
+def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20):
     '''
     Draws the geometry (points and curves) in geoData
     Parameters:
@@ -512,22 +581,22 @@ def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoi
     ax = plt.gca()
     ax.set_aspect('equal')
 
-    if drawPoints:
-        P = np.array(geoData.getPointCoords()) #M-by-3 list of M points.
+    if draw_points:
+        P = np.array(geometry.getPointCoords()) #M-by-3 list of M points.
         #plotArgs = {'mc':'r', 'mw':5, 'lw':0, 'ms':'o', 'axesAdjust':False, 'axes':axes}
         plotArgs = {"marker":"o", "ls":""}
-        if geoData.is3D:
+        if geometry.is3D:
             plt.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
         else:
             plt.plot(P[:,0], P[:,1], **plotArgs)
 
-        #if labelPoints: #Write text label at the points:
-        #    for (ID, (xyz, elSize, marker)) in geoData.points.items(): #[[x, y, z], elSize, marker]
-        #        text = "  " + str(ID) + ("[%s]"%marker if marker is not 0 else '')
-        #        addText(text, xyz, fontSize=fontSize-1, color=(0.5,0,0.5), axes=axes)
+        if label_points: #Write text label at the points:
+           for (ID, (xyz, el_size, marker)) in geometry.points.items(): #[[x, y, z], elSize, marker]
+               text = "  " + str(ID) + ("[%s]"%marker if marker is not 0 else '')
+               plt.text(xyz[0], xyz[1], text, fontsize=font_size, color=(0.5, 0, 0.5))
 
-    for(ID, (curveName, pointIDs, marker, elementsOnCurve, _, _)) in geoData.curves.items():
-        points = geoData.getPointCoords(pointIDs)
+    for(ID, (curveName, pointIDs, marker, elementsOnCurve, _, _)) in geometry.curves.items():
+        points = geometry.getPointCoords(pointIDs)
         if curveName == "Spline":
             P = _catmullspline(points, N)
         if curveName == "BSpline":
@@ -537,19 +606,21 @@ def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoi
         if curveName == "Ellipse":
             P = _ellipseArc(*points, pointsOnCurve=N)
         #plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
-        plotArgs = {} #Args for plot style. Black lines with no symbols at points.
-        if geoData.is3D:
+
+        plotArgs = {"color":"black"} #Args for plot style. Black lines with no symbols at points.
+
+        if geometry.is3D:
             plt.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
         else:
             plt.plot(P[:,0], P[:,1], **plotArgs)
 
-        #if labelCurves:
-        #    midP = P[int(P.shape[0]*7.0/12), :].tolist() # Sort of midpoint along the curve. Where the text goes.
-        #    #Create the text for the curve. Includes ID, elementsOnCurve, and marker:
-        #    text = " "+str(ID)
-        #    text += "(%s)"%(elementsOnCurve) if elementsOnCurve is not None else ''
-        #    text += "[%s]"%(marker) if marker is not 0 else '' #Something like "4(5)[8]"
-        #    addText(text, midP, fontSize=fontSize, axes=axes)
+        if label_curves:
+           midP = P[int(P.shape[0]*7.0/12), :].tolist() # Sort of midpoint along the curve. Where the text goes.
+           #Create the text for the curve. Includes ID, elementsOnCurve, and marker:
+           text = " "+str(ID)
+           text += "(%s)"%(elementsOnCurve) if elementsOnCurve is not None else ''
+           text += "[%s]"%(marker) if marker is not 0 else '' #Something like "4(5)[8]"
+           plt.text(midP[0], midP[1], text, fontsize = font_size)
 
     if title != None:
         plt.title(title, axes)

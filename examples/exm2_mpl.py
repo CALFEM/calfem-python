@@ -76,7 +76,11 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # Draw the geometry.
 
-cfv.draw_geometry(g, labelCurves=True)
+cfv.draw_geometry(
+    g, 
+    label_curves=True, 
+    title = "Example 2 - Geometry"
+    )
 
 # New figure window
 
@@ -90,7 +94,7 @@ cfv.draw_mesh(
     dofs_per_node = mesh.dofs_per_node, 
     el_type=mesh.el_type, 
     filled=True, 
-    title="Example 02"
+    title="Example 2 - Mesh"
     ) 
 
 # Show grid
