@@ -601,6 +601,7 @@ class Geometry:
     volume = addVolume
     structuredVolume = addStructuredVolume
     structured_volume = addStructuredVolume
+    get_point_coords = getPointCoords
     
     
 def geometry():

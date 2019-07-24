@@ -3,6 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.collections
+import matplotlib.path as mpp
+import matplotlib.patches as patches
+import matplotlib as mpl
+import matplotlib.tri as tri
 
 from numpy import sin, cos, pi
 from math import atan2
@@ -26,6 +30,10 @@ def figure_class():
 
 
 figureClass = figure_class
+
+
+def colorbar():
+    plt.colorbar()
 
 
 def figure(figure=None, show=True):
@@ -70,12 +78,6 @@ def camera3d():
     """Get visvis 3D camera."""
     return None
 
-#def show_grid(flag = True):
-#    """Show grid."""
-#    vv.gca().axis.showGrid = flag
-
-#showGrid = show_grid
-
 
 def show_and_wait():
     plt.show()
@@ -89,47 +91,6 @@ def show_and_wait_mpl():
 
 
 showAndWaitMpl = show_and_wait_mpl
-
-# def get_color_bar(axes=None):
-#     '''
-#     Returns the Colorbar.
-#     If axes is None the colorbar in the current axes will be found.
-#     If several colorbars exists in the axes the first found will be returned
-#     If no colorbar is found None is returned.
-#     '''
-#     #An ugly solution, but visvis seems to have no other way of getting the colorbar,
-#     #or most other entities that exist in the axes.
-#     if axes is None:
-#         axes = vv.gca()
-#     for obj in axes.children:
-#         if type(obj) == Colorbar:
-#             return obj
-#     return None
-
-# getColorbar = get_color_bar
-
-# def color_bar(axes=None):
-#     """Short form of getColorbar"""
-#     return getColorbar(axes)
-
-# colorBar = color_bar
-
-
-# def _makeColorBar(text, axes=None):
-#     '''
-#     Convenience function that finds the current colorbar in the axes
-#     or creates a new one if one does not exist.
-#     The reason is that colorbars can not be deleted without clearing
-#     the whole figure, and several colorbars can exist simultaneously.
-#     This should be avoided.
-#     '''
-#     if axes is None:
-#         axes = vv.gca()
-#     colBar = getColorbar(axes)
-#     if colBar is None:
-#         vv.colorbar(axes).SetLabel(text) #Creates a colorbar and sets the label.
-#     else:
-#         colBar.SetLabel(text)# A colorbar already exists, Change label.
 
 # def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
 #     '''
@@ -189,6 +150,7 @@ showAndWaitMpl = show_and_wait_mpl
 #     return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)
 #
 
+
 def ce2vf(coords, edof, dofs_per_node, el_type):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
 
@@ -210,7 +172,7 @@ def ce2vf(coords, edof, dofs_per_node, el_type):
         raise ValueError('element type not implemented')
 
     faces = (edof[:, 0::dofs_per_node]-1)/dofs_per_node
-    #'faces' here are actually lists of nodes in elements, not in faces necessarily if the elements are in 3D. This case is handled below.
+    # 'faces' here are actually lists of nodes in elements, not in faces necessarily if the elements are in 3D. This case is handled below.
 
     if el_type in [4, 5]:  # if hexahedrons or tetrahedrons:
         if el_type == 5:
@@ -220,7 +182,7 @@ def ce2vf(coords, edof, dofs_per_node, el_type):
                           [2, 6, 5, 1],
                           [2, 3, 7, 6],
                           [0, 4, 7, 3]])  # G is an array that is used to decomposes hexahedrons into its component faces.
-	   #The numbers are from the node orders (see p94 in the Gmsh manual) and each row makes one face.
+           # The numbers are from the node orders (see p94 in the Gmsh manual) and each row makes one face.
         elif el_type == 4:
             G = np.array([[0, 1, 2],
                           [0, 3, 2],
@@ -281,8 +243,8 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
             pc = matplotlib.collections.PolyCollection(
                 v, facecolor='none', **kwargs)
 
-        #pc.set_array(values)
-        #pc.set_color(['black'])
+        # pc.set_array(values)
+        # pc.set_color(['black'])
         ax.add_collection(pc)
         ax.autoscale()
         return pc
@@ -293,7 +255,7 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
 
     pc = quatplot(y, z, faces, values, ax=ax, edgecolor=color)
 
-    #pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
+    # pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
     #         edgecolor="crimson", cmap="rainbow")
 
     #fig.colorbar(pc, ax=ax)
@@ -306,62 +268,6 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
 
 
 drawMesh = draw_mesh
-
-# def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, axes=None, axesAdjust=True, doDrawMesh=True, title=None):
-#     '''
-#     Draws scalar nodal values in 2D or 3D. Returns the Mesh object that represents
-#     the mesh.
-#     Parameters:
-#     nodeVals    - An N-by-1 array or a list of scalars. The Scalar values at the
-#                   nodes. nodeVals[i] should be the value of node i
-#     coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-#                   of node i.
-#     edof        - An E-by-L array. Element topology. (E is the number of elements
-#                   and L is the number of dofs per element)
-#     dofsPerNode - Integer. Dofs per node.
-#     elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
-#                   for triangles or 3 for quadrangles.
-#     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
-#                   the colorbar. Defaults to None, in which case min/max are set to
-#                   min/max of nodeVals.
-#     axes        - Visvis Axes. The Axes where the model will be drawn.
-#                   If unspecified the current Axes will be used, or a new Axes will
-#                   be created if none exist.
-#     axesAdjust  - Boolean. True if the view should be changed to show the whole
-#                   model. Default True.
-#     doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-#     title       - String. Changes title of the figure. Default "Node Values".
-#     '''
-#     axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType)
-#     m = vv.Mesh(parent=axes, vertices=verts, faces=faces, values=nodeVals, verticesPerFace=verticesPerFace)
-
-#     if clim != None: #Set colorbar limits.
-#         m.clim = clim
-#         setClim = False
-#     else:
-#         setClim = True
-
-#     edgeSh = 'plain' if doDrawMesh else None
-#     m.faceShading, m.edgeShading = ('smooth', edgeSh)#NOTE: It seems colormap coloring breaks when faceshading='plain'. 'smooth' must be used.
-#     m.ambient = 1
-#     m.diffuse = 0
-#     m.specular = 0 #Disable specular.
-#     m.SetValues(nodeVals, setClim) #Set the values again, because it doesn't work in the constructor for unknown reasons
-
-#     axes.light0.ambient = 1.0
-#     axes.light0.diffuse = 0.0  #Only ambient light to avoid shadows
-
-#     m.colormap = vv.colormaps['jet']
-#     _makeColorBar("Node values", axes)
-
-#     # Adjust axes:
-#     if axesAdjust:
-#         _adjustaxes(axes, is3D)
-
-#     vv.title(title, axes)
-#     return m
-
-# drawNodalValues = draw_nodal_values
 
 
 def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, clim=None, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
@@ -436,7 +342,7 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
         pc = quatplot(y, z, faces, values, ax=ax,
                       edgecolor=None, cmap="rainbow")
 
-    #pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
+    # pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
     #         edgecolor="crimson", cmap="rainbow")
 
     fig.colorbar(pc, ax=ax)
@@ -479,7 +385,7 @@ def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_mesh=True, 
     '''
 
     if draw_undisplaced_mesh:
-        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.8, 0.8, 0.8))
+        draw_mesh(coords, edof, dofs_per_node, el_type, color=(0.8, 0.8, 0.8))
 
     if a is not None:
         if a.shape[1] != coords.shape[1]:
@@ -535,127 +441,122 @@ def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_mesh=True, 
     if title != None:
         ax.set(title=title)
 
-# def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None,
-#                       axesAdjust=True, doDrawMesh=True, doDrawUndisplacedMesh=False, magnfac=1.0, title=None):
-#     '''
-#     Draws scalar element values in 2D or 3D. Returns the world object
-#     elementsWobject that represents the mesh.
-#     Parameters:
-#     ev          - An N-by-1 array or a list of scalars. The Scalar values of the
-#                   elements. ev[i] should be the value of element i.
-#     coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-#                   of node i.
-#     edof        - An E-by-L array. Element topology. (E is the number of elements
-#                   and L is the number of dofs per element)
-#     dofsPerNode - Integer. Dofs per node.
-#     elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
-#                   for triangles or 3 for quadrangles.
-#     displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
-#                     displacements of node i.
-#     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
-#                   the colorbar. Defaults to None, in which case min/max are set to
-#                   min/max of nodeVals.
-#     axes        - Visvis Axes. The Axes where the model will be drawn.
-#                   If unspecified the current Axes will be used, or a new Axes will
-#                   be created if none exist.
-#     axesAdjust  - Boolean. True if the view should be changed to show the whole
-#                   model. Default True.
-#     doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-#     doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh
-#                   should be drawn on top of the displaced mesh. Default False.
-#                   Use only if displacements != None.
-#     magnfac     - Float. Magnification factor. Displacements are multiplied by
-#                   this value. Use this to make small displacements more visible.
-#     title       - String. Changes title of the figure. Default "Element Values".
-#     '''
-#     #Since vis.Mesh does not allow setting different colours for different faces, we need
-#     # a custom world object (WObject) for this function.
-#     # http://code.google.com/p/visvis/wiki/example_customWobject
-#     # http://code.google.com/p/visvis/wiki/creatingWibjectsAndWobjects
+
+def create_ordered_polys(geom, N=10):
+    """Creates ordered polygons from the geometry definition"""
+
+    N = 10
+
+    o_polys = []
+
+    for (id, (surf_name, curve_ids, holes, _, _, _)) in geom.surfaces.items():
+
+        polygon = np.empty((0, 3), float)
+
+        polys = []
+
+        for curve_id in curve_ids:
+
+            curve_name, curve_points, _, _, _, _ = geom.curves[curve_id]
+            points = geom.get_point_coords(curve_points)
+
+            if curve_name == "Spline":
+                P = _catmullspline(points, N)
+            if curve_name == "BSpline":
+                P = _bspline(points, N)
+            if curve_name == "Circle":
+                P = _circleArc(*points, pointsOnCurve=N)
+            if curve_name == "Ellipse":
+                P = _ellipseArc(*points, pointsOnCurve=N)
+
+            polys.append(P)
+
+        ordered_polys = []
+
+        ordered_polys.append(polys.pop())
+
+        while len(polys) != 0:
+            p0 = ordered_polys[-1]
+            for p in polys:
+                if np.allclose(p0[-1], p[0]):
+                    ordered_polys.append(polys.pop())
+                    break
+                elif np.allclose(p0[-1], p[-1]):
+                    ordered_polys.append(np.flipud(polys.pop()))
+                    break
+
+        for p in ordered_polys:
+            polygon = np.concatenate((polygon, p))
+
+        o_polys.append(polygon)
+
+    return o_polys
 
 
-#     if doDrawUndisplacedMesh:
-#         drawMesh(coords, edof, dofsPerNode, elType, axes, axesAdjust, color=(0.5, 0.5, 0.5))
+def draw_ordered_polys(o_polys):
 
-#     if displacements is not None:
-#         if displacements.shape[1] != coords.shape[1]:
-#             displacements = np.reshape(displacements, (-1, coords.shape[1]))
-#             coords = np.asarray(coords + magnfac * displacements)
+    for poly in o_polys:
 
-#     axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType)
+        ax = plt.gca()
+        path = mpp.Path(poly[:, 0:2])
+        patch = patches.PathPatch(path, facecolor='orange', lw=1)
+        ax.add_patch(patch)
 
 
-#     #This is done because 3D elements are made up of several faces.
-#     #TODO: Discard inner faces that are not visible.
-#     fPerElms = { 1:0,   2:1,   3:1,   4:4,   5:6} #TODO: Extend with more element types
-#     facesPerElement = fPerElms[elType]
-#     #Repeat the element values so that we get the value of each face:
-#     faceVals = np.repeat(ev, facesPerElement, axis=0)
+def point_in_geometry(o_polys, point):
 
-#     c = _elementsWobject(axes, faceVals, verts, faces, verticesPerFace, doDrawMesh, clim) #Creates the world object that gets drawn on screen.
+    for poly in o_polys:
 
-#     _makeColorBar("Element values", axes) #Finds or creates colorbar and sets the label.
+        path = mpp.Path(poly[:, 0:2])
+        inside = path.contains_points([point])
 
-#     # Adjust axes
-#     if axesAdjust:
-#         _adjustaxes(axes, is3D)
+        if inside:
+            return True
 
-#     vv.title(title, axes)
-#     return c
+    return False
 
-# drawElementValues = draw_element_values
 
-# def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVals=None, clim=None, axes=None,
-#                       axesAdjust=True, doDrawUndisplacedMesh=True, magnfac=1.0,  title=None):
-#     '''
-#     Draws mesh with displacements in 2D or 3D. Scalar nodal values can also be
-#     drawn on the mesh. Returns the displaced Mesh object.
-#     Parameters:
-#     displacements-An N-by-1 array (or matrix). Row i contains the displacement of
-#                   dof i.
-#                   N-by-2 or N-by-3 arrays are also accepted, in which case row i
-#                   contains the x,y,z displacements of node i.
-#     coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-#                   of node i.
-#     edof        - An E-by-L array. Element topology. (E is the number of elements
-#                   and L is the number of dofs per element)
-#     dofsPerNode - Integer. Dofs per node.
-#     elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
-#                   for triangles or 3 for quadrangles.
-#     nodeVals    - An N-by-1 array or a list of scalars. The Scalar values at the
-#                   nodes. nodeVals[i] should be the value of node i.
-#     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
-#                   the colorbar. Defaults to None, in which case min/max are set
-#                   to min/max of nodeVals.
-#     axes        - Visvis Axes. The Axes where the model will be drawn.
-#                   If unspecified the current Axes will be used, or a new Axes will
-#                   be created if none exist.
-#     axesAdjust  - Boolean. True if the view should be changed to show the whole
-#                   model. Default True.
-#     doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-#     magnfac     - Float. Magnification factor. Displacements are multiplied by
-#                   this value. Use this to make small displacements more visible.
-#     title       - String. Changes title of the figure. Default None (in which case
-#                   title depends on other parameters).
-#     '''
+def draw_nodal_values(values, coords, edof, geom, dofs_per_node, el_type, n_iso=25, draw_mesh=True, title=None, draw_triang_mesh=False, n_poly=10):
 
-#     if displacements.shape[1] != coords.shape[1]:
-#         displacements = np.reshape(displacements, (-1, coords.shape[1]))
-#     displaced = np.asarray(coords + magnfac * displacements)
+    fig = plt.gcf()
+    ax = plt.gca()
+    ax.set_aspect('equal')
 
-#     if doDrawUndisplacedMesh:
-#         drawMesh(coords, edof, dofsPerNode, elType, axes, axesAdjust, title=title, color=(0.5, 0.5, 0.5), filled=False)
+    x = coords[:, 0].flatten()
+    y = coords[:, 1].flatten()
+    z = np.resize(values, values.size)
 
-#     if nodeVals != None:
-#         m = drawNodalValues(nodeVals, displaced, edof, dofsPerNode, elType, clim=clim, axes=axes, axesAdjust=axesAdjust, doDrawMesh=True, title=title)
-#     else:
-#         m = drawMesh(displaced, edof, dofsPerNode, elType, axes, axesAdjust, title=title)
+    triang = tri.Triangulation(x, y)
 
-#     if title != None:
-#         vv.title(title, axes)
-#     return m
+    mask = np.zeros(triang.triangles.shape[0], dtype=bool)
+    exm = np.zeros(triang.triangles.shape[0], dtype=float)
+    eym = np.zeros(triang.triangles.shape[0], dtype=float)
 
-# drawDisplacements = draw_displacements
+    o_polys = create_ordered_polys(geom, N=n_poly)
+
+    i = 0
+
+    for t in triang.triangles:
+        ex = x[t]
+        ey = y[t]
+        xm = ex.mean()
+        ym = ey.mean()
+        exm[i] = xm
+        eym[i] = ym
+        mask[i] = not point_in_geometry(o_polys, [xm, ym])
+        i += 1
+
+    triang.set_mask(mask)
+    tc = plt.tricontourf(triang, z, n_iso)
+
+    if draw_triang_mesh:
+        plt.triplot(triang)
+
+    if draw_mesh:
+        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.2, 0.2, 0.2))
+
+    fig.colorbar(tc)
+
 
 def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20):
     '''
@@ -693,11 +594,11 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
 
         if label_points:  # Write text label at the points:
            # [[x, y, z], elSize, marker]
-           for (ID, (xyz, el_size, marker)) in geometry.points.items():
-               text = "  " + str(ID) + ("[%s]" %
-                                        marker if marker is not 0 else '')
-               plt.text(xyz[0], xyz[1], text,
-                        fontsize=font_size, color=(0.5, 0, 0.5))
+            for (ID, (xyz, el_size, marker)) in geometry.points.items():
+                text = "  " + str(ID) + ("[%s]" %
+                                         marker if marker is not 0 else '')
+                plt.text(xyz[0], xyz[1], text,
+                         fontsize=font_size, color=(0.5, 0, 0.5))
 
     for(ID, (curveName, pointIDs, marker, elementsOnCurve, _, _)) in geometry.curves.items():
         points = geometry.getPointCoords(pointIDs)
@@ -709,7 +610,7 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
             P = _circleArc(*points, pointsOnCurve=N)
         if curveName == "Ellipse":
             P = _ellipseArc(*points, pointsOnCurve=N)
-        #plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
+        # plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
 
         # Args for plot style. Black lines with no symbols at points.
         plotArgs = {"color": "black"}
@@ -720,76 +621,24 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
             plt.plot(P[:, 0], P[:, 1], **plotArgs)
 
         if label_curves:
-           # Sort of midpoint along the curve. Where the text goes.
-           midP = P[int(P.shape[0]*7.0/12), :].tolist()
-           #Create the text for the curve. Includes ID, elementsOnCurve, and marker:
-           text = " "+str(ID)
-           text += "(%s)" % (elementsOnCurve) if elementsOnCurve is not None else ''
-           # Something like "4(5)[8]"
-           text += "[%s]" % (marker) if marker is not 0 else ''
-           plt.text(midP[0], midP[1], text, fontsize=font_size)
+            # Sort of midpoint along the curve. Where the text goes.
+            midP = P[int(P.shape[0]*7.0/12), :].tolist()
+            # Create the text for the curve. Includes ID, elementsOnCurve, and marker:
+            text = " "+str(ID)
+            text += "(%s)" % (elementsOnCurve) if elementsOnCurve is not None else ''
+            # Something like "4(5)[8]"
+            text += "[%s]" % (marker) if marker is not 0 else ''
+            plt.text(midP[0], midP[1], text, fontsize=font_size)
 
     if title != None:
         plt.title(title, axes)
 
-    #if axesAdjust:
+    # if axesAdjust:
     #    _adjustaxes(axes, geoData.is3D)
     #axes.daspectAuto = False
     #axes.daspect = (1,1,1)
 
 # drawGeometry = draw_geometry
-
-# def _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType):
-#     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
-#     if axes is None:
-#         axes = vv.gca() #Gets current Axis or creates a new one if none exists.
-
-#     if np.shape(coords)[1] == 2:
-#         is3D = False
-#         verts = np.hstack((coords, np.zeros([np.shape(coords)[0],1]))) #pad with zeros to make 3D
-#     elif np.shape(coords)[1] == 3:
-#         is3D = True
-#         verts = coords
-#     else:
-#         raise ValueError('coords must be N-by-2 or N-by-3 array')
-
-#     if elType in [2, 4]: #elements with triangular faces
-#         verticesPerFace = 3
-#     elif elType in [3,5,16]: #elements with rectangular faces
-#         verticesPerFace = 4
-#     else:   #[NOTE] This covers all element types available in CALFEM plus tetrahedrons. If more element types are added it is necessary to include them here and below.
-#         raise ValueError('element type not implemented')
-
-#     faces = (edof[:,0::dofsPerNode]-1)/dofsPerNode
-# 	#'faces' here are actually lists of nodes in elements, not in faces necessarily if the elements are in 3D. This case is handled below.
-
-#     if elType in [4,5]: #if hexahedrons or tetrahedrons:
-#         if  elType == 5:
-#             G = np.array([[0,3,2,1],
-#                        [0,1,5,4],
-#                        [4,5,6,7],
-#                        [2,6,5,1],
-#                        [2,3,7,6],
-#                        [0,4,7,3]]) #G is an array that is used to decomposes hexahedrons into its component faces.
-# 					   #The numbers are from the node orders (see p94 in the Gmsh manual) and each row makes one face.
-#         elif elType == 4:
-#             G = np.array([[0,1,2],
-#                        [0,3,2],
-#                        [1,3,2],
-#                        [0,3,1]]) #This G decomposes tetrahedrons into faces
-#         faces = np.vstack([ faces[i, G] for i in range(faces.shape[0]) ])
-#     elif elType == 16: #if 8-node-quads:
-#         faces = faces[:, 0:4] #The first 4 nodes are the corners of the high order quad.
-
-#     axes.bgcolor = (0.7, 0.7, 0.7) #background colour.
-#     return axes, verts, faces, verticesPerFace, is3D
-
-
-# def _adjustaxes(axes, is3D):
-#     if axes.daspectAuto is None:
-#             axes.daspectAuto = False
-#     axes.cameraType = '3d' if is3D else '2d'
-#     axes.SetLimits(margin=0.1)
 
 
 def _catmullspline(controlPoints, pointsOnEachSegment=10):
@@ -813,7 +662,7 @@ def _catmullspline(controlPoints, pointsOnEachSegment=10):
     controlPoints = np.asarray(
         controlPoints)  # Convert to array if input is a list.
     if (controlPoints[0, :] == controlPoints[-1, :]).all():
-        #If the curve is closed we extend each opposite endpoint to the other side
+        # If the curve is closed we extend each opposite endpoint to the other side
         CPs = np.asmatrix(np.vstack((controlPoints[-2, :],
                                      controlPoints,
                                      controlPoints[1, :])))
@@ -848,7 +697,7 @@ def _bspline(controlPoints, pointsOnCurve=20):
     controlPoints = np.asarray(
         controlPoints)  # Convert to array if input is a list.
     if (controlPoints[0, :] == controlPoints[-1, :]).all():
-        #If the curve is closed we extend each opposite endpoint to the other side
+        # If the curve is closed we extend each opposite endpoint to the other side
         CPs = np.asmatrix(np.vstack((controlPoints[-2, :],
                                      controlPoints,
                                      controlPoints[1, :])))
@@ -871,10 +720,10 @@ def _circleArc(start, center, end, pointsOnCurve=20):
 
 def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     '''Input are 3D 1-by-3 numpy arrays or vectors'''
-    #First part is to find a similarity transform in 3D that transform the ellipse to
-    #the XY-plane with the center at the origin and the major axis of the ellipse along the X-axis.
+    # First part is to find a similarity transform in 3D that transform the ellipse to
+    # the XY-plane with the center at the origin and the major axis of the ellipse along the X-axis.
 
-    #convert to arrays in case inputs are lists:
+    # convert to arrays in case inputs are lists:
     start, center, majAxP, end, = np.asarray(start), np.asarray(
         center), np.asarray(majAxP), np.asarray(end)
 
@@ -937,423 +786,117 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     ellArc = T * ellArc  # Transform back to the original coordinate system
     return np.asarray(ellArc.T[:, 0:3])  # return points as an N-by-3 array.
 
-# class _elementsWobject(vv.Wobject, Colormapable):
-#     '''
-#     Custom wobject for drawing element values.
-#     Based on example http://code.google.com/p/visvis/wiki/example_customWobject
-#     '''
-#     #TODO: Find a way to make rendering faster. (Dump internal faces, cull backfaces,
-#     #TODO: Don't draw lines separately, pass array to GL instead of looping, etc?)
-#     def __init__(self, parent, fVals, verts, faces, verticesPerFace, doDrawMesh, clim=None):
-#         vv.Wobject.__init__(self, parent)
-#         self._fVals = fVals # N-by-1 array?            values of N faces (not elements if 3D)
-#         self._verts = verts # M-by-3 array             coordinates of M vertices
-#         self._faces = faces # N-by-3 or N-by-4 array   verts that make up N faces
-#         self.verticesPerFace = verticesPerFace #3 or 4. Either we have triangle faces or quads.
-#         self.doDrawMesh = doDrawMesh
-#         self._valMin = np.amin(fVals)
-#         self._valMax = np.amax(fVals)
-#         Colormapable.__init__(self)
-#         self._texture = None
-#         self.clim = minmax(self._fVals) if clim is None else clim
-#         self.colormap = vv.colormaps['jet']
-
-#     def _drawFaces(self, how):
-#         for (value, faceVerts) in zip(self._fVals, self._faces):
-#             valueIndex = int( 255 * (value-self.clim.min)/(self.clim.max-self.clim.min) ) #Turn the value into an index between 0 and 255
-#             if valueIndex > 255:
-#                 valueIndex = 255
-#             elif valueIndex < 0:
-#                 valueIndex = 0
-#             color = self.mapData[valueIndex, :] #get colour from value
-#             coords = self._verts[faceVerts.astype(int), :] #get coordinates of the vertices of the face.
-#             gl.glColor(*color)
-#             gl.glBegin(how)
-#             for (x,y,z) in coords:
-#                 gl.glVertex(x,y,z)
-#             gl.glEnd()
-
-#     def _drawLines(self, how=gl.GL_LINE_LOOP, color=(0,0,0)):
-#         for faceVerts in self._faces:
-#             coords = self._verts[faceVerts.astype(int), :] #get coordinates of the vertices of the face.
-#             gl.glColor(*color)
-#             gl.glBegin(how)
-#             for (x,y,z) in coords:
-#                 gl.glVertex(x,y,z)
-#             gl.glEnd()
-
-#     def _GetLimits(self):
-#         """ Tell the axes how big this object is.
-#         """
-#         # Get limits
-#         x1, x2 = minmax(self._verts[:,0])
-#         y1, y2 = minmax(self._verts[:,1])
-#         z1, z2 = minmax(self._verts[:,2])
-#         return vv.Wobject._GetLimits(self, x1, x2, y1, y2, z1, z2)
-
-#     def OnDraw(self):
-#         """ To draw the object.
-#         """
-#         if self.doDrawMesh:
-#             gl.glDisable(gl.GL_LINE_SMOOTH)
-#             #gl.glEnable(gl.GL_BLEND)
-#             gl.glLineWidth(1)
-#             self._drawLines(gl.GL_LINE_LOOP, (0,0,0))
-#         if self.verticesPerFace == 3:
-#             self._drawFaces(gl.GL_TRIANGLES)
-#         elif self.verticesPerFace == 4:
-#             self._drawFaces(gl.GL_QUADS)
-
-#     def OnDrawShape(self, clr):
-#         """ To draw the shape of the object.
-#         Only necessary if you want to be able to "pick" this object
-#         """
-#         self._drawFaces(gl.GL_TRIANGLES, clr)
-
-#     def OnDrawScreen(self):
-#         """ If the object also needs to draw in screen coordinates.
-#         Text needs this for instance.
-#         """
-#         pass
-
-#     def OnDestroyGl(self):
-#         """ To clean up any OpenGl resources such as textures or shaders.
-#         """
-#         pass
-
-#     def OnDestroy(self):
-#         """ To clean up any other resources.
-#         """
-#         pass
-
-#     #Overload _SetColormap get-setter so that we can change self.mapData, which we use
-#     #to map values to colours without calling self._colormap.GetData() every draw call.
-#     def _SetColormap(self, value):
-#         self._colormap.SetMap(value)
-#         self.mapData = self._colormap.GetData()
-
-# def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
-#     """
-#     eldraw2(ex,ey,plotpar,elnum)
-#     eldraw2(ex,ey,plotpar)
-#     eldraw2(ex,ey)
-
-#      PURPOSE
-#        Draw the undeformed 2D mesh for a number of elements of
-#        the same type. Supported elements are:
 
-#        1) -> bar element              2) -> beam el.
-#        3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
-#        5) -> 8-node isopar. elemen
+def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
+    """
+    eldraw2(ex,ey,plotpar,elnum)
+    eldraw2(ex,ey,plotpar)
+    eldraw2(ex,ey)
 
-#      INPUT
-#         ex,ey:.......... nen:   number of element nodes
-#                          nel:   number of elements
-#         plotpar=[ linetype, linecolor, nodemark]
-
-#                  linetype=1 -> solid    linecolor=1 -> black
-#                           2 -> dashed             2 -> blue
-#                           3 -> dotted             3 -> magenta
-#                                                   4 -> red
+     PURPOSE
+       Draw the undeformed 2D mesh for a number of elements of
+       the same type. Supported elements are:
 
-#                  nodemark=1 -> circle
-#                           2 -> star
-#                           0 -> no mark
+       1) -> bar element              2) -> beam el.
+       3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
+       5) -> 8-node isopar. elemen
 
-#         elnum=edof(:,1) ; i.e. the first column in the topology matrix
+     INPUT
+        ex,ey:.......... nen:   number of element nodes
+                         nel:   number of elements
+        plotpar=[ linetype, linecolor, nodemark]
 
-#         Rem. Default is solid white lines with circles at nodes.
-#     """
+                 linetype=1 -> solid    linecolor=1 -> black
+                          2 -> dashed             2 -> blue
+                          3 -> dotted             3 -> magenta
+                                                  4 -> red
 
-#     line_type = plotpar[0]
-#     line_color = plotpar[1]
-#     node_mark = plotpar[2]
+                 nodemark=1 -> circle
+                          2 -> star
+                          0 -> no mark
 
-#     # Translate CALFEM plotpar to visvis
+        elnum=edof(:,1) ; i.e. the first column in the topology matrix
 
-#     vv_line_type = '-'
-#     vv_line_color = 'b'
-#     vv_node_mark = 'o'
+        Rem. Default is solid white lines with circles at nodes.
+    """
 
-#     if line_type == 1:
-#         vv_line_type = '-'
-#     elif line_type == 2:
-#         vv_line_type = '--'
-#     elif line_type == 3:
-#         vv_line_type = ':'
-
-#     if line_color == 1:
-#         vv_line_color = 'k'
-#     elif line_color == 2:
-#         vv_line_color = 'b'
-#     elif line_color == 3:
-#         vv_line_color = 'm'
-#     elif line_color == 4:
-#         vv_line_color = 'r'
-
-#     if node_mark == 1:
-#         vv_node_mark = 'o'
-#     elif node_mark == 2:
-#         vv_node_mark = 'x'
-#     elif node_mark == 0:
-#         vv_node_mark = ''
+    line_type = plotpar[0]
+    line_color = plotpar[1]
+    node_mark = plotpar[2]
 
-#     vv_marker_color = vv_line_color
+    # Translate CALFEM plotpar to visvis
 
-#     vv.axis('equal')
+    vv_line_type = '-'
+    vv_line_color = 'b'
+    vv_node_mark = 'o'
 
-#     draw_element_numbers = False
+    if line_type == 1:
+        vv_line_type = '-'
+    elif line_type == 2:
+        vv_line_type = '--'
+    elif line_type == 3:
+        vv_line_type = ':'
 
-#     if len(elnum) == ex.shape[0]:
-#         draw_element_numbers = True
-
-#     i = 0
+    if line_color == 1:
+        vv_line_color = 'k'
+    elif line_color == 2:
+        vv_line_color = 'b'
+    elif line_color == 3:
+        vv_line_color = 'm'
+    elif line_color == 4:
+        vv_line_color = 'r'
 
-#     for elx, ely in zip(ex, ey):
-#         x = elx.tolist()
-#         x.append(elx[0])
-#         y = ely.tolist()
-#         y.append(ely[0])
+    if node_mark == 1:
+        vv_node_mark = 'o'
+    elif node_mark == 2:
+        vv_node_mark = 'x'
+    elif node_mark == 0:
+        vv_node_mark = ''
 
-#         xm = sum(x)/len(x)
-#         ym = sum(y)/len(y)
+    vv_marker_color = vv_line_color
 
-#         vv.plot(x, y, ls=vv_line_type, lc = vv_line_color, ms = vv_node_mark, mc = vv_marker_color)
+    plt.axis('equal')
 
-#         if draw_element_numbers:
-#             text(str(elnum[i]), [xm, ym])
-#             i += 1
+    draw_element_numbers = False
 
-# def eldraw2_mpl(ex, ey, plotpar=[1, 2, 1], elnum=[]):
-#     """
-#     eldraw2(ex,ey,plotpar,elnum)
-#     eldraw2(ex,ey,plotpar)
-#     eldraw2(ex,ey)
+    if len(elnum) == ex.shape[0]:
+        draw_element_numbers = True
 
-#      PURPOSE
-#        Draw the undeformed 2D mesh for a number of elements of
-#        the same type. Supported elements are:
+    i = 0
 
-#        1) -> bar element              2) -> beam el.
-#        3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
-#        5) -> 8-node isopar. elemen
+    for elx, ely in zip(ex, ey):
+        x = elx.tolist()
+        x.append(elx[0])
+        y = ely.tolist()
+        y.append(ely[0])
 
-#      INPUT
-#         ex,ey:.......... nen:   number of element nodes
-#                          nel:   number of elements
-#         plotpar=[ linetype, linecolor, nodemark]
+        xm = sum(x)/len(x)
+        ym = sum(y)/len(y)
 
-#                  linetype=1 -> solid    linecolor=1 -> black
-#                           2 -> dashed             2 -> blue
-#                           3 -> dotted             3 -> magenta
-#                                                   4 -> red
+        plt.plot(x, y, vv_line_color + vv_node_mark + vv_line_type)
 
-#                  nodemark=1 -> circle
-#                           2 -> star
-#                           0 -> no mark
 
-#         elnum=edof(:,1) ; i.e. the first column in the topology matrix
+def eliso2_mpl(ex, ey, ed):
 
-#         Rem. Default is solid white lines with circles at nodes.
-#     """
+    plt.axis('equal')
 
-#     line_type = plotpar[0]
-#     line_color = plotpar[1]
-#     node_mark = plotpar[2]
+    print(np.shape(ex))
+    print(np.shape(ey))
+    print(np.shape(ed))
 
-#     # Translate CALFEM plotpar to visvis
-
-#     vv_line_type = '-'
-#     vv_line_color = 'b'
-#     vv_node_mark = 'o'
-
-#     if line_type == 1:
-#         vv_line_type = '-'
-#     elif line_type == 2:
-#         vv_line_type = '--'
-#     elif line_type == 3:
-#         vv_line_type = ':'
-
-#     if line_color == 1:
-#         vv_line_color = 'k'
-#     elif line_color == 2:
-#         vv_line_color = 'b'
-#     elif line_color == 3:
-#         vv_line_color = 'm'
-#     elif line_color == 4:
-#         vv_line_color = 'r'
-
-#     if node_mark == 1:
-#         vv_node_mark = 'o'
-#     elif node_mark == 2:
-#         vv_node_mark = 'x'
-#     elif node_mark == 0:
-#         vv_node_mark = ''
-
-#     vv_marker_color = vv_line_color
-
-#     plt.axis('equal')
-
-#     draw_element_numbers = False
-
-#     if len(elnum) == ex.shape[0]:
-#         draw_element_numbers = True
-
-#     i = 0
-
-#     for elx, ely in zip(ex, ey):
-#         x = elx.tolist()
-#         x.append(elx[0])
-#         y = ely.tolist()
-#         y.append(ely[0])
-
-#         xm = sum(x)/len(x)
-#         ym = sum(y)/len(y)
-
-#         plt.plot(x, y, vv_line_color + vv_node_mark + vv_line_type)
-#         #vv.plot(x, y, ls=vv_line_type, lc = vv_line_color, ms = vv_node_mark, mc = vv_marker_color)
-
-#         #if draw_element_numbers:
-#         #    text(str(elnum[i]), [xm, ym])
-#         #    i += 1
-
-# def eliso2_mpl(ex, ey, ed):
-
-#     plt.axis('equal')
-
-#     print(np.shape(ex))
-#     print(np.shape(ey))
-#     print(np.shape(ed))
-
-#     gx = []
-#     gy = []
-#     gz = []
-
-
-#     for elx, ely, scl in zip(ex, ey, ed):
-#         for x in elx:
-#            gx.append(x)
-#         for y in ely:
-#            gy.append(y)
-#         for z in ely:
-#            gz.append(y)
-
-#     plt.tricontour(gx, gy, gz, 5)
-
-# def eldraw2_old(ex, ey):
-#     """
-#     Draw elements in 2d.
-
-#     Parameters:
-
-#         ex, ey          Element coordinates
-#         plotpar         (not implemented yet)
-
-#     """
-#     #if not haveWx:
-#     #    print("wxPython not installed.")
-#     #    return
-
-#     #class ElDispApp(wx.App):
-#     #    def OnInit(self):
-#     #        wx.InitAllImageHandlers()
-#     #        mainWindow = ElementView(None, -1, "")
-#     #        mainWindow.ex = ex
-#     #        mainWindow.ey = ey
-#     #        mainWindow.showNodalValues = False
-#     #        self.SetTopWindow(mainWindow)
-#     #        mainWindow.Show()
-#     #        return 1
-#     #
-#     #app = ElDispApp(0)
-#     #app.MainLoop()
-#     mainWindow = ElementView(None, -1, "")
-#     mainWindow.ex = ex
-#     mainWindow.ey = ey
-#     mainWindow.showNodalValues = False
-#     mainWindow.Show()
-#     globalWindows.append(mainWindow)
-
-# def eliso2_old(ex, ey, ed, showMesh=False):
-#     """
-#     Draw nodal values in 2d.
-
-#     Parameters:
-
-#         ex, ey          Element coordinates
-#         ed              Element nodal values
-#         plotpar         (not implemented yet)
-
-#     """
-#     #if not haveWx:
-#     #    print("wxPython not installed.")
-#     #    return
-
-#     #class ElDispApp(wx.App):
-#     #    def OnInit(self):
-#     #        wx.InitAllImageHandlers()
-#     #        mainWindow = ElementView(None, -1, "")
-#     #        mainWindow.ex = ex
-#     #        mainWindow.ey = ey
-#     #        mainWindow.ed = ed
-#     #        mainWindow.showMesh = showMesh
-#     #        mainWindow.showNodalValues = True
-#     #        self.SetTopWindow(mainWindow)
-#     #        mainWindow.Show()
-#     #        return 1
-#     #
-#     #app = ElDispApp(0)
-#     #app.MainLoop()
-#     mainWindow = ElementView(None, -1, "")
-#     mainWindow.ex = ex
-#     mainWindow.ey = ey
-#     mainWindow.ed = ed
-#     mainWindow.showMesh = showMesh
-#     mainWindow.showNodalValues = True
-#     mainWindow.Show()
-#     globalWindows.append(mainWindow)
-
-# def elval2(ex, ey, ev, showMesh=False):
-#     """
-#     Draw elements values in 2d.
-
-#     Parameters:
-
-#         ex, ey          Element coordinates
-#         ev              Element values (scalar)
-#         plotpar         (not implemented yet)
-
-#     """
-#     #if not haveWx:
-#     #    print("wxPython not installed.")
-#     #    return
-
-#     mainWindow = ElementView(None, -1, "")
-#     mainWindow.ex = ex
-#     mainWindow.ey = ey
-#     mainWindow.ev = ev
-#     mainWindow.showMesh = showMesh
-#     mainWindow.showElementValues = True
-#     mainWindow.showNodalValues = False
-#     mainWindow.Show()
-#     globalWindows.append(mainWindow)
-
-# def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
-#     #if not haveWx:
-#     #    print("wxPython not installed.")
-#     #    return
-
-#     mainWindow = ElementView(None, -1, "")
-#     mainWindow.dofsPerNode = 2
-#     mainWindow.ex = ex
-#     mainWindow.ey = ey
-#     mainWindow.ed = ed
-#     mainWindow.showMesh = showMesh
-#     mainWindow.showNodalValues = False
-#     mainWindow.showDisplacements = True
-#     mainWindow.magnfac = magnfac
-#     mainWindow.Show()
-#     globalWindows.append(mainWindow)
+    gx = []
+    gy = []
+    gz = []
+
+    for elx, ely, scl in zip(ex, ey, ed):
+        for x in elx:
+            gx.append(x)
+        for y in ely:
+            gy.append(y)
+        for z in ely:
+            gz.append(y)
+
+    plt.tricontour(gx, gy, gz, 5)
 
 # def waitDisplayNative():
 #     if haveQt:

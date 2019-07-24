@@ -14,6 +14,7 @@ import calfem.utils as cfu
 import calfem.core as cfc
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.tri as tri
 
 import numpy as np
@@ -145,6 +146,8 @@ for i in range(np.shape(ex)[0]):
 
 print("Visualising...")
 
+mpl.rcParams['figure.dpi'] = 160
+
 cfv.draw_geometry(g, title="Geometry")
 
 cfv.figure()
@@ -153,21 +156,9 @@ cfv.figure()
 
 cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
 
-plt.figure()
+cfv.figure()
 
-cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
-
-x = coords[:,0].flatten()
-y = coords[:,1].flatten()
-z = np.resize(a, a.size)
-
-triang = tri.Triangulation(x, y)
-print(triang.x.shape)
-print(z.shape)
-plt.tricontour(triang, z)
-
-#cfv.figure()
-#cfv.draw_nodal_values(a, coords, edof, dofs_per_node, el_type, title="Example 7")
+cfv.draw_nodal_values(a, coords, edof, g, dofs_per_node, el_type, title="Example 7", draw_mesh=True, n_iso=100)
 #cfv.get_color_bar().SetLabel("Temperature")
 #cfv.add_text("The bend has high conductivity", (125,125))
 #cfv.add_text("This part has low conductivity", (160,-50))
