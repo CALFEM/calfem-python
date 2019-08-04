@@ -31,9 +31,21 @@ def figure_class():
 
 figureClass = figure_class
 
+cfv_def_mappable = None
 
-def colorbar():
-    plt.colorbar()
+def set_mappable(mappable):
+    global cfv_def_mappable
+    cfv_def_mappable = mappable
+
+def colorbar(**kwargs):
+    """Add a colorbar to current figure"""
+    global cfv_def_mappable
+    if cfv_def_mappable!=None:
+        cbar = plt.colorbar(mappable=cfv_def_mappable, ax=plt.gca(), **kwargs)
+        cfv_def_mappable = None
+        return cbar
+    else:
+        return plt.colorbar(**kwargs)
 
 
 def figure(figure=None, show=True):
@@ -68,6 +80,9 @@ def gca():
     """Get current axis of the current visvis figure."""
     return plt.gca()
 
+def gcf():
+    return plt.gcf()
+
 
 def subplot(*args):
     """Create a visvis subplot."""
@@ -92,64 +107,14 @@ def show_and_wait_mpl():
 
 showAndWaitMpl = show_and_wait_mpl
 
-# def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-#     '''
-#     Adds a label inside the axes. Returns the Label object.
-#     Parameters:
-#     text    - String. The text of the label
-#     pos     - Tuple with two numbers. The (x,y) position of the label with origin
-#               at the upper left corner.
-#     angle   - Float or int. The rotation of the label in degrees.
-#     fontname- String. Either 'mono', 'sans' or 'serif'.
-#     fontSize- Int. Size of the text. Default 9.
-#     color   - A 3-tuple or a character in 'rgbycmkw', etc that defines text color.
-#               Default 'k' (black).
-#     bgcolor - Background color. See color. Default None.
-#     axes    - Axes wherein the label is placed. If None then the current axes is
-#               chosen.
-#     '''
-#     if axes is None:
-#         axes = vv.gca()
-#     label = vv.Label(axes, text, fontName, fontSize, color)
-#     label.position = pos
-#     label.bgcolor = bgcolor
-#     label.textAngle = angle
-#     return label
+def set_figure_dpi(dpi):
+    mpl.rcParams['figure.dpi'] = dpi
 
-# addLabel = add_label
+def text(text, pos, angle=0, **kwargs):
+    return plt.text(pos[0], pos[1], text, **kwargs)
 
-# def label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-#     return addLabel(text, pos, angle, fontName, fontSize, color, bgcolor, axes)
-
-# def add_text(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-#     '''
-#     Adds a text in the world space. Returns the Text object.
-#     Parameters:
-#     text    - String. The text of the label
-#     pos     - Tuple with two or three numbers. The (x,y,z) position of the text in
-#               world space.
-#     angle   - Float or int. The rotation of the label in degrees.
-#     fontname- String. Either 'mono', 'sans' or 'serif'.
-#     fontSize- Int. Size of the text. Default 9.
-#     color   - A 3-tuple or a character in 'rgbycmkw', etc that defines text color.
-#               Default 'k' (black).
-#     bgcolor - Background color. See color. Default None.
-#     axes    - Axes wherein the label is placed. If None then the current axes is
-#               chosen.
-#     '''
-#     if axes is None:
-#         axes = vv.gca()
-#     text = vv.Text(axes, text, *pos, fontName=fontName, fontSize=fontSize, color=color)
-#     text.bgcolor = bgcolor
-#     text.textAngle = angle
-#     return text
-
-# addText = add_text
-
-# def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-#     return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)
-#
-
+add_text = text
+addText = text
 
 def ce2vf(coords, edof, dofs_per_node, el_type):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
@@ -243,22 +208,14 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
             pc = matplotlib.collections.PolyCollection(
                 v, facecolor='none', **kwargs)
 
-        # pc.set_array(values)
-        # pc.set_color(['black'])
         ax.add_collection(pc)
         ax.autoscale()
         return pc
 
-    #fig = plt.gcf()
     ax = plt.gca()
     ax.set_aspect('equal')
 
     pc = quatplot(y, z, faces, values, ax=ax, edgecolor=color)
-
-    # pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
-    #         edgecolor="crimson", cmap="rainbow")
-
-    #fig.colorbar(pc, ax=ax)
 
     if show_nodes:
         ax.plot(y, z, marker="o", ls="", color=node_color)
@@ -270,41 +227,33 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
 drawMesh = draw_mesh
 
 
-def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, clim=None, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
+def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
     Parameters:
-    ev          - An N-by-1 array or a list of scalars. The Scalar values of the
-                  elements. ev[i] should be the value of element i.
-    coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-                  of node i.
-    edof        - An E-by-L array. Element topology. (E is the number of elements
-                  and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
-                  for triangles or 3 for quadrangles.
+    ev            - An N-by-1 array or a list of scalars. The Scalar values of the
+                    elements. ev[i] should be the value of element i.
+    coords        - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
+                    of node i.
+    edof          - An E-by-L array. Element topology. (E is the number of elements
+                    and L is the number of dofs per element)
+    dofs_per_node - Integer. Dofs per node.
+    el_type       - Integer. Element Type. See Gmsh manual for details. Usually 2
+                    for triangles or 3 for quadrangles.
     displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
                     displacements of node i.
-    clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
-                  the colorbar. Defaults to None, in which case min/max are set to
-                  min/max of nodeVals.
-    axes        - Visvis Axes. The Axes where the model will be drawn.
-                  If unspecified the current Axes will be used, or a new Axes will
-                  be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole
-                  model. Default True.
-    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-    doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh
-                  should be drawn on top of the displaced mesh. Default False.
-                  Use only if displacements != None.
-    magnfac     - Float. Magnification factor. Displacements are multiplied by
-                  this value. Use this to make small displacements more visible.
-    title       - String. Changes title of the figure. Default "Element Values".
+    draw_mesh             - Boolean. True if mesh wire should be drawn. Default True.
+    draw_undisplaced_mesh - Boolean. True if the wire of the undisplaced mesh
+                            should be drawn on top of the displaced mesh. Default False.
+                            Use only if displacements != None.
+    magnfac       - Float. Magnification factor. Displacements are multiplied by
+                    this value. Use this to make small displacements more visible.
+    title         - String. Changes title of the figure. Default "Element Values".
     '''
 
     if draw_undisplaced_mesh:
-        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.5, 0.5, 0.5))
+        draw_mesh(coords, edof, dofs_per_node, el_type, color=(0.5, 0.5, 0.5))
 
     if displacements is not None:
         if displacements.shape[1] != coords.shape[1]:
@@ -337,18 +286,20 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
 
     if draw_mesh:
         pc = quatplot(y, z, faces, values, ax=ax,
-                      edgecolor=color, cmap="rainbow")
+                      edgecolor=color)
     else:
         pc = quatplot(y, z, faces, values, ax=ax,
-                      edgecolor=None, cmap="rainbow")
+                      edgecolor=None)
 
     # pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
     #         edgecolor="crimson", cmap="rainbow")
 
-    fig.colorbar(pc, ax=ax)
+    set_mappable(pc)
 
     if title != None:
         ax.set(title=title)
+
+    return pc
 
 
 def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_undisplaced_mesh=False, magnfac=-1.0, magscale=0.25, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
@@ -356,29 +307,23 @@ def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_undisplaced
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
     Parameters:
-    ev          - An N-by-1 array or a list of scalars. The Scalar values of the
-                  elements. ev[i] should be the value of element i.
-    coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-                  of node i.
-    edof        - An E-by-L array. Element topology. (E is the number of elements
-                  and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
-                  for triangles or 3 for quadrangles.
+    ev            - An N-by-1 array or a list of scalars. The Scalar values of the
+                    elements. ev[i] should be the value of element i.
+    coords        - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
+                    of node i.
+    edof          - An E-by-L array. Element topology. (E is the number of elements
+                    and L is the number of dofs per element)
+    dofs_per_node - Integer. Dofs per node.
+    el_type       - Integer. Element Type. See Gmsh manual for details. Usually 2
+                    for triangles or 3 for quadrangles.
     displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
                     displacements of node i.
-    clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
-                  the colorbar. Defaults to None, in which case min/max are set to
-                  min/max of nodeVals.
-    axes        - Visvis Axes. The Axes where the model will be drawn.
-                  If unspecified the current Axes will be used, or a new Axes will
-                  be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole
-                  model. Default True.
-    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-    doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh
-                  should be drawn on top of the displaced mesh. Default False.
-                  Use only if displacements != None.
+    axes          - Visvis Axes. The Axes where the model will be drawn.
+                    If unspecified the current Axes will be used, or a new Axes will
+                    be created if none exist.
+    draw_undisplaced_mesh - Boolean. True if the wire of the undisplaced mesh
+                            should be drawn on top of the displaced mesh. Default False.
+                            Use only if displacements != None.
     magnfac     - Float. Magnification factor. Displacements are multiplied by
                   this value. Use this to make small displacements more visible.
     title       - String. Changes title of the figure. Default "Element Values".
@@ -431,7 +376,6 @@ def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_undisplaced
         ax.autoscale()
         return pc
 
-    fig = plt.gcf()
     ax = plt.gca()
     ax.set_aspect('equal')
 
@@ -516,46 +460,119 @@ def point_in_geometry(o_polys, point):
     return False
 
 
-def draw_nodal_values(values, coords, edof, geom, dofs_per_node, el_type, n_iso=25, draw_mesh=True, title=None, draw_triang_mesh=False, n_poly=10):
+def topo_to_tri(edof):
+    """Converts 2d element topology to triangle topology to be used
+    with the matplotlib functions tricontour and tripcolor."""
 
-    fig = plt.gcf()
+    if edof.shape[1] == 3:
+        return edof
+    elif edof.shape[1] == 4:
+        new_edof = np.zeros((edof.shape[0]*2, 3), int)
+        new_edof[0::2, 0] = edof[:, 0]
+        new_edof[0::2, 1] = edof[:, 1]
+        new_edof[0::2, 2] = edof[:, 2]
+        new_edof[1::2, 0] = edof[:, 2]
+        new_edof[1::2, 1] = edof[:, 3]
+        new_edof[1::2, 2] = edof[:, 0]
+        return new_edof
+    elif edof.shape[1] == 8:
+        new_edof = np.zeros((edof.shape[0]*6, 3), int)
+        new_edof[0::6, 0] = edof[:, 0]
+        new_edof[0::6, 1] = edof[:, 4]
+        new_edof[0::6, 2] = edof[:, 7]
+        new_edof[1::6, 0] = edof[:, 4]
+        new_edof[1::6, 1] = edof[:, 1]
+        new_edof[1::6, 2] = edof[:, 5]
+        new_edof[2::6, 0] = edof[:, 5]
+        new_edof[2::6, 1] = edof[:, 2]
+        new_edof[2::6, 2] = edof[:, 6]
+        new_edof[3::6, 0] = edof[:, 6]
+        new_edof[3::6, 1] = edof[:, 3]
+        new_edof[3::6, 2] = edof[:, 7]
+        new_edof[4::6, 0] = edof[:, 4]
+        new_edof[4::6, 1] = edof[:, 6]
+        new_edof[4::6, 2] = edof[:, 7]
+        new_edof[5::6, 0] = edof[:, 4]
+        new_edof[5::6, 1] = edof[:, 5]
+        new_edof[5::6, 2] = edof[:, 6]
+        return new_edof
+    else:
+        error("Element topology not supported.")
+
+
+def draw_nodal_values_contourf(values, coords, edof, levels=12, title=None, dofs_per_node=None, el_type=None, draw_elements=False):
+    """Draws element nodal values as filled contours. Element topologies
+    supported are triangles, 4-node quads and 8-node quads."""
+
+    edof_tri = topo_to_tri(edof)
+
     ax = plt.gca()
     ax.set_aspect('equal')
 
-    x = coords[:, 0].flatten()
-    y = coords[:, 1].flatten()
-    z = np.resize(values, values.size)
+    x, y = coords.T
+    v = np.asarray(values)
+    plt.tricontourf(x, y, edof_tri - 1, v.ravel(), levels)
 
-    triang = tri.Triangulation(x, y)
+    if draw_elements:
+        if dofs_per_node != None and el_type != None:
+            draw_mesh(coords, edof, dofs_per_node,
+                      el_type, color=(0.2, 0.2, 0.2))
+        else:
+            info("dofs_per_node and el_type must be specified to draw the mesh.")
 
-    mask = np.zeros(triang.triangles.shape[0], dtype=bool)
-    exm = np.zeros(triang.triangles.shape[0], dtype=float)
-    eym = np.zeros(triang.triangles.shape[0], dtype=float)
+    if title != None:
+        ax.set(title=title)
 
-    o_polys = create_ordered_polys(geom, N=n_poly)
 
-    i = 0
+def draw_nodal_values_contour(values, coords, edof, levels=12, title=None, dofs_per_node=None, el_type=None, draw_elements=False):
+    """Draws element nodal values as filled contours. Element topologies
+    supported are triangles, 4-node quads and 8-node quads."""
 
-    for t in triang.triangles:
-        ex = x[t]
-        ey = y[t]
-        xm = ex.mean()
-        ym = ey.mean()
-        exm[i] = xm
-        eym[i] = ym
-        mask[i] = not point_in_geometry(o_polys, [xm, ym])
-        i += 1
+    edof_tri = topo_to_tri(edof)
 
-    triang.set_mask(mask)
-    tc = plt.tricontourf(triang, z, n_iso)
+    ax = plt.gca()
+    ax.set_aspect('equal')
 
-    if draw_triang_mesh:
-        plt.triplot(triang)
+    x, y = coords.T
+    v = np.asarray(values)
+    plt.tricontour(x, y, edof_tri - 1, v.ravel(), levels)
 
-    if draw_mesh:
-        drawMesh(coords, edof, dofs_per_node, el_type, color=(0.2, 0.2, 0.2))
+    if draw_elements:
+        if dofs_per_node != None and el_type != None:
+            draw_mesh(coords, edof, dofs_per_node,
+                      el_type, color=(0.2, 0.2, 0.2))
+        else:
+            info("dofs_per_node and el_type must be specified to draw the mesh.")
 
-    fig.colorbar(tc)
+    if title != None:
+        ax.set(title=title)
+
+
+def draw_nodal_values_shaded(values, coords, edof, title=None, dofs_per_node=None, el_type=None, draw_elements=False):
+    """Draws element nodal values as shaded triangles. Element topologies
+    supported are triangles, 4-node quads and 8-node quads."""
+
+    edof_tri = topo_to_tri(edof)
+
+    ax = plt.gca()
+    ax.set_aspect('equal')
+
+    x, y = coords.T
+    v = np.asarray(values)
+    plt.tripcolor(x, y, edof_tri - 1, v.ravel(), shading="gouraud")
+
+    if draw_elements:
+        if dofs_per_node != None and el_type != None:
+            draw_mesh(coords, edof, dofs_per_node,
+                      el_type, color=(0.2, 0.2, 0.2))
+        else:
+            info("dofs_per_node and el_type must be specified to draw the mesh.")
+
+    if title != None:
+        ax.set(title=title)
+
+
+draw_nodal_values = draw_nodal_values_contourf
 
 
 def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20):
@@ -897,19 +914,3 @@ def eliso2_mpl(ex, ey, ed):
             gz.append(y)
 
     plt.tricontour(gx, gy, gz, 5)
-
-# def waitDisplayNative():
-#     if haveQt:
-#         globalQtApp.exec_()
-#     else:
-#         globalWxApp.MainLoop()
-
-
-# def showAndWaitNative():
-#     if haveQt:
-#         globalQtApp.exec_()
-#     else:
-#         globalWxApp.MainLoop()
-
-# if __name__ == "__main__":
-#     print("Testing")

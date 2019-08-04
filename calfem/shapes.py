@@ -66,6 +66,10 @@ class Rectangle(Shape):
 
         return self.g
 
+class RectangleWithHole(Rectangle):
+    def __init__(self, width=1.0, height=1.0, elemenmt_type = 3, dofs_per_node = 1, max_area = -1):
+        super().__init__(self, width, height, element_type, dofs_per_node, max_area)
+
 class ShapeMesh:
     """Mesh generator for shapes"""
     def __init__(self, shape):

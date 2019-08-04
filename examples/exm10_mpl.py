@@ -179,6 +179,8 @@ cfv.draw_element_values(von_mises, coords, edof, dofs_per_node, el_type, a,
                       draw_mesh=True, draw_undisplaced_mesh=False, 
                       title="Effective Stress", magnfac=25.0)
 
+cfv.colorbar()
+
 cfu.info("Done drawing...")
 
 cfv.showAndWait()

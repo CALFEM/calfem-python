@@ -144,19 +144,15 @@ for i in range(edof.shape[0]):
 cfu.info("Visualising...")
 
 cfv.figure()
-
 cfv.draw_geometry(g, draw_points=True, label_curves=True, label_points=True)
 
 cfv.figure()
-
 cfv.draw_mesh(coords, edof, dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type)
 
 cfv.figure()
-
 cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, None, draw_mesh=False, draw_undisplaced_mesh=False, title="Example 6 - Effective stress")
 
 cfv.figure()
-
 cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06 - Displacements")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on 

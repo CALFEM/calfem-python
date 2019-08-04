@@ -3179,6 +3179,8 @@ def extractEldisp(edof,a):
         
     return ed
 
+extract_eldisp = extractEldisp
+
 def statcon(K,f,cd):
     """
     Condensation of static FE-equations according to the vector cd.

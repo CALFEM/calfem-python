@@ -134,7 +134,7 @@ class Flow2DSolver(Solver):
         es = None
         et = None
         if elementType == 2: 
-            es, et = cfc.flw2ts(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)
+            es, et = cfc.flw2ts(ex, ey, self.mesh.shape.D, ed)
         else:
             es, et, temp = cfc.flw2i4s(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)
         

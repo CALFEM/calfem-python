@@ -4,6 +4,19 @@ from calfem.core import createdofs
 from calfem.utils import which
 import calfem.core as cfc
 
+import logging as cflog
+
+
+def error(msg):
+    """Log error message"""
+    cflog.error(msg)
+
+
+def info(msg):
+    """Log information message"""
+    cflog.info(msg)
+
+
 def cmp(a, b):
     return (a > b) - (a < b)  
 
@@ -283,7 +296,7 @@ class GmshMeshGenerator:
         #Execute gmsh
         
         gmshExe = os.path.normpath(gmshExe)
-        print("GMSH binary: "+gmshExe)
+        info("GMSH binary: "+gmshExe)
         #print('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         #os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
         #retval = os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
@@ -294,7 +307,7 @@ class GmshMeshGenerator:
         #print("Opening msh file " + mshFileName)#TEMP
         
         mshFile = open(mshFileName, 'r')
-        print("Mesh file  : "+mshFileName)
+        info("Mesh file  : "+mshFileName)
         
         #print("Reading msh file...")#TEMP
         ln = mshFile.readline()
@@ -725,7 +738,7 @@ def trimesh2d(vertices, segments = None, holes = None, maxArea=None, quality=Tru
             triangleExecutable = None
             
     if triangleExecutable==None:
-        print("Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH).")
+        error("Error: Could not find triangle. Please make sure that the \ntriangle executable is available on the search path (PATH).")
         return None, None, None, None
     
     # Create triangle options

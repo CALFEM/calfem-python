@@ -146,22 +146,23 @@ for i in range(np.shape(ex)[0]):
 
 print("Visualising...")
 
-mpl.rcParams['figure.dpi'] = 160
+cfv.set_figure_dpi(100)
 
 cfv.draw_geometry(g, title="Geometry")
 
-cfv.figure()
-
 # 8-node quads are drawn as simple quads.
 
+cfv.figure()
 cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
 
 cfv.figure()
+cfv.draw_nodal_values_shaded(a, coords, edof, title="Temperature", dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type, draw_elements=True)
+cbar = cfv.colorbar(orientation="horizontal")
+cbar.set_label("Temperature")
 
-cfv.draw_nodal_values(a, coords, edof, g, dofs_per_node, el_type, title="Example 7", draw_mesh=True, n_iso=100)
-#cfv.get_color_bar().SetLabel("Temperature")
-#cfv.add_text("The bend has high conductivity", (125,125))
-#cfv.add_text("This part has low conductivity", (160,-50))
+
+cfv.text("The bend has high conductivity", (125,125))
+cfv.text("This part has low conductivity", (160,-50))
 
 # Enter main loop
 
