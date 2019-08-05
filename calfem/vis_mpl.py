@@ -300,9 +300,6 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     if title != None:
         ax.set(title=title)
 
-    return pc
-
-
 def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_undisplaced_mesh=False, magnfac=-1.0, magscale=0.25, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object

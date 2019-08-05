@@ -2497,6 +2497,56 @@ def plants(ex,ey,ep,D,ed):
             ie = ie + incie
                     
         return es, et
+        
+    # --------- plane strain --------------------------------------
+    elif ptype == 2:   #Implementation by LAPM
+        colD = D.shape[1]
+        incie=0
+
+        if rowex==1:
+            incie=0
+        else:
+            incie=1
+      
+        et=np.zeros([rowed,colD])
+        es=np.zeros([rowed,colD])
+        
+        ie=0
+        
+        ee=np.zeros([colD,1])
+
+        for i in range(rowed):
+            C = np.matrix(
+                [[1, ex[ie,0], ey[ie,0], 0, 0, 0 ], 
+                 [0, 0, 0, 1, ex[ie,0], ey[ie,0] ],
+                 [1, ex[ie,1], ey[ie,1], 0, 0, 0 ],
+                 [0, 0, 0, 1, ex[ie,1], ey[ie,1] ],
+                 [1, ex[ie,2], ey[ie,2], 0, 0, 0 ],
+                 [0, 0, 0, 1, ex[ie,2], ey[ie,2] ]]
+                )
+            
+            B = np.matrix([
+                [0,1,0,0,0,0],
+                [0,0,0,0,0,1],
+                [0,0,1,0,1,0]])*np.linalg.inv(C)
+            
+            e=B*np.asmatrix(ed[ie,:]).T
+
+            if colD>3:
+                ee[[0,1,3]]=e
+            else:
+                ee=e
+
+            et[ie,:] = ee.T
+            es[ie,:] = (D*ee).T
+    
+            ie = ie + incie
+                
+        return es, et
+
+    else:
+        print("Error ! Check first argument, ptype=1 or 2 allowed")
+        return None
     
 def plantf(ex,ey,ep,es):
     """

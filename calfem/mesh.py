@@ -18,7 +18,7 @@ def info(msg):
 
 
 def cmp(a, b):
-    return (a > b) - (a < b)  
+    return (a > b) ^ (a < b)
 
 #def dofsFromNodes(listOfNodes, dofs):
 #        D = []
