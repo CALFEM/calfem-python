@@ -47,9 +47,7 @@ segments = np.array([
 
 print("Creating element mesh...")
 
-coords, edof, dofs, bdofs = cfm.trimesh2d(vertices, segments, maxArea=20.0, dofsPerNode=1)
-
-print(coords[0:8,:])
+coords, edof, dofs, bdofs = cfm.trimesh2d(vertices, segments, maxArea=20.0, dofs_per_node=1)
 
 # ---- Assemble system matrix
 

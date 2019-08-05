@@ -7,7 +7,7 @@ Created on Sat Mar  3 22:08:29 2018
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 
 # ----- Define geometry
 
@@ -35,17 +35,17 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 print(bdofs)
 
-cfv.drawGeometry(g)
+cfv.draw_geometry(g)
 
 cfv.figure() 
 
 # ----- Draw the mesh.
 
-cfv.drawMesh(
+cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode=mesh.dofsPerNode, 
-    elType=mesh.elType, 
+    dofs_per_node=mesh.dofsPerNode, 
+    el_type=mesh.elType, 
     filled=True, 
     title="Example 01"
     ) 

@@ -176,7 +176,7 @@ cfv.draw_displacements(a, coords, edof, dofs_per_node, el_type,
 
 cfv.figure()
 cfv.draw_element_values(von_mises, coords, edof, dofs_per_node, el_type, a, 
-                      draw_mesh=True, draw_undisplaced_mesh=False, 
+                      draw_elements=True, draw_undisplaced_mesh=False, 
                       title="Effective Stress", magnfac=25.0)
 
 cfv.colorbar()

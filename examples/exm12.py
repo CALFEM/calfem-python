@@ -57,20 +57,4 @@ cfv.drawMesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType,
 cfv.figure() 
 cfv.drawNodalValues(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType)
 
-print(results.a)
-
-#cfv.figure()
-#cfv.drawDisplacements(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
-#                      doDrawUndisplacedMesh=False, title="Displacements", 
-#                      magnfac=1)
-
-#cfv.figure()
-#cfv.drawElementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, results.a, 
-#                      doDrawMesh=True, doDrawUndisplacedMesh=False, 
-#                      title="Effective Stress", magnfac=1)
-                      
-#cfv.colorBar().SetLabel("Effective stress")
-
-cfu.info("Done drawing...")
-
 cfv.showAndWait()

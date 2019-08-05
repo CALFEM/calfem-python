@@ -140,7 +140,7 @@ def _makeColorBar(text, axes=None):
     else:
         colBar.SetLabel(text)# A colorbar already exists, Change label.
 
-def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+def add_label(text, pos, angle=0, font_name=None, font_size=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a label inside the axes. Returns the Label object.
     Parameters:
@@ -148,8 +148,8 @@ def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=
     pos     - Tuple with two numbers. The (x,y) position of the label with origin
               at the upper left corner.
     angle   - Float or int. The rotation of the label in degrees.
-    fontname- String. Either 'mono', 'sans' or 'serif'.
-    fontSize- Int. Size of the text. Default 9.
+    font_name- String. Either 'mono', 'sans' or 'serif'.
+    font_size- Int. Size of the text. Default 9.
     color   - A 3-tuple or a character in 'rgbycmkw', etc that defines text color.
               Default 'k' (black).
     bgcolor - Background color. See color. Default None.
@@ -158,7 +158,7 @@ def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=
     '''
     if axes is None:
         axes = vv.gca()
-    label = vv.Label(axes, text, fontName, fontSize, color)
+    label = vv.Label(axes, text, font_name, font_size, color)
     label.position = pos
     label.bgcolor = bgcolor
     label.textAngle = angle
@@ -166,10 +166,10 @@ def add_label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=
 
 addLabel = add_label
 
-def label(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-    return addLabel(text, pos, angle, fontName, fontSize, color, bgcolor, axes)    
+def label(text, pos, angle=0, font_name=None, font_size=9, color='k', bgcolor=None, axes=None):
+    return addLabel(text, pos, angle, font_name, font_size, color, bgcolor, axes)    
 
-def add_text(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
+def add_text(text, pos, angle=0, font_name=None, font_size=9, color='k', bgcolor=None, axes=None):
     '''
     Adds a text in the world space. Returns the Text object.
     Parameters:
@@ -177,8 +177,8 @@ def add_text(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=N
     pos     - Tuple with two or three numbers. The (x,y,z) position of the text in
               world space.
     angle   - Float or int. The rotation of the label in degrees.
-    fontname- String. Either 'mono', 'sans' or 'serif'.
-    fontSize- Int. Size of the text. Default 9.
+    font_name- String. Either 'mono', 'sans' or 'serif'.
+    font_size- Int. Size of the text. Default 9.
     color   - A 3-tuple or a character in 'rgbycmkw', etc that defines text color.
               Default 'k' (black).
     bgcolor - Background color. See color. Default None.
@@ -187,18 +187,18 @@ def add_text(text, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=N
     '''
     if axes is None:
         axes = vv.gca()
-    text = vv.Text(axes, text, *pos, fontName=fontName, fontSize=fontSize, color=color)
+    text = vv.Text(axes, text, *pos, fontName=font_name, fontSize=font_size, color=color)
     text.bgcolor = bgcolor
     text.textAngle = angle
     return text
 
 addText = add_text
 
-def text(txt, pos, angle=0, fontName=None, fontSize=9, color='k', bgcolor=None, axes=None):
-    return addText(txt, pos, angle, fontName, fontSize, color, bgcolor, axes)   
+def text(txt, pos, angle=0, font_name=None, font_size=9, color='k', bgcolor=None, axes=None):
+    return addText(txt, pos, angle, font_name, font_size, color, bgcolor, axes)   
 
-def draw_mesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True, 
-             title=None, color=(0,0,0), faceColor=(1,1,1), filled=False):
+def draw_mesh(coords, edof, dofs_per_node, el_type, axes=None, axes_adjust=True, 
+             title=None, color=(0,0,0), face_color=(1,1,1), filled=False):
     '''
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
@@ -207,34 +207,34 @@ def draw_mesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True,
                   of node i.
     edof        - An E-by-L array. Element topology. (E is the number of elements
                   and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2
+    dofs_per_node - Integer. Dofs per node.
+    el_type      - Integer. Element Type. See Gmsh manual for details. Usually 2
                   for triangles or 3 for quadrangles.
     axes        - Visvis Axes. The Axes where the model will be drawn. 
                   If unspecified the current Axes will be used, or a new Axes will
                   be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole
+    axes_adjust  - Boolean. True if the view should be changed to show the whole
                   model. Default True.
     title       - String. Changes title of the figure. Default "Mesh".
     color       - 3-tuple or char. Color of the wire. Defaults to black (0,0,0).
                   Can also be given as a character in 'rgbycmkw'.
-    faceColor   - 3-tuple or char. Color of the faces. Defaults to white (1,1,1).
+    face_color   - 3-tuple or char. Color of the faces. Defaults to white (1,1,1).
                   Parameter filled must be True or faces will not be drawn at all.
     filled      - Boolean. Faces will be drawn if True. Otherwise only the wire is
                   drawn. Default False.
     '''
     #Prep:
-    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType)
+    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofs_per_node, el_type)
     #Create mesh:
     m = vv.Mesh(parent=axes, vertices=verts, faces=faces, values=color, verticesPerFace=verticesPerFace)
     #Settings:
     fShade = 'plain' if filled else None
     m.faceShading, m.edgeShading = (fShade, 'plain')
     m.edgeColor = color
-    m.faceColor = faceColor
+    m.face_color = face_color
     m.specular = 0 
     #Adjust axes:
-    if axesAdjust:
+    if axes_adjust:
         _adjustaxes(axes, is3D)
     #Set title and return:
     vv.title(title, axes)
@@ -242,33 +242,33 @@ def draw_mesh(coords, edof, dofsPerNode, elType, axes=None, axesAdjust=True,
     
 drawMesh = draw_mesh
     
-def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, axes=None, axesAdjust=True, doDrawMesh=True, title=None):
+def draw_nodal_values(node_vals, coords, edof, dofs_per_node, el_type, clim=None, axes=None, axes_adjust=True, draw_elements=True, title=None):
     '''
     Draws scalar nodal values in 2D or 3D. Returns the Mesh object that represents
     the mesh.
     Parameters:
-    nodeVals    - An N-by-1 array or a list of scalars. The Scalar values at the
-                  nodes. nodeVals[i] should be the value of node i 
+    node_vals    - An N-by-1 array or a list of scalars. The Scalar values at the
+                  nodes. node_vals[i] should be the value of node i 
     coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
                   of node i.
     edof        - An E-by-L array. Element topology. (E is the number of elements 
                   and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2 
+    dofs_per_node - Integer. Dofs per node.
+    el_type      - Integer. Element Type. See Gmsh manual for details. Usually 2 
                   for triangles or 3 for quadrangles.
     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
                   the colorbar. Defaults to None, in which case min/max are set to
-                  min/max of nodeVals.
+                  min/max of node_vals.
     axes        - Visvis Axes. The Axes where the model will be drawn. 
                   If unspecified the current Axes will be used, or a new Axes will
                   be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole 
+    axes_adjust  - Boolean. True if the view should be changed to show the whole 
                   model. Default True.
-    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
+    draw_elements  - Boolean. True if mesh wire should be drawn. Default True.
     title       - String. Changes title of the figure. Default "Node Values".
     '''    
-    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType)
-    m = vv.Mesh(parent=axes, vertices=verts, faces=faces, values=nodeVals, verticesPerFace=verticesPerFace)
+    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofs_per_node, el_type)
+    m = vv.Mesh(parent=axes, vertices=verts, faces=faces, values=node_vals, verticesPerFace=verticesPerFace)
     
     if clim != None: #Set colorbar limits.
         m.clim = clim
@@ -276,12 +276,12 @@ def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, ax
     else:
         setClim = True
     
-    edgeSh = 'plain' if doDrawMesh else None
+    edgeSh = 'plain' if draw_elements else None
     m.faceShading, m.edgeShading = ('smooth', edgeSh)#NOTE: It seems colormap coloring breaks when faceshading='plain'. 'smooth' must be used.
     m.ambient = 1
     m.diffuse = 0
     m.specular = 0 #Disable specular. 
-    m.SetValues(nodeVals, setClim) #Set the values again, because it doesn't work in the constructor for unknown reasons
+    m.SetValues(node_vals, setClim) #Set the values again, because it doesn't work in the constructor for unknown reasons
     
     axes.light0.ambient = 1.0
     axes.light0.diffuse = 0.0  #Only ambient light to avoid shadows
@@ -290,7 +290,7 @@ def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, ax
     _makeColorBar("Node values", axes)
         
     # Adjust axes:
-    if axesAdjust:
+    if axes_adjust:
         _adjustaxes(axes, is3D)
     
     vv.title(title, axes)
@@ -298,8 +298,8 @@ def draw_nodal_values(nodeVals, coords, edof, dofsPerNode, elType, clim=None, ax
 
 drawNodalValues = draw_nodal_values
     
-def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=None, clim=None, axes=None, 
-                      axesAdjust=True, doDrawMesh=True, doDrawUndisplacedMesh=False, magnfac=1.0, title=None):
+def draw_element_values(ev, coords, edof, dofs_per_node, el_type, displacements=None, clim=None, axes=None, 
+                      axes_adjust=True, draw_elements=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object 
     elementsWobject that represents the mesh.
@@ -310,21 +310,21 @@ def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=Non
                   of node i.
     edof        - An E-by-L array. Element topology. (E is the number of elements
                   and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2 
+    dofs_per_node - Integer. Dofs per node.
+    el_type      - Integer. Element Type. See Gmsh manual for details. Usually 2 
                   for triangles or 3 for quadrangles.
     displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z 
                     displacements of node i.
     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
                   the colorbar. Defaults to None, in which case min/max are set to
-                  min/max of nodeVals.
+                  min/max of node_vals.
     axes        - Visvis Axes. The Axes where the model will be drawn. 
                   If unspecified the current Axes will be used, or a new Axes will
                   be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole 
+    axes_adjust  - Boolean. True if the view should be changed to show the whole 
                   model. Default True.
-    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
-    doDrawUndisplacedMesh - Boolean. True if the wire of the undisplaced mesh 
+    draw_elements  - Boolean. True if mesh wire should be drawn. Default True.
+    draw_undisplaced_mesh - Boolean. True if the wire of the undisplaced mesh 
                   should be drawn on top of the displaced mesh. Default False. 
                   Use only if displacements != None.
     magnfac     - Float. Magnification factor. Displacements are multiplied by
@@ -337,30 +337,30 @@ def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=Non
     # http://code.google.com/p/visvis/wiki/creatingWibjectsAndWobjects
     
 
-    if doDrawUndisplacedMesh:
-        drawMesh(coords, edof, dofsPerNode, elType, axes, axesAdjust, color=(0.5, 0.5, 0.5))
+    if draw_undisplaced_mesh:
+        drawMesh(coords, edof, dofs_per_node, el_type, axes, axes_adjust, color=(0.5, 0.5, 0.5))
     
     if displacements is not None:
         if displacements.shape[1] != coords.shape[1]:
             displacements = np.reshape(displacements, (-1, coords.shape[1]))
             coords = np.asarray(coords + magnfac * displacements)
     
-    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType)
+    axes, verts, faces, verticesPerFace, is3D = _preMeshDrawPrep(axes, coords, edof, dofs_per_node, el_type)
     
     
     #This is done because 3D elements are made up of several faces.
     #TODO: Discard inner faces that are not visible.
     fPerElms = { 1:0,   2:1,   3:1,   4:4,   5:6} #TODO: Extend with more element types
-    facesPerElement = fPerElms[elType]
+    facesPerElement = fPerElms[el_type]
     #Repeat the element values so that we get the value of each face:
     faceVals = np.repeat(ev, facesPerElement, axis=0) 
 
-    c = _elementsWobject(axes, faceVals, verts, faces, verticesPerFace, doDrawMesh, clim) #Creates the world object that gets drawn on screen.
+    c = _elementsWobject(axes, faceVals, verts, faces, verticesPerFace, draw_elements, clim) #Creates the world object that gets drawn on screen.
     
     _makeColorBar("Element values", axes) #Finds or creates colorbar and sets the label.
     
     # Adjust axes
-    if axesAdjust:
+    if axes_adjust:
         _adjustaxes(axes, is3D)
     
     vv.title(title, axes)
@@ -368,8 +368,8 @@ def draw_element_values(ev, coords, edof, dofsPerNode, elType, displacements=Non
 
 drawElementValues = draw_element_values
     
-def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVals=None, clim=None, axes=None, 
-                      axesAdjust=True, doDrawUndisplacedMesh=True, magnfac=1.0,  title=None):
+def draw_displacements(displacements, coords, edof, dofs_per_node, el_type, node_vals=None, clim=None, axes=None, 
+                      axes_adjust=True, draw_undisplaced_mesh=True, magnfac=1.0,  title=None):
     '''
     Draws mesh with displacements in 2D or 3D. Scalar nodal values can also be 
     drawn on the mesh. Returns the displaced Mesh object.
@@ -382,20 +382,20 @@ def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVal
                   of node i.
     edof        - An E-by-L array. Element topology. (E is the number of elements
                   and L is the number of dofs per element)
-    dofsPerNode - Integer. Dofs per node.
-    elType      - Integer. Element Type. See Gmsh manual for details. Usually 2 
+    dofs_per_node - Integer. Dofs per node.
+    el_type      - Integer. Element Type. See Gmsh manual for details. Usually 2 
                   for triangles or 3 for quadrangles.
-    nodeVals    - An N-by-1 array or a list of scalars. The Scalar values at the
-                  nodes. nodeVals[i] should be the value of node i.
+    node_vals    - An N-by-1 array or a list of scalars. The Scalar values at the
+                  nodes. node_vals[i] should be the value of node i.
     clim        - 2-tuple. Colorbar limits (min, max). Defines the value range of
                   the colorbar. Defaults to None, in which case min/max are set 
-                  to min/max of nodeVals.
+                  to min/max of node_vals.
     axes        - Visvis Axes. The Axes where the model will be drawn. 
                   If unspecified the current Axes will be used, or a new Axes will
                   be created if none exist.
-    axesAdjust  - Boolean. True if the view should be changed to show the whole 
+    axes_adjust  - Boolean. True if the view should be changed to show the whole 
                   model. Default True.
-    doDrawMesh  - Boolean. True if mesh wire should be drawn. Default True.
+    draw_elements  - Boolean. True if mesh wire should be drawn. Default True.
     magnfac     - Float. Magnification factor. Displacements are multiplied by
                   this value. Use this to make small displacements more visible.
     title       - String. Changes title of the figure. Default None (in which case
@@ -406,13 +406,13 @@ def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVal
         displacements = np.reshape(displacements, (-1, coords.shape[1]))
     displaced = np.asarray(coords + magnfac * displacements)
        
-    if doDrawUndisplacedMesh:
-        drawMesh(coords, edof, dofsPerNode, elType, axes, axesAdjust, title=title, color=(0.5, 0.5, 0.5), filled=False)
+    if draw_undisplaced_mesh:
+        drawMesh(coords, edof, dofs_per_node, el_type, axes, axes_adjust, title=title, color=(0.5, 0.5, 0.5), filled=False)
     
-    if nodeVals != None:
-        m = drawNodalValues(nodeVals, displaced, edof, dofsPerNode, elType, clim=clim, axes=axes, axesAdjust=axesAdjust, doDrawMesh=True, title=title)
+    if node_vals != None:
+        m = drawNodalValues(node_vals, displaced, edof, dofs_per_node, el_type, clim=clim, axes=axes, axes_adjust=axes_adjust, draw_elements=True, title=title)
     else:
-        m = drawMesh(displaced, edof, dofsPerNode, elType, axes, axesAdjust, title=title) 
+        m = drawMesh(displaced, edof, dofs_per_node, el_type, axes, axes_adjust, title=title) 
     
     if title != None:
         vv.title(title, axes)
@@ -420,7 +420,7 @@ def draw_displacements(displacements, coords, edof, dofsPerNode, elType, nodeVal
 
 drawDisplacements = draw_displacements
     
-def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoints=True, labelCurves=True, title=None, fontSize=11, N=20):
+def draw_geometry(geoData, axes=None, axes_adjust=True, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20):
     '''
     Draws the geometry (points and curves) in geoData
     Parameters:
@@ -429,14 +429,14 @@ def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoi
     axes       - Visvis Axes. The Axes where the model will be drawn. 
                  If unspecified the current Axes will be used, or a new Axes will
                  be created if none exist.
-    axesAdjust - Boolean. If True the view will be changed to show the whole 
+    axes_adjust - Boolean. If True the view will be changed to show the whole 
                  model. Default True.
-    drawPoints - Boolean. If True points will be drawn.
-    labelPoints- Boolean. If True Points will be labeled. The format is:
+    draw_points - Boolean. If True points will be drawn.
+    label_points- Boolean. If True Points will be labeled. The format is:
                  ID[marker]. If a point has marker==0 only the ID is written. 
-    labelCurves- Boolean. If True Curves will be labeled. The format is: 
+    label_curves- Boolean. If True Curves will be labeled. The format is: 
                  ID(elementsOnCurve)[marker].
-    fontSize   - Integer. Size of the text in the text labels. Default 11. 
+    font_size   - Integer. Size of the text in the text labels. Default 11. 
     N          - Integer. The number of discrete points per curve segment. 
                  Default 20. Increase for smoother curves. Decrease for better 
                  performance.
@@ -446,18 +446,18 @@ def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoi
         axes = vv.gca()
     axes.bgcolor = (0.7, 0.7, 0.7)
     
-    if drawPoints:
+    if draw_points:
         P = np.array(geoData.getPointCoords()) #M-by-3 list of M points.
-        plotArgs = {'mc':'r', 'mw':5, 'lw':0, 'ms':'o', 'axesAdjust':False, 'axes':axes}
+        plotArgs = {'mc':'r', 'mw':5, 'lw':0, 'ms':'o', 'axes_adjust':False, 'axes':axes}
         if geoData.is3D: 
             vv.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
         else:
             vv.plot(P[:,0], P[:,1], **plotArgs)           
         
-        if labelPoints: #Write text label at the points:
-            for (ID, (xyz, elSize, marker)) in geoData.points.items(): #[[x, y, z], elSize, marker]
+        if label_points: #Write text label at the points:
+            for (ID, (xyz, el_size, marker)) in geoData.points.items(): #[[x, y, z], el_size, marker]
                 text = "  " + str(ID) + ("[%s]"%marker if marker is not 0 else '')
-                addText(text, xyz, fontSize=fontSize-1, color=(0.5,0,0.5), axes=axes)  
+                addText(text, xyz, font_size=font_size-1, color=(0.5,0,0.5), axes=axes)  
     
     for(ID, (curveName, pointIDs, marker, elementsOnCurve, _, _)) in geoData.curves.items():
         points = geoData.getPointCoords(pointIDs)
@@ -469,31 +469,31 @@ def draw_geometry(geoData, axes=None, axesAdjust=True, drawPoints=True, labelPoi
             P = _circleArc(*points, pointsOnCurve=N)
         if curveName == "Ellipse":
             P = _ellipseArc(*points, pointsOnCurve=N)
-        plotArgs = {'lc':'k', 'ms':None, 'axesAdjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
+        plotArgs = {'lc':'k', 'ms':None, 'axes_adjust':False, 'axes':axes} #Args for plot style. Black lines with no symbols at points.
         if geoData.is3D:
             vv.plot(P[:,0], P[:,1], P[:,2], **plotArgs)
         else:
             vv.plot(P[:,0], P[:,1], **plotArgs)
         
-        if labelCurves:
+        if label_curves:
             midP = P[int(P.shape[0]*7.0/12), :].tolist() # Sort of midpoint along the curve. Where the text goes.
             #Create the text for the curve. Includes ID, elementsOnCurve, and marker:
             text = " "+str(ID)
             text += "(%s)"%(elementsOnCurve) if elementsOnCurve is not None else ''
             text += "[%s]"%(marker) if marker is not 0 else '' #Something like "4(5)[8]"
-            addText(text, midP, fontSize=fontSize, axes=axes)
+            addText(text, midP, font_size=font_size, axes=axes)
         
     if title != None:
         vv.title(title, axes)
     
-    if axesAdjust:
+    if axes_adjust:
         _adjustaxes(axes, geoData.is3D)
     axes.daspectAuto = False
     axes.daspect = (1,1,1)
     
 drawGeometry = draw_geometry
 
-def _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType):
+def _preMeshDrawPrep(axes, coords, edof, dofs_per_node, el_type):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
     if axes is None:
         axes = vv.gca() #Gets current Axis or creates a new one if none exists.
@@ -507,18 +507,18 @@ def _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType):
     else:
         raise ValueError('coords must be N-by-2 or N-by-3 array')
     
-    if elType in [2, 4]: #elements with triangular faces    
+    if el_type in [2, 4]: #elements with triangular faces    
         verticesPerFace = 3
-    elif elType in [3,5,16]: #elements with rectangular faces
+    elif el_type in [3,5,16]: #elements with rectangular faces
         verticesPerFace = 4
     else:   #[NOTE] This covers all element types available in CALFEM plus tetrahedrons. If more element types are added it is necessary to include them here and below.
         raise ValueError('element type not implemented')
     
-    faces = (edof[:,0::dofsPerNode]-1)/dofsPerNode  
+    faces = (edof[:,0::dofs_per_node]-1)/dofs_per_node  
 	#'faces' here are actually lists of nodes in elements, not in faces necessarily if the elements are in 3D. This case is handled below.   
     
-    if elType in [4,5]: #if hexahedrons or tetrahedrons:
-        if  elType == 5:
+    if el_type in [4,5]: #if hexahedrons or tetrahedrons:
+        if  el_type == 5:
             G = np.array([[0,3,2,1],
                        [0,1,5,4],
                        [4,5,6,7],
@@ -526,13 +526,13 @@ def _preMeshDrawPrep(axes, coords, edof, dofsPerNode, elType):
                        [2,3,7,6],
                        [0,4,7,3]]) #G is an array that is used to decomposes hexahedrons into its component faces.
 					   #The numbers are from the node orders (see p94 in the Gmsh manual) and each row makes one face.
-        elif elType == 4:
+        elif el_type == 4:
             G = np.array([[0,1,2],
                        [0,3,2],
                        [1,3,2],
                        [0,3,1]]) #This G decomposes tetrahedrons into faces
         faces = np.vstack([ faces[i, G] for i in range(faces.shape[0]) ])
-    elif elType == 16: #if 8-node-quads:
+    elif el_type == 16: #if 8-node-quads:
         faces = faces[:, 0:4] #The first 4 nodes are the corners of the high order quad.
         
     axes.bgcolor = (0.7, 0.7, 0.7) #background colour.
@@ -674,13 +674,13 @@ class _elementsWobject(vv.Wobject, Colormapable):
     '''
     #TODO: Find a way to make rendering faster. (Dump internal faces, cull backfaces, 
     #TODO: Don't draw lines separately, pass array to GL instead of looping, etc?)
-    def __init__(self, parent, fVals, verts, faces, verticesPerFace, doDrawMesh, clim=None):
+    def __init__(self, parent, fVals, verts, faces, verticesPerFace, draw_elements, clim=None):
         vv.Wobject.__init__(self, parent)
         self._fVals = fVals # N-by-1 array?            values of N faces (not elements if 3D)
         self._verts = verts # M-by-3 array             coordinates of M vertices  
         self._faces = faces # N-by-3 or N-by-4 array   verts that make up N faces
         self.verticesPerFace = verticesPerFace #3 or 4. Either we have triangle faces or quads.
-        self.doDrawMesh = doDrawMesh
+        self.draw_elements = draw_elements
         self._valMin = np.amin(fVals)
         self._valMax = np.amax(fVals)
         Colormapable.__init__(self)
@@ -724,7 +724,7 @@ class _elementsWobject(vv.Wobject, Colormapable):
     def OnDraw(self):
         """ To draw the object.
         """ 
-        if self.doDrawMesh:
+        if self.draw_elements:
             gl.glDisable(gl.GL_LINE_SMOOTH)
             #gl.glEnable(gl.GL_BLEND)
             gl.glLineWidth(1)
@@ -1074,7 +1074,7 @@ def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
     #    return
         
     mainWindow = ElementView(None, -1, "")
-    mainWindow.dofsPerNode = 2
+    mainWindow.dofs_per_node = 2
     mainWindow.ex = ex
     mainWindow.ey = ey
     mainWindow.ed = ed

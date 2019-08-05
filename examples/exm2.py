@@ -18,10 +18,10 @@ g = cfg.Geometry()
 #  In this example we set the IDs manually.
 
 g.point([ -2,  0], ID=0)
-g.point([  0,  1], ID=1, elSize=5) # elSize determines the size of the elements near this point.
-g.point([  1,  0], 2, elSize=5)    #  elSize is 1 by default. Larger number means less dense mesh.
+g.point([  0,  1], ID=1, el_size=5) # el_size determines the size of the elements near this point.
+g.point([  1,  0], 2, el_size=5)    #  el_size is 1 by default. Larger number means less dense mesh.
 g.point([  0, -2], 3)              #  Size means the length of the sides of the elements.
-g.point([  0,  0], 4, elSize=5)
+g.point([  0,  0], 4, el_size=5)
 g.point([ .5, .2], 5)
 g.point([-.5, .5], 6)
 g.point([-.7,-.5], 7)
@@ -72,7 +72,7 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # Draw the geometry.
 
-cfv.draw_geometry(g, labelCurves=True)
+cfv.draw_geometry(g, label_curves=True)
 
 # New figure window
 
@@ -83,8 +83,8 @@ cfv.figure()
 cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode = mesh.dofs_per_node, 
-    elType=mesh.el_type, 
+    dofs_per_node = mesh.dofs_per_node, 
+    el_type=mesh.el_type, 
     filled=True, 
     title="Example 02"
     ) 

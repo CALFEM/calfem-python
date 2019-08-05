@@ -97,7 +97,7 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 # Draw the geometry. Note that surfaces and volumes are not drawn at all by 
 # this function.
 
-cfv.drawGeometry(g)
+cfv.draw_geometry(g)
 
 # New figure window
 
@@ -105,11 +105,11 @@ cfv.figure()
 
 # Draw the mesh.
 
-cfv.drawMesh(
+cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode=mesh.dofs_per_node, 
-    elType=mesh.el_type, 
+    dofs_per_node=mesh.dofs_per_node, 
+    el_type=mesh.el_type, 
     filled=True, 
     title="Example 01"
     ) 

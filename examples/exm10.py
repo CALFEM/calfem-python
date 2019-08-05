@@ -9,7 +9,7 @@ The example does not contain anything that is not covered in the previous exampl
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis_mpl as cfv
+import calfem.vis as cfv
 import calfem.utils as cfu
 import numpy as np
 
@@ -163,23 +163,23 @@ for i in range(edof.shape[0]):
 cfu.info("Drawing results...")
 
 cfv.figure() 
-cfv.drawGeometry(g, title="Geometry")
+cfv.draw_geometry(g, title="Geometry")
 
 cfv.figure() 
-cfv.drawMesh(coords=coords, edof=edof, dofsPerNode=dofs_per_node, elType=el_type, 
+cfv.draw_mesh(coords=coords, edof=edof, dofs_per_node=dofs_per_node, el_type=el_type, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure()
-cfv.drawDisplacements(a, coords, edof, dofs_per_node, el_type, 
-                      doDrawUndisplacedMesh=False, title="Displacements", 
+cfv.draw_displacements(a, coords, edof, dofs_per_node, el_type, 
+                      draw_undisplaced_mesh=False, title="Displacements", 
                       magnfac=25.0)
 
 cfv.figure()
-cfv.drawElementValues(von_mises, coords, edof, dofs_per_node, el_type, a, 
-                      doDrawMesh=True, doDrawUndisplacedMesh=False, 
+cfv.draw_element_values(von_mises, coords, edof, dofs_per_node, el_type, a, 
+                      draw_elements=True, draw_undisplaced_mesh=False, 
                       title="Effective Stress", magnfac=25.0)
-                      
-cfv.colorBar().SetLabel("Effective stress")
+
+cfv.get_color_bar().SetLabel("Effective Stress")
 
 cfu.info("Done drawing...")
 

@@ -22,12 +22,12 @@ g = cfg.Geometry()
 #  In this example we set the IDs manually.
 
 g.point([-2,  0], ID=0)
-# elSize determines the size of the elements near this point.
-g.point([0,  1], ID=1, elSize=5)
-# elSize is 1 by default. Larger number means less dense mesh.
-g.point([1,  0], 2, elSize=5)
+# el_size determines the size of the elements near this point.
+g.point([0,  1], ID=1, el_size=5)
+# el_size is 1 by default. Larger number means less dense mesh.
+g.point([1,  0], 2, el_size=5)
 g.point([0, -2], 3)  # Size means the length of the sides of the elements.
-g.point([0,  0], 4, elSize=5)
+g.point([0,  0], 4, el_size=5)
 g.point([.5, .2], 5)
 g.point([-.5, .5], 6)
 g.point([-.7, -.5], 7)

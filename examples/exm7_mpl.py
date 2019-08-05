@@ -67,13 +67,13 @@ for p in points:
 
 # Add Splines:
 
-g.spline([1,2], marker=2, elOnCurve=4)
-g.spline([3,4], elOnCurve=4)
-g.circle([1,0,3], elOnCurve = 10)
-g.circle([2,0,4], elOnCurve = 10)
-g.spline([3,5], elOnCurve = 6)
-g.spline([5,6], marker=3, elOnCurve = 4)
-g.spline([6,4], elOnCurve = 6)
+g.spline([1,2], marker=2, el_on_curve=4)
+g.spline([3,4], el_on_curve=4)
+g.circle([1,0,3], el_on_curve = 10)
+g.circle([2,0,4], el_on_curve = 10)
+g.spline([3,5], el_on_curve = 6)
+g.spline([5,6], marker=3, el_on_curve = 4)
+g.spline([6,4], el_on_curve = 6)
 
 # Add Surfaces:
 #

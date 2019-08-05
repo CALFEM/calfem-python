@@ -55,7 +55,7 @@ splines = [[0,1], [1,2], [6,7], [7,8], [8,13],          #0-4
            [12,19]]                                     #25
            
 for s in splines:
-    g.spline(s, elOnCurve=10)
+    g.spline(s, el_on_curve=10)
     
 g.curveMarker(ID=4,  marker=7) #Assign marker 7 to the splines on the right.
 g.curveMarker(ID=5,  marker=7) # We will apply a force on nodes with marker 7.
@@ -68,7 +68,7 @@ circlearcs = [[2, 23, 3], [3, 23, 4], [4, 23, 5], [5, 23, 6],           #26-29
               [16, 24, 17], [17, 24, 18], [18, 24, 19], [19, 24, 20]]   #30-33
               
 for c in circlearcs:
-    g.circle(c, elOnCurve=10)
+    g.circle(c, el_on_curve=10)
 
 g.structuredSurface([11,12,13,0]) #0
 g.structuredSurface([14, 12, 10, 9])
@@ -143,13 +143,13 @@ for i in range(edof.shape[0]):
 
 cfu.info("Visualising...")
 
-cfv.drawGeometry(g, drawPoints=False, labelCurves=True)
+cfv.drawGeometry(g, draw_points=False, label_curves=True)
 
 cfv.figure()
-cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
+cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, draw_elements=True, draw_undisplaced_mesh=False, title="Example 06 effective stress")
 
 cfv.figure()
-cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, doDrawUndisplacedMesh=True, title="Example 06")
+cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on 
 # the right hand side of the mesh:
@@ -173,7 +173,7 @@ for i in rightSideNodes:
     
     # A poor man's force indicator. Could also use vv.plot()    
     
-    cfv.addText("\rightarrow", (x, y), fontSize=20, color='g') 
+    cfv.addText("\rightarrow", (x, y), font_size=20, color='g') 
 
 # Enter main loop
 

@@ -28,18 +28,18 @@ g.point([0, 1, 1], 8)
 
 # Add splines
 
-g.spline([0, 1, 2], 0, marker = 33, elOnCurve = 5)
-g.spline([2, 3], 1, marker = 23, elOnCurve = 5)
-g.spline([3, 4], 2, marker = 23, elOnCurve = 5)
-g.spline([4, 0], 3, elOnCurve = 5)
-g.spline([0, 5], 4, elOnCurve = 5)
-g.spline([2, 6], 5, elOnCurve = 5)
-g.spline([3, 7], 6, elOnCurve = 5)
-g.spline([4, 8], 7, elOnCurve = 5)
-g.spline([5, 6], 8, elOnCurve = 5)
-g.spline([6, 7], 9, elOnCurve = 5)
-g.spline([7, 8], 10, elOnCurve = 5)
-g.spline([8, 5], 11, elOnCurve = 5)
+g.spline([0, 1, 2], 0, marker = 33, el_on_curve = 5)
+g.spline([2, 3], 1, marker = 23, el_on_curve = 5)
+g.spline([3, 4], 2, marker = 23, el_on_curve = 5)
+g.spline([4, 0], 3, el_on_curve = 5)
+g.spline([0, 5], 4, el_on_curve = 5)
+g.spline([2, 6], 5, el_on_curve = 5)
+g.spline([3, 7], 6, el_on_curve = 5)
+g.spline([4, 8], 7, el_on_curve = 5)
+g.spline([5, 6], 8, el_on_curve = 5)
+g.spline([6, 7], 9, el_on_curve = 5)
+g.spline([7, 8], 10, el_on_curve = 5)
+g.spline([8, 5], 11, el_on_curve = 5)
 
 # Add surfaces
 

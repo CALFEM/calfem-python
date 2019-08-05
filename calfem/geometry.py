@@ -11,8 +11,8 @@ class Geometry:
     def __init__(self):
         self.points = {}    #dict of [[x, y, z], elSize, marker]
         self.curves = {}    #dict of [curvTypestring, [p1, p2, ... pn], marker, elementsOnCurve, distributionString, distributionVal]
-        self.surfaces = {}  #dict of [SurfaceTypeString, [c1, c2 ... cn], [[c1, c2 ... cm], ... [c1, ... ck]], ID, marker, isStructured]. c means curve-ID.
-        self.volumes = {}   #dict of [[s1, s2 ..], [[s1,s2...],[s1,s2..],..], ID, marker, isStructured]    
+        self.surfaces = {}  #dict of [SurfaceTypeString, [c1, c2 ... cn], [[c1, c2 ... cm], ... [c1, ... ck]], ID, marker, is_structured]. c means curve-ID.
+        self.volumes = {}   #dict of [[s1, s2 ..], [[s1,s2...],[s1,s2..],..], ID, marker, is_structured]    
         self.is3D = False   #This is automatically set to True if a 3D point is added.
         self._pointIDspecified = False
         self._nextPointID = 0
@@ -129,7 +129,7 @@ class Geometry:
             for row in points:
                 self.addPoint(row.tolist())
     
-    def addPoint(self, coord, ID=None, marker=0, elSize=1):
+    def addPoint(self, coord, ID=None, marker=0, el_size=1):
         '''
         Adds a point.
         
@@ -161,7 +161,7 @@ class Geometry:
         else:
             self._pointIDspecified = True
             
-        self.points[ID] = [coord, elSize, marker]
+        self.points[ID] = [coord, el_size, marker]
         
     def addSplines(self, points):
         '''
@@ -177,7 +177,7 @@ class Geometry:
                 splineDef = row.tolist()
                 self.addSpline(splineDef[:-1], marker = splineDef[2])
     
-    def addSpline(self, points, ID=None, marker=0, elOnCurve=None, elDistribType=None, elDistribVal=None):
+    def addSpline(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
         '''
         Adds a Spline curve
         
@@ -194,17 +194,17 @@ class Geometry:
                     The number of element edges that will be distributed
                     along this curve. Only works for structured meshes. 
                     
-        elDistribType -
+        el_distrib_type -
                     String. Either "bump" or "progression". 
                     Determines how the density of elements vary along the curve
                     for structured meshes. Only works for structured meshes.
-                    elOnCurv and elDistribVal must be be defined if this param
+                    elOnCurv and el_distrib_val must be be defined if this param
                     is used.
                                         
-        elDistribVal -
+        el_distrib_val -
                     Float. Determines how severe the element distribution is.
                     Only works for structured meshes. elOnCurv and 
-                    elDistribType must be be defined if this param is used.
+                    el_distrib_type must be be defined if this param is used.
                     
                         bump:
                     Smaller value means elements are bunched up at the edges
@@ -214,15 +214,15 @@ class Geometry:
                     The edge of each element along this curve (from starting
                     point to end) will be larger than the preceding one by 
                     this factor.
-                    elDistribVal = 2 meaning for example that each line element 
+                    el_distrib_val = 2 meaning for example that each line element 
                     in the series will be twice as long as the preceding one.
-                    elDistribVal < 1 makes each element smaller than the 
+                    el_distrib_val < 1 makes each element smaller than the 
                     preceeding one.
         '''
-        self._addCurve("Spline", points, ID, marker, elOnCurve, elDistribType, elDistribVal)
+        self._addCurve("Spline", points, ID, marker, el_on_curve, el_distrib_type, el_distrib_val)
         
         
-    def addBSpline(self, points, ID=None, marker=0, elOnCurve=None,  elDistribType=None, elDistribVal=None):
+    def addBSpline(self, points, ID=None, marker=0, el_on_curve=None,  el_distrib_type=None, el_distrib_val=None):
         '''
         Adds a B-Spline curve
         
@@ -239,17 +239,17 @@ class Geometry:
                     The number of element edges that will be distributed
                     along this curve. Only works for structured meshes. 
                     
-        elDistribType -
+        el_distrib_type -
                     String. Either "bump" or "progression". 
                     Determines how the density of elements vary along the curve
                     for structured meshes. Only works for structured meshes.
-                    elOnCurv and elDistribVal must be be defined if this param
+                    elOnCurv and el_distrib_val must be be defined if this param
                     is used.
                                         
-        elDistribVal -
+        el_distrib_val -
                     Float. Determines how severe the element distribution is.
                     Only works for structured meshes. elOnCurv and 
-                    elDistribType must be be defined if this param is used.
+                    el_distrib_type must be be defined if this param is used.
                     
                         bump:
                     Smaller value means elements are bunched up at the edges
@@ -259,15 +259,15 @@ class Geometry:
                     The edge of each element along this curve (from starting
                     point to end) will be larger than the preceding one by 
                     this factor.
-                    elDistribVal = 2 meaning for example that each line element 
+                    el_distrib_val = 2 meaning for example that each line element 
                     in the series will be twice as long as the preceding one.
-                    elDistribVal < 1 makes each element smaller than the 
+                    el_distrib_val < 1 makes each element smaller than the 
                     preceeding one.
         '''
-        self._addCurve("BSpline", points, ID, marker, elOnCurve,  elDistribType, elDistribVal)
+        self._addCurve("BSpline", points, ID, marker, el_on_curve, el_distrib_type, el_distrib_val)
 
 
-    def addCircle(self, points, ID=None, marker=0, elOnCurve=None,  elDistribType=None, elDistribVal=None):
+    def addCircle(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
         '''
         Adds a Circle arc curve.
         
@@ -285,17 +285,17 @@ class Geometry:
                     The number of element edges that will be distributed
                     along this curve. Only works for structured meshes.
                     
-        elDistribType -
+        el_distrib_type -
                     String. Either "bump" or "progression". 
                     Determines how the density of elements vary along the curve
                     for structured meshes. Only works for structured meshes.
-                    elOnCurv and elDistribVal must be be defined if this param
+                    elOnCurv and el_distrib_val must be be defined if this param
                     is used.
                                         
-        elDistribVal -
+        el_distrib_val -
                     Float. Determines how severe the element distribution is.
                     Only works for structured meshes. elOnCurv and 
-                    elDistribType must be be defined if this param is used.
+                    el_distrib_type must be be defined if this param is used.
                     
                         bump:
                     Smaller value means elements are bunched up at the edges
@@ -305,17 +305,17 @@ class Geometry:
                     The edge of each element along this curve (from starting
                     point to end) will be larger than the preceding one by 
                     this factor.
-                    elDistribVal = 2 meaning for example that each line element 
+                    el_distrib_val = 2 meaning for example that each line element 
                     in the series will be twice as long as the preceding one.
-                    elDistribVal < 1 makes each element smaller than the 
+                    el_distrib_val < 1 makes each element smaller than the 
                     preceeding one.
         '''
         if len(points) != 3:
             raise IndexError("Circle: points must be a list of 3 positive integers denoting point indices")
-        self._addCurve("Circle", points, ID, marker, elOnCurve,  elDistribType, elDistribVal)
+        self._addCurve("Circle", points, ID, marker, el_on_curve,  el_distrib_type, el_distrib_type)
         
         
-    def addEllipse(self, points, ID=None, marker=0, elOnCurve=None, elDistribType=None, elDistribVal=None):
+    def addEllipse(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
         '''
         Adds a Ellipse arc curve.
         
@@ -337,17 +337,17 @@ class Geometry:
                     The number of element edges that will be distributed
                     along this curve. Only works for structured meshes. 
                     
-        elDistribType -
+        el_distrib_type -
                     String. Either "bump" or "progression". 
                     Determines how the density of elements vary along the curve
                     for structured meshes. Only works for structured meshes.
-                    elOnCurv and elDistribVal must be be defined if this param
+                    elOnCurv and el_distrib_val must be be defined if this param
                     is used.
                                         
-        elDistribVal -
+        el_distrib_val -
                     Float. Determines how severe the element distribution is.
                     Only works for structured meshes. elOnCurv and 
-                    elDistribType must be be defined if this param is used.
+                    el_distrib_type must be be defined if this param is used.
                     
                         bump:
                     Smaller value means elements are bunched up at the edges
@@ -357,37 +357,37 @@ class Geometry:
                     The edge of each element along this curve (from starting
                     point to end) will be larger than the preceding one by 
                     this factor.
-                    elDistribVal = 2 meaning for example that each line element 
+                    el_distrib_val = 2 meaning for example that each line element 
                     in the series will be twice as long as the preceding one.
-                    elDistribVal < 1 makes each element smaller than the 
+                    el_distrib_val < 1 makes each element smaller than the 
                     preceeding one.                      
         '''
         if len(points) != 4:
             raise IndexError("Ellipse: points must be a list of 4 positive integers denoting point indices")
-        self._addCurve("Ellipse", points, ID, marker, elOnCurve, elDistribType, elDistribVal)
+        self._addCurve("Ellipse", points, ID, marker, el_on_curve, el_distrib_type, el_distrib_val)
 
         
-    def _addCurve(self, name, points, ID, marker, elOnCurve, elDistribType, elDistribVal):
+    def _addCurve(self, name, points, ID, marker, el_on_curve, el_distrib_type, el_distrib_val):
         '''Duplicate code goes here!'''
         if ID==None:
             ID = self._getNewCurveID()
         else:
             self._curveIDspecified = True
         
-        if elDistribType != None:
-            elDistribType = elDistribType.lower().title() #transform into lowercase except the first letter upper case.
-            if elDistribType not in ["Bump", "Progression"]:
-                raise ValueError("elDistribType must be a string, either \"bump\" or \"progression\". Curve with ID=%i was incorrect." %ID)
-            if elDistribVal == None:
-                raise ValueError("If elDistribType is defined then elDistribVal must be given a (float) value")
+        if el_distrib_type != None:
+            el_distrib_type = el_distrib_type.lower().title() #transform into lowercase except the first letter upper case.
+            if el_distrib_type not in ["Bump", "Progression"]:
+                raise ValueError("el_distrib_type must be a string, either \"bump\" or \"progression\". Curve with ID=%i was incorrect." %ID)
+            if el_distrib_val == None:
+                raise ValueError("If el_distrib_type is defined then el_distrib_val must be given a (float) value")
         
-        self.curves[ID] = [name, points, marker, elOnCurve, elDistribType, elDistribVal]
+        self.curves[ID] = [name, points, marker, el_on_curve, el_distrib_type, el_distrib_val]
     
-    def addSurface(self, outerLoop, holes=[], ID=None, marker=0):
+    def addSurface(self, outer_loop, holes=[], ID=None, marker=0):
         '''
         Adds a plane surface (flat).
         Parameters:
-        outerLoop - List of curve IDs that make up the outer boundary of
+        outer_loop - List of curve IDs that make up the outer boundary of
                     the surface. The curves must lie in the same plane.
         
         holes     - List of lists of curve IDs that make up the inner
@@ -400,15 +400,15 @@ class Geometry:
                     
         marker    - Integer. Marker applied to this surface. Default 0.
         '''
-        #TODO: Possibly check if outerLoop is an actual loop and if the holes are correct.
-        self._addSurf("Plane Surface", outerLoop, holes, ID, marker, isStructured=False)
+        #TODO: Possibly check if outer_loop is an actual loop and if the holes are correct.
+        self._addSurf("Plane Surface", outer_loop, holes, ID, marker, is_structured=False)
         
         
-    def addRuledSurface(self, outerLoop, ID=None, marker=0):
+    def addRuledSurface(self, outer_loop, ID=None, marker=0):
         '''
         Adds a Ruled Surface (bent surface).
         Parameters:
-        outerLoop - List of 3 or 4 curve IDs that make up the boundary of
+        outer_loop - List of 3 or 4 curve IDs that make up the boundary of
                     the surface.
                     
         ID        - Positive integer ID of this surface. If left unspecified
@@ -417,16 +417,16 @@ class Geometry:
                     
         marker    - Integer. Marker applied to this surface. Default 0.
         '''
-        if len(outerLoop) not in [3, 4]:
-            raise IndexError("Ruled Surface: outerloop must be a list of 3 or 4 positive integers denoting curve indices")
-        self._addSurf("Ruled Surface", outerLoop, [], ID, marker, isStructured=False)
+        if len(outer_loop) not in [3, 4]:
+            raise IndexError("Ruled Surface: outer_loop must be a list of 3 or 4 positive integers denoting curve indices")
+        self._addSurf("Ruled Surface", outer_loop, [], ID, marker, is_structured=False)
     
     
-    def addStructuredSurface(self, outerLoop, ID=None, marker=0):
+    def addStructuredSurface(self, outer_loop, ID=None, marker=0):
         '''
         Adds a Structured Surface.
         Parameters:
-        outerLoop - List of 4 curve IDs that make up the boundary of
+        outer_loop - List of 4 curve IDs that make up the boundary of
                     the surface. The curves must be structured, i.e. their
                     parameter 'elOnCurv' must be defined.
                     
@@ -436,13 +436,13 @@ class Geometry:
                     
         marker    - Integer. Marker applied to this surface. Default 0.
         '''
-        self._checkIfProperStructuredQuadBoundary(outerLoop, ID)
-        self._addSurf("Ruled Surface", outerLoop, [], ID, marker, isStructured=True) 
+        self._checkIfProperStructuredQuadBoundary(outer_loop, ID)
+        self._addSurf("Ruled Surface", outer_loop, [], ID, marker, is_structured=True) 
     
     
-    def _addSurf(self, name, outerLoop, holes, ID, marker, isStructured):
+    def _addSurf(self, name, outer_loop, holes, ID, marker, is_structured):
         '''For duplicate code'''
-        #TODO: check if the curves in outerloop actually exist. Maybe print a warning.
+        #TODO: check if the curves in outer_loop actually exist. Maybe print a warning.
         if ID==None:
             ID = self._getNewSurfaceID()
         else:
@@ -454,13 +454,13 @@ class Geometry:
             except TypeError:
                 raise TypeError("Hole " + str(hole) + " is not iterable. Parameter holes must be a list of lists of integers")
         
-        self.surfaces[ID] = [name, outerLoop, holes, ID, marker, isStructured]
+        self.surfaces[ID] = [name, outer_loop, holes, ID, marker, is_structured]
     
     
-    def addVolume(self, outerSurfaces, holes=[], ID=None, marker=0):
+    def addVolume(self, outer_surfaces, holes=[], ID=None, marker=0):
         '''Adds a Volume
         Parameters:
-        outerSurfaces - List of surface IDs that make up the outer boundary of
+        outer_surfaces - List of surface IDs that make up the outer boundary of
                         the volume.
         
         holes         - List of lists of surface IDs that make up the inner
@@ -471,13 +471,13 @@ class Geometry:
                         It is recommended to specify all volume-IDs or none.
                     
         marker        - Integer. Marker applied to this volume. Default 0.'''
-        self._addVolume(outerSurfaces, holes, ID, marker, isStructured=False)
+        self._addVolume(outer_surfaces, holes, ID, marker, is_structured=False)
     
     
-    def addStructuredVolume(self, outerSurfaces, ID=None, marker=0):
+    def addStructuredVolume(self, outer_surfaces, ID=None, marker=0):
         '''Adds a Structured Volume
         Parameters:
-        outerSurfaces - List of surface IDs that make up the outer boundary of
+        outer_surfaces - List of surface IDs that make up the outer boundary of
                         the volume. The surfaces must be Structured Surfaces.
                     
         ID            - Positive integer ID of this volume. If left unspecified
@@ -486,17 +486,17 @@ class Geometry:
                     
         marker        - Integer. Marker applied to this volume. Default 0.'''
         #TODO: Check input. (see if surfaces are structured)
-        self._addVolume(outerSurfaces, [], ID, marker, isStructured=True)
+        self._addVolume(outer_surfaces, [], ID, marker, is_structured=True)
     
     
-    def _addVolume(self,  outerSurfaces, holes, ID, marker, isStructured):
+    def _addVolume(self,  outer_surfaces, holes, ID, marker, is_structured):
         '''Duplicate code'''
-        #TODO: Check input (outerSurfaces and holes[i] must be closed surfaces)
+        #TODO: Check input (outer_surfaces and holes[i] must be closed surfaces)
         if ID==None:
             ID = self._getNewVolumeID()
         else:
             self._volumeIDspecified = True
-        self.volumes[ID] = [outerSurfaces, holes, ID, marker, isStructured] 
+        self.volumes[ID] = [outer_surfaces, holes, ID, marker, is_structured] 
         
     def pointMarker(self, ID, marker):
         self.setPointMarker(ID, marker)
@@ -525,17 +525,17 @@ class Geometry:
         self.volumes[ID][3] = marker
     
     
-    def _checkIfProperStructuredQuadBoundary(self, outerLoop, ID):
+    def _checkIfProperStructuredQuadBoundary(self, outer_loop, ID):
         '''Checks if the four edges of a quad-shaped superelement exist and
-        are correct, i.e elOnCurve of opposite curves are equal.'''
-        if len(outerLoop) != 4:
-            raise IndexError("Structured Surface: outerloop must be a list of 4 positive integers denoting curve indices")
+        are correct, i.e el_on_curve of opposite curves are equal.'''
+        if len(outer_loop) != 4:
+            raise IndexError("Structured Surface: outer_loop must be a list of 4 positive integers denoting curve indices")
         
         try:
-            c0 = self.curves[outerLoop[0]]
-            c1 = self.curves[outerLoop[1]]
-            c2 = self.curves[outerLoop[2]]
-            c3 = self.curves[outerLoop[3]]
+            c0 = self.curves[outer_loop[0]]
+            c1 = self.curves[outer_loop[1]]
+            c2 = self.curves[outer_loop[2]]
+            c3 = self.curves[outer_loop[3]]
         except KeyError:
             raise KeyError("Structured Surface: Attempted construction of StructuredSurface with ID=%s from a curve that does not exist" % ID)
         
@@ -543,7 +543,7 @@ class Geometry:
             raise Exception("Attempted to create structured surface from non-structured boundary curves.")
         
         if( c0[-3] != c2[-3] or c1[-3] != c3[-3] ): #Check if the number of elements on opposite curves match.
-            raise Exception("Structured Surface: The outerLoop of StructuredSurface %i is not properly " + 
+            raise Exception("Structured Surface: The outer_loop of StructuredSurface %i is not properly " + 
                             "constructed. The reason could be that the number of elements (elOnCurv) on " + 
                             "opposite pairs of curves are different")
 
