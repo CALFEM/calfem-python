@@ -115,6 +115,7 @@ def text(text, pos, angle=0, **kwargs):
 
 add_text = text
 addText = text
+label = text
 
 def ce2vf(coords, edof, dofs_per_node, el_type):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
@@ -227,7 +228,7 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
 drawMesh = draw_mesh
 
 
-def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, draw_mesh=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
+def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, draw_elements=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
@@ -284,7 +285,7 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     ax = plt.gca()
     ax.set_aspect('equal')
 
-    if draw_mesh:
+    if draw_elements:
         pc = quatplot(y, z, faces, values, ax=ax,
                       edgecolor=color)
     else:
