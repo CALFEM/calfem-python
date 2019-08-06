@@ -24,7 +24,7 @@ cfu.enableLogging()
 
 cfu.info("Creating rectangle")
 
-rect = cfs.Rectangle(5.0, 1.0, elementType=2, dofsPerNode=1, maxArea=0.08)
+rect = cfs.Rectangle(5.0, 1.0, element_type=2, dofs_per_node=1, max_area=0.08)
 
 rect.t = 1
 rect.ep = [rect.t, 1]
@@ -39,8 +39,8 @@ mesh = cfs.ShapeMesh(rect)
 
 solver = cfslv.Flow2DSolver(mesh)
 
-solver.addBC(rect.leftId, 0.0)
-solver.addBC(rect.rightId, 120.0)
+solver.addBC(rect.left_id, 0.0)
+solver.addBC(rect.right_id, 120.0)
 #solver.addForceTotal(rect.topId, -10e5, dimension=2)
 
 results = solver.execute()       
@@ -53,15 +53,15 @@ cfv.figure()
 cfv.draw_geometry(rect.geometry(), title="Geometry")
 
 cfv.figure() 
-cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
+cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofs_per_node, rect.element_type, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure() 
 cfv.draw_nodal_values_shaded(results.a, mesh.coords, mesh.edof)
-plt.colorbar()
+cfv.colorbar()
 
 cfv.figure() 
 cfv.draw_nodal_values_contourf(results.a, mesh.coords, mesh.edof)
-plt.colorbar()
+cfv.colorbar()
 
 cfv.showAndWait()

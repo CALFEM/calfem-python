@@ -26,20 +26,20 @@ class Solver:
     def __init__(self, mesh):
         self.results = Results()
         self.mesh = mesh
-        self.nDofs = np.size(mesh.dofs)
-        self.nElements = np.size(self.mesh.edof,0)
+        self.n_dofs = np.size(mesh.dofs)
+        self.n_elements = np.size(self.mesh.edof,0)
 
         self.bc = np.array([],'i')
         self.bcVal = np.array([],'i')
-        self.f = np.zeros([self.nDofs,1])
+        self.f = np.zeros([self.n_dofs,1])
         
-        self.results.elForces = np.zeros([self.nElements, self.onQueryElForceSize()])
+        self.results.elForces = np.zeros([self.n_elements, self.on_query_el_force_size()])
         
-    def onQueryElForceSize(self):
+    def on_query_el_force_size(self):
         return 1
                        
     def execute(self):
-        info("Assembling K... ("+str(self.nDofs)+")")
+        info("Assembling K... ("+str(self.n_dofs)+")")
         self.assem()
         
         info("Solving system...")        
@@ -49,14 +49,14 @@ class Solver:
         self.results.ed = cfc.extractEldisp(self.mesh.edof, self.results.a)
         
         info("Element forces... ")
-        self.calcElementForces()
+        self.calc_element_forces()
         
         return self.results
         
     def assem(self):
-        self.K = lil_matrix((self.nDofs, self.nDofs))
+        self.K = lil_matrix((self.n_dofs, self.n_dofs))
         for eltopo, elx, ely in zip(self.mesh.edof, self.mesh.ex, self.mesh.ey):
-            Ke = self.onCreateKe(elx, ely, self.mesh.shape.elementType)                
+            Ke = self.on_create_Ke(elx, ely, self.mesh.shape.element_type)                
             cfc.assem(eltopo, self.K, Ke)
             
     def addBC(self, marker, value=0.0, dimension=0):
@@ -75,42 +75,42 @@ class Solver:
         self.bc, self.bcVal = cfu.applybcnode(node, value, dimension)
 
     def applyBCs(self):
-        self.bc, self.bcVal = self.onApplyBCs(self.mesh, self.bc, self.bcVal)
+        self.bc, self.bcVal = self.on_apply_bcs(self.mesh, self.bc, self.bcVal)
                 
-    def calcElementForces(self):
+    def calc_element_forces(self):
         for i in range(self.mesh.edof.shape[0]):
-            elForce = self.onCalcElForce(self.mesh.ex[i,:], self.mesh.ey[i,:], self.results.ed[i,:], self.mesh.shape.elementType)
+            elForce = self.on_calc_el_force(self.mesh.ex[i,:], self.mesh.ey[i,:], self.results.ed[i,:], self.mesh.shape.element_type)
             if len(elForce)==1:
                 self.results.elForces[i,:] = elForce
             else:
                 pass
             
             
-    def onCalcElForce(self, ex, ey, ed, elementType):
+    def on_calc_el_force(self, ex, ey, ed, element_type):
         pass
 
-    def onCreateKe(self, elx, ely, elementType):
+    def on_create_Ke(self, elx, ely, element_type):
         pass
     
-    def onApplyBCs(self, mesh, bc, bcVal):        
+    def on_apply_bcs(self, mesh, bc, bcVal):        
         pass
         
-    def onApplyLoads(self, mesh, f):
+    def on_apply_loads(self, mesh, f):
         pass
         
 class Plan2DSolver(Solver):
         
-    def onCreateKe(self, elx, ely, elementType):
+    def on_create_Ke(self, elx, ely, element_type):
         Ke = None
-        if self.mesh.shape.elementType == 2:
+        if self.mesh.shape.element_type == 2:
             Ke = cfc.plante(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
         else:
             Ke = cfc.planqe(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
             
         return Ke
                     
-    def onCalcElForce(self, ex, ey, ed, elementType):
-        if elementType == 2: 
+    def on_calc_el_force(self, ex, ey, ed, element_type):
+        if element_type == 2: 
             es, et = cfc.plants(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)
             elMises = np.math.sqrt( pow(es[0,0],2) - es[0,0]*es[0,1] + pow(es[0,1],2) + 3*pow(es[0,2],2) )
         else:
@@ -121,19 +121,19 @@ class Plan2DSolver(Solver):
 
 class Flow2DSolver(Solver):
         
-    def onCreateKe(self, elx, ely, elementType):
+    def on_create_Ke(self, elx, ely, element_type):
         Ke = None
-        if self.mesh.shape.elementType == 2:
+        if self.mesh.shape.element_type == 2:
             Ke = cfc.flw2te(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
         else:
             Ke = cfc.flw2i4e(elx, ely, self.mesh.shape.ep, self.mesh.shape.D)
             
         return Ke
                     
-    def onCalcElForce(self, ex, ey, ed, elementType):
+    def on_calc_el_force(self, ex, ey, ed, element_type):
         es = None
         et = None
-        if elementType == 2: 
+        if element_type == 2: 
             es, et = cfc.flw2ts(ex, ey, self.mesh.shape.D, ed)
         else:
             es, et, temp = cfc.flw2i4s(ex, ey, self.mesh.shape.ep, self.mesh.shape.D, ed)

@@ -689,7 +689,7 @@ def _catmullspline(controlPoints, pointsOnEachSegment=10):
                          [2, -5,  4, -1], [-1,  3, -3,  1]])
     t = np.linspace(0, 1, pointsOnEachSegment)
     T = np.matrix([[1, s, pow(s, 2), pow(s, 3)] for s in t])
-    return np.asarray(np.vstack(T * M * CPs[j-1:j+3, :] for j in range(1, len(CPs)-2)))
+    return np.asarray(np.vstack([T * M * CPs[j-1:j+3, :] for j in range(1, len(CPs)-2)]))
 
 
 def _bspline(controlPoints, pointsOnCurve=20):
@@ -726,8 +726,8 @@ def _bspline(controlPoints, pointsOnCurve=20):
                              [1,  4,  1, 0]])
     t = np.linspace(0, 1, pointsOnCurve)
     T = np.matrix([[pow(s, 3), pow(s, 2), s, 1] for s in t])
-    return np.asarray(np.vstack(T * M * CPs[i-1: i+3, :] for i in range(1, len(CPs)-2)))
 
+    return np.asarray(np.vstack([T * M * CPs[i-1: i+3, :] for i in range(1, len(CPs)-2)]))
 
 def _circleArc(start, center, end, pointsOnCurve=20):
     return _ellipseArc(start, center, start, end, pointsOnCurve)
