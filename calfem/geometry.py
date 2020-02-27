@@ -594,14 +594,18 @@ class Geometry:
     circle = addCircle
     ellipse = addEllipse
     surface = addSurface
+    surf = addSurface
     ruledSurface = addRuledSurface
     ruled_surface = addRuledSurface
+    ruled_surf = addRuledSurface
     structuredSurface = addStructuredSurface
     structured_surface = addStructuredSurface
+    struct_surf = addStructuredSurface
     volume = addVolume
     structuredVolume = addStructuredVolume
     structured_volume = addStructuredVolume
     get_point_coords = getPointCoords
+    curve_marker = curveMarker
     
     
 def geometry():

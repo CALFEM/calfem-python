@@ -48,17 +48,17 @@ def colorbar(**kwargs):
         return plt.colorbar(**kwargs)
 
 
-def figure(figure=None, show=True):
+def figure(figure=None, show=True, figsize=(4,3)):
     """Create a visvis figure with extras."""
     f = None
-
+    
     if figure == None:
-        f = plt.figure()
+        f = plt.figure(figsize=figsize)
     else:
         try:
             f = plt.figure(figure)
         except:
-            f = plt.figure()
+            f = plt.figure(figsize=fig_size)
 
     return f
 

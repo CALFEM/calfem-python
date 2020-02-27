@@ -55,8 +55,6 @@ class GuiWindow(QWidget):
             var_label = QLabel(key)
             var_edit = QLineEdit(str(value))
 
-            print(value.__class__)
-
             self.grid.addWidget(var_label, row, 0)
             self.grid.addWidget(var_edit, row, 1)
 

@@ -92,8 +92,12 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Visualise mesh -------------------------------------------------------
 
-#Hold left mouse button to pan.
+# Hold left mouse button to pan.
 # Hold right mouse button to zoom.
+
+# To render correctly on high dpi screeen uncomment command below.
+
+# cfv.set_figure_dpi(300)
 
 # Draw the geometry. Note that surfaces and volumes are not drawn at all by 
 # this function.
