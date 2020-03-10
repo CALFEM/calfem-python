@@ -7,7 +7,7 @@ Structured 3D meshing. Adding texts and labels to figures. Altering axis propert
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -96,27 +96,27 @@ cfv.draw_mesh(coords=coords, edof=edof, dofs_per_node=dofs_per_node, el_type=el_
 
 # Add a text in world space
 
-cfv.add_text("This is a Text", pos=(1, 0.5, 0.5), angle=45)  
+#cfv.add_text("This is a Text", pos=(1, 0.5, 0.5), angle=45)  
 
 # Add a label in the screen space
 
-our_label = cfv.add_label("This is a Label", pos=(20,30), angle=-45) 
+#our_label = cfv.add_label("This is a Label", pos=(20,30), angle=-45) 
 
 # We can change the attributes of labels and texts, such as color and position.
 
-our_label.text = "Label, changed." 
+#our_label.text = "Label, changed." 
 
 # Make it red. (1,0,0) would also have worked.
 
-our_label.textColor = 'r'  
+#our_label.textColor = 'r'  
 
 # Matlab style axes (three axes in the background instead of a cube)
 
-cfv.gca().axis.showBox = 0 
+#cfv.gca().axis.showBox = 0 
 
 #Change the limits of the axes.
 
-cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02) 
+#cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02) 
 
 # Enter main loop
 

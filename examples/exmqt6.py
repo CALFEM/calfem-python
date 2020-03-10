@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#import sys, os
-
-if getattr(sys, 'frozen', False):
-    # we are running in a |PyInstaller| bundle
-    basedir = sys._MEIPASS
-else:
-    # we are running in a normal Python environment
-    basedir = os.path.dirname(__file__)
-
 '''Example 06
 
 Solves a plane stress 2D problem using a structured mesh.
@@ -70,7 +61,7 @@ class PlaneStress2DProblem(object):
                    [12, 19]]                                     #25
 
         for s in splines:
-            g.spline(s, elOnCurve=5)
+            g.spline(s, el_on_curve=5)
 
         g.curveMarker(ID=4, marker=7) #Assign marker 7 to the splines on the right.
         g.curveMarker(ID=5, marker=7) # We will apply a force on nodes with marker 7.
@@ -83,7 +74,7 @@ class PlaneStress2DProblem(object):
                       [16, 24, 17], [17, 24, 18], [18, 24, 19], [19, 24, 20]]   #30-33
 
         for c in circlearcs:
-            g.circle(c, elOnCurve=5)
+            g.circle(c, el_on_curve=5)
 
         g.structuredSurface([11, 12, 13, 0]) #0
         g.structuredSurface([14, 12, 10, 9])
@@ -105,14 +96,14 @@ class PlaneStress2DProblem(object):
 
         # 3 Quads
 
-        self.elType = 3
-        self.dofsPerNode = 2
+        self.el_type = 3
+        self.dofs_per_node = 2
 
         # Create mesh
 
         self.mesh = cfm.GmshMeshGenerator(geometry=self.g)
-        self.mesh.elType = self.elType
-        self.mesh.dofsPerNode = self.dofsPerNode
+        self.mesh.el_type = self.el_type
+        self.mesh.dofs_per_node = self.dofs_per_node
 
         self.coords, self.edof, self.dofs, self.bdofs, self.elementmarkers = self.mesh.create()
 
@@ -171,25 +162,25 @@ class PlaneStress2DProblem(object):
         """Draws geometry in specified figure"""
         cfv.figure(figGeometry.nr)
         cfv.clf()
-        cfv.drawGeometry(self.g, drawPoints=False, labelCurves=True)
+        cfv.draw_geometry(self.g, draw_points=False, label_curves=True)
 
     def drawElementValues(self, figElementValues):
         """Draws element values in specified figure"""
         cfv.figure(figElementValues.nr)
         cfv.clf()
-        cfv.drawElementValues(self.vonMises, self.coords, self.edof,
-                              self.mesh.dofsPerNode, self.mesh.elType,
-                              self.a, doDrawMesh=True,
-                              doDrawUndisplacedMesh=False,
+        cfv.draw_element_values(self.vonMises, self.coords, self.edof,
+                              self.mesh.dofs_per_node, self.mesh.el_type,
+                              self.a, draw_elements=True,
+                              draw_undisplaced_mesh=False,
                               title="Example 06 effective stress")
 
     def drawDisplacements(self, figDisplacements):
         """Draws displacements in specified figure"""
         cfv.figure(figDisplacements.nr)
         cfv.clf()
-        cfv.drawDisplacements(self.a, self.coords, self.edof,
-                              self.mesh.dofsPerNode, self.mesh.elType,
-                              doDrawUndisplacedMesh=True, title="Example 06")
+        cfv.draw_displacements(self.a, self.coords, self.edof,
+                              self.mesh.dofs_per_node, self.mesh.el_type,
+                              draw_undisplaced_mesh=True, title="Example 06")
 
         # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on
         # the right hand side of the mesh:
@@ -213,7 +204,7 @@ class PlaneStress2DProblem(object):
 
             # A poor man's force indicator. Could also use vv.plot()
 
-            cfv.addText("\rightarrow", (x, y), fontSize=20, color='g')
+            cfv.addText("\rightarrow", (x, y), font_size=20, color='g')
 
 
 class MainWindow(QMainWindow):

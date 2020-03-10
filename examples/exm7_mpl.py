@@ -9,9 +9,14 @@ elements in different regions.
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import calfem.core as cfc
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.tri as tri
+
 import numpy as np
 
 # ---- Problem constants ----------------------------------------------------
@@ -141,19 +146,23 @@ for i in range(np.shape(ex)[0]):
 
 print("Visualising...")
 
-cfv.drawGeometry(g, title="Geometry")
+cfv.set_figure_dpi(100)
 
-cfv.figure()
+cfv.draw_geometry(g, title="Geometry")
 
 # 8-node quads are drawn as simple quads.
 
-cfv.drawMesh(coords, edof, dofs_per_node, el_type, filled=False)
+cfv.figure()
+cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
 
 cfv.figure()
-cfv.draw_nodal_values(a, coords, edof, dofs_per_node, el_type, title="Example 7")
-cfv.get_color_bar().SetLabel("Temperature")
-cfv.add_text("The bend has high conductivity", (125,125))
-cfv.add_text("This part has low conductivity", (160,-50))
+cfv.draw_nodal_values_shaded(a, coords, edof, title="Temperature", dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type, draw_elements=True)
+cbar = cfv.colorbar(orientation="horizontal")
+cbar.set_label("Temperature")
+
+
+cfv.text("The bend has high conductivity", (125,125))
+cfv.text("This part has low conductivity", (160,-50))
 
 # Enter main loop
 

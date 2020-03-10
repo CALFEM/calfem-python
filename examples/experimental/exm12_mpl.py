@@ -7,12 +7,14 @@ The example does not contain anything that is not covered in the previous exampl
 '''
 
 import calfem.core as cfc
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import calfem.shapes as cfs
 import calfem.solver as cfslv
 
 import numpy as np
+
+import matplotlib.pyplot as plt
 
 cfu.enableLogging()
   
@@ -22,7 +24,7 @@ cfu.enableLogging()
 
 cfu.info("Creating rectangle")
 
-rect = cfs.Rectangle(5.0, 1.0, elementType=3, dofsPerNode=1, maxArea=0.08)
+rect = cfs.Rectangle(5.0, 1.0, element_type=2, dofs_per_node=1, max_area=0.08)
 
 rect.t = 1
 rect.ep = [rect.t, 1]
@@ -37,8 +39,8 @@ mesh = cfs.ShapeMesh(rect)
 
 solver = cfslv.Flow2DSolver(mesh)
 
-solver.addBC(rect.leftId, 0.0)
-solver.addBC(rect.rightId, 120.0)
+solver.addBC(rect.left_id, 0.0)
+solver.addBC(rect.right_id, 120.0)
 #solver.addForceTotal(rect.topId, -10e5, dimension=2)
 
 results = solver.execute()       
@@ -48,29 +50,18 @@ results = solver.execute()
 cfu.info("Drawing results...")
 
 cfv.figure() 
-cfv.drawGeometry(rect.geometry(), title="Geometry")
+cfv.draw_geometry(rect.geometry(), title="Geometry")
 
 cfv.figure() 
-cfv.drawMesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
+cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofs_per_node, rect.element_type, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure() 
-cfv.drawNodalValues(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType)
+cfv.draw_nodal_values_shaded(results.a, mesh.coords, mesh.edof)
+cfv.colorbar()
 
-print(results.a)
-
-#cfv.figure()
-#cfv.drawDisplacements(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
-#                      doDrawUndisplacedMesh=False, title="Displacements", 
-#                      magnfac=1)
-
-#cfv.figure()
-#cfv.drawElementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, results.a, 
-#                      doDrawMesh=True, doDrawUndisplacedMesh=False, 
-#                      title="Effective Stress", magnfac=1)
-                      
-#cfv.colorBar().SetLabel("Effective stress")
-
-cfu.info("Done drawing...")
+cfv.figure() 
+cfv.draw_nodal_values_contourf(results.a, mesh.coords, mesh.edof)
+cfv.colorbar()
 
 cfv.showAndWait()

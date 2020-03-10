@@ -8,7 +8,7 @@ Created on Sat Mar  3 22:08:29 2018
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 
 import numpy as np
@@ -88,16 +88,16 @@ for i in range(edof.shape[0]):
     
 # ----- Draw geometry
 
-cfv.drawGeometry(g)
+cfv.draw_geometry(g)
 
 # ----- Draw the mesh.
 
 cfv.figure() 
-cfv.drawMesh(
+cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode=mesh.dofsPerNode, 
-    elType=mesh.elType, 
+    dofs_per_node=mesh.dofsPerNode, 
+    el_type=mesh.elType, 
     filled=True, 
     title="Example 01"
     ) 
@@ -105,9 +105,9 @@ cfv.drawMesh(
 # ----- Draw results
 
 cfv.figure()
-cfv.drawElementValues(vonMises, coords, edof, mesh.dofsPerNode, mesh.elType, a, doDrawMesh=True, doDrawUndisplacedMesh=False, title="Example 06 effective stress")
+cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, draw_elements=True, draw_undisplaced_mesh=False, title="Example 06 effective stress")
 
 cfv.figure()
-cfv.drawDisplacements(a, coords, edof, mesh.dofsPerNode, mesh.elType, doDrawUndisplacedMesh=True, title="Example 06", magnfac=10.0)
+cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06", magnfac=10.0)
 
 cfv.showAndWait()

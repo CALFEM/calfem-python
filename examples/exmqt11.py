@@ -63,30 +63,26 @@ class PlaneStress2DProblem(object):
         """Draw geometry in provided figure"""
         cfv.figure(figGeometry.nr) 
         cfv.clf()
-        cfv.drawGeometry(self.rect.geometry(), title="Geometry")
+        cfv.draw_geometry(self.rect.geometry(), title="Geometry")
         
     def drawMesh(self, figMesh):
         """Draw mesh in provided figure"""
         cfv.figure(figMesh.nr)
         cfv.clf()
-        cfv.drawMesh(self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
+        cfv.draw_mesh(self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
                      filled=True, title="Mesh") #Draws the mesh.
         
     def drawDisplacements(self, figDisplacements):
         """Draw displacements in provided figure"""
         cfv.figure(figDisplacements.nr)
         cfv.clf()
-        cfv.drawDisplacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
-                              doDrawUndisplacedMesh=False, title="Displacements", 
-                              magnfac=1)
+        cfv.draw_displacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, draw_undisplaced_mesh=False, title="Displacements", magnfac=1)
         
     def drawElementValues(self, figElementValues):
         """Draw element values in provided figure"""
         cfv.figure(figElementValues.nr)
         cfv.clf()
-        cfv.drawElementValues(self.results.elForces, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, self.results.a, 
-                              doDrawMesh=True, doDrawUndisplacedMesh=False, 
-                              title="Effective Stress", magnfac=1)
+        cfv.draw_element_values(self.results.elForces, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, self.results.a, draw_elements=True, draw_undisplaced_mesh=False, title="Effective Stress", magnfac=1)
                       
 
 class MainWindow(QMainWindow):

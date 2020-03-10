@@ -17,7 +17,7 @@ g = cfg.geometry()
 g.point([0, 0, 0],      0)
 g.point([1, 0, 0],      1)
 g.point([0, 1, 0],      2)
-g.point([0, 1, 1],      3, elSize=0.1)
+g.point([0, 1, 1],      3, el_size=0.1)
 g.point([0.5, -0.3, 0], 4)
 g.point([-0.3, 0.5, 0], 5)
 g.point([0.75, 0.75, 0],6)
@@ -67,7 +67,7 @@ a1.camera = a2.camera = cam
 # Draw geometry and mesh
 
 cfv.draw_geometry(g, axes=a1)
-cfv.draw_mesh(coords=coords, edof=edof, dofsPerNode=dofs_per_node, elType=el_type, filled=False, axes=a2)
+cfv.draw_mesh(coords=coords, edof=edof, dofs_per_node=dofs_per_node, el_type=el_type, filled=False, axes=a2)
 
 # Enter main loop
 

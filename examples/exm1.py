@@ -76,6 +76,7 @@ mesh = cfm.GmshMesh(g)
 mesh.el_type = 3 
 mesh.dofs_per_node = 1 # Degrees of freedom per node. 
 mesh.el_size_factor = 0.05 # Factor that changes element sizes.
+# mesh.mesh_dir = "./mesh_files"
 # mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
 # Mesh the geometry:
@@ -91,13 +92,17 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # ---- Visualise mesh -------------------------------------------------------
 
-#Hold left mouse button to pan.
+# Hold left mouse button to pan.
 # Hold right mouse button to zoom.
+
+# To render correctly on high dpi screeen uncomment command below.
+
+# cfv.set_figure_dpi(300)
 
 # Draw the geometry. Note that surfaces and volumes are not drawn at all by 
 # this function.
 
-cfv.drawGeometry(g)
+cfv.draw_geometry(g)
 
 # New figure window
 
@@ -105,11 +110,11 @@ cfv.figure()
 
 # Draw the mesh.
 
-cfv.drawMesh(
+cfv.draw_mesh(
     coords=coords, 
     edof=edof, 
-    dofsPerNode=mesh.dofs_per_node, 
-    elType=mesh.el_type, 
+    dofs_per_node=mesh.dofs_per_node, 
+    el_type=mesh.el_type, 
     filled=True, 
     title="Example 01"
     ) 

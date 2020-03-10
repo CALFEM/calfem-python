@@ -9,7 +9,7 @@ The example does not contain anything that is not covered in the previous exampl
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import numpy as np
 
@@ -179,7 +179,7 @@ cfv.draw_element_values(von_mises, coords, edof, dofs_per_node, el_type, a,
                       draw_elements=True, draw_undisplaced_mesh=False, 
                       title="Effective Stress", magnfac=25.0)
 
-cfv.get_color_bar().SetLabel("Effective Stress")
+cfv.colorbar()
 
 cfu.info("Done drawing...")
 

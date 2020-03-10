@@ -53,8 +53,8 @@ class ElementProperties(object):
             self.attributes[markerId] = {}
             self.attributes[markerId][name] = value
 
-def enableLogging():
-    cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.DEBUG)
+def enableLogging(def_level=cflog.INFO):
+    cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=def_level)
     
 def disableLogging():
     cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.NOTSET)

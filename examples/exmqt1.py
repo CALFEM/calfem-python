@@ -86,11 +86,11 @@ class MainWindow(QMainWindow):
     def drawMesh(self):
         cfv.figure(self.fig2.nr) 
         cfv.clf()
-        cfv.drawMesh(
+        cfv.draw_mesh(
             coords=self.coords, 
             edof=self.edof, 
-            dofsPerNode=self.meshGen.dofsPerNode, 
-            elType=self.meshGen.elType, 
+            dofs_per_node=self.meshGen.dofsPerNode, 
+            el_type=self.meshGen.elType, 
             filled=True, 
             title="Example 01"
             ) 

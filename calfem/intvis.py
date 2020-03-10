@@ -2,7 +2,8 @@
 
 import sys
 
-from calfem.qt5 import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
 class GuiWindow(QWidget):
     def __init__(self, var_dict):
@@ -15,6 +16,30 @@ class GuiWindow(QWidget):
         self.var_dict = var_dict
 
         self.init_gui()
+
+    def __parse_variables(self, g):
+
+        # a_edit = 1
+        # b_slider = 2.0
+        # c_list = [1, 2, 3]
+        # d_check = True
+        # f_param = 42.0
+        # g_float = 84.0
+        # g_int = 34
+
+        row = 0
+
+        for key, value in self.var_dict.items():
+            if '_edit' in key:
+                var_label = QLabel(key)
+                var_edit = QLineEdit(str(value))
+
+                g.addWidget(var_label, row, 0)
+                g.addWidget(var_edit, row, 1)
+            elif '_slider' in key:
+                var_label = QLabel(key.split("_")[0])
+                var_edit = QSlider()
+
 
     def init_gui(self):
         """Initiera gränssnitt"""
@@ -29,16 +54,27 @@ class GuiWindow(QWidget):
         for key, value in self.var_dict.items():
             var_label = QLabel(key)
             var_edit = QLineEdit(str(value))
+
             self.grid.addWidget(var_label, row, 0)
             self.grid.addWidget(var_edit, row, 1)
 
             row += 1
 
+        buttons = QHBoxLayout()
+
         ok_button = QPushButton("OK")
         cancel_button = QPushButton("Cancel")
 
-        self.grid.addWidget(ok_button, row, 0)
-        self.grid.addWidget(cancel_button, row, 1)
+        buttons.addStretch()
+        buttons.addWidget(ok_button)
+        buttons.addWidget(cancel_button)
+        buttons.addStretch()
+
+        self.grid.setRowStretch(row, 10)
+
+        row += 1
+
+        self.grid.addLayout(buttons, row, 0, 1, 2)
 
         # Visa fönster
 

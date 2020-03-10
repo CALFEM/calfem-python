@@ -10,7 +10,7 @@ drawElementValues(). Shows use of GmshMesher attribute 'nodesOnCurve'
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import calfem.core as cfc
 import numpy as np
@@ -143,13 +143,17 @@ for i in range(edof.shape[0]):
 
 cfu.info("Visualising...")
 
-cfv.drawGeometry(g, draw_points=False, label_curves=True)
+cfv.figure()
+cfv.draw_geometry(g, draw_points=True, label_curves=True, label_points=True)
 
 cfv.figure()
-cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, a, draw_elements=True, draw_undisplaced_mesh=False, title="Example 06 effective stress")
+cfv.draw_mesh(coords, edof, dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type)
 
 cfv.figure()
-cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06")
+cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, None, draw_elements=False, draw_undisplaced_mesh=False, title="Example 6 - Effective stress")
+
+cfv.figure()
+cfv.draw_displacements(a, coords, edof, mesh.dofs_per_node, mesh.el_type, draw_undisplaced_mesh=True, title="Example 06 - Displacements")
 
 # Make use of attribute 'nodesOnCurve' in GmshMesher to draw some arrows on 
 # the right hand side of the mesh:
@@ -173,7 +177,7 @@ for i in rightSideNodes:
     
     # A poor man's force indicator. Could also use vv.plot()    
     
-    cfv.addText("\rightarrow", (x, y), font_size=20, color='g') 
+    #cfv.addText("\rightarrow", (x, y), fontSize=20, color='g') 
 
 # Enter main loop
 

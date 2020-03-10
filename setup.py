@@ -31,7 +31,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='3.4.6',
+    version='3.5',
 
     description='CALFEM for Python',
     long_description=long_description,
@@ -67,6 +67,8 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     # What does your project relate to?
@@ -86,7 +88,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'visvis', 'pyvtk'],
+    install_requires=['numpy', 'visvis', 'pyvtk', 'matplotlib'],
     include_package_data=True
     #package_data={'calfem': ['examples/*']}
     
