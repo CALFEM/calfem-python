@@ -20,7 +20,7 @@ cfu.enableLogging()
 
 cfu.info("Creating rectangle")
 
-rect = cfs.Rectangle(5.0, 1.0, elementType=3, dofsPerNode=2, maxArea=0.08)
+rect = cfs.Rectangle(5.0, 1.0, element_type=3, dofs_per_node=2, max_area=0.08)
 rect.t = 0.2
 rect.v = 0.35
 rect.E = 2e9
@@ -36,8 +36,8 @@ mesh = cfs.ShapeMesh(rect)
 
 solver = cfslv.Plan2DSolver(mesh)
 
-solver.addBC(rect.leftId, 0.0)
-solver.addForceTotal(rect.topId, -10e5, dimension=2)
+solver.addBC(rect.left_id, 0.0)
+solver.addForceTotal(rect.top_id, -10e5, dimension=2)
 
 results = solver.execute()       
        
@@ -49,17 +49,17 @@ cfv.figure()
 cfv.draw_geometry(rect.geometry(), title="Geometry")
 
 cfv.figure() 
-cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
+cfv.draw_mesh(mesh.coords, mesh.edof, rect.dofs_per_node, rect.element_type, 
              filled=True, title="Mesh") #Draws the mesh.
 
 cfv.figure()
-cfv.draw_displacements(results.a, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, 
-                      doDrawUndisplacedMesh=False, title="Displacements", 
+cfv.draw_displacements(results.a, mesh.coords, mesh.edof, rect.dofs_per_node, rect.element_type, 
+                      draw_undisplaced_mesh=False, title="Displacements", 
                       magnfac=1)
 
 cfv.figure()
-cfv.draw_elementValues(results.elForces, mesh.coords, mesh.edof, rect.dofsPerNode, rect.elementType, results.a, 
-                      doDrawMesh=True, doDrawUndisplacedMesh=False, 
+cfv.draw_element_values(results.el_forces, mesh.coords, mesh.edof, rect.dofs_per_node, rect.element_type, results.a, 
+                      draw_elements=True, draw_undisplaced_mesh=False, 
                       title="Effective Stress", magnfac=1)
                       
 #cfv.colorBar().SetLabel("Effective stress")

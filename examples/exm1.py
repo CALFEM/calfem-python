@@ -8,7 +8,7 @@ Also demonstrates drawGeometry(), drawMesh, and drawing texts and labels in a fi
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis_mpl as cfv
+import calfem.vis as cfv
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -76,7 +76,7 @@ mesh = cfm.GmshMesh(g)
 mesh.el_type = 3 
 mesh.dofs_per_node = 1 # Degrees of freedom per node. 
 mesh.el_size_factor = 0.05 # Factor that changes element sizes.
-mesh.mesh_dir = "./mesh_files"
+# mesh.mesh_dir = "./mesh_files"
 # mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
 # Mesh the geometry:

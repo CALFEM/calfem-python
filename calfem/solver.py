@@ -30,10 +30,10 @@ class Solver:
         self.n_elements = np.size(self.mesh.edof,0)
 
         self.bc = np.array([],'i')
-        self.bcVal = np.array([],'i')
+        self.bc_val = np.array([],'i')
         self.f = np.zeros([self.n_dofs,1])
         
-        self.results.elForces = np.zeros([self.n_elements, self.on_query_el_force_size()])
+        self.results.el_forces = np.zeros([self.n_elements, self.on_query_el_force_size()])
         
     def on_query_el_force_size(self):
         return 1
@@ -43,7 +43,7 @@ class Solver:
         self.assem()
         
         info("Solving system...")        
-        self.results.a, self.results.r = cfc.spsolveq(self.K, self.f, self.bc, self.bcVal)
+        self.results.a, self.results.r = cfc.spsolveq(self.K, self.f, self.bc, self.bc_val)
         
         info("Extracting ed...")        
         self.results.ed = cfc.extractEldisp(self.mesh.edof, self.results.a)
@@ -60,28 +60,28 @@ class Solver:
             cfc.assem(eltopo, self.K, Ke)
             
     def addBC(self, marker, value=0.0, dimension=0):
-        self.bc, self.bcVal = cfu.applybc(self.mesh.bdofs, self.bc, self.bcVal, marker, value, dimension)
+        self.bc, self.bc_val = cfu.applybc(self.mesh.bdofs, self.bc, self.bc_val, marker, value, dimension)
         
     def addForceTotal(self, marker, value=0.0, dimension=0):
-        cfu.applyforcetotal(self.mesh.bdofs, self.f, self.mesh.shape.topId, value, dimension)
+        cfu.applyforcetotal(self.mesh.bdofs, self.f, self.mesh.shape.top_id, value, dimension)
           
     def addForce(self, marker, value=0.0, dimension=0):
-        cfu.applyforce(self.mesh.bdofs, self.f, self.mesh.shape.topId, value, dimension)
+        cfu.applyforce(self.mesh.bdofs, self.f, self.mesh.shape.top_id, value, dimension)
         
     def addForceNode(self, node, value = 0.0, dimension=0):
         cfu.applyforcenode(node, value, dimension)
         
     def addBCNode(self, node, value = 0.0, dimension = 0):
-        self.bc, self.bcVal = cfu.applybcnode(node, value, dimension)
+        self.bc, self.bc_val = cfu.applybcnode(node, value, dimension)
 
     def applyBCs(self):
-        self.bc, self.bcVal = self.on_apply_bcs(self.mesh, self.bc, self.bcVal)
+        self.bc, self.bc_val = self.on_apply_bcs(self.mesh, self.bc, self.bcVal)
                 
     def calc_element_forces(self):
         for i in range(self.mesh.edof.shape[0]):
-            elForce = self.on_calc_el_force(self.mesh.ex[i,:], self.mesh.ey[i,:], self.results.ed[i,:], self.mesh.shape.element_type)
-            if len(elForce)==1:
-                self.results.elForces[i,:] = elForce
+            el_force = self.on_calc_el_force(self.mesh.ex[i,:], self.mesh.ey[i,:], self.results.ed[i,:], self.mesh.shape.element_type)
+            if el_force!=None:
+                self.results.el_forces[i,:] = el_force
             else:
                 pass
             
