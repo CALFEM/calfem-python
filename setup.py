@@ -34,7 +34,7 @@ setup(
     version='3.5',
 
     description='CALFEM for Python',
-    long_description=long_description,
+    long_description='The computer program CALFEM is written for the software MATLAB and is an interactive tool for  learning the finite element method. CALFEM is an abbreviation of "Computer Aided Learning of the Finite Element  Method" and been developed by the Division of Structural Mechanics at Lund University since the late 70s.',
 
     # The project's main homepage.
     url='https://github.com/CALFEM/calfem-python',
