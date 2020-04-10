@@ -12,7 +12,7 @@
 #----------------------------------------------------------------
 
 import numpy as np
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.core as cfc
 
 # ----- System matrices -----
@@ -85,13 +85,13 @@ for i in range(8):
 
 print(Ex)
 print(Ey)
+print(a)
+print(Ed)
 
-cfv.eldraw2_mpl(Ex, Ey, [1, 2, 1], range(1,Ex.shape[0]+1))
+cfv.eldraw2(Ex, Ey, [1, 2, 1], range(1,Ex.shape[0]+1))
 cfv.eliso2_mpl(Ex,Ey,Ed);
 cfv.showAndWaitMpl()
 
-print(a)
-print(Ed)
 #cfv.showAndWait()
 #sfac=scalfact2(Ex,Ey,Es,0.5);
 #eldraw2(Ex,Ey); 

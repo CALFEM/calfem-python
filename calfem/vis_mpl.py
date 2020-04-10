@@ -62,6 +62,12 @@ def figure(figure=None, show=True, figsize=(4,3)):
 
     return f
 
+def figure_widget(fig):
+    widget = cfv.FigureCanvas(fig)
+    toolbar = cfv.NavigationToolbar(widget, widget)
+    return widget
+
+
 
 def close_all():
     """Close all visvis windows."""
