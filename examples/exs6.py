@@ -14,7 +14,7 @@
 import numpy as np
 import calfem.core as cfc
 import calfem.utils as cfu
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 
 # ----- Topology -------------------------------------------------
 
@@ -98,7 +98,7 @@ ey = np.array([
 print(ey)
 
 cfv.eldraw2(ex, ey)
-cfv.eldisp2(ex, ey, Ed)
+#cfv.eldisp2(ex, ey, Ed)
 cfv.showAndWait()
 
 #figure(1)
