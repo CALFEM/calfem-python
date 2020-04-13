@@ -8,6 +8,9 @@ import matplotlib.patches as patches
 import matplotlib as mpl
 import matplotlib.tri as tri
 
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+
 from numpy import sin, cos, pi
 from math import atan2
 
@@ -33,14 +36,16 @@ figureClass = figure_class
 
 cfv_def_mappable = None
 
+
 def set_mappable(mappable):
     global cfv_def_mappable
     cfv_def_mappable = mappable
 
+
 def colorbar(**kwargs):
     """Add a colorbar to current figure"""
     global cfv_def_mappable
-    if cfv_def_mappable!=None:
+    if cfv_def_mappable != None:
         cbar = plt.colorbar(mappable=cfv_def_mappable, ax=plt.gca(), **kwargs)
         cfv_def_mappable = None
         return cbar
@@ -48,12 +53,12 @@ def colorbar(**kwargs):
         return plt.colorbar(**kwargs)
 
 
-def figure(figure=None, show=True, figsize=(4,3)):
+def figure(figure=None, show=True, fig_size=(4, 3)):
     """Create a visvis figure with extras."""
     f = None
-    
+
     if figure == None:
-        f = plt.figure(figsize=figsize)
+        f = plt.figure(figsize=fig_size)
     else:
         try:
             f = plt.figure(figure)
@@ -62,11 +67,13 @@ def figure(figure=None, show=True, figsize=(4,3)):
 
     return f
 
-def figure_widget(fig):
-    widget = cfv.FigureCanvas(fig)
-    toolbar = cfv.NavigationToolbar(widget, widget)
-    return widget
 
+def figure_widget(fig, parent=None):
+    widget = FigureCanvas(fig)
+    if parent != None:
+        widget.setParent(parent)
+    toolbar = NavigationToolbar(widget, widget)
+    return widget
 
 
 def close_all():
@@ -86,6 +93,7 @@ def gca():
     """Get current axis of the current visvis figure."""
     return plt.gca()
 
+
 def gcf():
     return plt.gcf()
 
@@ -101,6 +109,7 @@ def camera3d():
 
 
 def show_and_wait():
+    """Wait for plot to show"""
     plt.show()
 
 
@@ -108,20 +117,25 @@ showAndWait = show_and_wait
 
 
 def show_and_wait_mpl():
+    """Wait for plot to show"""
     plt.show()
 
 
 showAndWaitMpl = show_and_wait_mpl
 
+
 def set_figure_dpi(dpi):
     mpl.rcParams['figure.dpi'] = dpi
+
 
 def text(text, pos, angle=0, **kwargs):
     return plt.text(pos[0], pos[1], text, **kwargs)
 
+
 add_text = text
 addText = text
 label = text
+
 
 def ce2vf(coords, edof, dofs_per_node, el_type):
     '''Duplicate code. Extracts verts, faces and verticesPerFace from input.'''
@@ -172,26 +186,27 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
     '''
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
-    Parameters:
-    coords      - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-                  of node i.
-    edof        - An E-by-L array. Element topology. (E is the number of elements
-                  and L is the number of dofs per element)
-    dofs_per_nodes - Integer. Dofs per node.
-    el_type      - Integer. Element Type. See Gmsh manual for details. Usually 2
-                  for triangles or 3 for quadrangles.
-    axes        - Visvis Axes. The Axes where the model will be drawn. 
-                  If unspecified the current Axes will be used, or a new Axes will
-                  be created if none exist.
-    axes_adjust  - Boolean. True if the view should be changed to show the whole
-                  model. Default True.
-    title       - String. Changes title of the figure. Default "Mesh".
-    color       - 3-tuple or char. Color of the wire. Defaults to black (0,0,0).
-                  Can also be given as a character in 'rgbycmkw'.
-    face_color   - 3-tuple or char. Color of the faces. Defaults to white (1,1,1).
-                  Parameter filled must be True or faces will not be drawn at all.
-    filled      - Boolean. Faces will be drawn if True. Otherwise only the wire is
-                  drawn. Default False.
+    Args:
+        coords:
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+        edof:
+            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+        dofs_per_nodes:
+            Integer. Dofs per node.
+        el_type:
+            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+        axes:
+            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+        axes_adjust:
+            Boolean. True if the view should be changed to show the whole model. Default True.
+        title:
+            String. Changes title of the figure. Default "Mesh".
+        color: 
+            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+        face_color:
+            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
+        filled:
+            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
     '''
 
     verts, faces, vertices_per_face, is_3d = ce2vf(
@@ -236,27 +251,38 @@ drawMesh = draw_mesh
 
 def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, draw_elements=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
-    Draws scalar element values in 2D or 3D. Returns the world object
-    elementsWobject that represents the mesh.
-    Parameters:
-    ev            - An N-by-1 array or a list of scalars. The Scalar values of the
-                    elements. ev[i] should be the value of element i.
-    coords        - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-                    of node i.
-    edof          - An E-by-L array. Element topology. (E is the number of elements
-                    and L is the number of dofs per element)
-    dofs_per_node - Integer. Dofs per node.
-    el_type       - Integer. Element Type. See Gmsh manual for details. Usually 2
-                    for triangles or 3 for quadrangles.
-    displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
-                    displacements of node i.
-    draw_mesh             - Boolean. True if mesh wire should be drawn. Default True.
-    draw_undisplaced_mesh - Boolean. True if the wire of the undisplaced mesh
-                            should be drawn on top of the displaced mesh. Default False.
-                            Use only if displacements != None.
-    magnfac       - Float. Magnification factor. Displacements are multiplied by
-                    this value. Use this to make small displacements more visible.
-    title         - String. Changes title of the figure. Default "Element Values".
+    Draws scalar element values in 2D or 3D. 
+
+    Args:
+        ev: 
+            An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
+    
+        coords:
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+
+        edof:
+            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+
+        dofs_per_node:
+            Integer. Dofs per node.
+
+        el_type: 
+            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+    
+        displacements:
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z displacements of node i.
+    
+        draw_mesh:
+            Boolean. True if mesh wire should be drawn. Default True.
+
+        draw_undisplaced_mesh: 
+            Boolean. True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
+
+        magnfac: 
+            Float. Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
+
+        title: 
+            String. Changes title of the figure. Default "Element Values".
     '''
 
     if draw_undisplaced_mesh:
@@ -306,31 +332,33 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     if title != None:
         ax.set(title=title)
 
+
 def draw_displacements(a, coords, edof, dofs_per_node, el_type, draw_undisplaced_mesh=False, magnfac=-1.0, magscale=0.25, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
     '''
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
-    Parameters:
-    ev            - An N-by-1 array or a list of scalars. The Scalar values of the
-                    elements. ev[i] should be the value of element i.
-    coords        - An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates
-                    of node i.
-    edof          - An E-by-L array. Element topology. (E is the number of elements
-                    and L is the number of dofs per element)
-    dofs_per_node - Integer. Dofs per node.
-    el_type       - Integer. Element Type. See Gmsh manual for details. Usually 2
-                    for triangles or 3 for quadrangles.
-    displacements - An N-by-2 or N-by-3 array. Row i contains the x,y,z
-                    displacements of node i.
-    axes          - Visvis Axes. The Axes where the model will be drawn.
-                    If unspecified the current Axes will be used, or a new Axes will
-                    be created if none exist.
-    draw_undisplaced_mesh - Boolean. True if the wire of the undisplaced mesh
-                            should be drawn on top of the displaced mesh. Default False.
-                            Use only if displacements != None.
-    magnfac     - Float. Magnification factor. Displacements are multiplied by
-                  this value. Use this to make small displacements more visible.
-    title       - String. Changes title of the figure. Default "Element Values".
+
+    Args:
+        ev: 
+            An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
+        coords: 
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+        edof: 
+            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+        dofs_per_node: 
+            Integer. Dofs per node.
+        el_type: 
+            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+        displacements:  
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z  displacements of node i.
+        axes: 
+            Matlotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+        draw_undisplaced_mesh:
+            Boolean. True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
+        magnfac:        
+            Float. Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
+        title:          
+            String. Changes title of the figure. Default "Element Values".
     '''
 
     if draw_undisplaced_mesh:
@@ -579,30 +607,33 @@ def draw_nodal_values_shaded(values, coords, edof, title=None, dofs_per_node=Non
 draw_nodal_values = draw_nodal_values_contourf
 
 
-def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20):
+def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20, rel_margin=0.05, draw_axis=False):
     '''
     Draws the geometry (points and curves) in geoData
-    Parameters:
-    geoData    - GeoData object. Geodata contains geometric information of the
-                 model.
-    axes       - Visvis Axes. The Axes where the model will be drawn.
-                 If unspecified the current Axes will be used, or a new Axes will
-                 be created if none exist.
-    axesAdjust - Boolean. If True the view will be changed to show the whole
-                 model. Default True.
-    drawPoints - Boolean. If True points will be drawn.
-    labelPoints- Boolean. If True Points will be labeled. The format is:
-                 ID[marker]. If a point has marker==0 only the ID is written.
-    labelCurves- Boolean. If True Curves will be labeled. The format is:
-                 ID(elementsOnCurve)[marker].
-    fontSize   - Integer. Size of the text in the text labels. Default 11.
-    N          - Integer. The number of discrete points per curve segment.
-                 Default 20. Increase for smoother curves. Decrease for better
-                 performance.
+    Args:
+        geoData:
+            GeoData object. Geodata contains geometric information of the model.
+        axes:
+            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+        axes_adjust:
+            Boolean. If True the view will be changed to show the whole model. Default True.
+        draw_points: 
+            Boolean. If True points will be drawn.
+        label_points:
+            Boolean. If True Points will be labeled. The format is: ID[marker]. If a point has marker==0 only the ID is written.
+        label_curves:
+            Boolean. If True Curves will be labeled. The format is: ID(elementsOnCurve)[marker].
+        font_size:
+            Integer. Size of the text in the text labels. Default 11.
+        N:
+            Integer. The number of discrete points per curve segment. Default 20. Increase for smoother curves. Decrease for better performance.
+        rel_margin:
+            Extra spacing between geometry and axis
     '''
 
     ax = plt.gca()
     ax.set_aspect('equal')
+    ax.set_frame_on(draw_axis)
 
     if draw_points:
         P = np.array(geometry.getPointCoords())  # M-by-3 list of M points.
@@ -652,7 +683,22 @@ def draw_geometry(geometry, axes=None, axes_adjust=True, draw_points=True, label
             plt.text(midP[0], midP[1], text, fontsize=font_size)
 
     if title != None:
-        plt.title(title, axes)
+        plt.title(title)
+
+    min_x, max_x, min_y, max_y = geometry.bounding_box_2d()
+
+    g_width = max_x - min_x
+    g_height = max_y - min_y
+
+    if g_width > g_height:
+        margin = rel_margin*g_width
+    else:
+        margin = rel_margin*g_height
+
+    bottom, top = ax.get_ylim()
+    left, right = ax.get_xlim()
+    ax.set_ylim(bottom-margin, top+margin)
+    ax.set_xlim(left-margin, right+margin)
 
     # if axesAdjust:
     #    _adjustaxes(axes, geoData.is3D)
@@ -734,6 +780,7 @@ def _bspline(controlPoints, pointsOnCurve=20):
     T = np.matrix([[pow(s, 3), pow(s, 2), s, 1] for s in t])
 
     return np.asarray(np.vstack([T * M * CPs[i-1: i+3, :] for i in range(1, len(CPs)-2)]))
+
 
 def _circleArc(start, center, end, pointsOnCurve=20):
     return _ellipseArc(start, center, start, end, pointsOnCurve)

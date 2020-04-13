@@ -31,8 +31,14 @@ Utility functions
 .. automodule:: calfem.utils
    :members:
 
-Visualisation functions
------------------------
+Visualisation functions (Matplotlib)
+------------------------------------
+
+.. automodule:: calfem.vis_mpl
+   :members:
+
+Visualisation functions (VisVis)
+--------------------------------
 
 .. automodule:: calfem.vis
    :members:
