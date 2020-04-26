@@ -12,7 +12,6 @@ have_pyvtk = True
 try:
     import pyvtk as vtk
 except:
-    global have_pyvtk
     have_pyvtk = False
     pass
 

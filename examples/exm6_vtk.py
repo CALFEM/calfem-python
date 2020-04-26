@@ -19,72 +19,6 @@ from math import sqrt
 
 cfu.enableLogging()
 
-def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=None, el_vec2=None):
-    """
-    Export mesh and results for a 2D stress problem.
-    
-    Parameters:
-    
-        filename            Filename of vtk-file
-        coords              Element coordinates (np.array)
-        topo                Element topology (not dof topology). mesh.topo. (np.array)
-        a                   Element displacements 2-dof (np.array)
-        el_scalar           Scalar values for each element (list)
-        el_vec1             Vector value for each element (list)
-        el_vec2             Vector value for each element (list)
-    """
-
-    points = coords.tolist()
-    polygons = (topo-1).tolist()
-
-    displ = []
-
-    point_data = None
-    scalars = None
-    vectors1 = None
-    vectors2 = None
-    cell_data = None
-
-    if a is not None:
-        for i in range(0,len(a),2):
-            displ.append([np.asscalar(a[i]), np.asscalar(a[i+1]), 0.0])
-                    
-        point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
-
-    if el_scalar is not None:
-        scalars = vtk.Scalars(el_scalar, name="scalar")
-    if el_vec1 is not None:
-        vectors1 = vtk.Vectors(el_vec1, name="principal1")
-    if el_vec2 is not None:
-        vectors2 = vtk.Vectors(el_vec2, name="principal2")
-
-    if el_scalar is not None and el_vec1 is None and el_vec2 is None:
-        cell_data = vtk.CellData(scalars)
-    if el_scalar is not None and el_vec1 is None and el_vec2 is not None:
-        cell_data = vtk.CellData(scalars, vectors2)
-    if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
-        cell_data = vtk.CellData(scalars, vectors1)
-    if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
-        cell_data = vtk.CellData(scalars, vectors1, vectors2)
-    if el_scalar is None and el_vec1 is None and el_vec2 is not None:
-        cell_data = vtk.CellData(vectors2)
-    if el_scalar is None and el_vec1 is not None and el_vec2 is None:
-        cell_data = vtk.CellData(vectors1)
-    if el_scalar is None and el_vec1 is not None and el_vec2 is None:
-        cell_data = vtk.CellData(vectors1, vectors2)
-
-    structure = vtk.PolyData(points = points, polygons = polygons)
-
-    if cell_data is not None and point_data is not None:
-        vtk_data = vtk.VtkData(structure, cell_data, point_data)
-    if cell_data is None and point_data is not None:
-        vtk_data = vtk.VtkData(structure, point_data)
-    if cell_data is None and point_data is None:
-        vtk_data = vtk.VtkData(structure)
-
-    vtk_data.tofile("exm6.vtk", "ascii")
-
-
 # ---- Define problem variables ---------------------------------------------
 
 t = 0.2
@@ -216,4 +150,4 @@ for i in range(edof.shape[0]):
 
 # ---- Export to VTK --------------------------------------------------------
 
-export_vtk_stress("exm6.vtk", coords, mesh.topo-1, a, von_mises, principal1, principal2)
+cfu.export_vtk_stress("exm6.vtk", coords, mesh.topo-1, a, von_mises, principal1, principal2)
