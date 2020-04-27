@@ -2934,7 +2934,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             [ w2, w1],
             [ w1, w1]])
     else:
-        cfinfo("Used number of integration points not implemented")
+        cfinfo("Used number of integrat     ion points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
     xsi = gp[:,0]
     eta = gp[:,1]
