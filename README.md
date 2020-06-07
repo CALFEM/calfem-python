@@ -22,6 +22,6 @@ Install CALFEM for python using
 `pip install calfem-python`
 
 ## Dependencies
-Mesh Generation Software: GMSH
+Mesh Generation Software: GMSH.
 Install GMSH [here](http://gmsh.info/) and add to the PATH of your file or instead add contents of GMSH to the file folder.
 
