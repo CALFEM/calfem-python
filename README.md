@@ -15,4 +15,13 @@ by the Division of Structural Mechanics at Lund University since the late 70’s
 
 ## Why CALFEM for Python?
 Unlike MATLAB, which have expensive licenses, Python is free to use and distribute
-both for personal and commercial use. An implementation to Py
+both for personal and commercial use. This is the python version of CALFEM for scientific purposes/research.
+
+## Installation
+Install CALFEM for python using 
+`pip install calfem-python`
+
+## Dependencies
+Mesh Generation Software: GMSH
+Install GMSH [here](http://gmsh.info/) and add to the PATH of your file or instead add contents of GMSH to the file folder.
+
