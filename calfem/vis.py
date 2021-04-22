@@ -19,7 +19,6 @@ import logging as cflog
 globalWindows = [] # For supporting ElementView:s for eldraw ...
 
 global globalVisVisApp
-
 global visApp
 visApp = vv.use('qt5') # use qt4
 

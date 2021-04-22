@@ -239,9 +239,11 @@ class GmshMeshGenerator:
         # Check for GMSH executable [NOTE]Mostly copied from trimesh2d(). TODO: Test on different systems
         gmshExe = self.gmsh_exec_path
         if gmshExe == None:
-            gmshExe = ""
+            gmshExe = None
             if sys.platform == "win32":
                 gmshExe = which("gmsh.exe")
+                if gmshExe == None:
+                    gmshExe = which("gmsh.bat")
             else:
                 gmshExe = which("gmsh")
         else:
@@ -254,6 +256,8 @@ class GmshMeshGenerator:
         if gmshExe == None:
             raise IOError(
                 "Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
+        else:
+            print("Info    : GMSH -> %s" % gmshExe)
 
         # Create a temporary directory for GMSH
 
