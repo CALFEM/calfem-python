@@ -454,7 +454,7 @@ def beam2t(ex,ey,ep,eq=None):
     else:
         return Ke,fe
 
-def beam2ts(ex,ey,ep,ed,eq=None,np=None):
+def beam2ts(ex,ey,ep,ed,eq=None,nep=None):
     """
     Compute section forces in two dimensional beam element (beam2e).
     
@@ -473,7 +473,7 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
 
         eq = [qx, qy]       distributed loads, local directions 
 
-        n                   number of evaluation points ( default=2 )
+        nep                 number of evaluation points ( default=2 )
         
     Returns:
           
@@ -512,8 +512,8 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
       
     ne = 2
     
-    if np != None:
-        ne = np
+    if nep != None:
+        ne = nep
         
     C = np.mat([
         [ 0., 0.,              0.,   1., 0., 0.],
@@ -558,7 +558,7 @@ def beam2ts(ex,ey,ep,ed,eq=None,np=None):
     edi = np.concatenate((u,v,teta),1)
     eci = x
 
-    if np != None:
+    if nep != None:
         return es,edi,eci
     else:
         return es
