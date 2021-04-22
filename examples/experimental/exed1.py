@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
                 gi = self.scene.addLine(p0[0], p0[1], p1[0], p1[1], self.pen)
 
         for p in self.g.points.values():
-            gi = NodeItem(-self.hs/2, -self.hs/2, self.hs, self.hs)
+            gi = QGraphicsEllipseItem(-self.hs/2, -self.hs/2, self.hs, self.hs)
             gi.setBrush(self.white_brush)
             gi.setPen(self.pen)
             gi.setPos(p[0][0], p[0][1])
@@ -94,17 +94,18 @@ class MainWindow(QMainWindow):
             self.scene.addItem(gi)
             #gi = self.scene.addEllipse(-self.hs/2, -self.hs/2, self.hs, self.hs, self.pen, self.white_brush)
 
-        self.graphics_view.setScene(self.scene)
-        self.graphics_view.scale(200.0, 200.0)
 
         print(self.scene.sceneRect())
 
         #self.scene.setSceneRect(self.min_x, self.min_y, self.max_x-self.min_x, self.max_y-self.min_y)
-        #self.graphics_view.fitInView(self.scene.sceneRect())
+
+        self.graphics_view.setScene(self.scene)
+        #self.graphics_view.fitInView(self.min_x, self.min_y, self.max_x-self.min_x, self.max_y-self.min_y)
+        self.graphics_view.scale(200.0, 200.0)
 
 
         #ellipse = self.scene.addEllipse(20,20, 200,200, self.pen, self.greenBrush)
-        #rect = self.scene.addRect(-100,-100, 200,200, self.pen, self.grayBrush)
+        #rect = self.scene.addRect(self.min_x, self.min_y, self.max_x-self.min_x, self.max_y-self.min_y, self.pen)
 
         #ellipse.setFlag(QGraphicsItem.ItemIsMovable)
         #rect.setFlag(QGraphicsItem.ItemIsMovable)
@@ -114,11 +115,11 @@ class MainWindow(QMainWindow):
         self.scene.selectionChanged.connect(self.on_selection_changed)
 
     def on_focus_item_changed(self, new_focus_item, old_focus_item, reason):
-        print(new_focus_item, reason)
+        print("on_focus_item_changed", new_focus_item, reason)
 
     def on_selection_changed(self):
         if len(self.scene.selectedItems())>0:
-            print(self.scene.selectedItems()[0].pos())
+            print("on_selection_changed", self.scene.selectedItems()[0].pos())
 
     def on_item_mouse_move(self):
         print("on_item_mouse_move")
