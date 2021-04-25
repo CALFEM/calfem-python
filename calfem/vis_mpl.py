@@ -13,7 +13,7 @@ try:
     from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 except:
     print("Could not import Matplotlib backends. Probarbly due to missing Qt.")
-    
+
 from numpy import sin, cos, pi
 from math import atan2
 
