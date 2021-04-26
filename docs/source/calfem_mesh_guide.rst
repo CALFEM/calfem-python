@@ -117,8 +117,8 @@ To display the generated mesh we can use the **drawMesh()** function of the calf
     cfv.drawMesh(
         coords=coords, 
         edof=edof, 
-        dofsPerNode=meshGen.dofsPerNode, 
-        elType=meshGen.elType, 
+        dofs_per_node=mesh.dofsPerNode, 
+        el_Type=mesh.elType, 
         filled=True, 
         title="Example 01"
             ) 
