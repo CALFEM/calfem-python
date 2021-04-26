@@ -241,9 +241,9 @@ class GmshMeshGenerator:
         if gmshExe == None:
             gmshExe = None
             if sys.platform == "win32":
-                gmshExe = which("gmsh.exe")
+                gmshExe = which("gmsh.bat")
                 if gmshExe == None:
-                    gmshExe = which("gmsh.bat")
+                    gmshExe = which("gmsh.exe")
             else:
                 gmshExe = which("gmsh")
         else:
@@ -326,13 +326,10 @@ class GmshMeshGenerator:
 
         gmshExe = os.path.normpath(gmshExe)
         info("GMSH binary: "+gmshExe)
-        #print('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
-        #os.system('""%s" "%s" %s"' % (gmshExe, geoFilePath, options))
-        #retval = os.system(r'"%s" "%s" %s' % (gmshExe, geoFilePath, options))
 
         output = subprocess.Popen(r'"%s" "%s" %s' % (
             gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()
-
+        
         # Read generated msh file:
         # print("Opening msh file " + mshFileName)#TEMP
 
