@@ -10,6 +10,7 @@ import calfem.core as cfc
 
 import logging as cflog
 
+import gmsh
 
 def error(msg):
     """Log error message"""
@@ -172,6 +173,8 @@ class GmshMeshGenerator:
         # Apart from 16 the 2nd orders are totally untested. Only 16 (8-node quad)
         # is implemented in pycalfem though, so it does not matter.
 
+        self.use_gmsh_module = True
+
     def create(self, is3D=False):
         '''
         Meshes a surface or volume defined by the geometry in geoData.
@@ -236,28 +239,34 @@ class GmshMeshGenerator:
                            31: 56, 92: 64, 93: 125}
         nodesPerElement = nodesPerElmDict[self.el_type]
 
-        # Check for GMSH executable [NOTE]Mostly copied from trimesh2d(). TODO: Test on different systems
-        gmshExe = self.gmsh_exec_path
-        if gmshExe == None:
-            gmshExe = None
-            if sys.platform == "win32":
-                gmshExe = which("gmsh.bat")
-                if gmshExe == None:
-                    gmshExe = which("gmsh.exe")
-            else:
-                gmshExe = which("gmsh")
-        else:
-            if not os.path.exists(gmshExe):
-                gmshExe = os.path.join(
-                    os.getcwd(), self.gmsh_exec_path)  # Try relative path
-                if not os.path.exists(gmshExe):
-                    gmshExe = None  # Relative path didnt work either
+        # Check for GMSH executable 
+        # 
+        # Consider using the gmsh_extension module
 
-        if gmshExe == None:
-            raise IOError(
-                "Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
+        if not self.use_gmsh_module:
+            gmshExe = self.gmsh_exec_path
+            if gmshExe == None:
+                gmshExe = None
+                if sys.platform == "win32":
+                    gmshExe = which("gmsh.bat")
+                    if gmshExe == None:
+                        gmshExe = which("gmsh.exe")
+                else:
+                    gmshExe = which("gmsh")
+            else:
+                if not os.path.exists(gmshExe):
+                    gmshExe = os.path.join(
+                        os.getcwd(), self.gmsh_exec_path)  # Try relative path
+                    if not os.path.exists(gmshExe):
+                        gmshExe = None  # Relative path didnt work either
+
+            if gmshExe == None:
+                raise IOError(
+                    "Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
+            else:
+                print("Info    : GMSH -> %s" % gmshExe)
         else:
-            print("Info    : GMSH -> %s" % gmshExe)
+            print("Info    : GMSH -> Python-module")
 
         # Create a temporary directory for GMSH
 
@@ -271,9 +280,12 @@ class GmshMeshGenerator:
             tempMeshDir = tempfile.mkdtemp()
 
         # If geometry data is given as a .geo file we will just pass it on to gmsh later.
+
         if type(self.geometry) is str:
             geoFilePath = self.geometry
+
             # In this case geoData is a path string, so the dimension must be supplied by the user.
+
             dim = 3 if is3D else 2
             if not os.path.exists(geoFilePath):
                 geoFilePath = os.path.join(
@@ -282,7 +294,9 @@ class GmshMeshGenerator:
                     raise IOError(
                         "Error: Could not find geo-file " + geoFilePath)
         else:
+
             # Get the dimension of the model from geoData.
+
             dim = 3 if self.geometry.is3D else 2
 
             if oldStyleTempDir:
@@ -294,12 +308,13 @@ class GmshMeshGenerator:
                 geoFilePath = os.path.normpath(
                     os.path.join(tempMeshDir, 'tempGeometry.geo'))
 
-            self.geofile = open(geoFilePath, "w")  # Create temp geometry file
-            self._writeGeoFile()  # Write geoData to file
-            self.geofile.close()
+            with open(geoFilePath, "w") as self.geofile:
+                self._writeGeoFile()  # Write geoData to file
 
         if oldStyleTempDir:
+
             # Filepath to the msh-file that will be generated.
+
             mshFileName = os.path.normpath(os.path.join(
                 os.getcwd(), 'gmshMeshTemp/meshFile.msh'))
         else:
@@ -320,95 +335,167 @@ class GmshMeshGenerator:
         options += ' -algo ' + self.meshing_algorithm if self.meshing_algorithm is not None else ''
         options += ' -order 2' if self.el_type in self._2ndOrderElms else ''
         options += ' -format msh22'
+        options += ' -v 5'
         options += ' ' + self.additional_options
 
         # Execute gmsh
 
-        gmshExe = os.path.normpath(gmshExe)
-        info("GMSH binary: "+gmshExe)
+        print(r'"%s" "%s" %s' % ("gmshExe", geoFilePath, options))
 
-        output = subprocess.Popen(r'"%s" "%s" %s' % (
-            gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()
+        if self.use_gmsh_module:
+
+            # Meshing using gmsh extension module
+
+            gmsh.initialize(sys.argv)
+
+            # Load .geo file
+
+            gmsh.open(geoFilePath)
+            gmsh.model.geo.synchronize()
+
+            # Set meshing options
+
+            if self.el_type in self._2ndOrderElms:
+                gmsh.option.setNumber("Mesh.ElementOrder", 2)
+            
+            if self.meshing_algorithm is not None:
+                gmsh.option.setString(self.meshing_algorithm)
+            
+            gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
+            gmsh.option.setNumber("Mesh.MeshSizeFactor", self.el_size_factor)
+
+            if self.clcurv is not None:
+                gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", self.clcurv)
+
+            if self.min_size is not None:
+                gmsh.option.setNumber('Mesh.MeshSizeMin', self.min_size)
+            if self.max_size is not None:
+                gmsh.option.setNumber('Mesh.MeshSizeMax', self.max_size)
+
+            # Generate mesh
+
+            gmsh.model.mesh.generate(2)
+
+            # Write .msh file
+
+            gmsh.write(mshFileName)
+
+            # Close extension module
+
+            gmsh.finalize()            
+        else:
+            gmshExe = os.path.normpath(gmshExe)
+            info("GMSH binary: "+gmshExe)
+
+            output = subprocess.Popen(r'"%s" "%s" %s' % (
+                gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()
         
         # Read generated msh file:
         # print("Opening msh file " + mshFileName)#TEMP
 
-        mshFile = open(mshFileName, 'r')
-        info("Mesh file  : "+mshFileName)
+        with open(mshFileName, 'r') as mshFile:
 
-        # print("Reading msh file...")#TEMP
-        ln = mshFile.readline()
-        while(ln != '$Nodes\n'):  # Read until we find the nodes
+            info("Mesh file  : "+mshFileName)
+
+            # print("Reading msh file...")
+
             ln = mshFile.readline()
-        nbrNodes = int(mshFile.readline())
-        allNodes = np.zeros([nbrNodes, dim], 'd')
-        for i in range(nbrNodes):
-            line = list(map(float, mshFile.readline().split()))
-            # Grab the coordinates (1:3 if 2D, 1:4 if 3D)
-            allNodes[i, :] = line[1:dim+1]
+            while(ln != '$Nodes\n'):  # Read until we find the nodes
+                ln = mshFile.readline()
+            nbrNodes = int(mshFile.readline())
+            allNodes = np.zeros([nbrNodes, dim], 'd')
+            for i in range(nbrNodes):
+                line = list(map(float, mshFile.readline().split()))
 
-        while(mshFile.readline() != '$Elements\n'):  # Read until we find the elements
-            pass
-        # The nbr of elements (including marker elements).
-        nbrElements = int(mshFile.readline())
-        elements = []
-        elementmarkers = []
-        # temp dictionary of sets. Key:MarkerID. Value:Set. The sets will be converted to lists.
-        bdofs = {}
-        boundaryElements = {}
-        # nodeOnPoint = {}  #dictionary pointID : nodeNumber
-        self.nodesOnCurve = {}  # dictionary lineID  : set of [nodeNumber]
-        self.nodesOnSurface = {}  # dictionary surfID  : set of [nodeNumber]
-        self.nodesOnVolume = {}  # dictionary volID   : set of [nodeNumber]
-        # Read all elements (points, surfaces, etc):
-        for i in range(nbrElements):
-            line = list(map(int, mshFile.readline().split()))
-            eType = line[1]  # second int is the element type.
-            nbrTags = line[2]  # Third int is the nbr of tags on this element.
-            marker = line[3]  # Fourth int (first tag) is the marker.
-            # Fifth int  is the ID of the geometric entity (points, curves, etc) that the element belongs to
-            entityID = line[4]
-            # The rest after tags are node indices.
-            nodes = line[3+nbrTags: len(line)]
+                # Grab the coordinates (1:3 if 2D, 1:4 if 3D)
 
-            # If the element type is the kind of element we are looking for:
-            if(eType == self.el_type):
-                # Add the nodes of the elements to the list.
-                elements.append(nodes)
-                # Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
-                elementmarkers.append(marker)
-            else:  # If the element is not a "real" element we store its node at marker in bdof instead:
-                _insertInSetDict(bdofs, marker, nodes)
+                allNodes[i, :] = line[1:dim+1]
 
-                # We also store the full information as 'boundary elements'
-                _insertBoundaryElement(boundaryElements, eType, marker, nodes)
+            while(mshFile.readline() != '$Elements\n'):  # Read until we find the elements
+                pass
 
-            # if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
-            #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
+            # The nbr of elements (including marker elements).
 
-            if eType in [1, 8, 26, 27, 28]:  # If line
-                # insert nodes into nodesOnCurve
-                _insertInSetDict(self.nodesOnCurve, entityID -
-                                 1, _offsetIndices(nodes, -1))
-            elif eType in [2, 3, 9, 10, 16, 20, 21, 22, 23, 24, 25]:  # If surfaceelement
-                # insert nodes into nodesOnSurface
-                _insertInSetDict(self.nodesOnSurface, entityID -
-                                 1, _offsetIndices(nodes, -1))
-            else:  # if volume element.
-                _insertInSetDict(self.nodesOnVolume, entityID -
-                                 1, _offsetIndices(nodes, -1))
+            nbrElements = int(mshFile.readline())
+            elements = []
+            elementmarkers = []
 
-        elements = np.array(elements)
-        for key in bdofs.keys():  # Convert the sets of boundary nodes to lists.
-            bdofs[key] = list(bdofs[key])
-        for key in self.nodesOnCurve.keys():  # Convert set to list
-            self.nodesOnCurve[key] = list(self.nodesOnCurve[key])
-        for key in self.nodesOnSurface.keys():  # Convert set to list
-            self.nodesOnSurface[key] = list(self.nodesOnSurface[key])
-        for key in self.nodesOnVolume.keys():  # Convert set to list
-            self.nodesOnVolume[key] = list(self.nodesOnVolume[key])
+            # temp dictionary of sets. Key:MarkerID. Value:Set. The sets will be converted to lists.
 
-        mshFile.close()
+            bdofs = {}
+            boundaryElements = {}
+
+            # nodeOnPoint = {}  #dictionary pointID : nodeNumber
+
+            self.nodesOnCurve = {}  # dictionary lineID  : set of [nodeNumber]
+            self.nodesOnSurface = {}  # dictionary surfID  : set of [nodeNumber]
+            self.nodesOnVolume = {}  # dictionary volID   : set of [nodeNumber]
+
+            # Read all elements (points, surfaces, etc):
+
+            for i in range(nbrElements):
+                line = list(map(int, mshFile.readline().split()))
+                eType = line[1]  # second int is the element type.
+                nbrTags = line[2]  # Third int is the nbr of tags on this element.
+                marker = line[3]  # Fourth int (first tag) is the marker.
+
+                # Fifth int  is the ID of the geometric entity (points, curves, etc) that the element belongs to
+
+                entityID = line[4]
+
+                # The rest after tags are node indices.
+
+                nodes = line[3+nbrTags: len(line)]
+
+                # If the element type is the kind of element we are looking for:
+
+                if(eType == self.el_type):
+
+                    # Add the nodes of the elements to the list.
+
+                    elements.append(nodes)
+
+                    # Add element marker. It is used for keeping track of elements (thickness, heat-production and such)
+
+                    elementmarkers.append(marker)
+                else:  # If the element is not a "real" element we store its node at marker in bdof instead:
+                    _insertInSetDict(bdofs, marker, nodes)
+
+                    # We also store the full information as 'boundary elements'
+
+                    _insertBoundaryElement(boundaryElements, eType, marker, nodes)
+
+                # if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
+                #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
+
+                if eType in [1, 8, 26, 27, 28]:  # If line
+
+                    # insert nodes into nodesOnCurve
+
+                    _insertInSetDict(self.nodesOnCurve, entityID -
+                                    1, _offsetIndices(nodes, -1))
+                elif eType in [2, 3, 9, 10, 16, 20, 21, 22, 23, 24, 25]:  # If surfaceelement
+
+                    # insert nodes into nodesOnSurface
+
+                    _insertInSetDict(self.nodesOnSurface, entityID -
+                                    1, _offsetIndices(nodes, -1))
+                else:  
+                    
+                    # if volume element.
+
+                    _insertInSetDict(self.nodesOnVolume, entityID -
+                                    1, _offsetIndices(nodes, -1))
+
+            elements = np.array(elements)
+            for key in bdofs.keys():  # Convert the sets of boundary nodes to lists.
+                bdofs[key] = list(bdofs[key])
+            for key in self.nodesOnCurve.keys():  # Convert set to list
+                self.nodesOnCurve[key] = list(self.nodesOnCurve[key])
+            for key in self.nodesOnSurface.keys():  # Convert set to list
+                self.nodesOnSurface[key] = list(self.nodesOnSurface[key])
+            for key in self.nodesOnVolume.keys():  # Convert set to list
+                self.nodesOnVolume[key] = list(self.nodesOnVolume[key])
 
         # Remove temporary mesh directory if not explicetly specified.
 
@@ -445,53 +532,73 @@ class GmshMeshGenerator:
         return allNodes, elements, dofs, bdofs, elementmarkers
 
     def _writeGeoFile(self):
+
         # key is marker, value is a list of point indices (0-based) with that marker
+
         pointMarkers = {}
         curveMarkers = {}
         surfaceMarkers = {}
         volumeMarkers = {}
 
         # WRITE POINTS:
+
         for ID, [coords, elSize, marker] in self.geometry.points.items():
             self.geofile.write("Point(%i) = {%s};\n" % (
                 ID+1, _formatList(coords + [elSize])))
             _insertInSetDict(pointMarkers, marker, ID)
 
         # WRITE CURVES:
+
         for ID, [curveName, points, marker, elOnCurve, distributionString, distributionVal] in self.geometry.curves.items():
             self.geofile.write("%s(%i) = {%s};\n" % (
                 curveName, ID+1, _formatList(points, 1)))
 
             # Transfinite Line{2} = 20 Using Bump 0.05;
+
             if elOnCurve != None:
                 distribution = "" if distributionString == None else "Using %s %f" % (
                     distributionString, distributionVal)
                 self.geofile.write("Transfinite Line{%i} = %i %s;\n" % (
                     ID+1, elOnCurve+1, distribution))
+
                 # +1 on elOnCurve because gmsh actually takes the number of nodes on the curve, not elements on the curve.
+
             _insertInSetDict(curveMarkers, marker, ID)
 
         # WRITE SURFACES:
+
         for ID, [surfName, outerLoop, holes, ID, marker, isStructured] in self.geometry.surfaces.items():
+
             # First we write line loops for the surface edge and holes (if there are any holes):
+
             self._writeLineLoop(outerLoop, ID+1)
             holeIDs = []
             for hole, i in zip(holes, range(len(holes))):
+
                 # Create a hopefully unique ID-number for the line loop: Like 10015 or 1540035
                 # (If gmsh uses 32-bit integers for IDs then IDs over 214'748 will break)
+
                 holeID = 10000 * (ID+1) + 10 * i + 5
                 self._writeLineLoop(hole, holeID)
                 holeIDs.append(holeID)
+
             # Second, we write the surface itself:
             # If we have hole we want to include them in the surface.
+
             holeString = "" if not holeIDs else ", " + _formatList(holeIDs)
+
             # Like "Plane Surface(2) = {4, 2, 6, 8}
+
             self.geofile.write("%s(%i) = {%s%s};\n" % (
                 surfName, ID+1, ID+1, holeString))
+
             # Lastly, we make the surface transfinite if it is a structured surface:
+
             if isStructured:
                 cornerPoints = set()
+
                 # Find the corner points. This is possibly unnecessary since Gmsh can do this automatically.
+
                 for c in outerLoop:
                     curvePoints = self.geometry.curves[c][1]
                     cornerPoints.add(curvePoints[0])
@@ -499,48 +606,66 @@ class GmshMeshGenerator:
                 cornerPoints = list(cornerPoints)
                 self.geofile.write("Transfinite Surface{%i} = {%s};\n" % (
                     ID+1, _formatList(cornerPoints, 1)))  # Like Transfinite Surface{1} = {1,2,3,4};
+
                 # Transfinite Surface has an optional argument (about triangle orientation) that is not implemented here.
+
             _insertInSetDict(surfaceMarkers, marker, ID)
 
         # WRITE VOLUMES:
+
         for ID, [outerLoop, holes, ID, marker, isStructured] in self.geometry.volumes.items():
+
             # Surface loops for the volume boundary and holes (if any):
+
             self._writeSurfaceLoop(outerLoop, ID+1)
             holeIDs = []
             for hole, i in zip(holes, range(len(holes))):
+
                 # ID-number for the hole surface loop
+
                 holeID = 10000 * (ID+1) + 10 * i + 7
                 self._writeSurfaceLoop(hole, holeID)
                 holeIDs.append(holeID)
+
             # Write the volume itself:
             # If we have hole we want to include them in the surface.
+
             holeString = "" if not holeIDs else " , " + _formatList(holeIDs)
+
             # Like "Plane Surface(2) = {4, 2, 6, 8}
+
             self.geofile.write(
                 "Volume(%i) = {%s%s};\n" % (ID+1, ID+1, holeString))
+
             # Lastly, we make the volume transfinite if it is a structured volume:
+
             if isStructured:
                 self.geofile.write("Transfinite Volume{%i} = {};\n" % (ID+1))
-                # We don't find the corner points of the structured volume like we did with the surfaces. Gmsh can actually
-                # find the corners automatically.
+
+                # We don't find the corner points of the structured volume like we did with the surfaces. Gmsh can actually find the corners automatically.
+
             _insertInSetDict(volumeMarkers, marker, ID)
 
         # MAYBE MAKE QUADS:
+
         if(self.el_type in self._ElementsWithQuadFaces):  # If we have quads surfaces on the elements
             self.geofile.write("Mesh.RecombineAll = 1;\n")
 
         # WRITE POINT MARKERS:
+
         for marker, IDlist in pointMarkers.items():
             if marker != 0:
                 self.geofile.write("Physical Point(%i) = {%s};\n" % (
                     marker, _formatList(IDlist, 1)))
 
         # WRITE CURVE MARKERS:
+
         for marker, IDlist in curveMarkers.items():
             self.geofile.write("Physical Line(%i) = {%s};\n" % (
                 marker, _formatList(IDlist, 1)))
 
         # WRITE SURFACE MARKERS:
+
         for marker, IDlist in surfaceMarkers.items():
             self.geofile.write("Physical Surface(%i) = {%s};\n" % (
                 marker, _formatList(IDlist, 1)))
@@ -553,29 +678,41 @@ class GmshMeshGenerator:
         # If the element type is of an incomplete second order type
         # (i.e it is an 2nd order element without nodes in the middle of the element face),
         # then we need to specify this in the geo-file:
+
         if self.el_type in self._2dOrderIncompleteElms:
             self.geofile.write("Mesh.SecondOrderIncomplete=1;\n")
 
     def _writeLineLoop(self, lineIndices, loopID):
+
         # endPoints is used to keep track of at which points the curves start and end (i.e the direction of the curves)
+
         endPoints = []
+
         # lineIndices is a list of curve indices (0-based here, but 1-based later in the method)
+
         for i in lineIndices:
             curvePoints = self.geometry.curves[i][1]
             endPoints.append([curvePoints[0], curvePoints[-1]])
 
         # We need the indices to be 1-based rather than 0-based in the next loop. (Some indices will be preceded by a minus-sign)
+
         lineIndices = _offsetIndices(lineIndices, 1)
         isFirstLine = True
         nbrLinesinLoop = len(lineIndices)
+
         # In this loop we reverse the direction of some lines in the LineLoop to make them conform to the format that Gmsh expects.
+
         for k in range(nbrLinesinLoop):
             if isFirstLine and nbrLinesinLoop > 1:
                 isFirstLine = False
+
                 # If last point of the first line exists in the endpoints of the second line... Do nothing
+
                 if endPoints[0][1] in endPoints[1]:
                     pass
+
                 # Else if the first point in the first line exists in the endpoints of the second line:
+
                 elif endPoints[0][0] in endPoints[1]:
                     endPoints[0].reverse()
                     lineIndices[0] *= -1  # Reverse the direction of the line
@@ -596,6 +733,7 @@ class GmshMeshGenerator:
                     "ERROR: The last curve of a line-loop %i does not join up with the first curve" % loopID)
 
         # If the model is in 2D we need to make all line loops counter-clockwise so surface normals point in the positive z-direction.
+
         if not self.geometry.is3D:
             lineIndices = self._makeCounterClockwise(lineIndices)
 
@@ -607,7 +745,9 @@ class GmshMeshGenerator:
         this function will return a counterclockwise version of lineIndices
         (i.e. all indices multiplied by -1).
         lineIndices is a list of integers (1-based line indices) that may be negative, but not 0'''
+
         # Method described at http://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
+
         summa = 0.0  # Counter-clockwise if the sum ends up negative.
         for index in lineIndices:
             sign = -1 if index < 0 else 1
