@@ -32,7 +32,7 @@ setup(
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
 
-    version='3.5.6',
+    version='3.5.7',
 
     description='CALFEM for Python',
     long_description='The computer program CALFEM is written for the software MATLAB and is an interactive tool for  learning the finite element method. CALFEM is an abbreviation of "Computer Aided Learning of the Finite Element  Method" and been developed by the Division of Structural Mechanics at Lund University since the late 70s.',
@@ -90,7 +90,7 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'visvis', 'pyvtk', 'matplotlib', 'scipy', 'pyqt5', 'gmsh'],
+    install_requires=['numpy', 'visvis', 'pyvtk', 'matplotlib', 'scipy', 'gmsh'],
     include_package_data=True
     #package_data={'calfem': ['examples/*']}
     

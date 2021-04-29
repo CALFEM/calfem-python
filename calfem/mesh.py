@@ -340,8 +340,6 @@ class GmshMeshGenerator:
 
         # Execute gmsh
 
-        print(r'"%s" "%s" %s' % ("gmshExe", geoFilePath, options))
-
         if self.use_gmsh_module:
 
             # Meshing using gmsh extension module
