@@ -174,6 +174,8 @@ class GmshMeshGenerator:
         # is implemented in pycalfem though, so it does not matter.
 
         self.use_gmsh_module = True
+        self.remove_gmsh_signal_handler = True
+        self.initialize_gmsh = True
 
     def create(self, is3D=False):
         '''
@@ -344,7 +346,14 @@ class GmshMeshGenerator:
 
             # Meshing using gmsh extension module
 
-            gmsh.initialize(sys.argv)
+            if self.initialize_gmsh:
+                gmsh.initialize(sys.argv)
+
+            # This is a hack to enable the use of gmsh in 
+            # a separate thread.
+
+            if self.remove_gmsh_signal_handler:
+                gmsh.oldsig = None
 
             # Load .geo file
 
@@ -380,7 +389,8 @@ class GmshMeshGenerator:
 
             # Close extension module
 
-            gmsh.finalize()            
+            if self.initialize_gmsh:
+                gmsh.finalize()            
         else:
             gmshExe = os.path.normpath(gmshExe)
             info("GMSH binary: "+gmshExe)
