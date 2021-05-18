@@ -1,5 +1,8 @@
 # CALFEM for Python
 
+## Documentation
+[https://calfem-for-python.readthedocs.io/en/latest/](https://calfem-for-python.readthedocs.io/en/latest/)
+
 ## Manuals
 
 Original manual: [manual.pdf](https://github.com/CALFEM/calfem-python/raw/master/manual.pdf)
