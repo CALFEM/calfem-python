@@ -118,7 +118,7 @@ To display the generated mesh we can use the **drawMesh()** function of the calf
         coords=coords, 
         edof=edof, 
         dofs_per_node=mesh.dofsPerNode, 
-        el_Type=mesh.elType, 
+        el_type=mesh.elType, 
         filled=True, 
         title="Example 01"
             ) 
@@ -127,7 +127,7 @@ Running the exmaple will produce the following mesh with quad elements:
     
 .. image:: images/mesh2.png
 
-Changing the *elType* property to 2 will produce a mesh with triangle elements instead:
+Changing the *elType* property to 2 (:code:`mesh.elType = 2`) will produce a mesh with triangle elements instead:
 
 .. image:: images/mesh3.png
 
