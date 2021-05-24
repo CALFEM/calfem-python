@@ -7,13 +7,29 @@ Welcome to CALFEM for Python's documentation!
 =============================================
 
 Contents:
+---------
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Installation
+
+   installation
+
 
 .. toctree::
    :maxdepth: 2
+   :caption: Tutorial
 
    calfem_examples
    calfem_mesh_guide
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Function Reference
+
    calfem_reference
+
 
 ==================
 Indices and tables
