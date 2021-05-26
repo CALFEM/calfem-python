@@ -12,8 +12,8 @@ Show the basic steps in a finite element calculation.
 
 **Description:**
 
-The general procedure in linear finite element calculations is carried out for a simple
-structure. The steps are:
+The general procedure in linear finite element calculations is carried out for a
+simple structure. The steps are:
 
  * define the model
  * generate element matrices
@@ -21,11 +21,11 @@ structure. The steps are:
  * solve the global system of equations
  * evaluate element forces
 
-Consider the system of three linear elastic springs, and the corresponding finite
-element model. The system of springs is fixed in its ends and loaded by a single
-load F.
+Consider the system of three linear elastic springs, and the corresponding
+finite element model. The system of springs is fixed in its ends and loaded by a
+single load F.
 
-.. image:: images/exs1-1.png
+.. image:: images/exs1-1-rev1.png
 
 Import required modules::
 
@@ -148,14 +148,17 @@ Analysis of one-dimensional heat flow.
 
 **Description:**
 
-Consider a wall built up of concrete and thermal insulation. The outdoor temperature
-is −17 ◦C and the temperature inside is 20 ◦C. At the inside of the thermal
-insulation there is a heat source yielding 10 W/m2.
+Consider a wall built up of concrete and thermal insulation. The outdoor
+temperature is −17 ◦C and the temperature inside is 20 ◦C. At the inside of
+the thermal insulation there is a heat source yielding :math:`10 ~W/m^2`.
 
-The wall is subdivided into five elements and the one-dimensional spring (analogy)
-element spring1e is used. Equivalent spring stiffnesses are ki = λA/L for thermal
-conductivity and ki = A/R for thermal surface resistance. Corresponding spring
-stiffnesses per m2 of the wall are::
+.. image:: images/exs2.png
+
+The wall is subdivided into five elements and the one-dimensional spring
+(analogy) element `spring1e` is used. Equivalent spring stiffnesses are
+k\ :sub:`i` = λ A/L for thermal conductivity and k\ :sub:`i` = A/R for thermal
+surface resistance. Corresponding spring stiffnesses per m\ :sup:`2` of the wall
+are::
 
     k1 = 1/0.04 = 25.0 W/K
     k2 = 1.7/0.070 = 24.3 W/K
@@ -164,13 +167,13 @@ stiffnesses per m2 of the wall are::
     k5 = 1/0.13 = 7.7 W/K
 
 A global system matrix K and a heat flow vector f are defined. The heat source
-inside the wall is considered by setting f4 = 10. The element matrices Ke are
-computed using spring1e, and the function `assem` assembles the global stiffness
-matrix.
+inside the wall is considered by setting f\ :sub:`4` = 10. The element matrices
+`Ke` are computed using `spring1e`, and the function `assem` assembles the
+global stiffness matrix.
 
 The system of equations is solved using `solveq` with considerations to the
-boundary conditions in `bc` and `bcVal`. The prescribed temperatures are T1 =
-−17 ◦C and T2 = 20◦C.
+boundary conditions in `bc` and `bcVal`. The prescribed temperatures are T\
+:sub:`1` = −17 ◦C and T\ :sub:`2` = 20◦C.
 
 Necessary modules are first imported.::
 

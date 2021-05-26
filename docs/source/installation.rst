@@ -1,7 +1,7 @@
 Installation instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The simples way to install CALFEM for Python is via pip. 
+The simplest way to install CALFEM for Python is via pip. 
 This procedure will ensure that all required dependencies are fulfilled.
 
 This can be achieved by executing the following command::
