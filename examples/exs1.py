@@ -25,8 +25,8 @@ Edof = np.array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K = np.matrix(np.zeros((3,3)))
-f = np.matrix(np.zeros((3,1)))
+K = np.zeros((3,3))
+f = np.zeros((3,1))
 
 # ----- Element stiffness matrices  ------------------------------
 
@@ -48,7 +48,7 @@ print(K)
 # ----- Solve the system of equations ----------------------------
 
 bc = np.array([1,3])
-f[1]=100
+f[1]=100                            # f[1] corresponds to edof 2
 
 a, r = cfc.solveq(K, f, bc)
 
@@ -68,6 +68,7 @@ es1 = cfc.spring1s(ep2,ed1)
 es2 = cfc.spring1s(ep1,ed2)
 es3 = cfc.spring1s(ep2,ed3)
 
+print("Element forces N:")
 print("N1 = "+str(es1))
 print("N2 = "+str(es2))
 print("N3 = "+str(es3))
