@@ -21,8 +21,10 @@ Contents:
    :caption: Tutorial
 
    calfem_examples
+   exs1
+   examples/exs2
    calfem_mesh_guide
-
+   
 
 .. toctree::
    :maxdepth: 1
