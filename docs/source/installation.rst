@@ -12,13 +12,13 @@ or::
 
     sudo pip install calfem-python
 
-to install system-wide (not recommended if your system used a lot of python dependencies), or::
+to install system-wide (not recommended if your system used a lot of python dependencies)::
 
     pip install -u calfem-python
 
-to install just for your own user. You can use argument `--user` instead of
-`-u`. If you want to specify your Python version, use the command like the
-following::
+to install just for your own user. You can use the argument `--user` which is 
+same as `-u`. If you want to specify your Python version, use the command like 
+the following::
 
     python3.6 -m pip install --user calfem-python
 
