@@ -5,8 +5,12 @@
 
 *.geo
 
+*.bak
+
 docs/build
 docs/pycalfem
+
+venv-calfem
 
 calfem/shapes - kopia.py
 
