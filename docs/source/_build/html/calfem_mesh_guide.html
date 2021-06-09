@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Mesh generation with CALFEM &mdash; CALFEM for Python 3.5.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Function reference" href="calfem_reference.html" />
+    <link rel="prev" title="Using CALFEM for Python" href="calfem_examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> CALFEM for Python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation instructions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="calfem_examples.html">Using CALFEM for Python</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Mesh generation with CALFEM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#required-modules-for-geometry-and-mesh-generation">Required modules for geometry and mesh generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#defining-geometry">Defining geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-mesh">Creating a mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#specifying-boundary-markers">Specifying boundary markers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extracting-dofs-defined-by-markers">Extracting dofs defined by markers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#complete-example-with-a-solver">Complete example with a solver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#updated-module-imports">Updated module imports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#problem-variables-and-constants">Problem variables and constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-geometry-object">Creating a Geometry object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-quad-mesh">Creating a quad mesh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#implementing-a-calfem-solver">Implementing a CALFEM solver</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Function Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="calfem_reference.html">Function reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CALFEM for Python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Mesh generation with CALFEM</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/calfem_mesh_guide.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mesh-generation-with-calfem">
+<h1>Mesh generation with CALFEM<a class="headerlink" href="#mesh-generation-with-calfem" title="Permalink to this headline">¶</a></h1>
+<p>Included in the Python version of CALFEM is a mesh generation library based on GMSH. The library encapsulates the usage of GMSH transparently for the user. It will also parse the output from GMSH and create the necessary data structures required by CALFEM for solving finite element problems.</p>
+<p>Mesh generation in CALFEM is divided in three steps:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Defining the geometry of the model.</p></li>
+<li><p>Creating a finite element mesh with the desired elements and properties</p></li>
+<li><p>Extracting data structures that can be used by CALFEM.</p></li>
+</ol>
+</div></blockquote>
+<p>The following sections describe these steps.</p>
+<div class="section" id="required-modules-for-geometry-and-mesh-generation">
+<h2>Required modules for geometry and mesh generation<a class="headerlink" href="#required-modules-for-geometry-and-mesh-generation" title="Permalink to this headline">¶</a></h2>
+<p>To use the CALFEM geometry and mesh generation routines, we use the following import directives:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">calfem.geometry</span> <span class="k">as</span> <span class="nn">cfg</span>
+<span class="kn">import</span> <span class="nn">calfem.mesh</span> <span class="k">as</span> <span class="nn">cfm</span>
+<span class="kn">import</span> <span class="nn">calfem.vis</span> <span class="k">as</span> <span class="nn">cfv</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="defining-geometry">
+<h2>Defining geometry<a class="headerlink" href="#defining-geometry" title="Permalink to this headline">¶</a></h2>
+<p>Geometry in CALFEM is described using the <strong>Geometry</strong> class. A <strong>Geometry</strong>-object will hold all points, lines and surfaces describing the geometry. This object is also what is passed to the mesh generation routines in the following sections.</p>
+<p>A <strong>Geometry</strong>-object, <em>g</em>, is created with the following code:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">Geometry</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This creates a <strong>Geometry</strong> object which will be used to described our geometry. Next we define the points that will be used to define lines, splines or ellipses. In this example we define a simple triangle:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span> <span class="c1"># point 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span> <span class="c1"># point 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">])</span> <span class="c1"># point 2</span>
+</pre></div>
+</div>
+<p>The points are connected together with spline-elements. These can have 2 or three nodes. In this case we only use 2 node splines (lines):</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="c1"># line 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="c1"># line 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="c1"># line 2</span>
+</pre></div>
+</div>
+<p>Finally we create the surface by defining what lines make up the surface:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">surface</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>To display our geometry, we use the calfem.vis module:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cfv</span><span class="o">.</span><span class="n">drawGeometry</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+<span class="n">cfv</span><span class="o">.</span><span class="n">showAndWait</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Running this example will show the following window with a simple rectangle:</p>
+<img alt="_images/mesh1.png" src="_images/mesh1.png" />
+</div>
+<div class="section" id="creating-a-mesh">
+<h2>Creating a mesh<a class="headerlink" href="#creating-a-mesh" title="Permalink to this headline">¶</a></h2>
+<p>To create a mesh we need to create a GmshMesh object and initialize this with our geometry:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mesh</span> <span class="o">=</span> <span class="n">cfm</span><span class="o">.</span><span class="n">GmshMesh</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, we need to set some desired properties on our mesh:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="o">.</span><span class="n">elType</span> <span class="o">=</span> <span class="mi">3</span>          <span class="c1"># Degrees of freedom per node.</span>
+<span class="n">mesh</span><span class="o">.</span><span class="n">dofsPerNode</span> <span class="o">=</span> <span class="mi">1</span>     <span class="c1"># Factor that changes element sizes.</span>
+<span class="n">mesh</span><span class="o">.</span><span class="n">elSizeFactor</span> <span class="o">=</span> <span class="mf">0.15</span> <span class="c1"># Element size Factor</span>
+</pre></div>
+</div>
+<p>The <em>eltype</em> property determines the element used for mesh generation. Elements that can be generated are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>2 - 3 node triangle element</p></li>
+<li><p>3 - 4 node quadrangle element</p></li>
+<li><p>5 - 8 node hexahedron</p></li>
+<li><p>16 - 8 node second order quadrangle</p></li>
+</ul>
+</div></blockquote>
+<p>The <em>dofsPerNode</em> defines the number of degrees of freedom for each node. <em>elSizeFactor</em> determines the coarseness of the mesh.</p>
+<p>To generate the mesh and at the same time get the needed data structures for use with CALFEM we call the <strong>.create()</strong> method of the mesh object:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">coords</span><span class="p">,</span> <span class="n">edof</span><span class="p">,</span> <span class="n">dofs</span><span class="p">,</span> <span class="n">bdofs</span><span class="p">,</span> <span class="n">elementmarkers</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The returned data structures are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>coords - Element coordinates</p></li>
+<li><p>edof - Element topology</p></li>
+<li><p>dofs - Degrees of freedom per node</p></li>
+<li><p>bdofs - Boundary degrees of freedom. Dictionary containing the dofs for each boundary marker. More on markers in the next section.</p></li>
+<li><p>elementmarkers - List of integer markers. Row i contains the marker of element i. Can be used to determine what region an element is in.</p></li>
+</ul>
+</div></blockquote>
+<p>To display the generated mesh we can use the <strong>drawMesh()</strong> function of the calfem.vis module:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cfv</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="c1"># Draw the mesh.</span>
+
+<span class="n">cfv</span><span class="o">.</span><span class="n">drawMesh</span><span class="p">(</span>
+    <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
+    <span class="n">edof</span><span class="o">=</span><span class="n">edof</span><span class="p">,</span>
+    <span class="n">dofs_per_node</span><span class="o">=</span><span class="n">mesh</span><span class="o">.</span><span class="n">dofsPerNode</span><span class="p">,</span>
+    <span class="n">el_type</span><span class="o">=</span><span class="n">mesh</span><span class="o">.</span><span class="n">elType</span><span class="p">,</span>
+    <span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Example 01&quot;</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>Running the example will produce the following mesh with quad elements:</p>
+<img alt="_images/mesh2.png" src="_images/mesh2.png" />
+<p>Changing the <em>elType</em> property to 2 (<code class="code docutils literal notranslate"><span class="pre">mesh.elType</span> <span class="pre">=</span> <span class="pre">2</span></code>) will produce a mesh with triangle elements instead:</p>
+<img alt="_images/mesh3.png" src="_images/mesh3.png" />
+</div>
+<div class="section" id="specifying-boundary-markers">
+<h2>Specifying boundary markers<a class="headerlink" href="#specifying-boundary-markers" title="Permalink to this headline">¶</a></h2>
+<p>To assist in assigning boundary conditions, markers can be defined on the geometry, which can be used to identify which dofs are assigned to nodes, lines and surfaces.</p>
+<p>In this example we add a marker, 10, to line number 2. Markers are added as a parameter to the .spline() method of the <strong>Geometry</strong> object as shown in the following code:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="c1"># line 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="c1"># line 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># line 2 with marker 10</span>
+</pre></div>
+</div>
+<p>It is also possible to assign markers to points. The marker parameter is added to the <em>.point()</em> method of the <strong>Geometry</strong> object.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span> <span class="c1"># point 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="c1"># point 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">])</span> <span class="c1"># point 2</span>
+</pre></div>
+</div>
+<p>In the same way markers can be added to surfaces as well.</p>
+</div>
+<div class="section" id="extracting-dofs-defined-by-markers">
+<h2>Extracting dofs defined by markers<a class="headerlink" href="#extracting-dofs-defined-by-markers" title="Permalink to this headline">¶</a></h2>
+<p>To extract the dofs defined by the marker we use the <em>bdofs</em> dictionary returned when the mesh was created by the <em>.create()</em> method. If we print the bdofs dictionary we get the following output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="mi">20</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="mi">0</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">...</span> <span class="p">,</span> <span class="mi">67</span><span class="p">],</span> <span class="mi">10</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">68</span><span class="p">,</span> <span class="o">...</span> <span class="p">,</span> <span class="mi">98</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>If we examine the output we see that there is a key, 10, containing the dofs of the number 2 line. We also have the key 20 with a single dof 2 in this case. If the <em>dofsPerNode</em> property in the mesh generator was set to 2 the marker 20 would have contained 2 integers.</p>
+</div>
+<div class="section" id="complete-example-with-a-solver">
+<h2>Complete example with a solver<a class="headerlink" href="#complete-example-with-a-solver" title="Permalink to this headline">¶</a></h2>
+<p>To illustrate the workflow of the mesh generation modules we implement a complete 2D plane stress solver.</p>
+<div class="section" id="updated-module-imports">
+<h3>Updated module imports<a class="headerlink" href="#updated-module-imports" title="Permalink to this headline">¶</a></h3>
+<p>We need to add some additional import directives, such as the core calfem module as well as the <em>calfem.utils</em> module. We will also need NumPy as well as the standard math routines:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">calfem.core</span> <span class="k">as</span> <span class="nn">cfc</span>
+<span class="kn">import</span> <span class="nn">calfem.geometry</span> <span class="k">as</span> <span class="nn">cfg</span>
+<span class="kn">import</span> <span class="nn">calfem.mesh</span> <span class="k">as</span> <span class="nn">cfm</span>
+<span class="kn">import</span> <span class="nn">calfem.vis</span> <span class="k">as</span> <span class="nn">cfv</span>
+<span class="kn">import</span> <span class="nn">calfem.utils</span> <span class="k">as</span> <span class="nn">cfu</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="problem-variables-and-constants">
+<h3>Problem variables and constants<a class="headerlink" href="#problem-variables-and-constants" title="Permalink to this headline">¶</a></h3>
+<p>To make it easier to update our example we define a number of variables describing our problem. First some geometric parameters describing our module, in this case a simple rectangular beam:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">l</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="n">h</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">t</span> <span class="o">=</span> <span class="mf">0.2</span>
+</pre></div>
+</div>
+<p>Next, we define our material properties we will need later in the code:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="mf">0.35</span>
+<span class="n">E</span> <span class="o">=</span> <span class="mf">2.1e9</span>
+<span class="n">ptype</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">ep</span> <span class="o">=</span> <span class="p">[</span><span class="n">ptype</span><span class="p">,</span><span class="n">t</span><span class="p">]</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">cfc</span><span class="o">.</span><span class="n">hooke</span><span class="p">(</span><span class="n">ptype</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To make it easier to read our code we define 3 constants, which we will use instead of numerical markers.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">left_support</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">right_support</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">top_line</span> <span class="o">=</span> <span class="mi">30</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-geometry-object">
+<h3>Creating a Geometry object<a class="headerlink" href="#creating-a-geometry-object" title="Permalink to this headline">¶</a></h3>
+<p>We are now ready to create a <strong>Geometry</strong> object describing our geometry:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">Geometry</span><span class="p">()</span>
+
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">left_support</span><span class="p">)</span> <span class="c1"># point 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="n">l</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">right_support</span><span class="p">)</span> <span class="c1"># point 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="n">l</span><span class="p">,</span> <span class="n">h</span><span class="p">])</span> <span class="c1"># point 2</span>
+<span class="n">g</span><span class="o">.</span><span class="n">point</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">h</span><span class="p">])</span> <span class="c1"># point 2</span>
+
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="c1"># line 0</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="c1"># line 1</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">marker</span> <span class="o">=</span> <span class="n">top_line</span><span class="p">)</span> <span class="c1"># line 2</span>
+<span class="n">g</span><span class="o">.</span><span class="n">spline</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="c1"># line 2</span>
+
+<span class="n">g</span><span class="o">.</span><span class="n">surface</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The finished geometry is shown in below:</p>
+<img alt="_images/tut2-1.png" src="_images/tut2-1.png" />
+</div>
+<div class="section" id="creating-a-quad-mesh">
+<h3>Creating a quad mesh<a class="headerlink" href="#creating-a-quad-mesh" title="Permalink to this headline">¶</a></h3>
+<p>A quadrilateral mesh is now created with the following code. Please not that we use the <em>dofsPerNode</em> property to specify 2 dofs per node as this is a mechanical example.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mesh</span> <span class="o">=</span> <span class="n">cfm</span><span class="o">.</span><span class="n">GmshMesh</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+
+<span class="n">mesh</span><span class="o">.</span><span class="n">elType</span> <span class="o">=</span> <span class="mi">3</span> <span class="c1"># Degrees of freedom per node.</span>
+<span class="n">mesh</span><span class="o">.</span><span class="n">dofsPerNode</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># Factor that changes element sizes.</span>
+<span class="n">mesh</span><span class="o">.</span><span class="n">elSizeFactor</span> <span class="o">=</span> <span class="mf">0.10</span>
+
+<span class="n">coords</span><span class="p">,</span> <span class="n">edof</span><span class="p">,</span> <span class="n">dofs</span><span class="p">,</span> <span class="n">bdofs</span><span class="p">,</span> <span class="n">elementmarkers</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="implementing-a-calfem-solver">
+<h3>Implementing a CALFEM solver<a class="headerlink" href="#implementing-a-calfem-solver" title="Permalink to this headline">¶</a></h3>
+<p>We now have the necessary input to implement a simple CALFEM solver. First, we create some convenience variables, nDofs (total number of dofs), ex and ey (element x and y coordinates).</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">nDofs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">dofs</span><span class="p">)</span>
+<span class="n">ex</span><span class="p">,</span> <span class="n">ey</span> <span class="o">=</span> <span class="n">cfc</span><span class="o">.</span><span class="n">coordxtr</span><span class="p">(</span><span class="n">edof</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">dofs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The global stiffness matrix can now be allocated:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">nDofs</span><span class="p">,</span><span class="n">nDofs</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For larger problems please consider using sparse matrices instead.</p>
+<p>To make the assembly loop less cluttered we use the <em>zip()</em> method to extract rows from <em>edof</em>, <em>ex</em> and <em>ey</em> to <em>eltopo</em>, <em>elx</em> and <em>ely</em>. The loop then becomes:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">eltopo</span><span class="p">,</span> <span class="n">elx</span><span class="p">,</span> <span class="n">ely</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edof</span><span class="p">,</span> <span class="n">ex</span><span class="p">,</span> <span class="n">ey</span><span class="p">):</span>
+    <span class="n">Ke</span> <span class="o">=</span> <span class="n">cfc</span><span class="o">.</span><span class="n">planqe</span><span class="p">(</span><span class="n">elx</span><span class="p">,</span> <span class="n">ely</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+    <span class="n">cfc</span><span class="o">.</span><span class="n">assem</span><span class="p">(</span><span class="n">eltopo</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">Ke</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Please not the difference from standard MATLAB CALFEM that the <cite>assem</cite> routine does not require returning the K matrix on the left side as the assembly is done in place.</p>
+<p>Next, we need to setup our boundary conditions. Two empty arrays are created, <em>bc</em> for storing the dof to prescribe and and a second <em>bcVal</em> for storing the prescribed values.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">bc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+<span class="n">bcVal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To prescribe a boundary condition the utility function <em>applybc()</em> is used. This function takes the boundary dictionary as input and applies the boundary condition to the correct dofs. Here we prescribe the left support as fixed and the right support fixed in y-direction.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">bc</span><span class="p">,</span> <span class="n">bcVal</span> <span class="o">=</span> <span class="n">cfu</span><span class="o">.</span><span class="n">applybc</span><span class="p">(</span><span class="n">bdofs</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">bcVal</span><span class="p">,</span> <span class="n">left_support</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">bc</span><span class="p">,</span> <span class="n">bcVal</span> <span class="o">=</span> <span class="n">cfu</span><span class="o">.</span><span class="n">applybc</span><span class="p">(</span><span class="n">bdofs</span><span class="p">,</span> <span class="n">bc</span><span class="p">,</span> <span class="n">bcVal</span><span class="p">,</span> <span class="n">right_support</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="calfem_reference.html" class="btn btn-neutral float-right" title="Function reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="calfem_examples.html" class="btn btn-neutral float-left" title="Using CALFEM for Python" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016-2020, Jonas Lindemann.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
