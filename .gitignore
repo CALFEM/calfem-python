@@ -6,6 +6,8 @@
 *.geo
 
 docs/build
+docs/pycalfem
+
 calfem/shapes - kopia.py
 
 .vscode/launch.json
