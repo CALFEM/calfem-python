@@ -44,18 +44,20 @@ g.spline([7, 0])
 g.surface([0, 1, 2, 3, 4, 5, 6, 7])
 
 # plot geometry
-# cfv.drawGeometry(g)
-# cfv.showAndWait() 
+cfv.draw_geometry(g)
+cfv.showAndWait() 
 
 # mesh generation
 elType = 3          # quadrature element
 dofsPerNode = 1     # 1 dof
 
+# generate mesh paramters
 meshGen = cfm.GmshMeshGenerator(g)
 meshGen.elSizeFactor = 1.0              # factor that changes element sizes
 meshGen.elType = elType
 meshGen.dofsPerNode = dofsPerNode
 
+# create mesh
 coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
 
 # assembly
