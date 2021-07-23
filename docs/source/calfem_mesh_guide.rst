@@ -148,9 +148,9 @@ It is also possible to assign markers to points. The marker parameter is added t
 
 .. code-block:: Python
 
-    g.point([0.0, 0.0]) # point 0
-    g.point([5.0, 0.0], marker=20) # point 1
-    g.point([2.5, 4.0]) # point 2
+    g.point([0.0, 0.0])             # point 0
+    g.point([5.0, 0.0], marker=20)  # point 1
+    g.point([2.5, 4.0])             # point 2
 
 In the same way markers can be added to surfaces as well.
 
@@ -178,11 +178,10 @@ We need to add some additional import directives, such as the core calfem module
     import calfem.core as cfc
     import calfem.geometry as cfg
     import calfem.mesh as cfm
-    import calfem.vis as cfv
+    import calfem.vis_mpl as cfv
     import calfem.utils as cfu
 
     import numpy as np
-    from math import *    
 
 Problem variables and constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -191,17 +190,17 @@ To make it easier to update our example we define a number of variables describi
 
 .. code-block:: Python
 
-    l = 5.0
-    h = 1.0
-    t = 0.2
+    l = 5.0	# length
+    h = 1.0	# height
+    t = 0.2	# thickness
 
 Next, we define our material properties we will need later in the code:
 
 .. code-block:: Python
 
-    v = 0.35
-    E = 2.1e9
-    ptype = 1
+    v = 0.35		# Poisson
+    E = 2.1e9		# Young modulus
+    ptype = 1		# plane stress
     ep = [ptype,t]
     D = cfc.hooke(ptype, E, v)
 
@@ -222,18 +221,25 @@ We are now ready to create a **Geometry** object describing our geometry:
 
     g = cfg.Geometry()
 
-    g.point([0.0, 0.0], marker = left_support) # point 0
-    g.point([l, 0.0], marker = right_support) # point 1
-    g.point([l, h]) # point 2
-    g.point([0.0, h]) # point 2
+    g.point([0.0, 0.0], marker = left_support)	# point 0
+    g.point([l, 0.0], marker = right_support) 	# point 1
+    g.point([l, h]) 					# point 2
+    g.point([0.0, h]) 					# point 3
 
-    g.spline([0, 1]) # line 0
-    g.spline([1, 2]) # line 1
-    g.spline([2, 3], marker = top_line) # line 2
-    g.spline([3, 0]) # line 2
+    g.spline([0, 1]) 					# line 0
+    g.spline([1, 2]) 					# line 1
+    g.spline([2, 3], marker = top_line) 		# line 3
+    g.spline([3, 0]) 					# line 3
 
     g.surface([0, 1, 2, 3])
 
+To show the geometry you can use: 
+
+.. code-block:: Python
+
+    cfv.draw_geometry(g)
+    cfv.showAndWait()
+    
 The finished geometry is shown in below:
 
 .. image:: images/tut2-1.png
@@ -247,11 +253,28 @@ A quadrilateral mesh is now created with the following code. Please not that we 
 
     mesh = cfm.GmshMesh(g)
 
-    mesh.elType = 3 # Degrees of freedom per node.
-    mesh.dofsPerNode = 2 # Factor that changes element sizes.
-    mesh.elSizeFactor = 0.10
+    mesh.elType = 3             # Type of mesh 
+    mesh.dofsPerNode = 2        # Factor that changes element sizes
+    mesh.elSizeFactor = 0.10    # Factor that changes element sizes
 
     coords, edof, dofs, bdofs, elementmarkers = mesh.create()
+
+As previous, to show the finished mesh you can use:
+
+.. code-block:: Python
+
+	cfv.figure()
+	cfv.drawMesh(
+	    coords=coords,
+	    edof=edof,
+	    dofs_per_node=mesh.dofsPerNode,
+	    el_type=mesh.elType,
+	    filled=True)
+	cfv.showAndWait()
+
+The finished mesh is shown belo:
+
+.. image:: images/exm0_2.png
 
 Implementing a CALFEM solver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -294,5 +317,7 @@ To prescribe a boundary condition the utility function *applybc()* is used. This
 
     bc, bcVal = cfu.applybc(bdofs, bc, bcVal, left_support, 0.0, 0)
     bc, bcVal = cfu.applybc(bdofs, bc, bcVal, right_support, 0.0, 2)
+
+Now, we have some data structures that can be used by CALFEM. If there is no force and displacement, nothing happens. If we applied force `f` and calculate the displacement, then we can solve the equation to obtain more data to plot. These next steps are left in the next examples.
 
 

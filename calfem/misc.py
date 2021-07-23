@@ -47,22 +47,22 @@ def eldisp2(ex,ey,ed,rat=0.2):
     dlmax = 0.
     edmax = 1.
     
-    print(rank(ex))
+    # print(rank(ex))
 
-    if rank(ex)==1:
+    if np.linalg.matrix_rank(ex)==1:
         nen = ex.shape[0]
         nel = 1
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
+        dxmax = max(ex.T.max(0)-ex.T.min(0))
+        dymax = max(ey.T.max(0)-ey.T.min(0))
+        dlmax = max(dxmax,dymax)
+        edmax = abs(ed).max()
     else:
         nen = ex.shape[1]
         nel = ex.shape[0]
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
+        dxmax = max(ex.T.max(0)-ex.T.min(0))
+        dymax = max(ey.T.max(0)-ey.T.min(0))
+        dlmax = max(dxmax,dymax)
+        edmax = abs(ed).max()
         
     k = rat
     return k*dlmax/edmax

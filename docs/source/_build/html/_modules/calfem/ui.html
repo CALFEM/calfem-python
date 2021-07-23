@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>calfem.ui &mdash; CALFEM for Python 3.5.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CALFEM for Python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation instructions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_examples.html">Using CALFEM for Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_mesh_guide.html">Mesh generation with CALFEM</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Function Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_reference.html">Function reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CALFEM for Python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>calfem.ui</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for calfem.ui</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Apr 11 09:44:29 2016</span>
+
+<span class="sd">@author: lindemann</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CALFEM/Python ui module initialising&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;------------------------------------&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">PyQt5.QtCore</span> <span class="kn">import</span> <span class="n">pyqtSlot</span><span class="p">,</span> <span class="n">pyqtSignal</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QDialog</span><span class="p">,</span> <span class="n">QWidget</span><span class="p">,</span> <span class="n">QMainWindow</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtGui</span> <span class="kn">import</span> <span class="n">QPixmap</span>
+<span class="kn">from</span> <span class="nn">PyQt5.uic</span> <span class="kn">import</span> <span class="n">loadUi</span>
+
+<span class="c1">#from PyQt import QtGui, QtCore, uic</span>
+
+
+<span class="n">g_inSpyder</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;SPYDER&#39;</span> <span class="ow">in</span> <span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Running in Spyder...&#39;</span><span class="p">)</span>
+    <span class="n">g_inSpyder</span> <span class="o">=</span> <span class="kc">True</span>
+    
+<span class="n">g_haveVisVis</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">visvis</span> <span class="k">as</span> <span class="nn">vv</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">g_haveVisVis</span> <span class="o">=</span> <span class="kc">False</span>
+        
+<span class="k">if</span> <span class="n">g_haveVisVis</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;VisVis installed...&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;VisVis not installed...&quot;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="loadUiWidget"><a class="viewcode-back" href="../../calfem_reference.html#calfem.ui.loadUiWidget">[docs]</a><span class="k">def</span> <span class="nf">loadUiWidget</span><span class="p">(</span><span class="n">uifilename</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load user interface file and return object model&quot;&quot;&quot;</span>
+    <span class="n">ui</span> <span class="o">=</span> <span class="n">loadUi</span><span class="p">(</span><span class="n">uifilename</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ui</span>    </div>
+        
+<div class="viewcode-block" id="appInstance"><a class="viewcode-back" href="../../calfem_reference.html#calfem.ui.appInstance">[docs]</a><span class="k">def</span> <span class="nf">appInstance</span><span class="p">(</span><span class="n">useVisVis</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a suitable application instance&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating application instance...&quot;</span><span class="p">)</span>
+    
+    <span class="k">global</span> <span class="n">g_haveVisVis</span>
+    
+    <span class="n">app</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">if</span> <span class="n">g_haveVisVis</span> <span class="ow">and</span> <span class="n">useVisVis</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using VisVis application instance...&quot;</span><span class="p">)</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">vv</span><span class="o">.</span><span class="n">use</span><span class="p">()</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">Create</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Trying Qt application instance...&quot;</span><span class="p">)</span> 
+        <span class="n">app</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating new Qt application instance...&quot;</span><span class="p">)</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reusing existing Qt application instance...&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">app</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">Run</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">exec_</span>
+            
+    <span class="k">if</span> <span class="n">app</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No application instance found. Exiting...&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">app</span>    </div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016-2020, Jonas Lindemann.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
