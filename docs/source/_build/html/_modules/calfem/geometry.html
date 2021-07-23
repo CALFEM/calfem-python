@@ -1,0 +1,854 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>calfem.geometry &mdash; CALFEM for Python 3.5.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> CALFEM for Python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                3.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation instructions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_examples.html">Using CALFEM for Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_mesh_guide.html">Mesh generation with CALFEM</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Function Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../calfem_reference.html">Function reference</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CALFEM for Python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>calfem.geometry</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for calfem.geometry</h1><div class="highlight"><pre>
+<span></span><span class="c1"># TODO: Consider adding more checks whether entities exist.</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="Geometry"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry">[docs]</a><span class="k">class</span> <span class="nc">Geometry</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Instances of GeoData can hold geometric data and be passed to </span>
+<span class="sd">    GmshMesher in pycalfem_Mesh to mesh the geometry.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># dict of [[x, y, z], elSize, marker]</span>
+        <span class="c1"># dict of [curvTypestring, [p1, p2, ... pn], marker, elementsOnCurve, distributionString, distributionVal]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curves</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># dict of [SurfaceTypeString, [c1, c2 ... cn], [[c1, c2 ... cm], ... [c1, ... ck]], ID, marker, is_structured]. c means curve-ID.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># dict of [[s1, s2 ..], [[s1,s2...],[s1,s2..],..], ID, marker, is_structured]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volumes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># This is automatically set to True if a 3D point is added.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is3D</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pointIDspecified</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nextPointID</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_curveIDspecified</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nextcurveID</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_surfaceIDspecified</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nextsurfaceID</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_volumeIDspecified</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nextvolumeID</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="Geometry.removePoint"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.removePoint">[docs]</a>    <span class="k">def</span> <span class="nf">removePoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Removes the point with this ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ID</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.removeCurve"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.removeCurve">[docs]</a>    <span class="k">def</span> <span class="nf">removeCurve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Removes the curve with this ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ID</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.removeSurface"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.removeSurface">[docs]</a>    <span class="k">def</span> <span class="nf">removeSurface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Removes the surface with this ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ID</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.removeVolume"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.removeVolume">[docs]</a>    <span class="k">def</span> <span class="nf">removeVolume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Removes the volume with this ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volumes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ID</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.getPointCoords"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.getPointCoords">[docs]</a>    <span class="k">def</span> <span class="nf">getPointCoords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns an N-by-3 list of point coordinates if the parameter is</span>
+<span class="sd">        a list of IDs. If the parameter is just a single integer then </span>
+<span class="sd">        a single coordinate (simple 3-element list) is returned.</span>
+<span class="sd">        If the parameter is undefined (or None) all point coords will be returned</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">IDs</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pointCoords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">pID</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">pID</span> <span class="ow">in</span> <span class="n">IDs</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># IDs was not iterable. Probably just a single ID.</span>
+            <span class="n">pointCoords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">IDs</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pointCoords</span></div>
+
+<div class="viewcode-block" id="Geometry.pointsOnCurves"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.pointsOnCurves">[docs]</a>    <span class="k">def</span> <span class="nf">pointsOnCurves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns a list of all geometric points (not nodes) on the curves</span>
+<span class="sd">        specified in IDs. IDs may be an integer or a list of integers.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subentitiesOnEntities</span><span class="p">(</span><span class="n">IDs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.stuffOnSurfaces"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.stuffOnSurfaces">[docs]</a>    <span class="k">def</span> <span class="nf">stuffOnSurfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns lists of all geometric points and curves on the surfaces</span>
+<span class="sd">        specified in IDs. IDs may be an integer or a list of integers</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">curveSet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subentitiesOnEntities</span><span class="p">(</span>
+            <span class="n">IDs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Curves on the outer edges</span>
+        <span class="n">curveSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subentityHolesOnEntities</span><span class="p">(</span>
+            <span class="n">IDs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># Curves on the holes</span>
+        <span class="c1"># Points on the curves of these surfaces.</span>
+        <span class="n">pointList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pointsOnCurves</span><span class="p">(</span><span class="n">curveSet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pointList</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">curveSet</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.stuffOnVolumes"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.stuffOnVolumes">[docs]</a>    <span class="k">def</span> <span class="nf">stuffOnVolumes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns lists of all geometric points, curves, and surfaces on the volumes</span>
+<span class="sd">        specified in IDs. IDs may be an integer or a list of integers</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">surfaceSet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subentitiesOnEntities</span><span class="p">(</span><span class="n">IDs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">surfaceSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_subentitiesOnEntities</span><span class="p">(</span><span class="n">IDs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">pointList</span><span class="p">,</span> <span class="n">curveList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stuffOnSurfaces</span><span class="p">(</span><span class="n">surfaceSet</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pointList</span><span class="p">,</span> <span class="n">curveList</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">surfaceSet</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_subentitiesOnEntities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="p">,</span> <span class="n">entityDict</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Duplicate code. Gets the IDs of the subentities that</span>
+<span class="sd">        make up an entity, i.e. the points that define a curve or</span>
+<span class="sd">        the curves that define a surface. Note that only the outer</span>
+<span class="sd">        subentities of surfaces and volumes can be extracted with</span>
+<span class="sd">        this function. For holes use _subentityHolesOnEntities().</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">theSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ID</span> <span class="ow">in</span> <span class="n">IDs</span><span class="p">:</span>
+                <span class="n">theSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entityDict</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="n">index</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># IDs is not iterable, so it is probably a single ID</span>
+            <span class="n">theSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entityDict</span><span class="p">[</span><span class="n">IDs</span><span class="p">][</span><span class="n">index</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">theSet</span>
+
+    <span class="k">def</span> <span class="nf">_subentityHolesOnEntities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IDs</span><span class="p">,</span> <span class="n">entityDict</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Duplicate code. Does the same thing as _subentitiesOnEntities(), but for holes&#39;&#39;&#39;</span>
+        <span class="n">theSet</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ID</span> <span class="ow">in</span> <span class="n">IDs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">hole</span> <span class="ow">in</span> <span class="n">entityDict</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="n">index</span><span class="p">]:</span>
+                    <span class="n">theSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># IDs is not iterable, so it is probably a single ID</span>
+            <span class="k">for</span> <span class="n">hole</span> <span class="ow">in</span> <span class="n">entityDict</span><span class="p">[</span><span class="n">IDs</span><span class="p">][</span><span class="n">index</span><span class="p">]:</span>
+                <span class="n">theSet</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">theSet</span>
+
+<div class="viewcode-block" id="Geometry.addPoints"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addPoints">[docs]</a>    <span class="k">def</span> <span class="nf">addPoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">markers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">elSizes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add points from a numpy-array</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nPoints</span><span class="p">,</span> <span class="n">dims</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">addPoint</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">addPoint</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Geometry.addPoint"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addPoint">[docs]</a>    <span class="k">def</span> <span class="nf">addPoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">el_size</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a point.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        coord     - [x, y] or [x, y, z].</span>
+<span class="sd">                    List, not array.</span>
+
+<span class="sd">        ID        - Positive integer ID of this point. If left unspecified the</span>
+<span class="sd">                    point will be assigned the smallest unused point-ID.</span>
+<span class="sd">                    It is recommended to specify all point-IDs or none.</span>
+
+<span class="sd">        marker    - Marker applied to this point. Default 0.</span>
+<span class="sd">                    It is not a good idea to apply non-zero markers to points</span>
+<span class="sd">                    that are control points on B-splines or center points on </span>
+<span class="sd">                    circles/ellipses, since this can lead to &quot;loose&quot; nodes</span>
+<span class="sd">                    that are not part of any elements.</span>
+
+<span class="sd">        elSize    - The size of elements at this point. Default 1. Use to make</span>
+<span class="sd">                    a mesh denser or sparser here. Only affects unstructured</span>
+<span class="sd">                    meshes</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># A 3D point is inserted.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is3D</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># The point is in 2D (we assume)</span>
+            <span class="c1"># Pad with a 0. (we store points as 3D points for consistency&#39;s sake)</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="n">coord</span><span class="o">+</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ID</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># ID is not specified. Get an ID for this point:</span>
+            <span class="n">ID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getNewPointID</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pointIDspecified</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">ID</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">coord</span><span class="p">,</span> <span class="n">el_size</span><span class="p">,</span> <span class="n">marker</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Geometry.bounding_box_2d"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.bounding_box_2d">[docs]</a>    <span class="k">def</span> <span class="nf">bounding_box_2d</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate bounding box geometry&quot;&quot;&quot;</span>
+
+        <span class="n">min_x</span> <span class="o">=</span> <span class="mf">1e300</span>
+        <span class="n">max_x</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e300</span>
+        <span class="n">min_y</span> <span class="o">=</span> <span class="mf">1e300</span>
+        <span class="n">max_y</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e300</span>
+
+        <span class="k">for</span> <span class="n">point_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">point_id</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_x</span><span class="p">:</span>
+                <span class="n">max_x</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_x</span><span class="p">:</span>
+                <span class="n">min_x</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_y</span><span class="p">:</span>
+                <span class="n">max_y</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">min_y</span><span class="p">:</span>
+                <span class="n">min_y</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">min_x</span><span class="p">,</span> <span class="n">max_x</span><span class="p">,</span> <span class="n">min_y</span><span class="p">,</span> <span class="n">max_y</span></div>
+
+<div class="viewcode-block" id="Geometry.addSplines"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addSplines">[docs]</a>    <span class="k">def</span> <span class="nf">addSplines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Add splines from numpy array</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">nPoints</span><span class="p">,</span> <span class="n">dims</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">addSpline</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+                <span class="n">splineDef</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">addSpline</span><span class="p">(</span><span class="n">splineDef</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="n">splineDef</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Geometry.addSpline"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addSpline">[docs]</a>    <span class="k">def</span> <span class="nf">addSpline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a Spline curve</span>
+
+<span class="sd">        points    - List of indices of control points that make a Spline</span>
+<span class="sd">                    [p1, p2, ... , pn]</span>
+
+<span class="sd">        ID        - Positive integer ID of this curve. If left unspecified the</span>
+<span class="sd">                    curve will be assigned the smallest unused curve-ID.</span>
+<span class="sd">                    It is recommended to specify all curve-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this curve. Default 0.</span>
+
+<span class="sd">        elOnCurv  - Positive integer. Elements on curve. </span>
+<span class="sd">                    The number of element edges that will be distributed</span>
+<span class="sd">                    along this curve. Only works for structured meshes. </span>
+
+<span class="sd">        el_distrib_type -</span>
+<span class="sd">                    String. Either &quot;bump&quot; or &quot;progression&quot;. </span>
+<span class="sd">                    Determines how the density of elements vary along the curve</span>
+<span class="sd">                    for structured meshes. Only works for structured meshes.</span>
+<span class="sd">                    elOnCurv and el_distrib_val must be be defined if this param</span>
+<span class="sd">                    is used.</span>
+
+<span class="sd">        el_distrib_val -</span>
+<span class="sd">                    Float. Determines how severe the element distribution is.</span>
+<span class="sd">                    Only works for structured meshes. elOnCurv and </span>
+<span class="sd">                    el_distrib_type must be be defined if this param is used.</span>
+
+<span class="sd">                        bump:</span>
+<span class="sd">                    Smaller value means elements are bunched up at the edges</span>
+<span class="sd">                    of the curve, larger means bunched in the middle.</span>
+
+<span class="sd">                        progression:</span>
+<span class="sd">                    The edge of each element along this curve (from starting</span>
+<span class="sd">                    point to end) will be larger than the preceding one by </span>
+<span class="sd">                    this factor.</span>
+<span class="sd">                    el_distrib_val = 2 meaning for example that each line element </span>
+<span class="sd">                    in the series will be twice as long as the preceding one.</span>
+<span class="sd">                    el_distrib_val &lt; 1 makes each element smaller than the </span>
+<span class="sd">                    preceeding one.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addCurve</span><span class="p">(</span><span class="s2">&quot;Spline&quot;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="p">,</span>
+                       <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addBSpline"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addBSpline">[docs]</a>    <span class="k">def</span> <span class="nf">addBSpline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">el_distrib_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a B-Spline curve</span>
+
+<span class="sd">        points    - List of indices of control points that make a B-spline</span>
+<span class="sd">                    [p1, p2, ... , pn]</span>
+
+<span class="sd">        ID        - Positive integer ID of this curve. If left unspecified the</span>
+<span class="sd">                    curve will be assigned the smallest unused curve-ID.</span>
+<span class="sd">                    It is recommended to specify all curve-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this curve. Default 0.</span>
+
+<span class="sd">        elOnCurv  - Positive integer. Elements on curve. </span>
+<span class="sd">                    The number of element edges that will be distributed</span>
+<span class="sd">                    along this curve. Only works for structured meshes. </span>
+
+<span class="sd">        el_distrib_type -</span>
+<span class="sd">                    String. Either &quot;bump&quot; or &quot;progression&quot;. </span>
+<span class="sd">                    Determines how the density of elements vary along the curve</span>
+<span class="sd">                    for structured meshes. Only works for structured meshes.</span>
+<span class="sd">                    elOnCurv and el_distrib_val must be be defined if this param</span>
+<span class="sd">                    is used.</span>
+
+<span class="sd">        el_distrib_val -</span>
+<span class="sd">                    Float. Determines how severe the element distribution is.</span>
+<span class="sd">                    Only works for structured meshes. elOnCurv and </span>
+<span class="sd">                    el_distrib_type must be be defined if this param is used.</span>
+
+<span class="sd">                        bump:</span>
+<span class="sd">                    Smaller value means elements are bunched up at the edges</span>
+<span class="sd">                    of the curve, larger means bunched in the middle.</span>
+
+<span class="sd">                        progression:</span>
+<span class="sd">                    The edge of each element along this curve (from starting</span>
+<span class="sd">                    point to end) will be larger than the preceding one by </span>
+<span class="sd">                    this factor.</span>
+<span class="sd">                    el_distrib_val = 2 meaning for example that each line element </span>
+<span class="sd">                    in the series will be twice as long as the preceding one.</span>
+<span class="sd">                    el_distrib_val &lt; 1 makes each element smaller than the </span>
+<span class="sd">                    preceeding one.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addCurve</span><span class="p">(</span><span class="s2">&quot;BSpline&quot;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span>
+                       <span class="n">el_on_curve</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addCircle"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addCircle">[docs]</a>    <span class="k">def</span> <span class="nf">addCircle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a Circle arc curve.</span>
+
+<span class="sd">        points    - list of 3 indices of point that make a circle arc smaller</span>
+<span class="sd">                    than Pi.</span>
+<span class="sd">                    [startpoint, centerpoint, endpoint]</span>
+
+<span class="sd">        ID        - Positive integer ID of this curve. If left unspecified the</span>
+<span class="sd">                    curve will be assigned the smallest unused curve-ID.</span>
+<span class="sd">                    It is recommended to specify all curve-IDs or none.</span>
+
+<span class="sd">        marker    - Marker applied to this curve. Default 0.</span>
+
+<span class="sd">        elOnCurv  - Elements on curve.</span>
+<span class="sd">                    The number of element edges that will be distributed</span>
+<span class="sd">                    along this curve. Only works for structured meshes.</span>
+
+<span class="sd">        el_distrib_type -</span>
+<span class="sd">                    String. Either &quot;bump&quot; or &quot;progression&quot;. </span>
+<span class="sd">                    Determines how the density of elements vary along the curve</span>
+<span class="sd">                    for structured meshes. Only works for structured meshes.</span>
+<span class="sd">                    elOnCurv and el_distrib_val must be be defined if this param</span>
+<span class="sd">                    is used.</span>
+
+<span class="sd">        el_distrib_val -</span>
+<span class="sd">                    Float. Determines how severe the element distribution is.</span>
+<span class="sd">                    Only works for structured meshes. elOnCurv and </span>
+<span class="sd">                    el_distrib_type must be be defined if this param is used.</span>
+
+<span class="sd">                        bump:</span>
+<span class="sd">                    Smaller value means elements are bunched up at the edges</span>
+<span class="sd">                    of the curve, larger means bunched in the middle.</span>
+
+<span class="sd">                        progression:</span>
+<span class="sd">                    The edge of each element along this curve (from starting</span>
+<span class="sd">                    point to end) will be larger than the preceding one by </span>
+<span class="sd">                    this factor.</span>
+<span class="sd">                    el_distrib_val = 2 meaning for example that each line element </span>
+<span class="sd">                    in the series will be twice as long as the preceding one.</span>
+<span class="sd">                    el_distrib_val &lt; 1 makes each element smaller than the </span>
+<span class="sd">                    preceeding one.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;Circle: points must be a list of 3 positive integers denoting point indices&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addCurve</span><span class="p">(</span><span class="s2">&quot;Circle&quot;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="p">,</span>
+                       <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addEllipse"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addEllipse">[docs]</a>    <span class="k">def</span> <span class="nf">addEllipse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a Ellipse arc curve.</span>
+
+<span class="sd">        points    - List of 4 indices of point that make a ellipse arc smaller</span>
+<span class="sd">                    than Pi.</span>
+<span class="sd">                    [startpoint, centerpoint, mAxisPoint, endpoint]</span>
+<span class="sd">                    Startpoint is the starting point of the arc.</span>
+<span class="sd">                    Centerpoint is the point at the center of the ellipse.</span>
+<span class="sd">                    MAxisPoint is any point on the major axis of the ellipse.</span>
+<span class="sd">                    Endpoint is the end point of the arc.</span>
+
+<span class="sd">        ID        - Positive integer ID of this curve. If left unspecified the</span>
+<span class="sd">                    curve will be assigned the smallest unused curve-ID.</span>
+<span class="sd">                    It is recommended to specify all curve-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this curve. Default 0.</span>
+
+<span class="sd">        elOnCurv  - Positive integer. Elements on curve. </span>
+<span class="sd">                    The number of element edges that will be distributed</span>
+<span class="sd">                    along this curve. Only works for structured meshes. </span>
+
+<span class="sd">        el_distrib_type -</span>
+<span class="sd">                    String. Either &quot;bump&quot; or &quot;progression&quot;. </span>
+<span class="sd">                    Determines how the density of elements vary along the curve</span>
+<span class="sd">                    for structured meshes. Only works for structured meshes.</span>
+<span class="sd">                    elOnCurv and el_distrib_val must be be defined if this param</span>
+<span class="sd">                    is used.</span>
+
+<span class="sd">        el_distrib_val -</span>
+<span class="sd">                    Float. Determines how severe the element distribution is.</span>
+<span class="sd">                    Only works for structured meshes. elOnCurv and </span>
+<span class="sd">                    el_distrib_type must be be defined if this param is used.</span>
+
+<span class="sd">                        bump:</span>
+<span class="sd">                    Smaller value means elements are bunched up at the edges</span>
+<span class="sd">                    of the curve, larger means bunched in the middle.</span>
+
+<span class="sd">                        progression:</span>
+<span class="sd">                    The edge of each element along this curve (from starting</span>
+<span class="sd">                    point to end) will be larger than the preceding one by </span>
+<span class="sd">                    this factor.</span>
+<span class="sd">                    el_distrib_val = 2 meaning for example that each line element </span>
+<span class="sd">                    in the series will be twice as long as the preceding one.</span>
+<span class="sd">                    el_distrib_val &lt; 1 makes each element smaller than the </span>
+<span class="sd">                    preceeding one.                      </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;Ellipse: points must be a list of 4 positive integers denoting point indices&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addCurve</span><span class="p">(</span><span class="s2">&quot;Ellipse&quot;</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span>
+                       <span class="n">el_on_curve</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_addCurve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">el_on_curve</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Duplicate code goes here!&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">ID</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getNewCurveID</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_curveIDspecified</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">el_distrib_type</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># transform into lowercase except the first letter upper case.</span>
+            <span class="n">el_distrib_type</span> <span class="o">=</span> <span class="n">el_distrib_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">el_distrib_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Bump&quot;</span><span class="p">,</span> <span class="s2">&quot;Progression&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;el_distrib_type must be a string, either </span><span class="se">\&quot;</span><span class="s2">bump</span><span class="se">\&quot;</span><span class="s2"> or </span><span class="se">\&quot;</span><span class="s2">progression</span><span class="se">\&quot;</span><span class="s2">. Curve with ID=</span><span class="si">%i</span><span class="s2"> was incorrect.&quot;</span> <span class="o">%</span> <span class="n">ID</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">el_distrib_val</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;If el_distrib_type is defined then el_distrib_val must be given a (float) value&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">ID</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span>
+                           <span class="n">el_on_curve</span><span class="p">,</span> <span class="n">el_distrib_type</span><span class="p">,</span> <span class="n">el_distrib_val</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Geometry.addSurface"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addSurface">[docs]</a>    <span class="k">def</span> <span class="nf">addSurface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">holes</span><span class="o">=</span><span class="p">[],</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a plane surface (flat).</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        outer_loop - List of curve IDs that make up the outer boundary of</span>
+<span class="sd">                    the surface. The curves must lie in the same plane.</span>
+
+<span class="sd">        holes     - List of lists of curve IDs that make up the inner</span>
+<span class="sd">                    boundaries of the surface. The curves must lie in the</span>
+<span class="sd">                    same plane. </span>
+
+<span class="sd">        ID        - Positive integer ID of this surface. If left unspecified</span>
+<span class="sd">                    the surface will be assigned the smallest unused surface-ID.</span>
+<span class="sd">                    It is recommended to specify all surface-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this surface. Default 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="c1"># TODO: Possibly check if outer_loop is an actual loop and if the holes are correct.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addSurf</span><span class="p">(</span><span class="s2">&quot;Plane Surface&quot;</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">holes</span><span class="p">,</span>
+                      <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addRuledSurface"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addRuledSurface">[docs]</a>    <span class="k">def</span> <span class="nf">addRuledSurface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a Ruled Surface (bent surface).</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        outer_loop - List of 3 or 4 curve IDs that make up the boundary of</span>
+<span class="sd">                    the surface.</span>
+
+<span class="sd">        ID        - Positive integer ID of this surface. If left unspecified</span>
+<span class="sd">                    the surface will be assigned the smallest unused surface-ID.</span>
+<span class="sd">                    It is recommended to specify all surface-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this surface. Default 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outer_loop</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;Ruled Surface: outer_loop must be a list of 3 or 4 positive integers denoting curve indices&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addSurf</span><span class="p">(</span><span class="s2">&quot;Ruled Surface&quot;</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="p">[],</span>
+                      <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addStructuredSurface"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addStructuredSurface">[docs]</a>    <span class="k">def</span> <span class="nf">addStructuredSurface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Adds a Structured Surface.</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        outer_loop - List of 4 curve IDs that make up the boundary of</span>
+<span class="sd">                    the surface. The curves must be structured, i.e. their</span>
+<span class="sd">                    parameter &#39;elOnCurv&#39; must be defined.</span>
+
+<span class="sd">        ID        - Positive integer ID of this surface. If left unspecified</span>
+<span class="sd">                    the surface will be assigned the smallest unused surface-ID.</span>
+<span class="sd">                    It is recommended to specify all surface-IDs or none.</span>
+
+<span class="sd">        marker    - Integer. Marker applied to this surface. Default 0.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_checkIfProperStructuredQuadBoundary</span><span class="p">(</span><span class="n">outer_loop</span><span class="p">,</span> <span class="n">ID</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addSurf</span><span class="p">(</span><span class="s2">&quot;Ruled Surface&quot;</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="p">[],</span>
+                      <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_addSurf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">holes</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;For duplicate code&#39;&#39;&#39;</span>
+        <span class="c1"># TODO: check if the curves in outer_loop actually exist. Maybe print a warning.</span>
+        <span class="k">if</span> <span class="n">ID</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getNewSurfaceID</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_surfaceIDspecified</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Catch the easy mistake of making holes a list of ints rather than a list of lists of ints.</span>
+        <span class="k">for</span> <span class="n">hole</span> <span class="ow">in</span> <span class="n">holes</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hole</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Hole &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">hole</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; is not iterable. Parameter holes must be a list of lists of integers&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">[</span><span class="n">ID</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span>
+                             <span class="n">holes</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Geometry.addVolume"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addVolume">[docs]</a>    <span class="k">def</span> <span class="nf">addVolume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_surfaces</span><span class="p">,</span> <span class="n">holes</span><span class="o">=</span><span class="p">[],</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Adds a Volume</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        outer_surfaces - List of surface IDs that make up the outer boundary of</span>
+<span class="sd">                        the volume.</span>
+
+<span class="sd">        holes         - List of lists of surface IDs that make up the inner</span>
+<span class="sd">                        boundaries of the volume.</span>
+
+<span class="sd">        ID            - Positive integer ID of this volume. If left unspecified</span>
+<span class="sd">                        the volume will be assigned the smallest unused volume-ID.</span>
+<span class="sd">                        It is recommended to specify all volume-IDs or none.</span>
+
+<span class="sd">        marker        - Integer. Marker applied to this volume. Default 0.&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addVolume</span><span class="p">(</span><span class="n">outer_surfaces</span><span class="p">,</span> <span class="n">holes</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Geometry.addStructuredVolume"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.addStructuredVolume">[docs]</a>    <span class="k">def</span> <span class="nf">addStructuredVolume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_surfaces</span><span class="p">,</span> <span class="n">ID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Adds a Structured Volume</span>
+<span class="sd">        Parameters:</span>
+<span class="sd">        outer_surfaces - List of surface IDs that make up the outer boundary of</span>
+<span class="sd">                        the volume. The surfaces must be Structured Surfaces.</span>
+
+<span class="sd">        ID            - Positive integer ID of this volume. If left unspecified</span>
+<span class="sd">                        the volume will be assigned the smallest unused volume-ID.</span>
+<span class="sd">                        It is recommended to specify all volume-IDs or none.</span>
+
+<span class="sd">        marker        - Integer. Marker applied to this volume. Default 0.&#39;&#39;&#39;</span>
+        <span class="c1"># TODO: Check input. (see if surfaces are structured)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_addVolume</span><span class="p">(</span><span class="n">outer_surfaces</span><span class="p">,</span> <span class="p">[],</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_addVolume</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="n">outer_surfaces</span><span class="p">,</span> <span class="n">holes</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Duplicate code&#39;&#39;&#39;</span>
+        <span class="c1"># TODO: Check input (outer_surfaces and holes[i] must be closed surfaces)</span>
+        <span class="k">if</span> <span class="n">ID</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getNewVolumeID</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_volumeIDspecified</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volumes</span><span class="p">[</span><span class="n">ID</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">outer_surfaces</span><span class="p">,</span> <span class="n">holes</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="n">is_structured</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">pointMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setPointMarker</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Geometry.setPointMarker"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.setPointMarker">[docs]</a>    <span class="k">def</span> <span class="nf">setPointMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Sets the marker of the point with the ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">marker</span></div>
+
+    <span class="k">def</span> <span class="nf">curveMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setCurveMarker</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Geometry.setCurveMarker"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.setCurveMarker">[docs]</a>    <span class="k">def</span> <span class="nf">setCurveMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Sets the marker of the curve with the ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">marker</span></div>
+
+    <span class="k">def</span> <span class="nf">surfaceMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setSurfaceMarker</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Geometry.setSurfaceMarker"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.setSurfaceMarker">[docs]</a>    <span class="k">def</span> <span class="nf">setSurfaceMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Sets the marker of the surface with the ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">marker</span></div>
+
+<div class="viewcode-block" id="Geometry.setVolumeMarker"><a class="viewcode-back" href="../../calfem_reference.html#calfem.geometry.Geometry.setVolumeMarker">[docs]</a>    <span class="k">def</span> <span class="nf">setVolumeMarker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ID</span><span class="p">,</span> <span class="n">marker</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Sets the marker of the volume with the ID&#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volumes</span><span class="p">[</span><span class="n">ID</span><span class="p">][</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">marker</span></div>
+
+    <span class="k">def</span> <span class="nf">_checkIfProperStructuredQuadBoundary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outer_loop</span><span class="p">,</span> <span class="n">ID</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Checks if the four edges of a quad-shaped superelement exist and</span>
+<span class="sd">        are correct, i.e el_on_curve of opposite curves are equal.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">outer_loop</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="s2">&quot;Structured Surface: outer_loop must be a list of 4 positive integers denoting curve indices&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">outer_loop</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">c1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">outer_loop</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">c2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">outer_loop</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+            <span class="n">c3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">[</span><span class="n">outer_loop</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="s2">&quot;Structured Surface: Attempted construction of StructuredSurface with ID=</span><span class="si">%s</span><span class="s2"> from a curve that does not exist&quot;</span> <span class="o">%</span> <span class="n">ID</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">c0</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">c3</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="s2">&quot;Attempted to create structured surface from non-structured boundary curves.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check if the number of elements on opposite curves match.</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">c0</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="n">c2</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="ow">or</span> <span class="n">c1</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">!=</span> <span class="n">c3</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Structured Surface: The outer_loop of StructuredSurface </span><span class="si">%i</span><span class="s2"> is not properly &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;constructed. The reason could be that the number of elements (elOnCurv) on &quot;</span> <span class="o">+</span>
+                            <span class="s2">&quot;opposite pairs of curves are different&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getNewPointID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pointIDspecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nextPointID</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nextPointID</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smallestFreeKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getNewCurveID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_curveIDspecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nextcurveID</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nextcurveID</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smallestFreeKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curves</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getNewSurfaceID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surfaceIDspecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nextsurfaceID</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nextsurfaceID</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smallestFreeKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surfaces</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getNewVolumeID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_volumeIDspecified</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nextvolumeID</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nextvolumeID</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smallestFreeKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">volumes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_smallestFreeKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Finds the smallest unused key in the dict.&#39;&#39;&#39;</span>
+        <span class="n">sortedkeys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dictionary</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dictionary</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">sortedkeys</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">i</span>
+
+    <span class="n">point</span> <span class="o">=</span> <span class="n">addPoint</span>
+    <span class="n">spline</span> <span class="o">=</span> <span class="n">addSpline</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">addSpline</span>
+    <span class="n">bspline</span> <span class="o">=</span> <span class="n">addBSpline</span>
+    <span class="n">circle</span> <span class="o">=</span> <span class="n">addCircle</span>
+    <span class="n">ellipse</span> <span class="o">=</span> <span class="n">addEllipse</span>
+    <span class="n">surface</span> <span class="o">=</span> <span class="n">addSurface</span>
+    <span class="n">surf</span> <span class="o">=</span> <span class="n">addSurface</span>
+    <span class="n">ruledSurface</span> <span class="o">=</span> <span class="n">addRuledSurface</span>
+    <span class="n">ruled_surface</span> <span class="o">=</span> <span class="n">addRuledSurface</span>
+    <span class="n">ruled_surf</span> <span class="o">=</span> <span class="n">addRuledSurface</span>
+    <span class="n">structuredSurface</span> <span class="o">=</span> <span class="n">addStructuredSurface</span>
+    <span class="n">structured_surface</span> <span class="o">=</span> <span class="n">addStructuredSurface</span>
+    <span class="n">struct_surf</span> <span class="o">=</span> <span class="n">addStructuredSurface</span>
+    <span class="n">volume</span> <span class="o">=</span> <span class="n">addVolume</span>
+    <span class="n">structuredVolume</span> <span class="o">=</span> <span class="n">addStructuredVolume</span>
+    <span class="n">structured_volume</span> <span class="o">=</span> <span class="n">addStructuredVolume</span>
+    <span class="n">get_point_coords</span> <span class="o">=</span> <span class="n">getPointCoords</span>
+    <span class="n">curve_marker</span> <span class="o">=</span> <span class="n">curveMarker</span></div>
+
+
+<span class="k">def</span> <span class="nf">geometry</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">Geometry</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2016-2020, Jonas Lindemann.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

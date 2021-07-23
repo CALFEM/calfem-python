@@ -72,7 +72,7 @@ dofs_per_node = 1
 
 # Create mesh
 
-coords, edof, dofs, bdofs, _ = cfm.mesh(g, el_type, dofs_per_node)
+coords, edof, dofs, bdofs, _ = cfm.mesh(g, el_type, 1, dofs_per_node)
 
 #coords, edof, dofs, bdofs, _ = cfm.mesh(
 #        g, el_type, dofs_per_node, gmsh_exec_path="D:\\vsmn20-software\\gmsh\gmsh.exe")

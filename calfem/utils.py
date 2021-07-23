@@ -495,7 +495,8 @@ def scalfact2(ex,ey,ed,rat=0.2):
                     If not specified, 0.2 is used.
         
     """
-
+    # nen:   number of element nodes
+    # nel:   number of elements 
     nen = -1
     if ex.shape != ey.shape:
         print("ex and ey shapes do not match.")
@@ -504,20 +505,20 @@ def scalfact2(ex,ey,ed,rat=0.2):
     dlmax = 0.
     edmax = 1.
     
-    if np.rank(ex)==1:
+    if np.linalg.matrix_rank(ex)==1:
         nen = ex.shape[0]
         nel = 1
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
+        dxmax = max(ex.T.max(0)-ex.T.min(0)) # axis 0, return vector
+        dymax = max(ey.T.max(0)-ey.T.min(0))
+        dlmax = max(dxmax,dymax)
+        edmax = abs(ed).max()
     else:
         nen = ex.shape[1]
         nel = ex.shape[0]
-        dxmax=ex.T.max()-ex.T.min()
-        dymax=ey.T.max()-ey.T.min()
-        dlmax=max(dxmax,dymax);
-        edmax=abs(ed).max();
+        dxmax = max(ex.T.max(0)-ex.T.min(0))
+        dymax = max(ey.T.max(0)-ey.T.min(0))
+        dlmax = max(dxmax,dymax)
+        edmax = abs(ed).max()
         
     k = rat
     return k*dlmax/edmax
