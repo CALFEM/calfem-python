@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+CALFEM Visualisation module (matplotlib)
+
+Contains all the functions implementing visualisation routines.
+"""
 
 import numpy as np
+
 import matplotlib.pyplot as plt
 import matplotlib.collections
 import matplotlib.path as mpp
@@ -259,7 +265,7 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
     Args:
         ev: 
             An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
-    
+
         coords:
             An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
 
@@ -271,10 +277,10 @@ def draw_element_values(values, coords, edof, dofs_per_node, el_type, displaceme
 
         el_type: 
             Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-    
+
         displacements:
             An N-by-2 or N-by-3 array. Row i contains the x,y,z displacements of node i.
-    
+
         draw_mesh:
             Boolean. True if mesh wire should be drawn. Default True.
 

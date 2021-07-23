@@ -1,4 +1,9 @@
-# TODO: Consider adding more checks whether entities exist.
+# -*- coding: iso-8859-15 -*-
+"""
+CALFEM Geometry module
+
+Contains functions and classes for describing geometry.
+"""
 
 import numpy as np
 
