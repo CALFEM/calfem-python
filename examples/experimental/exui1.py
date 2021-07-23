@@ -7,10 +7,12 @@ Created on Mon Apr 11 09:44:29 2016
 
 import sys
 
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QMetaObject
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QPixmap
-from PyQt5.uic import loadUi
+from qtpy.QtCore import Slot, Signal, QMetaObject
+from qtpy.QtWidgets import *
+from qtpy.QtGui import QPixmap
+from qtpy.uic import loadUi
+
+import calfem.vis_mpl as cfv
 
 class MainWindow(QMainWindow):
     """Main window class of our UI"""
@@ -23,25 +25,55 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("MyWindow")
 
         self.executeButton = QPushButton("Tryck", self)
+        self.executeButton.setObjectName("executeButton")
         self.executeButton.move(50,50)
         self.executeButton.resize(100,50)
-        #self.button.clicked.connect(self.on_button_clicked)
         
         QMetaObject.connectSlotsByName(self)
 
-    @pyqtSlot()
+    @Slot()
     def on_executeButton_clicked(self):
         print("Button pressed")
 
+def init_app():
+    app = QApplication.instance()
+    
+    if app is None:
+        print("No QApplication instance found. Creating one.")
+        # if it does not exist then a QApplication is created
+        app = QApplication(sys.argv)    
+    else:
+        print("QApplication instance found.")
 
-#    def show(self):
-#        """Show and raise window"""
-#        self.ui.show()
-#        self.ui.raise_()
+    return app
+        
+def main_loop():
+    
+    app = QApplication.instance()
+    
+    if app is None:
+        print("No QApplication instance found. Creating one.")
+        # if it does not exist then a QApplication is created
+        app = QApplication(sys.argv)    
+    else:
+        print("QApplication instance found.")
+        
+    # För matplotlib kompatibilitet
+    
+    # plt.show(block=False)
+    
+    app.exec_()      
+        
+        
+def show_window():
+    app = init_app()
+    widget = MainWindow()
+    widget.show()
+    app.exec_()
 
 if __name__ == '__main__':
 
-    app = QApplication(sys.argv)
-    widget = MainWindow()
-    widget.show()
-    sys.exit(app.exec_())
+    show_window()
+    print("Hello")
+    show_window()
+    print("Hello after...")

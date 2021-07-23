@@ -1,16 +1,25 @@
+# -*- coding: iso-8859-15 -*-
+"""
+CALFEM Mesh module
+
+Contains functions and classes for generating meshes from geometries.
+"""
+
 import os
 import sys
 import tempfile
 import shutil
 import subprocess
+
 import numpy as np
+
 from calfem.core import createdofs
 from calfem.utils import which
 import calfem.core as cfc
-
 import logging as cflog
 
 import gmsh
+
 
 def error(msg):
     """Log error message"""
@@ -24,12 +33,6 @@ def info(msg):
 
 def cmp(a, b):
     return (a > b) ^ (a < b)
-
-# def dofsFromNodes(listOfNodes, dofs):
-#        D = []
-#        for node in listOfNodes:
-#            D.extend(dofs[node])
-#        return D
 
 
 def _offsetIndices(lst, offset=0):
@@ -241,8 +244,8 @@ class GmshMeshGenerator:
                            31: 56, 92: 64, 93: 125}
         nodesPerElement = nodesPerElmDict[self.el_type]
 
-        # Check for GMSH executable 
-        # 
+        # Check for GMSH executable
+        #
         # Consider using the gmsh_extension module
 
         if not self.use_gmsh_module:
@@ -349,7 +352,7 @@ class GmshMeshGenerator:
             if self.initialize_gmsh:
                 gmsh.initialize(sys.argv)
 
-            # This is a hack to enable the use of gmsh in 
+            # This is a hack to enable the use of gmsh in
             # a separate thread.
 
             if self.remove_gmsh_signal_handler:
@@ -364,15 +367,16 @@ class GmshMeshGenerator:
 
             if self.el_type in self._2ndOrderElms:
                 gmsh.option.setNumber("Mesh.ElementOrder", 2)
-            
+
             if self.meshing_algorithm is not None:
                 gmsh.option.setString(self.meshing_algorithm)
-            
+
             gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
             gmsh.option.setNumber("Mesh.MeshSizeFactor", self.el_size_factor)
 
             if self.clcurv is not None:
-                gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", self.clcurv)
+                gmsh.option.setNumber(
+                    "Mesh.MeshSizeFromCurvature", self.clcurv)
 
             if self.min_size is not None:
                 gmsh.option.setNumber('Mesh.MeshSizeMin', self.min_size)
@@ -390,14 +394,14 @@ class GmshMeshGenerator:
             # Close extension module
 
             if self.initialize_gmsh:
-                gmsh.finalize()            
+                gmsh.finalize()
         else:
             gmshExe = os.path.normpath(gmshExe)
             info("GMSH binary: "+gmshExe)
 
             output = subprocess.Popen(r'"%s" "%s" %s' % (
                 gmshExe, geoFilePath, options), shell=True, stdout=subprocess.PIPE).stdout.read()
-        
+
         # Read generated msh file:
         # print("Opening msh file " + mshFileName)#TEMP
 
@@ -436,7 +440,8 @@ class GmshMeshGenerator:
             # nodeOnPoint = {}  #dictionary pointID : nodeNumber
 
             self.nodesOnCurve = {}  # dictionary lineID  : set of [nodeNumber]
-            self.nodesOnSurface = {}  # dictionary surfID  : set of [nodeNumber]
+            # dictionary surfID  : set of [nodeNumber]
+            self.nodesOnSurface = {}
             self.nodesOnVolume = {}  # dictionary volID   : set of [nodeNumber]
 
             # Read all elements (points, surfaces, etc):
@@ -444,7 +449,8 @@ class GmshMeshGenerator:
             for i in range(nbrElements):
                 line = list(map(int, mshFile.readline().split()))
                 eType = line[1]  # second int is the element type.
-                nbrTags = line[2]  # Third int is the nbr of tags on this element.
+                # Third int is the nbr of tags on this element.
+                nbrTags = line[2]
                 marker = line[3]  # Fourth int (first tag) is the marker.
 
                 # Fifth int  is the ID of the geometric entity (points, curves, etc) that the element belongs to
@@ -471,7 +477,8 @@ class GmshMeshGenerator:
 
                     # We also store the full information as 'boundary elements'
 
-                    _insertBoundaryElement(boundaryElements, eType, marker, nodes)
+                    _insertBoundaryElement(
+                        boundaryElements, eType, marker, nodes)
 
                 # if eType == 15: #If point. Commmented away because points only make elements if they have non-zero markers, so nodeOnPoint is not very useful.
                 #    nodeOnPoint[entityID-1] = nodes[0] #insert node into nodeOnPoint. (ID-1 because we want 0-based indices)
@@ -481,19 +488,19 @@ class GmshMeshGenerator:
                     # insert nodes into nodesOnCurve
 
                     _insertInSetDict(self.nodesOnCurve, entityID -
-                                    1, _offsetIndices(nodes, -1))
+                                     1, _offsetIndices(nodes, -1))
                 elif eType in [2, 3, 9, 10, 16, 20, 21, 22, 23, 24, 25]:  # If surfaceelement
 
                     # insert nodes into nodesOnSurface
 
                     _insertInSetDict(self.nodesOnSurface, entityID -
-                                    1, _offsetIndices(nodes, -1))
-                else:  
-                    
+                                     1, _offsetIndices(nodes, -1))
+                else:
+
                     # if volume element.
 
                     _insertInSetDict(self.nodesOnVolume, entityID -
-                                    1, _offsetIndices(nodes, -1))
+                                     1, _offsetIndices(nodes, -1))
 
             elements = np.array(elements)
             for key in bdofs.keys():  # Convert the sets of boundary nodes to lists.
@@ -1089,17 +1096,6 @@ def trimesh2d(vertices, segments=None, holes=None, maxArea=None, quality=True, d
                               elementRow[2]+1, elementRow[3]+1]
 
         elementFile.close()
-
-    # Clean up
-
-    try:
-        pass
-        # os.remove(filename)
-        # os.remove(nodeFilename)
-        # os.remove(elementFilename)
-        # os.remove(polyFilename)
-    except:
-        pass
 
     # Add dofs in edof and bcVerts
 

@@ -2,8 +2,10 @@
 
 import sys
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
+from qtpy.QtWidgets import *
+from qtpy.QtGui import *
+
+import calfem.ui as cfui
 
 class GuiWindow(QWidget):
     def __init__(self, var_dict):
@@ -107,11 +109,12 @@ def edit_params(var_dict):
     valid_vars = parse_variables(var_dict)
     print(valid_vars)
 
-    app = QApplication(sys.argv)
+    app = cfui.init_qt_app()
 
     # Skapa vårt MyWindow objekt
 
     w = create_window(valid_vars)
+    w.show()
 
     # Starta händelseloop
 

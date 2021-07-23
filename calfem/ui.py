@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr 11 09:44:29 2016
+CALFEM UI module
 
-@author: lindemann
+Routines for interfacing wirt user interface toolkits.
 """
 
 import os, sys
@@ -12,13 +12,10 @@ print("CALFEM/Python ui module initialising")
 print("------------------------------------")
 print()
 
-from PyQt5.QtCore import pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
-from PyQt5.QtGui import QPixmap
-from PyQt5.uic import loadUi
-
-#from PyQt import QtGui, QtCore, uic
-
+from qtpy.QtCore import Slot, Signal
+from qtpy.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
+from qtpy.QtGui import QPixmap
+from qtpy.uic import loadUi
 
 g_inSpyder = False
 
@@ -37,11 +34,25 @@ if g_haveVisVis:
     print("VisVis installed...")
 else:
     print("VisVis not installed...")
+
+def init_qt_app():
+    app = QApplication.instance()
     
+    if app is None:
+        print("No QApplication instance found. Creating one.")
+        # if it does not exist then a QApplication is created
+        app = QApplication(sys.argv)    
+    else:
+        print("QApplication instance found. Reusing.")
+
+    return app
+            
 def loadUiWidget(uifilename, parent=None):
     """Load user interface file and return object model"""
     ui = loadUi(uifilename, parent)
-    return ui    
+    return ui
+
+load_ui_widget = loadUiWidget
         
 def appInstance(useVisVis=True):
     """Create a suitable application instance"""
@@ -72,3 +83,5 @@ def appInstance(useVisVis=True):
         sys.exit(-1)
 
     return app    
+
+app_instance = appInstance

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 29 23:22:20 2016
+CALFEM Solver module
 
-@author: jonas_000
+*** EXPERIMENTAL ***
+
 """
 
 import calfem.core as cfc
