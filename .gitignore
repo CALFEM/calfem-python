@@ -24,20 +24,17 @@ calfem-python.sln
 build/
 calfem_python.egg-info/
 dist/
-<<<<<<< HEAD
 *.xml
 *.iml
-=======
 .idea/
->>>>>>> 91100c9458e7559d6eda068b4a09f67589698c65
 .vscode/settings.json
-.vscode/settings.json
+examples/.ipynb_checkpoints/exm0-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm1-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm2-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm3-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm6-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm7-checkpoint.ipynb
-.vscode/settings.json
+# .vscode/settings.json
 examples/.ipynb_checkpoints/exm10-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm12-checkpoint.ipynb
 examples/.ipynb_checkpoints/exm13-checkpoint.ipynb
@@ -55,3 +52,6 @@ examples/.ipynb_checkpoints/exs1-checkpoint.py
 examples/.ipynb_checkpoints/Untitled1-checkpoint.ipynb
 examples/.ipynb_checkpoints/exs4a-checkpoint.py
 exm6.vtk
+
+# new notebook examples
+docs/source/examples/.ipynb_checkpoints/

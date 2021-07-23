@@ -4,4 +4,3 @@ pyvtk
 calfem-python
 sphinx==1.6.6
 nbsphinx
-ipykernel

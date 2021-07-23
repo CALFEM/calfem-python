@@ -148,9 +148,9 @@ It is also possible to assign markers to points. The marker parameter is added t
 
 .. code-block:: Python
 
-    g.point([0.0, 0.0]) # point 0
-    g.point([5.0, 0.0], marker=20) # point 1
-    g.point([2.5, 4.0]) # point 2
+    g.point([0.0, 0.0])             # point 0
+    g.point([5.0, 0.0], marker=20)  # point 1
+    g.point([2.5, 4.0])             # point 2
 
 In the same way markers can be added to surfaces as well.
 
@@ -253,9 +253,9 @@ A quadrilateral mesh is now created with the following code. Please not that we 
 
     mesh = cfm.GmshMesh(g)
 
-    mesh.elType = 3 # Degrees of freedom per node.
-    mesh.dofsPerNode = 2 # Factor that changes element sizes.
-    mesh.elSizeFactor = 0.10
+    mesh.elType = 3             # Type of mesh 
+    mesh.dofsPerNode = 2        # Factor that changes element sizes
+    mesh.elSizeFactor = 0.10    # Factor that changes element sizes
 
     coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
