@@ -448,34 +448,47 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
         point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
 
     if el_scalar is not None:
+        print("Adding cell scalars...")
         scalars = vtk.Scalars(el_scalar, name="scalar")
     if el_vec1 is not None:
+        print("Adding cell vector 1...")
         vectors1 = vtk.Vectors(el_vec1, name="principal1")
     if el_vec2 is not None:
+        print("Adding cell vector 2...")
         vectors2 = vtk.Vectors(el_vec2, name="principal2")
 
     if el_scalar is not None and el_vec1 is None and el_vec2 is None:
+        print("Exporting celldata, el_scalar...")
         cell_data = vtk.CellData(scalars)
     if el_scalar is not None and el_vec1 is None and el_vec2 is not None:
+        print("Exporting celldata, el_scalar, el_vec2...")
         cell_data = vtk.CellData(scalars, vectors2)
     if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_scalar, el_vec1...")
         cell_data = vtk.CellData(scalars, vectors1)
-    if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
+    if el_scalar is not None and el_vec1 is not None and el_vec2 is not None:
+        print("Exporting celldata, el_scalar, el_vec1, el_vec2...")
         cell_data = vtk.CellData(scalars, vectors1, vectors2)
     if el_scalar is None and el_vec1 is None and el_vec2 is not None:
+        print("Exporting celldata, el_vec2...")
         cell_data = vtk.CellData(vectors2)
     if el_scalar is None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_vec1...")
         cell_data = vtk.CellData(vectors1)
     if el_scalar is None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_vec1, el_vec2...")
         cell_data = vtk.CellData(vectors1, vectors2)
 
     structure = vtk.PolyData(points = points, polygons = polygons)
 
     if cell_data is not None and point_data is not None:
+        print("VTK includes cell_data and point_data")
         vtk_data = vtk.VtkData(structure, cell_data, point_data)
     if cell_data is None and point_data is not None:
+        print("VTK includes point_data")
         vtk_data = vtk.VtkData(structure, point_data)
     if cell_data is None and point_data is None:
+        print("VTK includes only structure")
         vtk_data = vtk.VtkData(structure)
 
     vtk_data.tofile("exm6.vtk", "ascii")
