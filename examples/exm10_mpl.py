@@ -181,6 +181,6 @@ cfv.draw_element_values(von_mises, coords, edof, dofs_per_node, el_type, a,
 
 cfv.colorbar()
 
-cfu.info("Done drawing...")
+# cfu.info("Done drawing...")
 
 cfv.showAndWait()

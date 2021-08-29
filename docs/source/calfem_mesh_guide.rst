@@ -1,13 +1,13 @@
 Mesh generation with CALFEM
 ===========================
 
-Included in the Python version of CALFEM is a mesh generation library based on GMSH. The library encapsulates the usage of GMSH transparently for the user. It will also parse the output from GMSH and create the neccesary data structures required by CALFEM for solving finite element problems.
+Included in the Python version of CALFEM is a mesh generation library based on GMSH. The library encapsulates the usage of GMSH transparently for the user. It will also parse the output from GMSH and create the necessary data structures required by CALFEM for solving finite element problems.
 
 Mesh generation in CALFEM is divided in three steps:
 
- 1. Definining the geometry of the model.
+ 1. Defining the geometry of the model.
  2. Creating a finite element mesh with the desired elements and properties
- 3. Exctracting data structures that can be used by CALFEM.
+ 3. Extracting data structures that can be used by CALFEM.
 
 The following sections describe these steps.
 
@@ -69,7 +69,7 @@ Running this example will show the following window with a simple rectangle:
 Creating a mesh
 ---------------
 
-To create a mesh we need to create a GmshMesh object and initialise this with our geometry:
+To create a mesh we need to create a GmshMesh object and initialize this with our geometry:
 
 .. code-block:: Python
 
@@ -90,7 +90,7 @@ The *eltype* property determines the element used for mesh generation. Elements 
  * 5 - 8 node hexahedron
  * 16 - 8 node second order quadrangle
 
-The *dofsPerNode* defines the number of degrees of freedom for each node. *elSizeFactor* determines the coarsness of the mesh.
+The *dofsPerNode* defines the number of degrees of freedom for each node. *elSizeFactor* determines the coarseness of the mesh.
 
 To generate the mesh and at the same time get the needed data structures for use with CALFEM we call the **.create()** method of the mesh object:
 
@@ -103,7 +103,7 @@ The returned data structures are:
  * coords - Element coordinates
  * edof - Element topology
  * dofs - Degrees of freedom per node
- * bdofs - Boundary degrees of freedon. Dictionary containing the dofs for each boundary marker. More on markers in the next section.
+ * bdofs - Boundary degrees of freedom. Dictionary containing the dofs for each boundary marker. More on markers in the next section.
  * elementmarkers - List of integer markers. Row i contains the marker of element i. Can be used to determine what region an element is in.
 
 To display the generated mesh we can use the **drawMesh()** function of the calfem.vis module:
@@ -117,17 +117,17 @@ To display the generated mesh we can use the **drawMesh()** function of the calf
     cfv.drawMesh(
         coords=coords, 
         edof=edof, 
-        dofsPerNode=meshGen.dofsPerNode, 
-        elType=meshGen.elType, 
+        dofs_per_node=mesh.dofsPerNode, 
+        el_type=mesh.elType, 
         filled=True, 
         title="Example 01"
             ) 
 
-Running the exmaple will produce the following mesh with quad elements:
+Running the example will produce the following mesh with quad elements:
     
 .. image:: images/mesh2.png
 
-Changing the *elType* property to 2 will produce a mesh with triangle elements instead:
+Changing the *elType* property to 2 (:code:`mesh.elType = 2`) will produce a mesh with triangle elements instead:
 
 .. image:: images/mesh3.png
 
@@ -148,9 +148,9 @@ It is also possible to assign markers to points. The marker parameter is added t
 
 .. code-block:: Python
 
-    g.point([0.0, 0.0]) # point 0
-    g.point([5.0, 0.0], marker=20) # point 1
-    g.point([2.5, 4.0]) # point 2
+    g.point([0.0, 0.0])             # point 0
+    g.point([5.0, 0.0], marker=20)  # point 1
+    g.point([2.5, 4.0])             # point 2
 
 In the same way markers can be added to surfaces as well.
 
@@ -178,11 +178,10 @@ We need to add some additional import directives, such as the core calfem module
     import calfem.core as cfc
     import calfem.geometry as cfg
     import calfem.mesh as cfm
-    import calfem.vis as cfv
+    import calfem.vis_mpl as cfv
     import calfem.utils as cfu
 
     import numpy as np
-    from math import *    
 
 Problem variables and constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -191,19 +190,19 @@ To make it easier to update our example we define a number of variables describi
 
 .. code-block:: Python
 
-    l = 5.0
-    h = 1.0
-    t = 0.2
+    l = 5.0	# length
+    h = 1.0	# height
+    t = 0.2	# thickness
 
 Next, we define our material properties we will need later in the code:
 
 .. code-block:: Python
 
-    v = 0.35
-    E = 2.1e9
-    ptype = 1
+    v = 0.35		# Poisson
+    E = 2.1e9		# Young modulus
+    ptype = 1		# plane stress
     ep = [ptype,t]
-    D=cfc.hooke(ptype, E, v)
+    D = cfc.hooke(ptype, E, v)
 
 To make it easier to read our code we define 3 constants, which we will use instead of numerical markers.
 
@@ -222,18 +221,25 @@ We are now ready to create a **Geometry** object describing our geometry:
 
     g = cfg.Geometry()
 
-    g.point([0.0, 0.0], marker = left_support) # point 0
-    g.point([l, 0.0], marker = right_support) # point 1
-    g.point([l, h]) # point 2
-    g.point([0.0, h]) # point 2
+    g.point([0.0, 0.0], marker = left_support)	# point 0
+    g.point([l, 0.0], marker = right_support) 	# point 1
+    g.point([l, h]) 					# point 2
+    g.point([0.0, h]) 					# point 3
 
-    g.spline([0, 1]) # line 0
-    g.spline([1, 2]) # line 1
-    g.spline([2, 3], marker = top_line) # line 2
-    g.spline([3, 0]) # line 2
+    g.spline([0, 1]) 					# line 0
+    g.spline([1, 2]) 					# line 1
+    g.spline([2, 3], marker = top_line) 		# line 3
+    g.spline([3, 0]) 					# line 3
 
     g.surface([0, 1, 2, 3])
 
+To show the geometry you can use: 
+
+.. code-block:: Python
+
+    cfv.draw_geometry(g)
+    cfv.showAndWait()
+    
 The finished geometry is shown in below:
 
 .. image:: images/tut2-1.png
@@ -247,16 +253,33 @@ A quadrilateral mesh is now created with the following code. Please not that we 
 
     mesh = cfm.GmshMesh(g)
 
-    mesh.elType = 3 # Degrees of freedom per node.
-    mesh.dofsPerNode = 2 # Factor that changes element sizes.
-    mesh.elSizeFactor = 0.10
+    mesh.elType = 3             # Type of mesh 
+    mesh.dofsPerNode = 2        # Factor that changes element sizes
+    mesh.elSizeFactor = 0.10    # Factor that changes element sizes
 
     coords, edof, dofs, bdofs, elementmarkers = mesh.create()
+
+As previous, to show the finished mesh you can use:
+
+.. code-block:: Python
+
+	cfv.figure()
+	cfv.drawMesh(
+	    coords=coords,
+	    edof=edof,
+	    dofs_per_node=mesh.dofsPerNode,
+	    el_type=mesh.elType,
+	    filled=True)
+	cfv.showAndWait()
+
+The finished mesh is shown belo:
+
+.. image:: images/exm0_2.png
 
 Implementing a CALFEM solver
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We now have the neccesary input to implement a simple CALFEM solver. First, we create some convenience variables, nDofs (total number of dofs), ex and ey (element x and y coordinates).
+We now have the necessary input to implement a simple CALFEM solver. First, we create some convenience variables, nDofs (total number of dofs), ex and ey (element x and y coordinates).
 
 .. code-block:: Python
 
@@ -271,7 +294,7 @@ The global stiffness matrix can now be allocated:
 
 For larger problems please consider using sparse matrices instead.
 
-To make the assemblation loop less cluttered we use the *zip()* method to extract rows from *edof*, *ex* and *ey* to *eltopo*, *elx* and *ely*. The loop then becomes:
+To make the assembly loop less cluttered we use the *zip()* method to extract rows from *edof*, *ex* and *ey* to *eltopo*, *elx* and *ely*. The loop then becomes:
 
 .. code-block:: Python
 
@@ -279,7 +302,7 @@ To make the assemblation loop less cluttered we use the *zip()* method to extrac
         Ke = cfc.planqe(elx, ely, ep, D)
         cfc.assem(eltopo, K, Ke)
 
-Please not the difference from standard MATLAB CALFEM that the assem routine does not require returning the K matrix on the left side as the assemblation is done in place. 
+Please not the difference from standard MATLAB CALFEM that the `assem` routine does not require returning the K matrix on the left side as the assembly is done in place. 
 
 Next, we need to setup our boundary conditions. Two empty arrays are created, *bc* for storing the dof to prescribe and and a second *bcVal* for storing the prescribed values.
 
@@ -294,5 +317,7 @@ To prescribe a boundary condition the utility function *applybc()* is used. This
 
     bc, bcVal = cfu.applybc(bdofs, bc, bcVal, left_support, 0.0, 0)
     bc, bcVal = cfu.applybc(bdofs, bc, bcVal, right_support, 0.0, 2)
+
+Now, we have some data structures that can be used by CALFEM. If there is no force and displacement, nothing happens. If we applied force `f` and calculate the displacement, then we can solve the equation to obtain more data to plot. These next steps are left in the next examples.
 
 
