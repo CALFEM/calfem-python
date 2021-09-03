@@ -1,0 +1,38 @@
+<RCC>
+  <qresource prefix="Images">
+    <file>blank.svg</file>
+    <file>plus.svg</file>
+    <file>minus.svg</file>
+    <file>erase.png</file>
+    <file>add_marker.svg</file>
+    <file>merge.svg</file>
+    <file>split_edge.svg</file>
+    <file>polygon.svg</file>
+    <file>polygon_hole.svg</file>
+    <file>rectangle.svg</file>
+    <file>rectangle_hole.svg</file>
+    <file>rectangle.svg</file>
+    <file>polygon_hole.svg</file>
+    <file>rectangle_hole.svg</file>
+    <file>polygon.svg</file>
+    <file>geometry.png</file>
+    <file>grid.png</file>
+    <file>grid_settings.png</file>
+    <file>grid_snap.png</file>
+    <file>line.png</file>
+    <file>line_number.png</file>
+    <file>move.png</file>
+    <file>move_node.png</file>
+    <file>node.png</file>
+    <file>node_number.png</file>
+    <file>save.png</file>
+    <file>zoom_in.png</file>
+    <file>zoom_out.png</file>
+    <file>pan.png</file>
+    <file>open.png</file>
+    <file>polygon_hole.svg</file>
+    <file>select.png</file>
+  </qresource>
+  <qresource prefix="newPrefix"/>
+  <qresource prefix="newPrefix"/>
+</RCC>

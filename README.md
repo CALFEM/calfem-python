@@ -37,4 +37,6 @@ Install GMSH [here](http://gmsh.info/) and add to the PATH of your file or inste
 
 * Ottosson, A., 2010. Implementation of CALFEM for Python - http://www.byggmek.lth.se/fileadmin/byggnadsmekanik/publications/tvsm5000/web5167.pdf 
 
+* Eriksson, K, 2021. CALFEM Geometry Editor - An interactive geometry editor for CALFEM
+
 
