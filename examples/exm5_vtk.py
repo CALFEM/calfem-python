@@ -8,7 +8,9 @@ It also demonstrates how to do subplots and create two axes that are viewed from
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_vtk as cfv
+
+import vtk
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -56,19 +58,4 @@ coords, edof, dofs, bdofs, elementmarkers = cfm.mesh(g, el_type, 0.3, dofs_per_n
 
 # ---- Visualise mesh -------------------------------------------------------
 
-# Create two axes that are viewed from the same camera:
-
-cfv.figure()
-a1 = cfv.subplot(121)
-a2 = cfv.subplot(122)
-cam = cfv.camera3d()
-a1.camera = a2.camera = cam
-
-# Draw geometry and mesh
-
-cfv.draw_geometry(g, axes=a1)
-cfv.draw_mesh(coords=coords, edof=edof, dofs_per_node=dofs_per_node, el_type=el_type, filled=False, axes=a2)
-
-# Enter main loop
-
-cfv.show_and_wait()
+cfv.draw_mesh(coords, edof, el_type)

@@ -180,7 +180,7 @@ class GmshMeshGenerator:
         self.remove_gmsh_signal_handler = True
         self.initialize_gmsh = True
 
-    def create(self, is3D=False):
+    def create(self, is3D=False, dim=3):
         '''
         Meshes a surface or volume defined by the geometry in geoData.
         Parameters:
@@ -385,7 +385,7 @@ class GmshMeshGenerator:
 
             # Generate mesh
 
-            gmsh.model.mesh.generate(2)
+            gmsh.model.mesh.generate(dim)
 
             # Write .msh file
 
