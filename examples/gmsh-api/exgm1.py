@@ -36,8 +36,8 @@ print("tag  =", tag)
 
 print("node_tags:", len(node_tags))
 print(node_tags)
-print("node_coords:", len(node_coords))
-print(node_coords)
+print("node_coords:", int(node_coords.shape[0]/3))
+print(node_coords.reshape((int(node_coords.shape[0]/3), 3)))
 print("node_params:", len(node_params))
 print(node_params)
 print("elem_types:", len(elem_types))
@@ -98,6 +98,6 @@ print(elem_node_tags[0])
 gmsh.write("exgmsh1.msh")
 
 #if '-nopopup' not in sys.argv:
-gmsh.fltk.run()
+#gmsh.fltk.run()
 
 gmsh.finalize()
