@@ -75,12 +75,12 @@ def saveMatlabArrays(coords, edof, dofs, bdofs, elementmarkers, boundaryElements
    # bdofs = {str(k): v for k, v in bdofs.items()} # MATLAB struct needs keys as strings
     #print(markerDict)
     newBdof = {}
-    for key, value in bdofs.items():
-        print(key, value)
-        if key == 0:
-            newBdof["None"] = value
+    for name, index in bdofs.items():
+        print(name, index)
+        if index == 0:
+            newBdof["None"] = 0
         else:
-            newBdof[markerDict[key]] = value
+            newBdof[markerDict[index]] = name
 
     saveDict["bdofs"] = newBdof
     elementmarkers = np.asarray(elementmarkers)

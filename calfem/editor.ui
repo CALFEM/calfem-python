@@ -83,45 +83,46 @@ QTabBar::tab:!selected {
        <number>0</number>
       </property>
       <widget class="QWidget" name="tab_2">
-       <property name="focusPolicy">
-        <enum>Qt::ClickFocus</enum>
-       </property>
-       <property name="autoFillBackground">
-        <bool>false</bool>
-       </property>
        <property name="styleSheet">
         <string notr="true">QWidget{
 	background-color: rgb(240, 240, 240);
 }        </string>
        </property>
        <attribute name="title">
-        <string>Tab 2</string>
+        <string>Page</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <spacer name="horizontalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Maximum</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>5</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <layout class="QGridLayout" name="gridLayout">
-            <item row="1" column="1">
-             <widget class="QToolButton" name="zoomInButtonSurface">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>1457</width>
+          <height>71</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Maximum</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="1">
+            <widget class="QToolButton" name="zoomOutButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -133,29 +134,35 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Zoom In</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/zoom_in.png</normaloff>:/Images/zoom_in.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QToolButton" name="zoomOutButtonSurface">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Zoom Out</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_out.png</normaloff>:/Images/zoom_out.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QToolButton" name="arrowButtonSurface">
+             <property name="cursor">
+              <cursorShape>ArrowCursor</cursorShape>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -167,29 +174,32 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Zoom Out</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/zoom_out.png</normaloff>:/Images/zoom_out.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QToolButton" name="panningButtonSurface">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Arrow</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/select.png</normaloff>:/Images/select.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QToolButton" name="panningButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -201,35 +211,29 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Panning</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/pan.png</normaloff>:/Images/pan.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QToolButton" name="arrowButtonSurface">
-              <property name="cursor">
-               <cursorShape>ArrowCursor</cursorShape>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::WheelFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Panning</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/pan.png</normaloff>:/Images/pan.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QToolButton" name="zoomInButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -241,55 +245,52 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Arrow</string>
-              </property>
-              <property name="icon">
-               <iconset resource="resources.qrc">
-                <normaloff>:/Images/select.png</normaloff>:/Images/select.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="checkable">
-               <bool>false</bool>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="Line" name="line_2">
-            <property name="minimumSize">
-             <size>
-              <width>15</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <property name="lineWidth">
-             <number>1</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <item>
-             <widget class="QToolButton" name="polyButton">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Zoom In</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_in.png</normaloff>:/Images/zoom_in.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_2">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QToolButton" name="polyButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -301,32 +302,32 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Draw Polygon</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/polygon.svg</normaloff>:/Images/polygon.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="rectButton">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Draw Polygon</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/polygon.svg</normaloff>:/Images/polygon.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="rectButton">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -338,33 +339,33 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Draw Rectangle</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/rectangle.svg</normaloff>:/Images/rectangle.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_10">
-            <item>
-             <widget class="QToolButton" name="addPolyHoleButton">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Draw Rectangle</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/rectangle.svg</normaloff>:/Images/rectangle.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <widget class="QToolButton" name="addPolyHoleButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -376,29 +377,29 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Draw Polygon Hole</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/polygon_hole.svg</normaloff>:/Images/polygon_hole.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="addRectHoleButton">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Draw Polygon Hole</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/polygon_hole.svg</normaloff>:/Images/polygon_hole.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="addRectHoleButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -410,42 +411,42 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Draw Rectangle Hole</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/rectangle_hole.svg</normaloff>:/Images/rectangle_hole.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_12">
-            <item>
-             <widget class="QToolButton" name="mergeButton">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="layoutDirection">
-               <enum>Qt::LeftToRight</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Draw Rectangle Hole</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/rectangle_hole.svg</normaloff>:/Images/rectangle_hole.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <item>
+            <widget class="QToolButton" name="mergeButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -457,55 +458,89 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Merge Overlapping Geometries</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/merge.svg</normaloff>:/Images/merge.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-              <property name="autoRaise">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="Line" name="line_5">
-            <property name="minimumSize">
-             <size>
-              <width>15</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <property name="lineWidth">
-             <number>1</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_9">
-            <item>
-             <widget class="QToolButton" name="gridSnapButtonSurface">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Merge Overlapping Geometries</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/merge.svg</normaloff>:/Images/merge.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="deleteButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Delete Item</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/erase.png</normaloff>:/Images/erase.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_5">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <item>
+            <widget class="QToolButton" name="gridSnapButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -517,35 +552,35 @@ QToolButton:hover {
     background-color: rgb(223, 219, 215);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Toggle Gridsnap</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/grid_snap.png</normaloff>:/Images/grid_snap.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="gridButtonSurface">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Toggle Gridsnap</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid_snap.png</normaloff>:/Images/grid_snap.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="gridButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -557,55 +592,55 @@ QToolButton:hover {
     background-color: rgb(223, 219, 215);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Toggle Grid</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/grid.png</normaloff>:/Images/grid.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_8">
-            <item>
-             <widget class="QSpinBox" name="gridSpacingSpinBox">
-              <property name="minimum">
-               <number>5</number>
-              </property>
-              <property name="maximum">
-               <number>1000</number>
-              </property>
-              <property name="singleStep">
-               <number>10</number>
-              </property>
-              <property name="value">
-               <number>20</number>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QToolButton" name="gridSpacingButton">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Toggle Grid</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid.png</normaloff>:/Images/grid.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QSpinBox" name="gridSpacingSpinBox">
+             <property name="minimum">
+              <number>5</number>
+             </property>
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+             <property name="singleStep">
+              <number>10</number>
+             </property>
+             <property name="value">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="gridSpacingButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -617,52 +652,52 @@ QToolButton:hover {
     background-color: rgb(223, 219, 215);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Set Grid Spacing</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>:/Images/grid_settings.png</normaloff>:/Images/grid_settings.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="Line" name="line_6">
-            <property name="minimumSize">
-             <size>
-              <width>15</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <property name="lineWidth">
-             <number>1</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_11">
-            <item>
-             <widget class="QToolButton" name="loadGeometryButton">
-              <property name="styleSheet">
-               <string notr="true">QToolButton{
+             </property>
+             <property name="text">
+              <string>Set Grid Spacing</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid_settings.png</normaloff>:/Images/grid_settings.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_6">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <item>
+            <widget class="QToolButton" name="loadGeometryButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
 	border: 0px;
 }
 
@@ -674,30 +709,29 @@ QToolButton:hover {
     background-color: rgba(185, 211, 220,100);
 }
 </string>
-              </property>
-              <property name="text">
-               <string>Load Geometry</string>
-              </property>
-              <property name="icon">
-               <iconset resource="resources.qrc">
-                <normaloff>:/Images/open.png</normaloff>:/Images/open.png</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="toolButtonStyle">
-               <enum>Qt::ToolButtonTextBesideIcon</enum>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </item>
-       </layout>
+             </property>
+             <property name="text">
+              <string>Load Geometry</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/open.png</normaloff>:/Images/open.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </widget>
       <widget class="QWidget" name="tab">
        <property name="styleSheet">
@@ -726,7 +760,7 @@ QToolButton:hover {
               <cursorShape>ArrowCursor</cursorShape>
              </property>
              <property name="focusPolicy">
-              <enum>Qt::WheelFocus</enum>
+              <enum>Qt::TabFocus</enum>
              </property>
              <property name="styleSheet">
               <string notr="true">QToolButton{
@@ -746,7 +780,7 @@ QToolButton:hover {
               <string>Arrow</string>
              </property>
              <property name="icon">
-              <iconset resource="resources.qrc">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/select.png</normaloff>:/Images/select.png</iconset>
              </property>
              <property name="iconSize">
@@ -783,7 +817,7 @@ QToolButton:hover {
               <string>Zoom Out</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/zoom_out.png</normaloff>:/Images/zoom_out.png</iconset>
              </property>
              <property name="iconSize">
@@ -817,7 +851,7 @@ QToolButton:hover {
               <string>Zoom In</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/zoom_in.png</normaloff>:/Images/zoom_in.png</iconset>
              </property>
              <property name="iconSize">
@@ -851,7 +885,7 @@ QToolButton:hover {
               <string>Panning</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/pan.png</normaloff>:/Images/pan.png</iconset>
              </property>
              <property name="iconSize">
@@ -899,7 +933,7 @@ QToolButton:hover {
               <string>Set Marker</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/add_marker.svg</normaloff>:/Images/add_marker.svg</iconset>
              </property>
              <property name="iconSize">
@@ -933,7 +967,7 @@ QToolButton:hover {
               <string>Split Edge</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/split_edge.svg</normaloff>:/Images/split_edge.svg</iconset>
              </property>
              <property name="iconSize">
@@ -981,7 +1015,7 @@ QToolButton:hover {
               <string>Toggle Gridsnap</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/grid_snap.png</normaloff>:/Images/grid_snap.png</iconset>
              </property>
              <property name="iconSize">
@@ -1021,7 +1055,7 @@ QToolButton:hover {
               <string>Toggle Grid</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/grid.png</normaloff>:/Images/grid.png</iconset>
              </property>
              <property name="iconSize">
@@ -1082,7 +1116,7 @@ QToolButton:hover {
          <string>Save Geometry</string>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
           <normaloff>:/Images/save.png</normaloff>:/Images/save.png</iconset>
         </property>
         <property name="iconSize">
@@ -1130,7 +1164,7 @@ QToolButton:hover {
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>:/Images/save.png</pixmap>
+            <pixmap resource="../../../Exjobb/Examensarbete/resources.qrc">:/Images/save.png</pixmap>
            </property>
           </widget>
          </item>
@@ -1166,7 +1200,7 @@ QToolButton:hover {
               <string>Save Mesh</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
              </property>
              <property name="iconSize">
@@ -1200,7 +1234,7 @@ QToolButton:hover {
               <string>Save Mesh Arrays</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
              </property>
              <property name="iconSize">
@@ -1240,7 +1274,7 @@ QToolButton:hover {
               <string>Save Mesh Arrays to Matlab</string>
              </property>
              <property name="icon">
-              <iconset>
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
                <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
              </property>
              <property name="iconSize">
@@ -1716,7 +1750,7 @@ QToolButton:hover {
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>258</width>
+               <width>196</width>
                <height>296</height>
               </rect>
              </property>
@@ -1990,8 +2024,8 @@ background: rgb(255,255,255);
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -2018,7 +2052,7 @@ QToolButton:hover {
            <string/>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
             <normaloff>:/Images/minus.svg</normaloff>:/Images/minus.svg</iconset>
           </property>
           <property name="iconSize">
@@ -2051,7 +2085,7 @@ QToolButton:hover {
            <string/>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
             <normaloff>:/Images/plus.svg</normaloff>:/Images/plus.svg</iconset>
           </property>
           <property name="iconSize">
@@ -2082,7 +2116,7 @@ QToolButton:hover {
            <string/>
           </property>
           <property name="icon">
-           <iconset>
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
             <normaloff>:/Images/erase.png</normaloff>:/Images/erase.png</iconset>
           </property>
           <property name="iconSize">
@@ -2105,19 +2139,19 @@ QToolButton:hover {
      <x>0</x>
      <y>0</y>
      <width>1493</width>
-     <height>31</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
-  <include location="resources.qrc"/>
+  <include location="../../../Exjobb/Examensarbete/resources.qrc"/>
  </resources>
  <connections/>
  <buttongroups>
   <buttongroup name="buttonGroupDrawPoints"/>
-  <buttongroup name="buttonGroupDisplayPointLabels"/>
   <buttongroup name="buttonGroupDOFsPerNode"/>
+  <buttongroup name="buttonGroupDisplayPointLabels"/>
  </buttongroups>
 </ui>
