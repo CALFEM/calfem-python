@@ -1,7 +1,7 @@
 #!/bin/env python
 # -*- coding: iso-8859-15 -*-
 
-import os, sys, pickle
+import os, sys, pickle, scipy.io
 
 import numpy as np
 import calfem.core as cfc
@@ -609,13 +609,15 @@ def save_matlab_arrays(coords, edof, dofs, bdofs, elementmarkers, boundaryElemen
     saveDict["dofs"] = dofs.astype('double')
    # bdofs = {str(k): v for k, v in bdofs.items()} # MATLAB struct needs keys as strings
     #print(markerDict)
+    print(bdofs)
+    print(markerDict)
     newBdof = {}
-    for key, value in bdofs.items():
-        print(key, value)
-        if key == 0:
-            newBdof["None"] = value
+    for index, bdofs in bdofs.items():
+        print(index, bdofs)
+        if index == 0:
+            newBdof["None"] = bdofs
         else:
-            newBdof[markerDict[key]] = value
+            newBdof[markerDict[index]] = bdofs
 
     saveDict["bdofs"] = newBdof
     elementmarkers = np.asarray(elementmarkers)
