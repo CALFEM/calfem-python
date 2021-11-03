@@ -1,29 +1,21 @@
-import os, sys, itertools
+import itertools
 from functools import cmp_to_key
 
-
 import PyQt5
-
-from PyQt5.QtCore import QPoint, QPointF, QLineF, QRectF, QSize, QLocale, Qt, QRegExp
-
-from PyQt5.QtGui import QPen, QColor, QBrush, QPolygon, QPolygonF, QPainter, QFont, QIntValidator, \
-    QDoubleValidator, QCloseEvent, QCursor, QRegExpValidator
-
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow, QFileDialog, QGraphicsView, QGraphicsScene, \
-    QGraphicsSceneMouseEvent, QGraphicsItem, QLabel, QGraphicsPolygonItem, QButtonGroup, QToolButton, \
-    QGraphicsEllipseItem, QMessageBox, QLineEdit, QFormLayout, QGraphicsLineItem, QTabWidget, QGraphicsTextItem, QFrame, \
-    QVBoxLayout, QGridLayout, QScrollArea, QPushButton, QWidgetItem, QGraphicsRectItem, QStackedWidget, QComboBox, \
-    QScrollBar, QSpinBox, QTextBrowser
-
-from PyQt5.uic import loadUi
-
 import numpy as np
+from PyQt5.QtCore import QPointF, QLineF, QRectF, QLocale, QRegExp
+from PyQt5.QtGui import QPen, QColor, QBrush, QPolygonF, QFont, QIntValidator, \
+    QDoubleValidator, QRegExpValidator
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QGraphicsScene, \
+    QGraphicsItem, QLabel, QGraphicsPolygonItem, QToolButton, \
+    QGraphicsEllipseItem, QLineEdit, QFormLayout, QGraphicsLineItem, QGraphicsTextItem, QGridLayout, QPushButton, \
+    QComboBox
 
+import calfem.editor_resources
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis_mpl as cfv
 import calfem.utils as cfu
-import calfem.editor_resources
+import calfem.vis_mpl as cfv
 
 setattr(calfem.geometry.Geometry, "marker_dict", None)
 
@@ -95,13 +87,16 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.label_points = True
         self.label_curves = True
 
+        # Start program with arrow as activated tool in surface view
         self.mode = "Arrow"
         self.view = "Surface View"
 
+        # Methods assigned from the editor window
         self.update_labels = None
         self.toggle_tab_enabled = None
         self.get_graphics_view_size = None
         self.overlap_warning = None
+        self.marker_removal_warning = None
         self.intersection_error = None
         self.set_tooltip = None
         self.figure_canvas = None
@@ -112,7 +107,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.node_splitter.setVisible(False)
         self.split_edge = None
 
-        self.canceled = False
+        self.canceled = False  # Bool to track selection of errors
 
         self.prev_selected_point = None
 
@@ -130,8 +125,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.clearSelection()
         if view == self.SURFACE_VIEW:
             self.toggle_surface_mode()
-            if self.numbers_shown:
-                self.toggle_display_numbers()
             self.view = "Surface View"
         elif view == self.BORDER_VIEW:
             self.toggle_border_mode()
@@ -456,9 +449,14 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         update_button.clicked.connect(update)
 
     def add_marker(self, item, marker_text):
-        item.__setattr__("marker", self.line_marker_index)
-        self.line_marker_dict[marker_text] = self.line_marker_index
-        self.reversed_line_marker_dict[self.line_marker_index] = marker_text
+
+        if marker_text in self.line_marker_dict:
+            index = self.line_marker_dict[marker_text]
+        else:
+            index = self.line_marker_index
+        item.__setattr__("marker", index)
+        self.line_marker_dict[marker_text] = index
+        self.reversed_line_marker_dict[index] = marker_text
         self.line_marker_index += 1
 
         if isinstance(item, PyQt5.QtWidgets.QGraphicsEllipseItem):
@@ -643,6 +641,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                             self.add_marker(item, e1.text())
 
                     update_button = QToolButton()
+                    update_button.setStyleSheet("border: 2px solid rgb(0,0,128);")
                     update_button.setText("Update")
                     update_button.clicked.connect(pressed)
 
@@ -792,7 +791,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
         """
         poly = poly_item.polygon()
 
-        print(marker_dict)
         for i in range(poly.size()):
             point = poly.at(i)
             p = self.addEllipse(-4, -4,  8, 8, self.LUBronze, self.LUBronze)
@@ -872,7 +870,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
             i = 0
             while i < len(curves) - 1:
                 if first:
-                    print(curves[i][1], curves[i + 1])
                     if curves[i][1] in curves[i + 1]:
                         i += 1
                         first = False
@@ -889,7 +886,10 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
             for curveID in curveID_list:
                 if g.curves[curveID][2] != 0:
-                    curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
+                    if g.marker_dict:
+                        curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
+                    else:
+                        curve_marker_dict[i] = g.curves[curveID][2]
                 i += 1
             flat_list = []
             for sublist in curves:
@@ -902,7 +902,10 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 coords = g.getPointCoords(pointID)
                 poly << QPointF(coords[0], -coords[1])  # canvas has flipped y-axis
                 if g.points[pointID][2] != 0:
-                    point_marker_dict[i] = g.marker_dict[g.points[pointID][2]]
+                    if g.marker_dict:
+                        point_marker_dict[i] = g.marker_dict[g.points[pointID][2]]
+                    else:
+                        point_marker_dict[i] = g.points[pointID][2]
                 added_points.append([coords[0], -coords[1]])
                 i += 1
 
@@ -937,7 +940,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     i = 0
                     while i < len(curves) - 1:
                         if first:
-                            print(curves[i][1], curves[i + 1])
                             if curves[i][1] in curves[i + 1]:
                                 i += 1
                                 first = False
@@ -975,15 +977,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     self.add_poly_to_scene(poly, point_marker_dict, curve_marker_dict, hole_mode=True)
             except TypeError:  # IDs is not iterable, so it is probably a single ID
                 print("error")
-
-        #self.toggle_surface_mode()
-        #if self.numbers_shown:
-            #self.toggle_display_numbers()
-            #curve_marker_dict = {}
-            #i = 1
-            #for curveID in g.stuffOnSurfaces(surfaceID)[1]:
-            #    curve_marker_dict[i] = g.curves[curveID][2]
-            #    i += 1
 
     def poly_to_list_with_overlap(self, polygon):
         """
@@ -1119,7 +1112,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         """
         Merge together overlapping polygons in the graphics view
         """
-
+        ignore_warning = False
         if self.mode == "Draw Poly":
             self.remove_drawing_poly()
         elif self.mode == "Draw Rect":
@@ -1144,6 +1137,56 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     if poly_inner in self.hole_list or poly_outer in self.hole_list:
                         pass
                     else:
+                        # Warning message that merging will remove any markers on the polygons
+                        for child in poly_inner.childItems():
+                            if child.childItems():
+                                if isinstance(child.childItems()[0], QGraphicsTextItem):
+                                    #if self.overlap_warning is not None:
+                                    if not ignore_warning:
+                                        user_choice = self.marker_removal_warning()
+                                        if user_choice == "Cancel":
+                                            return
+                                        elif user_choice == "Ignore":
+                                            ignore_warning = True
+                                    else:
+                                        self.point_marker_list.remove(child)
+                                elif child.childItems()[0].childItems():
+                                    if isinstance(child.childItems()[0].childItems()[0], QGraphicsTextItem):
+                                        if not ignore_warning:
+                                            user_choice = self.marker_removal_warning()
+                                            if user_choice == "Cancel":
+                                                return
+                                            elif user_choice == "Ignore":
+                                                ignore_warning = True
+                                                self.line_marker_list.remove(child.childItems()[0])
+                                        else:
+                                            self.line_marker_list.remove(child.childItems()[0])
+
+                        for child in poly_outer.childItems():
+                            if child.childItems():
+
+                                if isinstance(child.childItems()[0], QGraphicsTextItem):
+                                    if not ignore_warning:
+                                        user_choice = self.marker_removal_warning()
+                                        if user_choice == "Cancel":
+                                            return
+                                        elif user_choice == "Ignore":
+                                            ignore_warning = True
+                                    else:
+                                        self.point_marker_list.remove(child)
+
+                                elif child.childItems()[0].childItems():
+                                    if not ignore_warning:
+                                        if isinstance(child.childItems()[0].childItems()[0], QGraphicsTextItem):
+                                            user_choice = self.marker_removal_warning()
+                                            if user_choice == "Cancel":
+                                                return
+                                            elif user_choice == "Ignore":
+                                                self.line_marker_list.remove(child.childItems()[0])
+                                                ignore_warning = True
+                                    else:
+                                        self.line_marker_list.remove(child.childItems()[0])
+
                         # Move the QPolygonF items to the global coordinates and unite them (merge)
                         p1 = poly_outer.polygon().translated(poly_outer.x(), poly_outer.y())
                         p2 = poly_inner.polygon().translated(poly_inner.x(), poly_inner.y())
@@ -1158,7 +1201,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         self.add_poly_to_scene(QPolygonF(uni))
                         self.delete_polygon(poly_inner, True)
                         self.delete_polygon(poly_outer, True)
-                        break
+                        #break
+
                 else:
                     print("No overlap") # for debugging, remove later
 
@@ -1320,6 +1364,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             if point in point_marker_list:
                 i = point_marker_list.index(point)
                 point_marker = self.point_marker_list[i].marker
+                print(self.point_marker_list[i])
 
             if [point.x(), -point.y()] in added_points:  # if the point already exists don't add again
                 if first:  # If it is the first point of the poly set existing point as first_index
@@ -1331,22 +1376,29 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     pass
                 else:  # Check if the line from previous point already exists, in that case don't att a new one
                     current_index = added_points.index([point.x(), -point.y()])
+
                     if [prev_index, current_index] in added_lines:
                         surface.append(added_lines.index([prev_index, current_index]))
+
                     elif [current_index, prev_index] in added_lines:
                         surface.append(added_lines.index([current_index, prev_index]))
+
                     else:  # else add a line from the previous point to the current pre-existing one
                         # If the coordinates is in the edge_marker_list also add the marker for that edge
+
                         if [added_points[prev_index], added_points[current_index]] in edge_marker_list:
                             i = edge_marker_list.index([added_points[prev_index], added_points[current_index]])
                             line_marker = self.line_marker_list[i].marker
                             g.addSpline([prev_index, current_index], marker=line_marker)
+
                         elif [added_points[current_index], added_points[prev_index]] in edge_marker_list:
                             i = edge_marker_list.index([added_points[current_index], added_points[prev_index]])
                             line_marker = self.line_marker_list[i].marker
                             g.addSpline([prev_index, current_index], marker=line_marker)
+
                         else:
                             g.addSpline([prev_index, current_index])
+
                         surface.append(line_index)
                         line_index += 1
                         added_lines.append([prev_index, current_index])
@@ -1371,34 +1423,43 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         i = edge_marker_list.index([added_points[prev_index], added_points[current_index]])
                         line_marker = self.line_marker_list[i].marker
                         g.addSpline([prev_index, current_index], marker=line_marker)
+
                     elif [added_points[current_index], added_points[prev_index]] in edge_marker_list:
                         i = edge_marker_list.index([added_points[current_index], added_points[prev_index]])
                         line_marker = self.line_marker_list[i].marker
                         g.addSpline([prev_index, current_index], marker=line_marker)
+
                     else:
                         g.addSpline([prev_index, current_index])
+
                     surface.append(line_index)
                     line_index += 1
                     added_lines.append([prev_index, current_index])
+
             prev_index = current_index
 
         # Finally do the procedure again but add the line from the last index to the first index to close the
         # surface, also here add a line marker if there is one
         if [current_index, first_index] in added_lines:
             surface.append(added_lines.index([current_index, first_index]))
+
         elif [first_index, current_index] in added_lines:
             surface.append(added_lines.index([first_index, current_index]))
+
         else:
             if [added_points[first_index], added_points[current_index]] in edge_marker_list:
                 i = edge_marker_list.index([added_points[first_index], added_points[current_index]])
                 line_marker = self.line_marker_list[i].marker
                 g.addSpline([current_index, first_index], marker=line_marker)
+
             elif [added_points[current_index], added_points[first_index]] in edge_marker_list:
                 i = edge_marker_list.index([added_points[current_index], added_points[first_index]])
                 line_marker = self.line_marker_list[i].marker
                 g.addSpline([current_index, first_index], marker=line_marker)
+
             else:
                 g.addSpline([current_index, first_index])
+
             surface.append(line_index)
             line_index += 1
             added_lines.append([current_index, first_index])
@@ -1434,7 +1495,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
     def on_save_geometry_action(self):
         if self.g:
             name = QFileDialog.getSaveFileName(self.parent(), filter="*.cfg")
-            print(name)
             if name != ('', ''):
                 cfu.save_geometry(self.g, name[0])
 
