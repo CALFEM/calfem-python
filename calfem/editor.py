@@ -13,17 +13,13 @@ from PyQt5.QtCore import Qt
 
 from PyQt5.QtGui import QPainter, QCloseEvent
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QButtonGroup, QGraphicsEllipseItem, QMessageBox, QGraphicsLineItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QButtonGroup, QMessageBox
 
 from PyQt5.uic import loadUi
 
 import calfem.geometry as cfg
 import calfem.vis_mpl as cfv
 import calfem.editor_scene as editor_scene
-
-setattr(QGraphicsEllipseItem, "marker", None)
-setattr(QGraphicsEllipseItem, "localIndex", None)
-setattr(QGraphicsLineItem, "localIndex", None)
 
 app = None
 
@@ -32,7 +28,6 @@ class EditorWindow(QMainWindow):
     """MainWindow-klass som hanterar vårt huvudfönster"""
 
     def __init__(self):
-        """Constructor"""
         super(QMainWindow, self).__init__()
         self.app = app
 
@@ -91,6 +86,7 @@ class EditorWindow(QMainWindow):
         self.selectGroupBorder.addButton(self.splitEdgeButton)
         self.selectGroupBorder.buttonClicked.connect(self.clear_selection)
 
+        # Connect all buttons to corresponding action to perform when pressed
         self.arrowButtonSurface.clicked.connect(self.on_action_arrow)
         self.arrowButtonBorder.clicked.connect(self.on_action_arrow)
         self.panningButtonSurface.clicked.connect(self.on_action_panning)
@@ -118,6 +114,8 @@ class EditorWindow(QMainWindow):
 
         self.labelX.setText("")
         self.labelY.setText("")
+
+        # Connect methods that affect the window based on actions in the graphics scene
         self.gridSpacingSpinBox.setValue(self.scene.grid_spacing)
         self.scene.update_labels = self.update_labels
         self.scene.toggle_tab_enabled = self.toggle_tab_enabled
@@ -213,6 +211,7 @@ class EditorWindow(QMainWindow):
         self.scene.toggle_grid()
 
     def override_scroll(self, event):
+        # Control the amount of zoom from one scroll call
         delta = event.angleDelta().y()
         factor = 1
         if delta > 0:
@@ -237,7 +236,6 @@ class EditorWindow(QMainWindow):
 
         if self.min_view_scale <= new_scale <= self.max_view_scale:
             self.graphicsView.scale(factor, factor)
-        print(self.graphicsView.transform().m11())
 
     def set_tooltip(self, string):
         self.labelTooltip.setText(string)
@@ -306,7 +304,7 @@ class EditorWindow(QMainWindow):
         return self.graphicsView.size().width(), self.graphicsView.size().height()
 
     def on_action_tab(self):
-        """Action performed when clicking one of the tabs in the tab bar"""
+        """Action performed when clicking one of the tabs in the tab bar, index of tab clicked determines action"""
         self.set_tooltip("")
         index = self.tabWidget.currentIndex()
         self.scene.set_view(index)
@@ -363,6 +361,7 @@ class EditorWindow(QMainWindow):
         self.tabWidget.setTabEnabled(index, boolean)
 
     def closeEvent(self, a0: QCloseEvent) -> None:
+        # If closed and no CALFEM Geometry has been generated make sure one is with the currently drawn geometry
         if self.return_g:
             self.scene.build_gmsh()
 
@@ -494,6 +493,9 @@ class EditorWindow(QMainWindow):
             self.toggle_panning()
 
     def on_action_split(self):
+        """
+        De-selects all other toolButtons and sets the current mode to split line
+        """
         self.set_tooltip("Click on existing edge to split by adding an extra node")
         self.scene.mode = "Split Line"
         self.graphicsView.viewport().setCursor(Qt.ArrowCursor)
@@ -507,6 +509,9 @@ class EditorWindow(QMainWindow):
             self.toggle_panning()
 
     def on_action_set_marker(self):
+        """
+        De-selects all other toolButtons and sets the current mode to set marker
+        """
         self.set_tooltip("Select edge to add marker")
         self.scene.mode = "Set Marker"
         self.graphicsView.viewport().setCursor(Qt.PointingHandCursor)
@@ -574,6 +579,7 @@ def main_loop():
 
     app.exec_()
 
+
 def run_editor():
 
     app = init_app()
@@ -608,7 +614,7 @@ def edit_geometry(g : cfg.Geometry = None):
     widget.show()
     app.exec_()
     new_g = widget.scene.g
-    line_marker_dict = widget.scene.line_marker_dict
+    line_marker_dict = widget.scene.marker_dict
     if new_g:
         return new_g, line_marker_dict
     else:

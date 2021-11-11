@@ -3,13 +3,11 @@ from functools import cmp_to_key
 
 import PyQt5
 import numpy as np
-from PyQt5.QtCore import QPointF, QLineF, QRectF, QLocale, QRegExp
-from PyQt5.QtGui import QPen, QColor, QBrush, QPolygonF, QFont, QIntValidator, \
-    QDoubleValidator, QRegExpValidator
+from PyQt5.QtCore import QPointF, QLineF, QRectF, QRegExp
+from PyQt5.QtGui import QPen, QColor, QBrush, QPolygonF, QFont, QRegExpValidator
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QGraphicsScene, \
-    QGraphicsItem, QLabel, QGraphicsPolygonItem, QToolButton, \
-    QGraphicsEllipseItem, QLineEdit, QFormLayout, QGraphicsLineItem, QGraphicsTextItem, QGridLayout, QPushButton, \
-    QComboBox
+    QGraphicsItem, QGraphicsPolygonItem, QToolButton, \
+    QGraphicsEllipseItem, QLineEdit, QFormLayout, QGraphicsLineItem, QGraphicsTextItem, QGridLayout, QPushButton
 
 import calfem.editor_resources
 import calfem.geometry as cfg
@@ -18,6 +16,9 @@ import calfem.utils as cfu
 import calfem.vis_mpl as cfv
 
 setattr(calfem.geometry.Geometry, "marker_dict", None)
+setattr(QGraphicsEllipseItem, "marker", None)
+setattr(QGraphicsEllipseItem, "localIndex", None)
+setattr(QGraphicsLineItem, "localIndex", None)
 
 
 class EditorScene(QGraphicsScene, QMainWindow):
@@ -68,8 +69,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.g = None
         self.mesh = None
 
-        self.line_marker_dict = {}
-        self.reversed_line_marker_dict = {}
+        self.marker_dict = {}
+        self.reversed_marker_dict = {}
         self.line_marker_index = 1
 
         self.numbers_shown = False
@@ -123,6 +124,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         view = index
         self.reset_scroll_area()
         self.clearSelection()
+
         if view == self.SURFACE_VIEW:
             self.toggle_surface_mode()
             self.view = "Surface View"
@@ -138,18 +140,18 @@ class EditorScene(QGraphicsScene, QMainWindow):
             if self.show_mesh() == "Canceled":
                 self.canceled = True
             else:
-                self.mesh_scroll_area()
                 self.view = "Mesh View"
 
     def move_node(self, circ, poly, new_x, new_y):
         """
         Update the corner of a polygon when dragging a corner circle of the polygon
         """
-        poly_list = self.poly_to_list(poly, "Local")  # Extract the position of the polygon points before moving the point
+        poly_list = self.poly_to_list(poly,
+                                      "Local")  # Extract the position of the polygon points before moving the point
 
         temp_point = QGraphicsEllipseItem()
         temp_point.setPos(new_x, new_y)
-        if temp_point.pos() in self.poly_to_list(poly, "Global") : # Do not allow overlap of two points in same polygon
+        if temp_point.pos() in self.poly_to_list(poly, "Global"):  # Do not allow overlap of two points in same polygon
             return
 
         index = poly_list.index(circ.pos())  # Get the selected circles index in the polygon
@@ -208,7 +210,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
                             text.setPos((item.line().x1() + item.line().x2()) / 2,
                                         (item.line().y1() + item.line().y2()) / 2)
 
-
     def mouseMoveEvent(self, event):
         # If polygons have been added enable the geometry and mesh options in the tabview, else keep disabled
         if self.toggle_tab_enabled is not None:
@@ -223,14 +224,15 @@ class EditorScene(QGraphicsScene, QMainWindow):
         x = event.scenePos().x()
         y = event.scenePos().y()
 
+        # Update coord labels in window
         if self.update_labels is not None:
             self.update_labels(x, y)
+
         if self.grid_snap:
             x = round(x / self.grid_spacing) * self.grid_spacing
             y = round(y / self.grid_spacing) * self.grid_spacing
 
         if self.mode == "Split Line":
-
             x_closest = None
             y_closest = None
             edge_closest = None
@@ -245,7 +247,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     p = QPointF(0, 0)
                     p.setX(x + i - edge.scenePos().x())
                     p.setY(y + j - edge.scenePos().y())
-                    if[x + i - edge.scenePos().x(), y + j - edge.scenePos().y()] in self.point_coord_list.tolist():
+                    if [x + i - edge.scenePos().x(), y + j - edge.scenePos().y()] in self.point_coord_list.tolist():
                         pass
                     elif edge.contains(p):
                         edge_point_list.append([x + i, y + j, edge])
@@ -263,6 +265,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     y_closest = coords[1]
                     edge_closest = row[2]
 
+            # If there is a edge close to the pointer place the pointer there else hide it
+            # Both cases required to handle moving along the axes
             if x_closest:
                 self.node_splitter.setPos(x_closest, y_closest)
                 self.node_splitter.setVisible(True)
@@ -307,8 +311,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     for i, j in itertools.product(range(-10, 10), range(-10, 10)):
                         for edge in temp_edge_list:
                             p = QPointF(0, 0)
-                            p.setX(x+i - edge.scenePos().x())
-                            p.setY(y+j - edge.scenePos().y())
+                            p.setX(x + i - edge.scenePos().x())
+                            p.setY(y + j - edge.scenePos().y())
                             if edge.contains(p):
                                 edge_point_list.append([x + i, y + j])
 
@@ -334,7 +338,9 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         if point == circ.scenePos():
                             pass  # This point has already been removed, catch to avoid error in deletion
                         else:
-                            templist = np.delete(templist, np.where(np.all(templist == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
+                            templist = np.delete(templist,
+                                                 np.where(np.all(templist == [[point.x(), point.y()]], axis=1))[0][0],
+                                                 axis=0)
                     # Check if any point in the global point list is within snapping threshold, if so snap to that point
                     if (np.linalg.norm(templist - [x, y], axis=1) < 10).any():
                         coords = templist[np.where((np.linalg.norm(templist - [x, y], axis=1) < 10))]
@@ -343,12 +349,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
                     # Move corner of the polygon to the new x and y, if no snapping has occurred it is the mouse coords
                     self.move_node(circ, poly, x, y)
-
-                    #  FÃ¶r att uppdatera nummer nÃ€r noder flyttas, fungerar inte helt hundra Ã€n
-                    #if self.tabWidget.currentIndex() == 1:
-                    #    if self.numbers_shown:
-                    #        self.show_numbers()
-                    #        self.show_numbers()
 
         if self.mode == "Draw Poly":
             # This is to display the line in the polygon from the previous point to see where the new line would occur
@@ -372,23 +372,31 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     if self.prev_point.x() > x and self.prev_point.y() > y:
                         self.connecting_rect.setRect(QRectF(QPointF(x, y), self.prev_point))
                     elif self.prev_point.x() > x:
-                        self.connecting_rect.setRect(QRectF(QPointF(x, self.prev_point.y()), QPointF(self.prev_point.x(),y)))
+                        self.connecting_rect.setRect(
+                            QRectF(QPointF(x, self.prev_point.y()), QPointF(self.prev_point.x(), y)))
                     elif self.prev_point.y() > y:
-                        self.connecting_rect.setRect(QRectF(QPointF(self.prev_point.x(),y), QPointF(x, self.prev_point.y())))
+                        self.connecting_rect.setRect(
+                            QRectF(QPointF(self.prev_point.x(), y), QPointF(x, self.prev_point.y())))
                     else:
                         self.connecting_rect.setRect(QRectF(self.prev_point, QPointF(x, y)))
                 else:
                     self.connecting_rect = self.addRect(QRectF(self.prev_point, QPointF(x, y)))
 
     def delete_polygon(self, poly: QGraphicsPolygonItem, delete_from_coord_list=False):
+        """ Method to remove existing polygon from the scene and if wanted deletion of the corresponding points
+            from the list of coordinates"""
+
         self.poly_list.remove(poly)
+
         if poly in self.hole_list:
             self.hole_list.remove(poly)
+
         for item in poly.childItems():
             if isinstance(item, PyQt5.QtWidgets.QGraphicsLineItem):
                 self.edge_list.remove(item)
             if item in self.potential_edge_splitters:
                 self.potential_edge_splitters.remove(item)
+
         if delete_from_coord_list:
             for point in self.poly_to_list(poly, "Global"):
                 self.point_coord_list = np.delete(self.point_coord_list, np.where(
@@ -397,11 +405,10 @@ class EditorScene(QGraphicsScene, QMainWindow):
         poly.hide()
 
     def reset_scroll_area(self):
-        # Clear the scroll area
+        """Clears the scroll area of the window from current display widget"""
         scroll_area_widget_contents = QWidget()
         if self.scroll_area:
             self.scroll_area.setWidget(scroll_area_widget_contents)
-
 
     def mouseDoubleClickEvent(self, event):
         if self.mode == "Arrow":
@@ -440,7 +447,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                                         circ = child_item
                                         self.move_node(circ, poly, x, y)
                                         point = circ.scenePos()
-                                        self.point_coord_list = np.append(self.point_coord_list, [[point.x(), point.y()]], axis=0)
+                                        self.point_coord_list = np.append(self.point_coord_list,
+                                                                          [[point.x(), point.y()]], axis=0)
                                         i += 1
 
                         update_button = (QPushButton("Update"))
@@ -449,14 +457,16 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         update_button.clicked.connect(update)
 
     def add_marker(self, item, marker_text):
+        """Add a marker to a line or a point, updates the marker dictionary and a reversed one to handle MATLAB
+        interactions, also changes the display of the targeted edge or point"""
 
-        if marker_text in self.line_marker_dict:
-            index = self.line_marker_dict[marker_text]
+        if marker_text in self.marker_dict:
+            index = self.marker_dict[marker_text]
         else:
             index = self.line_marker_index
         item.__setattr__("marker", index)
-        self.line_marker_dict[marker_text] = index
-        self.reversed_line_marker_dict[index] = marker_text
+        self.marker_dict[marker_text] = index
+        self.reversed_marker_dict[index] = marker_text
         self.line_marker_index += 1
 
         if isinstance(item, PyQt5.QtWidgets.QGraphicsEllipseItem):
@@ -490,6 +500,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         y = event.scenePos().y()
 
         if self.mode == "Split Line":
+            # If there is a current edge with the split marker split that line at the marker position
             if self.split_edge:
                 edge = self.split_edge
                 poly = edge.parentItem()
@@ -500,10 +511,12 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 if poly in self.hole_list:
                     poly_is_hole = True
 
-                line.translate(edge.scenePos())
+                line.translate(edge.scenePos())  # Move line to global coordinates
                 p1_index = poly_list.index(line.p1())
                 p2_index = poly_list.index(line.p2())
-                if abs(p1_index - p2_index) > 1:  # If difference is larger than one means it is the first and last point
+
+                # Determine between which point index to insert the new point
+                if abs(p1_index - p2_index) > 1:  # If difference is larger than one means the split occurs between the first and last point
                     if p1_index > p2_index:
                         insert_index = p1_index
                     else:
@@ -514,11 +527,14 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     else:
                         insert_index = p2_index
                 insert_index += 1
+
+                # Insert a new the new point and create a new poilygon
                 poly_list.insert(insert_index, self.node_splitter.scenePos())
                 new_poly = QPolygonF()
                 for p in poly_list:
                     new_poly << p
 
+                # Find markers, if any, from the old poly and place in the corresponding edge or point in the new poly
                 edge_marker_dict = {}
                 point_marker_dict = {}
                 for item in poly.childItems():
@@ -531,10 +547,12 @@ class EditorScene(QGraphicsScene, QMainWindow):
                             # markers on circles
                         if item.childItems()[0].childItems():
                             if isinstance(item.childItems()[0].childItems()[0], QGraphicsTextItem):
-                                if abs(item.localIndex)> insert_index:
-                                    edge_marker_dict[abs(item.localIndex)] = item.childItems()[0].childItems()[0].toPlainText()
+                                if abs(item.localIndex) > insert_index:
+                                    edge_marker_dict[abs(item.localIndex)] = item.childItems()[0].childItems()[
+                                        0].toPlainText()
                                 else:
-                                    edge_marker_dict[abs(item.localIndex) - 1] = item.childItems()[0].childItems()[0].toPlainText()
+                                    edge_marker_dict[abs(item.localIndex) - 1] = item.childItems()[0].childItems()[
+                                        0].toPlainText()
                             # markers on edges
                 self.delete_polygon(poly, True)
                 self.add_poly_to_scene(new_poly, point_marker_dict, edge_marker_dict, hole_mode=poly_is_hole)
@@ -552,7 +570,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
             if self.selectedItems():
                 if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
                     for point in self.poly_to_list(self.selectedItems()[0], "Global"):
-                        self.point_coord_list = np.delete(self.point_coord_list, np.where(np.all(self.point_coord_list == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
+                        self.point_coord_list = np.delete(self.point_coord_list, np.where(
+                            np.all(self.point_coord_list == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
                         if self.grid_snap:
                             x = round(x / self.grid_spacing) * self.grid_spacing
                             y = round(y / self.grid_spacing) * self.grid_spacing
@@ -561,7 +580,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem):
                     self.prev_selected_point = self.selectedItems()[0]
                     point = self.selectedItems()[0].scenePos()
-                    self.point_coord_list = np.delete(self.point_coord_list, np.where(np.all(self.point_coord_list == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
+                    self.point_coord_list = np.delete(self.point_coord_list, np.where(
+                        np.all(self.point_coord_list == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
 
         if self.mode == "Draw Poly":
             # The drawing of the polygon is done by adding a point wherever the user clicks in the canvas, support
@@ -578,6 +598,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 if self.first_draw:
                     pass
                 else:
+                    self.append_text_browser("Polygon created")
                     self.add_poly_to_scene(self.drawing_poly, hole_mode=self.hole_mode)
                     self.remove_drawing_poly()
             elif event.button() == 1:
@@ -596,7 +617,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 else:
                     self.append_text_browser("Polygon point added at: (" + str(x) + " , " + str(y) + " )")
                     self.drawing_poly << QPointF(x, y)
-                    point = self.addEllipse(x-3, y - 3, 6, 6)
+                    point = self.addEllipse(x - 3, y - 3, 6, 6)
                     line = self.addLine(QLineF(self.prev_point, QPointF(x, y)))
                     self.connecting_line_list.append(line)
                     self.prev_point = QPointF(x, y)
@@ -614,13 +635,24 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 if self.set_tooltip:
                     self.set_tooltip("Click to complete rectangle")
             elif self.prev_point.x() == x or self.prev_point.y() == y:
+                self.append_text_browser("No rectangle created : Rectangle corners may not be placed along same axis")
                 pass  # Catch to avoid creating a rectangle where points overlap
             else:
                 r = self.connecting_rect.rect()
-                self.drawing_rect << QPointF(r.x(), r.y())
-                self.drawing_rect << QPointF(r.x() + r.width(), r.y())
-                self.drawing_rect << QPointF(r.x() + r.width(), r.y() + r.height())
-                self.drawing_rect << QPointF(r.x(), r.y() + r.height())
+                x1 = r.x()
+                x2 = r.x() + r.width()
+                y1 = r.y()
+                y2 = r.y() + r.height()
+                self.drawing_rect << QPointF(x1, y1)
+                self.drawing_rect << QPointF(x2, y1)
+                self.drawing_rect << QPointF(x2, y2)
+                self.drawing_rect << QPointF(x1, y2)
+
+                self.append_text_browser(
+                    "Rectangle added with points: (" + str(x1) + " , " + str(-y1) + " ), " + "(" + str(
+                        x2) + " , " + str(
+                        -y1) + " ), "
+                    + "(" + str(x2) + " , " + str(-y2) + " ), " + "(" + str(x1) + " , " + str(-y2) + " )")
 
                 self.add_poly_to_scene(self.drawing_rect, hole_mode=self.hole_mode)
                 self.remove_drawing_rect()
@@ -653,20 +685,22 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     flo.addRow("", update_button)
 
         if self.mode == "Delete":
+            # Delete the pressed polygon
             super(EditorScene, self).mousePressEvent(event)
             if self.selectedItems():
                 if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
                     self.delete_polygon(self.selectedItems()[0])
 
     def remove_drawing_rect(self):
+        """Hide the supportive rectangle used when drawing"""
         self.drawing_rect = QPolygonF()
-
         if self.connecting_rect:
             self.connecting_rect.setVisible(False)
         self.connecting_rect = None
         self.first_draw = True
 
     def remove_drawing_poly(self):
+        """Hide the supportive polygon used when drawing and clear corresponding list"""
 
         self.drawing_poly = QPolygonF()
         self.drawing_points_coords = []
@@ -695,10 +729,12 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem):
                     point = self.selectedItems()[0].scenePos()
                     self.point_coord_list = np.append(self.point_coord_list, [[point.x(), point.y()]], axis=0)
+                    self.append_text_browser("Node moved to (" + str(point.x()) + " , " + str(-point.y()) + ")")
             self.clearSelection()
 
     def toggle_border_mode(self):
-        # Make all polygon surfaces hidden
+        """ Toggle the border mode on disabling movement of surfaces and showcasing only the borders, also enabling
+        selection of the borders"""
         for poly in self.poly_list:
             poly.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
             poly.setBrush(QColor(0, 0, 0, 0))
@@ -714,7 +750,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 text.setVisible(True)
 
     def toggle_surface_mode(self):
-        # Make all polygon surfaces visible
+        """Toggle the surface mode on allowing movement of the surfaces and disable selection of the borders"""
         for poly in self.poly_list:
             poly.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
             if poly in self.hole_list:
@@ -726,16 +762,17 @@ class EditorScene(QGraphicsScene, QMainWindow):
         for edge in self.edge_list:
             edge.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
 
-            # Om text från markers inte ska visas i surface mode
             if edge.childItems()[0].childItems():
                 text = edge.childItems()[0].childItems()[0]
                 text.setVisible(False)
 
+        # Hide markers on points
         for point in self.point_marker_list:
             if point.childItems():
                 point.childItems()[0].setVisible(False)
 
     def add_poly_to_scene(self, polygon, point_marker_dict=None, curve_marker_dict=None, hole_mode=False):
+        """ Add a polygon to the scene"""
         if hole_mode:
             poly = self.addPolygon(polygon, QPen(QColor(0, 0, 0, 0)), QBrush(QColor(255, 255, 255)))
             poly.setZValue(1)
@@ -752,14 +789,15 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
     def add_poly_edges(self, poly_item, marker_dict=None):
         """
-        Add the edges of a polygon,
+        Add the edges of a polygon as children to the polygon, each edge has a display_line child to allow the parent
+        line to be of only one pixel width
         """
 
         poly = poly_item.polygon()
 
-        for i in range(1, poly.size()+1):
+        for i in range(1, poly.size() + 1):
             if i == poly.size():
-                p1 = poly.at(i-1)
+                p1 = poly.at(i - 1)
                 p2 = poly.at(0)
                 index = -poly.size()
 
@@ -778,8 +816,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
             # Used to pass markers when loading a g
             if marker_dict:
-                if i-1 in marker_dict:
-                    self.add_marker(display_line, marker_dict[i-1])
+                if i - 1 in marker_dict:
+                    self.add_marker(display_line, marker_dict[i - 1])
                     display_line.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, False)
                     text = display_line.childItems()[0]
                     text.setVisible(False)
@@ -793,7 +831,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
         for i in range(poly.size()):
             point = poly.at(i)
-            p = self.addEllipse(-4, -4,  8, 8, self.LUBronze, self.LUBronze)
+            p = self.addEllipse(-4, -4, 8, 8, self.LUBronze, self.LUBronze)
             p.setZValue(2)  # Make sure corners always in front of polygon surfaces
             p.setParentItem(poly_item)
             p.__setattr__("localIndex", int(i))
@@ -811,7 +849,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     text = p.childItems()[0]
                     text.setVisible(False)
 
-    def poly_to_list(self, poly, scope : str):
+    def poly_to_list(self, poly, scope: str):
         """Extract the points from a QGraphicsPolygonItem or a QPolygonF and return a list of all the containing QPointF
         , scope to be chosen as Global return scene coordinates otherwise returns local coordinates """
         inner_list = []
@@ -846,8 +884,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
         added_polygons = []
 
-        # For every surface in the g object loop through the points on the surface and make use of the fact that
-        # g.stuffOnSurfaces returns points the same order as they should be added to the polygon
+        # For every surface in the g object loop through the points on the surface and add the points to a new polygon
+        # object in the scene
         for surfaceID in g.surfaces:
             poly = QPolygonF()
 
@@ -859,15 +897,16 @@ class EditorScene(QGraphicsScene, QMainWindow):
             curve_marker_dict = {}
             curves = []
             curveID_list = []
+            # Loop through all lines to the surface and add the point pairs in the curves list
             for curveID in g.stuffOnSurfaces(surfaceID)[1]:
-                if any(x in g.curves[curveID][1] for x in point_list): # To make sure holes are not included in this step
+                if any(x in g.curves[curveID][1] for x in
+                       point_list):  # To make sure holes are not included in this step
                     curves.append(g.curves[curveID][1])
                     curveID_list.append(curveID)
-                #if g.curves[curveID][2] != 0:
-                    #curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
-                #i += 1
             first = True
             i = 0
+            # Algorithm to sort the points and make sure they are in a connected order so that the correct points
+            # are connected with lines
             while i < len(curves) - 1:
                 if first:
                     if curves[i][1] in curves[i + 1]:
@@ -883,7 +922,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         curves.append(curves.pop(curves.index(curves[i + 1])))
                         curveID_list.append(curveID_list.pop(curveID_list.index(curveID_list[i + 1])))
             i = 0
-
+            # Loop through the modified list of curveIDs to move markers to new correct locations
             for curveID in curveID_list:
                 if g.curves[curveID][2] != 0:
                     if g.marker_dict:
@@ -891,6 +930,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     else:
                         curve_marker_dict[i] = g.curves[curveID][2]
                 i += 1
+
+            # Flatten the list to be able to loop through points in correct order
             flat_list = []
             for sublist in curves:
                 for item in sublist:
@@ -898,6 +939,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         flat_list.append(item)
 
             i = 0
+            # Add each point in the flattened list in corresponding order to the polygon object
             for pointID in flat_list:
                 coords = g.getPointCoords(pointID)
                 poly << QPointF(coords[0], -coords[1])  # canvas has flipped y-axis
@@ -914,69 +956,64 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
         for surfaceID in g.surfaces:
 
-            #curve_set_holes = g._subentityHolesOnEntities(surfaceID, g.surfaces, 2)
+            # Perform same procedure as previous but for any holes
+            for hole in g.surfaces[surfaceID][2]:
+                poly = QPolygonF()
 
-            #curve_set_holes = set()
-            try:
-                for hole in g.surfaces[surfaceID][2]:
-                    poly = QPolygonF()
+                point_marker_dict = {}
+                curve_set = hole
+                point_list = g.pointsOnCurves(curve_set)
+                added_points = []
 
-                    point_marker_dict = {}
-                    curve_set = hole
-                    point_list = g.pointsOnCurves(curve_set)
-                    added_points = []
+                curve_marker_dict = {}
+                curves = []
+                curveID_list = []
+                for curveID in g.stuffOnSurfaces(surfaceID)[1]:
+                    if any(x in g.curves[curveID][1] for x in
+                           point_list):  # To make sure holes are not included in this step
+                        curves.append(g.curves[curveID][1])
+                        curveID_list.append(curveID)
 
-                    curve_marker_dict = {}
-                    curves = []
-                    curveID_list = []
-                    for curveID in g.stuffOnSurfaces(surfaceID)[1]:
-                        if any(x in g.curves[curveID][1] for x in point_list):  # To make sure holes are not included in this step
-                            curves.append(g.curves[curveID][1])
-                            curveID_list.append(curveID)
-                        # if g.curves[curveID][2] != 0:
-                        # curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
-                        # i += 1
-                    first = True
-                    i = 0
-                    while i < len(curves) - 1:
-                        if first:
-                            if curves[i][1] in curves[i + 1]:
-                                i += 1
-                                first = False
-                            else:
-                                curves.append(curves.pop(curves.index(curves[i + 1])))
-                                curveID_list.append(curveID_list.pop(curveID_list.index(curveID_list[i + 1])))
+                first = True
+                i = 0
+                while i < len(curves) - 1:
+                    if first:
+                        if curves[i][1] in curves[i + 1]:
+                            i += 1
+                            first = False
                         else:
-                            if any(x in curves[i] for x in curves[i + 1]):
-                                i += 1
-                            else:
-                                curves.append(curves.pop(curves.index(curves[i + 1])))
-                                curveID_list.append(curveID_list.pop(curveID_list.index(curveID_list[i + 1])))
-                    i = 0
+                            curves.append(curves.pop(curves.index(curves[i + 1])))
+                            curveID_list.append(curveID_list.pop(curveID_list.index(curveID_list[i + 1])))
+                    else:
+                        if any(x in curves[i] for x in curves[i + 1]):
+                            i += 1
+                        else:
+                            curves.append(curves.pop(curves.index(curves[i + 1])))
+                            curveID_list.append(curveID_list.pop(curveID_list.index(curveID_list[i + 1])))
+                i = 0
 
-                    for curveID in curveID_list:
-                        if g.curves[curveID][2] != 0:
-                            curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
-                        i += 1
-                    flat_list = []
-                    for sublist in curves:
-                        for item in sublist:
-                            if item not in flat_list:
-                                flat_list.append(item)
+                for curveID in curveID_list:
+                    if g.curves[curveID][2] != 0:
+                        curve_marker_dict[i] = g.marker_dict[g.curves[curveID][2]]
+                    i += 1
+                flat_list = []
+                for sublist in curves:
+                    for item in sublist:
+                        if item not in flat_list:
+                            flat_list.append(item)
 
-                    i = 0
-                    for pointID in flat_list:
-                        coords = g.getPointCoords(pointID)
-                        poly << QPointF(coords[0], -coords[1])  # canvas has flipped y-axis
-                        if g.points[pointID][2] != 0:
-                            point_marker_dict[i] = g.marker_dict[g.points[pointID][2]]
-                        added_points.append([coords[0], -coords[1]])
-                        i += 1
+                i = 0
+                for pointID in flat_list:
+                    coords = g.getPointCoords(pointID)
+                    poly << QPointF(coords[0], -coords[1])  # canvas has flipped y-axis
+                    if g.points[pointID][2] != 0:
+                        point_marker_dict[i] = g.marker_dict[g.points[pointID][2]]
+                    added_points.append([coords[0], -coords[1]])
+                    i += 1
 
-                    added_polygons.append(added_points)
-                    self.add_poly_to_scene(poly, point_marker_dict, curve_marker_dict, hole_mode=True)
-            except TypeError:  # IDs is not iterable, so it is probably a single ID
-                print("error")
+                added_polygons.append(added_points)
+                self.add_poly_to_scene(poly, point_marker_dict, curve_marker_dict, hole_mode=True)
+
 
     def poly_to_list_with_overlap(self, polygon):
         """
@@ -1138,10 +1175,11 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         pass
                     else:
                         # Warning message that merging will remove any markers on the polygons
+                        # If return is chosen cancel the merge, else proceed and ignore the warning message
+                        # for the continuation of the loop
                         for child in poly_inner.childItems():
                             if child.childItems():
                                 if isinstance(child.childItems()[0], QGraphicsTextItem):
-                                    #if self.overlap_warning is not None:
                                     if not ignore_warning:
                                         user_choice = self.marker_removal_warning()
                                         if user_choice == "Cancel":
@@ -1164,7 +1202,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
                         for child in poly_outer.childItems():
                             if child.childItems():
-
                                 if isinstance(child.childItems()[0], QGraphicsTextItem):
                                     if not ignore_warning:
                                         user_choice = self.marker_removal_warning()
@@ -1192,8 +1229,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         p2 = poly_inner.polygon().translated(poly_inner.x(), poly_inner.y())
                         uni = p1.united(p2)
 
-                        # Unite adds the starting point again as endpoint so we have to remove this duplicate point to avoid
-                        # future problems
+                        # Unite adds the starting point again as endpoint so we have to remove this duplicate point
+                        # to avoid future problems
                         uni = self.poly_to_list(uni, "Global")
                         uni = uni[:-1]
 
@@ -1201,15 +1238,15 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         self.add_poly_to_scene(QPolygonF(uni))
                         self.delete_polygon(poly_inner, True)
                         self.delete_polygon(poly_outer, True)
-                        #break
-
-                else:
-                    print("No overlap") # for debugging, remove later
+                        # break
 
     def toggle_gridsnap(self):
         self.grid_snap = not self.grid_snap
 
     def create_grid(self):
+        """
+        Create the grid for the graphics scene
+        """
 
         # If called when a grid already exists create a new grid
         if self.grid:
@@ -1218,8 +1255,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
         grid_pen = QPen(QColor(215, 215, 215), 1)
         w = 10000
         h = 10000
-        line_1 = self.addLine(-10000, 0, 10000, 0, QPen(QColor(0, 0, 0), 2))
-        line_2 = self.addLine(0, -10000, 0, 10000, QPen(QColor(0, 0, 0), 2))
+        self.addLine(-10000, 0, 10000, 0, QPen(QColor(0, 0, 0), 2))
+        self.addLine(0, -10000, 0, 10000, QPen(QColor(0, 0, 0), 2))
 
         w = int(w / self.grid_spacing) * self.grid_spacing
         h = int(h / self.grid_spacing) * self.grid_spacing
@@ -1266,7 +1303,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
     def build_gmsh(self):
         g = cfg.Geometry()
-        g.marker_dict = self.reversed_line_marker_dict
+        g.marker_dict = self.reversed_marker_dict
         point_index = 0
         line_index = 0
         added_points = []
@@ -1326,22 +1363,34 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         return None
 
             surface_tot = []
-            point_index, line_index, added_points, added_lines, surface = self.add_polygon_to_gmsh(poly, g, point_index, point_marker_list, line_index, added_points, added_lines, edge_marker_list)
+            point_index, line_index, added_points, added_lines, surface = self.add_polygon_to_gmsh(poly, g, point_index,
+                                                                                                   point_marker_list,
+                                                                                                   line_index,
+                                                                                                   added_points,
+                                                                                                   added_lines,
+                                                                                                   edge_marker_list)
             surface_tot.append(surface)
             surface_holes = []
 
             # Check if there are any holes inside the polygon
             for hole in self.polygon_contains_holes(poly):
-                point_index, line_index, added_points, added_lines, surface_hole = self.add_polygon_to_gmsh(hole, g, point_index, point_marker_list, line_index, added_points, added_lines, edge_marker_list)
-
-            for inner_poly in self.polygon_contains_other_polygon(poly):
-                point_index, line_index, added_points, added_lines, surface_inner = self.add_polygon_to_gmsh(inner_poly, g,
+                point_index, line_index, added_points, added_lines, surface_hole = self.add_polygon_to_gmsh(hole, g,
                                                                                                             point_index,
                                                                                                             point_marker_list,
                                                                                                             line_index,
                                                                                                             added_points,
                                                                                                             added_lines,
                                                                                                             edge_marker_list)
+
+            for inner_poly in self.polygon_contains_other_polygon(poly):
+                point_index, line_index, added_points, added_lines, surface_inner = self.add_polygon_to_gmsh(inner_poly,
+                                                                                                             g,
+                                                                                                             point_index,
+                                                                                                             point_marker_list,
+                                                                                                             line_index,
+                                                                                                             added_points,
+                                                                                                             added_lines,
+                                                                                                             edge_marker_list)
                 surface_holes.append(surface_inner)
                 surface_tot.append(surface_inner)
             # Create a surface from the added lines, give the surface a number index
@@ -1350,7 +1399,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.g = g
         return g
 
-    def add_polygon_to_gmsh(self, poly, g, point_index, point_marker_list, line_index, added_points, added_lines, edge_marker_list):
+    def add_polygon_to_gmsh(self, poly, g, point_index, point_marker_list, line_index, added_points, added_lines,
+                            edge_marker_list):
         first = True
         first_index = point_index
         prev_index = point_index
@@ -1364,7 +1414,6 @@ class EditorScene(QGraphicsScene, QMainWindow):
             if point in point_marker_list:
                 i = point_marker_list.index(point)
                 point_marker = self.point_marker_list[i].marker
-                print(self.point_marker_list[i])
 
             if [point.x(), -point.y()] in added_points:  # if the point already exists don't add again
                 if first:  # If it is the first point of the poly set existing point as first_index
@@ -1372,11 +1421,12 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     current_index = added_points.index([point.x(), -point.y()])
                     first_index = current_index
                 elif prev_index == added_points.index([point.x(), -point.y()]):
-                    # To avoid occurence of adding zero length line from point to self
+                    # To avoid occurrence of adding zero length line from point to self
                     pass
-                else:  # Check if the line from previous point already exists, in that case don't att a new one
-                    current_index = added_points.index([point.x(), -point.y()])
+                else:
 
+                    current_index = added_points.index([point.x(), -point.y()])
+                    # Check if the line from previous point already exists, in that case don't att a new one
                     if [prev_index, current_index] in added_lines:
                         surface.append(added_lines.index([prev_index, current_index]))
 
@@ -1466,6 +1516,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         return point_index, line_index, added_points, added_lines, surface
 
     def polygon_contains_holes(self, outer_poly):
+        """Check if the polygon fully contains any hole object, return a list of the contained hole objects"""
         contain_list = []
         for hole_polygon in self.hole_list:
             if all(self.polygon_contains(outer_poly, hole_polygon)):
@@ -1473,6 +1524,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         return contain_list
 
     def polygon_contains_other_polygon(self, outer_poly):
+        """Check if the polygon fully contains any other polygon, return a list of the contained polygon objects"""
         contain_list = []
         for inner_poly in self.poly_list:
             if outer_poly == inner_poly:
@@ -1482,6 +1534,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         return contain_list
 
     def polygon_overlaps_other_polygon(self, outer_poly):
+        """ Check if a polygon overlaps any other polygon in the scene"""
         contain_list = []
         for inner_poly in self.poly_list:
             if outer_poly == inner_poly:
@@ -1493,40 +1546,48 @@ class EditorScene(QGraphicsScene, QMainWindow):
         return contain_list
 
     def on_save_geometry_action(self):
+        """ Save CALFEM Geometry object to .cfg file"""
         if self.g:
             name = QFileDialog.getSaveFileName(self.parent(), filter="*.cfg")
             if name != ('', ''):
                 cfu.save_geometry(self.g, name[0])
 
     def on_save_mesh_action(self):
+        """ Save CALFEM mesh object to .cfm file"""
         if self.g:
             name = QFileDialog.getSaveFileName(self.parent(), filter="*.cfm")
             if name != ('', ''):
                 cfu.save_mesh(self.g, name[0])
 
     def on_save_arrays_action(self):
+        """ Save numpy arrays of the mesh to .cfma file"""
         if self.mesh:
             name = QFileDialog.getSaveFileName(self.parent(), filter="*.cfma")
             if name != ('', ''):
                 mesh = self.mesh
                 mesh.return_boundary_elements = True
                 coords, edof, dofs, bdofs, elementmarkers, boundary_elements = mesh.create()
-                cfu.save_arrays(coords, edof, dofs, bdofs, elementmarkers, boundary_elements, self.line_marker_dict, name[0])
+                cfu.save_arrays(coords, edof, dofs, bdofs, elementmarkers, boundary_elements, self.marker_dict,
+                                name[0])
 
     def on_save_arrays_matlab_action(self):
+        """ Save matlab arrays of the mesh to .m file"""
         if self.mesh:
             name = QFileDialog.getSaveFileName(self.parent(), filter="*.mat")
             if name != ('', ''):
                 mesh = self.mesh
                 mesh.return_boundary_elements = True
                 coords, edof, dofs, bdofs, elementmarkers, boundary_elements = mesh.create()
-                cfu.save_matlab_arrays(coords, edof, dofs, bdofs, elementmarkers, boundary_elements, self.reversed_line_marker_dict, name[0])
+                cfu.save_matlab_arrays(coords, edof, dofs, bdofs, elementmarkers, boundary_elements,
+                                       self.reversed_marker_dict, name[0])
 
     def show_geom(self):
+        """Update the CALFEM vis figure with the CALFEM geometry description of the currently drawn geometry"""
         g = self.build_gmsh()
         cfv.clf()
         if g:
-            cfv.draw_geometry(g, draw_points=self.draw_points, label_points=self.label_points, label_curves=self.label_curves)
+            cfv.draw_geometry(g, draw_points=self.draw_points, label_points=self.label_points,
+                              label_curves=self.label_curves)
             if self.figure_canvas is not None:
                 self.figure_canvas.draw()
             else:
@@ -1536,6 +1597,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             return "Canceled"
 
     def show_mesh(self):
+        """Update the CALFEM vis figure with the CALFEM mesh description of the currently drawn geometry"""
         g = self.build_gmsh()
         if g:
             mesh = cfm.GmshMesh(g)
@@ -1562,57 +1624,3 @@ class EditorScene(QGraphicsScene, QMainWindow):
             return None
         else:
             return "Canceled"
-
-    def mesh_scroll_area(self):
-        """
-        Update the ScrollArea to hold three input lines to allow the user to change element size, element type and
-        dofs per node
-        """
-        scroll_area_widget_contents = QWidget()
-        grid = QGridLayout(scroll_area_widget_contents)
-        if self.scroll_area:
-            self.scroll_area.setWidget(scroll_area_widget_contents)
-        label_el_size = QLabel("Element Size")
-        edit_el_size = QLineEdit(str(self.el_size_factor))
-        #edit_el_size.setValidator(QDoubleValidator())
-        locale = QLocale(QLocale.English, QLocale.UnitedStates)
-
-        validator = QDoubleValidator()
-        validator.setLocale(locale)
-        validator.setNotation(QDoubleValidator.StandardNotation)
-        edit_el_size.setValidator(validator)
-
-        grid.addWidget(label_el_size, 0, 0)
-        grid.addWidget(edit_el_size, 0, 1)
-
-        label_el_type = QLabel("Element Type")
-        edit_el_type = QComboBox()
-        edit_el_type.addItem("Triangle")
-        edit_el_type.addItem("Quadrangle")
-        if self.el_type == 3:
-            edit_el_type.setCurrentIndex(1)
-        grid.addWidget(label_el_type, 1, 0)
-        grid.addWidget(edit_el_type, 1, 1)
-
-        label_dofs_per_node = QLabel("DOFs per node")
-        edit_dofs_per_node = QLineEdit(str(self.dofs_per_node))
-        edit_dofs_per_node.setValidator(QIntValidator())
-        grid.addWidget(label_dofs_per_node, 2, 0)
-        grid.addWidget(edit_dofs_per_node, 2, 1)
-
-        def update():
-            if edit_dofs_per_node.text() != "":
-                self.edit_dofs_per_node = int(edit_dofs_per_node.text())
-            if edit_el_size.text() != "":
-                string = edit_el_size.text()
-                string = string.replace(",", ".")
-                self.el_size_factor = float(string)
-            if edit_el_type.currentText() == "Triangle":
-                self.el_type = 2
-            elif edit_el_type.currentText() == "Quadrangle":
-                self.el_type = 3
-            self.show_mesh()
-        update_button = (QPushButton("Update"))
-        grid.addWidget(update_button, 3, 1)
-        update_button.clicked.connect(update)
-
