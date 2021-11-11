@@ -28,11 +28,12 @@ g.spline([2, 3])  # line 2
 g.spline([3, 0])  # line 3
 
 g.surface([0, 1, 2, 3])  # Connect lines to form surface
-g.setCurveMarker(0, "A")
-g.setCurveMarker(2, "B")
+g.setCurveMarker(0, 10)
+g.setCurveMarker(2, 20)
 
 # Open the geometry to allow changes in the CALFEM Geometry Editor
-geometry, marker_dict = cfe.edit_geometry(g)
+new_geometry, marker_dict = cfe.edit_geometry(g)
+print(marker_dict)
 
 t = 0.2
 v = 0.35
@@ -41,66 +42,73 @@ ptype = 1
 ep = [ptype,t]
 D = cfc.hooke(ptype, E, v)
 
+bcs_new = [[marker_dict[10], 0]]  # Every border or point marked with 10 will recieve boundary condition value of 0
+loads_new = [[marker_dict[20], 10e5]]  # Every border or point marked with 20 will recieve load value of 10e5
 
-bcs = [[marker_dict["A"], 0]]  # Every border or point marked with A will recieve boundary condition value of 0
-loads = [[marker_dict["B"], 10e5]]  # Every border or point marked with B will recieve load value of 10e5
+bcs_old = [[10, 0]]  # Every border or point marked with A will recieve boundary condition value of 0
+loads_old = [[20, 10e5]]  # Every border or point marked with B will recieve load value of 10e5
 
 el_size_factor = 5
 el_type = 3
 dofs_per_node = 2
 
-mesh = cfm.GmshMeshGenerator(geometry)
-mesh.el_size_factor = el_size_factor  # Factor that changes element sizes.
-mesh.el_type = el_type
-mesh.dofs_per_node = dofs_per_node
+def calc(geometry, bcs, loads, text):
+    mesh = cfm.GmshMeshGenerator(geometry)
+    mesh.el_size_factor = el_size_factor  # Factor that changes element sizes.
+    mesh.el_type = el_type
+    mesh.dofs_per_node = dofs_per_node
 
-coords, edof, dofs, bdofs, elementmarkers = mesh.create()
+    coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
-# --- Beräkna element koordinater
+    # --- Beräkna element koordinater
 
-ex, ey = cfc.coordxtr(edof, coords, dofs)
-
-
-# --- Assemblera systemmatris
-
-nDofs = edof.max()
-
-K = np.zeros([nDofs, nDofs])
-
-for eltopo, elx, ely in zip(edof, ex, ey):
-    Ke = cfc.planqe(elx, ely, ep, D)
-    cfc.assem(eltopo, K, Ke)
-# --- Lösning av ekvationssystem
-
-f = np.zeros([nDofs, 1])
-bcPrescr = np.array([], int)
-bcVal = np.array([], float)
-
-for bc in bcs:
-    bcPrescr, bcVal = cfu.applybc(bdofs, bcPrescr, bcVal, bc[0], bc[1])
-
-for load in loads:
-    cfu.applyforcetotal(bdofs, f, load[0], load[1])
-
-a, r = cfc.solveq(K, f, bcPrescr, bcVal)
-
-# --- Beräkna elementkrafter
-
-ed = cfc.extractEldisp(edof, a)
-
-vonMises = []
-
-# For each element:
-for i in range(edof.shape[0]):
-
-    # Determine element stresses and strains in the element.
-    es, et = cfc.planqs(ex[i,:], ey[i,:], ep, D, ed[i,:])
-
-    # Calc and append effective stress to list.
-    vonMises.append(np.sqrt(np.power(es[0],2) - es[0]*es[1] + np.power(es[1],2) + 3*es[2] ) )
+    ex, ey = cfc.coordxtr(edof, coords, dofs)
 
 
-cfv.draw_geometry(geometry)
+    # --- Assemblera systemmatris
+
+    nDofs = edof.max()
+
+    K = np.zeros([nDofs, nDofs])
+
+    for eltopo, elx, ely in zip(edof, ex, ey):
+        Ke = cfc.planqe(elx, ely, ep, D)
+        cfc.assem(eltopo, K, Ke)
+    # --- Lösning av ekvationssystem
+
+    f = np.zeros([nDofs, 1])
+    bcPrescr = np.array([], int)
+    bcVal = np.array([], float)
+
+    for bc in bcs:
+        bcPrescr, bcVal = cfu.applybc(bdofs, bcPrescr, bcVal, bc[0], bc[1])
+
+    for load in loads:
+        cfu.applyforcetotal(bdofs, f, load[0], load[1])
+
+    a, r = cfc.solveq(K, f, bcPrescr, bcVal)
+
+    # --- Beräkna elementkrafter
+
+    ed = cfc.extractEldisp(edof, a)
+
+    vonMises = []
+
+    # For each element:
+    for i in range(edof.shape[0]):
+
+        # Determine element stresses and strains in the element.
+        es, et = cfc.planqs(ex[i,:], ey[i,:], ep, D, ed[i,:])
+
+        # Calc and append effective stress to list.
+        vonMises.append(np.sqrt(np.power(es[0],2) - es[0]*es[1] + np.power(es[1],2) + 3*es[2] ) )
+
+    title = "Effective stress" + text
+    cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, None, draw_elements=False, draw_undisplaced_mesh=False, title=title)
+
+
+cfv.clf()
+calc(g, bcs_old, loads_old, " original")
 cfv.figure()
-cfv.draw_element_values(vonMises, coords, edof, mesh.dofs_per_node, mesh.el_type, None, draw_elements=False, draw_undisplaced_mesh=False, title="Example 6 - Effective stress")
+calc(new_geometry, bcs_new, loads_new, " modified")
 cfv.show_and_wait()
