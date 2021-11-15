@@ -595,7 +595,7 @@ def run_and_load(g : cfg.Geometry):
 
     app = init_app()
 
-    # --- Skapa och visa huvudfönster
+    # --- Skapa och visa huvudfï¿½nster
 
     widget = EditorWindow()
     widget.load_scene_from_g(g)

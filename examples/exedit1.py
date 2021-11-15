@@ -60,7 +60,7 @@ def calc(geometry, bcs, loads, text):
 
     coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
-    # --- Beräkna element koordinater
+    # --- Berï¿½kna element koordinater
 
     ex, ey = cfc.coordxtr(edof, coords, dofs)
 
@@ -74,7 +74,7 @@ def calc(geometry, bcs, loads, text):
     for eltopo, elx, ely in zip(edof, ex, ey):
         Ke = cfc.planqe(elx, ely, ep, D)
         cfc.assem(eltopo, K, Ke)
-    # --- Lösning av ekvationssystem
+    # --- Lï¿½sning av ekvationssystem
 
     f = np.zeros([nDofs, 1])
     bcPrescr = np.array([], int)
@@ -88,7 +88,7 @@ def calc(geometry, bcs, loads, text):
 
     a, r = cfc.solveq(K, f, bcPrescr, bcVal)
 
-    # --- Beräkna elementkrafter
+    # --- Berï¿½kna elementkrafter
 
     ed = cfc.extractEldisp(edof, a)
 
@@ -112,3 +112,4 @@ calc(g, bcs_old, loads_old, " original")
 cfv.figure()
 calc(new_geometry, bcs_new, loads_new, " modified")
 cfv.show_and_wait()
+
