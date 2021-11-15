@@ -95,9 +95,9 @@ QTabBar::tab:!selected {
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>10</y>
-          <width>1457</width>
-          <height>71</height>
+          <y>0</y>
+          <width>1100</width>
+          <height>81</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -107,11 +107,11 @@ QTabBar::tab:!selected {
             <enum>Qt::Horizontal</enum>
            </property>
            <property name="sizeType">
-            <enum>QSizePolicy::Maximum</enum>
+            <enum>QSizePolicy::Fixed</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>5</width>
+             <width>10</width>
              <height>20</height>
             </size>
            </property>
@@ -746,12 +746,28 @@ QToolButton:hover {
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>10</y>
-          <width>671</width>
-          <height>67</height>
+          <y>0</y>
+          <width>464</width>
+          <height>81</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>10</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_2">
            <item row="0" column="0">
@@ -903,6 +919,12 @@ QToolButton:hover {
          </item>
          <item>
           <widget class="Line" name="line">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="frameShadow">
             <enum>QFrame::Plain</enum>
            </property>
@@ -1092,7 +1114,7 @@ QToolButton:hover {
        <widget class="QToolButton" name="saveGeomButton">
         <property name="geometry">
          <rect>
-          <x>20</x>
+          <x>10</x>
           <y>30</y>
           <width>141</width>
           <height>21</height>
@@ -2150,8 +2172,8 @@ QToolButton:hover {
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="buttonGroupDrawPoints"/>
-  <buttongroup name="buttonGroupDOFsPerNode"/>
   <buttongroup name="buttonGroupDisplayPointLabels"/>
+  <buttongroup name="buttonGroupDOFsPerNode"/>
+  <buttongroup name="buttonGroupDrawPoints"/>
  </buttongroups>
 </ui>

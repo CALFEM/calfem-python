@@ -7,37 +7,19 @@ Contains functions for implementing a interactive geometry editor.
 Written by Karl Eriksson
 """
 
-import os, sys, itertools
-from functools import cmp_to_key
+import os, sys
 
+from PyQt5.QtCore import Qt
 
-import PyQt5
+from PyQt5.QtGui import QPainter, QCloseEvent
 
-from PyQt5.QtCore import QPoint, QPointF, QLineF, QRectF, QSize, QLocale, Qt, QRegExp
-
-from PyQt5.QtGui import QPen, QColor, QBrush, QPolygon, QPolygonF, QPainter, QFont, QIntValidator, \
-    QDoubleValidator, QCloseEvent, QCursor, QRegExpValidator
-
-from PyQt5.QtWidgets import QApplication, QDialog, QWidget, QMainWindow, QFileDialog, QGraphicsView, QGraphicsScene, \
-    QGraphicsSceneMouseEvent, QGraphicsItem, QLabel, QGraphicsPolygonItem, QButtonGroup, QToolButton, \
-    QGraphicsEllipseItem, QMessageBox, QLineEdit, QFormLayout, QGraphicsLineItem, QTabWidget, QGraphicsTextItem, QFrame, \
-    QVBoxLayout, QGridLayout, QScrollArea, QPushButton, QWidgetItem, QGraphicsRectItem, QStackedWidget, QComboBox, \
-    QScrollBar, QSpinBox, QTextBrowser
+from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QButtonGroup, QMessageBox
 
 from PyQt5.uic import loadUi
 
-import numpy as np
-
 import calfem.geometry as cfg
-import calfem.mesh as cfm
 import calfem.vis_mpl as cfv
-import calfem.utils as cfu
-import calfem.editor_resources
-from calfem.editor_scene import EditorScene# L�gg till calfem.
-
-setattr(QGraphicsEllipseItem, "marker", None)
-setattr(QGraphicsEllipseItem, "localIndex", None)
-setattr(QGraphicsLineItem, "localIndex", None)
+import calfem.editor_scene as editor_scene
 
 app = None
 
@@ -46,7 +28,6 @@ class EditorWindow(QMainWindow):
     """MainWindow-klass som hanterar vårt huvudfönster"""
 
     def __init__(self):
-        """Constructor"""
         super(QMainWindow, self).__init__()
         self.app = app
 
@@ -56,7 +37,7 @@ class EditorWindow(QMainWindow):
         # loadUi('editor.ui', self)   loadUI kan ladd ui-fil och lägga till objekt direkt i klassen.
         self.setWindowTitle("CALFEM Geometry Editor")
 
-        scene = EditorScene(self)
+        scene = editor_scene.EditorScene(self)
 
         self.scene = scene
         self.graphicsView.setScene(scene)
@@ -65,7 +46,6 @@ class EditorWindow(QMainWindow):
         self.graphicsView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.setMouseTracking(True)
-
         self.graphicsView.setVisible(True)
         self.return_g = False
 
@@ -87,6 +67,7 @@ class EditorWindow(QMainWindow):
         self.tabWidget.setTabEnabled(2, False)
         self.tabWidget.setTabEnabled(3, False)
 
+        # Create buttongroup for buttons in surface view
         self.arrowButtonSurface.setDown(True)
         self.selectGroupSurface = QButtonGroup(self)
         self.selectGroupSurface.addButton(self.arrowButtonSurface)
@@ -97,14 +78,15 @@ class EditorWindow(QMainWindow):
         self.selectGroupSurface.addButton(self.deleteButton)
         self.selectGroupSurface.addButton(self.panningButtonSurface)
 
+        # Create buttongroup for buttons in border view
         self.selectGroupBorder = QButtonGroup(self)
         self.selectGroupBorder.addButton(self.arrowButtonBorder)
         self.selectGroupBorder.addButton(self.panningButtonBorder)
         self.selectGroupBorder.addButton(self.setMarkerButton)
         self.selectGroupBorder.addButton(self.splitEdgeButton)
-
         self.selectGroupBorder.buttonClicked.connect(self.clear_selection)
 
+        # Connect all buttons to corresponding action to perform when pressed
         self.arrowButtonSurface.clicked.connect(self.on_action_arrow)
         self.arrowButtonBorder.clicked.connect(self.on_action_arrow)
         self.panningButtonSurface.clicked.connect(self.on_action_panning)
@@ -132,11 +114,14 @@ class EditorWindow(QMainWindow):
 
         self.labelX.setText("")
         self.labelY.setText("")
+
+        # Connect methods that affect the window based on actions in the graphics scene
         self.gridSpacingSpinBox.setValue(self.scene.grid_spacing)
         self.scene.update_labels = self.update_labels
         self.scene.toggle_tab_enabled = self.toggle_tab_enabled
         self.scene.get_graphics_view_size = self.get_graphics_view_size
         self.scene.overlap_warning = self.overlap_warning
+        self.scene.marker_removal_warning = self.marker_removal_warning
         self.scene.intersection_error = self.intersection_error
         self.scene.set_tooltip = self.set_tooltip
         self.scene.set_view_scale = self.set_view_scale
@@ -166,6 +151,7 @@ class EditorWindow(QMainWindow):
         self.grid_snap_on = False
         self.panning_on = False
 
+        # Set the minimum and maximum allowed zooming distance, factors by 2
         self.max_view_scale = 8
         self.min_view_scale = 0.25
 
@@ -178,11 +164,12 @@ class EditorWindow(QMainWindow):
         self.raise_()
 
     def toggle_text_browser(self):
+        """ Toggle the text browser to be expanded or collapsed """
         if self.text_browser_active:
             self.clearTextBrowserButton.setVisible(False)
             self.hideTextBrowserButton.setVisible(False)
             self.showTextBrowserButton.setVisible(True)
-            self.textBrowser.setMaximumHeight(4) #.setVisible(False)
+            self.textBrowser.setMaximumHeight(4)
 
             self.text_browser_active = False
 
@@ -224,6 +211,7 @@ class EditorWindow(QMainWindow):
         self.scene.toggle_grid()
 
     def override_scroll(self, event):
+        # Control the amount of zoom from one scroll call
         delta = event.angleDelta().y()
         factor = 1
         if delta > 0:
@@ -248,7 +236,6 @@ class EditorWindow(QMainWindow):
 
         if self.min_view_scale <= new_scale <= self.max_view_scale:
             self.graphicsView.scale(factor, factor)
-        print(self.graphicsView.transform().m11())
 
     def set_tooltip(self, string):
         self.labelTooltip.setText(string)
@@ -276,10 +263,16 @@ class EditorWindow(QMainWindow):
         msg.setIcon(QMessageBox.Warning)
         msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ignore)
 
-        msg.setDefaultButton(QMessageBox.Retry)
-        msg.setInformativeText("")
+        msg.buttonClicked.connect(self.popup_button)
+        msg.exec_()
+        return self.overlap_warning_choice
 
-        msg.setDetailedText("details")
+    def marker_removal_warning(self):
+        msg = QMessageBox()
+        msg.setWindowTitle("Warning!")
+        msg.setText("Performing merging will remove markers")
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Cancel | QMessageBox.Ignore)
 
         msg.buttonClicked.connect(self.popup_button)
         msg.exec_()
@@ -311,15 +304,18 @@ class EditorWindow(QMainWindow):
         return self.graphicsView.size().width(), self.graphicsView.size().height()
 
     def on_action_tab(self):
+        """Action performed when clicking one of the tabs in the tab bar, index of tab clicked determines action"""
         self.set_tooltip("")
         index = self.tabWidget.currentIndex()
         self.scene.set_view(index)
-        self.on_action_arrow()
-        if self.scene.canceled:
+        self.on_action_arrow()  # Set arrow pointer as the standard tool
+
+        if self.scene.canceled:  # Set to surface mode in case of cancelling due to errors
             index = 0
             self.scene.canceled = False
             self.tabWidget.setCurrentIndex(0)
-        if index == 0:
+
+        if index == 0:  # Set to surface mode
             self.stackedWidgetRight.setCurrentIndex(1)
             self.stackedWidget.setCurrentIndex(1)
             self.graphicsView.setVisible(True)
@@ -334,7 +330,7 @@ class EditorWindow(QMainWindow):
             else:
                 self.gridButtonSurface.setChecked(False)
 
-        elif index == 1:
+        elif index == 1:  # Set to border mode
             self.stackedWidget.setCurrentIndex(1)
             self.stackedWidgetRight.setCurrentIndex(1)
             self.graphicsView.setVisible(True)
@@ -352,6 +348,7 @@ class EditorWindow(QMainWindow):
         elif index == 2:
             self.stackedWidgetRight.setCurrentIndex(2)
             self.stackedWidget.setCurrentIndex(0)
+
         elif index == 3:
             self.stackedWidgetRight.setCurrentIndex(0)
             self.stackedWidget.setCurrentIndex(0)
@@ -364,6 +361,7 @@ class EditorWindow(QMainWindow):
         self.tabWidget.setTabEnabled(index, boolean)
 
     def closeEvent(self, a0: QCloseEvent) -> None:
+        # If closed and no CALFEM Geometry has been generated make sure one is with the currently drawn geometry
         if self.return_g:
             self.scene.build_gmsh()
 
@@ -495,6 +493,9 @@ class EditorWindow(QMainWindow):
             self.toggle_panning()
 
     def on_action_split(self):
+        """
+        De-selects all other toolButtons and sets the current mode to split line
+        """
         self.set_tooltip("Click on existing edge to split by adding an extra node")
         self.scene.mode = "Split Line"
         self.graphicsView.viewport().setCursor(Qt.ArrowCursor)
@@ -508,6 +509,9 @@ class EditorWindow(QMainWindow):
             self.toggle_panning()
 
     def on_action_set_marker(self):
+        """
+        De-selects all other toolButtons and sets the current mode to set marker
+        """
         self.set_tooltip("Select edge to add marker")
         self.scene.mode = "Set Marker"
         self.graphicsView.viewport().setCursor(Qt.PointingHandCursor)
@@ -575,6 +579,7 @@ def main_loop():
 
     app.exec_()
 
+
 def run_editor():
 
     app = init_app()
@@ -609,7 +614,7 @@ def edit_geometry(g : cfg.Geometry = None):
     widget.show()
     app.exec_()
     new_g = widget.scene.g
-    line_marker_dict = widget.scene.line_marker_dict
+    line_marker_dict = widget.scene.marker_dict
     if new_g:
         return new_g, line_marker_dict
     else:
