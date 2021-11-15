@@ -33,7 +33,7 @@ import calfem.mesh as cfm
 import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import calfem.editor_resources
-from editor_scene  import EditorScene# Lägg till calfem.
+from calfem.editor_scene import EditorScene# Lï¿½gg till calfem.
 
 setattr(QGraphicsEllipseItem, "marker", None)
 setattr(QGraphicsEllipseItem, "localIndex", None)
@@ -590,7 +590,7 @@ def run_and_load(g : cfg.Geometry):
 
     app = init_app()
 
-    # --- Skapa och visa huvudfönster
+    # --- Skapa och visa huvudfï¿½nster
 
     widget = EditorWindow()
     widget.load_scene_from_g(g)

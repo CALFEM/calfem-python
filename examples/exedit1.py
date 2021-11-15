@@ -37,6 +37,7 @@ g.setPointMarker(1,10)
 
 print(g.points)
 print(g.curves)
+print(g.marker_dict)
 #cfv.draw_geometry(g)
 #cfv.show_and_wait_mpl()
 #print(g)
