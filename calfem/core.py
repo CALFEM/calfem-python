@@ -3194,7 +3194,7 @@ def spsolveq(K,f,bcPrescr,bcVal=None):
     info("done...")
     return (a_m,Q)
 
-def extractEldisp(edof,a):
+def extract_eldisp(edof,a):
     """
     Extract element displacements from the global displacement
     vector according to the topology matrix edof.
@@ -3229,7 +3229,7 @@ def extractEldisp(edof,a):
         
     return ed
 
-extract_eldisp = extractEldisp
+extractEldisp = extract_eldisp
 
 def statcon(K,f,cd):
     """
@@ -3281,11 +3281,13 @@ def dofHash(dof):
         value = -2
     return value
 
-def createdofs(nCoords,nDof):
+def create_dofs(nCoords, nDof):
     """
     Create dof array [nCoords x nDof]
     """
     return np.arange(nCoords*nDof).reshape(nCoords,nDof)+1
+
+createdofs = create_dofs
 
 def coordxtr(edof,coords,dofs):
     """
@@ -3357,7 +3359,9 @@ def coordxtr(edof,coords,dofs):
     if nDimensions==3:
         return ex, ey, ez
 
-def hooke(ptype,E,v):
+coord_extract = coordxtr
+
+def hooke(ptype, E, v):
     """
     Calculate the material matrix for a linear
     elastic and isotropic material.
@@ -3412,7 +3416,7 @@ def hooke(ptype,E,v):
         
     return D
 
-def effmises(es,ptype):
+def effmises(es, ptype):
     """
     Calculate effective von mises stresses.
     

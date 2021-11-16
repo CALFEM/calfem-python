@@ -56,9 +56,9 @@ print("Reaction forces Q:")
 print(r)
 
 # Caculate element forces 
-ed1 = cfc.extractEldisp(Edof[0,:],a)
-ed2 = cfc.extractEldisp(Edof[1,:],a)
-ed3 = cfc.extractEldisp(Edof[2,:],a)
+ed1 = cfc.extract_eldisp(Edof[0,:],a)
+ed2 = cfc.extract_eldisp(Edof[1,:],a)
+ed3 = cfc.extract_eldisp(Edof[2,:],a)
 
 es1 = cfc.spring1s(ep2,ed1)
 es2 = cfc.spring1s(ep1,ed2)
