@@ -15,7 +15,6 @@ Contents:
 
    installation
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial
@@ -32,6 +31,12 @@ Contents:
    examples/exm3
    examples/exm6
    examples/exm10
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Developing
+
+   developer
    
 .. toctree::
    :maxdepth: 1
