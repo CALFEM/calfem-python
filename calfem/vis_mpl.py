@@ -30,6 +30,7 @@ from math import atan2
 
 import logging as cflog
 
+g_figures = []
 
 def error(msg):
     """Log error message"""
@@ -85,6 +86,9 @@ def figure(figure=None, show=True, fig_size=(4, 3)):
             f = plt.figure(figure)
         except:
             f = plt.figure(figsize=fig_size)
+
+    if f is not None:
+        g_figures.append(f)
 
     return f
 
