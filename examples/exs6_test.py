@@ -18,7 +18,7 @@ import calfem.vis_mpl as cfv
 
 # ----- Topology -------------------------------------------------
 
-edof = np.array([
+Edof = np.array([
     [4,  5,  6, 1,  2,  3],
     [7,  8,  9, 10, 11, 12],
     [4,  5,  6,  7,  8,  9]      
@@ -56,9 +56,9 @@ Ke3, fe3 = cfc.beam2e(ex3, ey3, ep3, eq3)
 
 # ----- Assemble Ke into K ---------------------------------------
 
-cfc.assem(edof[0,:], K, Ke1)
-cfc.assem(edof[1,:], K, Ke2)
-cfc.assem(edof[2,:], K, Ke3, f, fe3)
+cfc.assem(Edof[0,:], K, Ke1);
+cfc.assem(Edof[1,:], K, Ke2);
+cfc.assem(Edof[2,:], K, Ke3, f, fe3);
 
 # ----- Solve the system of equations and compute reactions ------
 
@@ -72,11 +72,11 @@ print(r)
 
 # ----- Section forces -------------------------------------------
 
-ed = cfc.extract_ed(edof,a);
+Ed = cfc.extractEldisp(Edof,a);
 
-es1, ed1, ec1 = cfc.beam2s(ex1, ey1, ep1, ed[0,:], eq1, nep=21)
-es2, ed2, ec2 = cfc.beam2s(ex2, ey2, ep1, ed[1,:], eq2, nep=21)
-es3, ed3, ec3 = cfc.beam2s(ex3, ey3, ep3, ed[2,:], eq3, nep=21)
+es1, ed1, ec1 = cfc.beam2s(ex1, ey1, ep1, Ed[0,:], eq1, nep=21)
+es2, ed2, ec2 = cfc.beam2s(ex2, ey2, ep1, Ed[1,:], eq2, nep=21)
+es3, ed3, ec3 = cfc.beam2s(ex3, ey3, ep3, Ed[2,:], eq3, nep=21)
 
 print("es1 = ")
 print(es1)
@@ -86,7 +86,7 @@ print("es3 = ")
 print(es3)
 
 # ----- Draw deformed frame ---------------------------------------
- 
+
 ex = np.array([
     ex1, ex2, ex3
 ])
@@ -97,22 +97,30 @@ ey = np.array([
 ])
 print(ey)
 
-plotpar = [2, 1, 0]
-sfac = cfv.scalfact2(ex3, ey3, ed[2,:], 0.1)
-
-cfv.figure(1)
-cfv.eldraw2(ex1, ey1, plotpar)
-cfv.eldraw2(ex2, ey2, plotpar)
-cfv.eldraw2(ex3, ey3, plotpar)
-
-plotpar = [1, 2, 1]
-cfv.eldisp2(ex1, ey1, ed[0,:], plotpar, sfac)
-cfv.eldisp2(ex2, ey2, ed[1,:], plotpar, sfac)
-cfv.eldisp2(ex3, ey3, ed[2,:], plotpar, sfac)
-cfv.axis([-1.5, 7.5, -0.5, 5.5])
-#pltscalb2(sfac,[1e-2 0.5 0]);
-cfv.title('displacements')
+plotpar = [2, 2, 1]
+cfv.eldraw2(ex, ey, plotpar=plotpar)
 cfv.showAndWait()
+
+
+#
+#cfv.eldraw2(ex, ey, plotpar=plotpar)
+##cfv.eldisp2(ex, ey, Ed)
+#cfv.showAndWait()
+
+#figure(1)
+#plotpar=[2 1 0];
+#eldraw2(ex1,ey1,plotpar);
+#eldraw2(ex2,ey2,plotpar);
+#eldraw2(ex3,ey3,plotpar);
+#sfac=scalfact2(ex3,ey3,Ed(3,:),0.1);
+#plotpar=[1 2 1];
+#eldisp2(ex1,ey1,Ed(1,:),plotpar,sfac);
+#eldisp2(ex2,ey2,Ed(2,:),plotpar,sfac);
+#eldisp2(ex3,ey3,Ed(3,:),plotpar,sfac);
+#axis([-1.5 7.5 -0.5 5.5]); 
+#pltscalb2(sfac,[1e-2 0.5 0]);
+#axis([-1.5 7.5 -0.5 5.5]);
+#title('displacements')
  
 #----- Draw normal force diagram --------------------------------
  

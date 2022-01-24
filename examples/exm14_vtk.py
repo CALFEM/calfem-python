@@ -49,8 +49,8 @@ coords, edof, dofs, bdofs, elementmarkers = mesh_generator.create(is3D=True)
 
 print(coords)
 print(edof)
-print(bdofs)
-print(elementmarkers)
+#print(bdofs)
+#print(elementmarkers)
 
 #print(bdofs[100])
 #print(edof[0])
@@ -61,4 +61,4 @@ print(elementmarkers)
 
 # ---- Visualise mesh -------------------------------------------------------
 
-#cfv.draw_mesh(coords, edof, el_type)
+cfv.draw_mesh(coords, edof, el_type)
