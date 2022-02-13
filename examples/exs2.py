@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # example exs2
 # ----------------------------------------------------------------
 # PURPOSE
@@ -16,7 +18,7 @@ import calfem.core as cfc
 
 # ----- Topology matrix Edof -------------------------------------
 
-Edof = np.array([
+edof = np.array([
     [1, 2],
     [2, 3],
     [3, 4],
@@ -48,11 +50,11 @@ Ke5 = cfc.spring1e(ep5)
 
 # ---- Assemble Ke into K ---------------------------------------
 
-cfc.assem(Edof[0, :], K, Ke1)
-cfc.assem(Edof[1, :], K, Ke2)
-cfc.assem(Edof[2, :], K, Ke3)
-cfc.assem(Edof[3, :], K, Ke4)
-cfc.assem(Edof[4, :], K, Ke5)
+cfc.assem(edof[0, :], K, Ke1)
+cfc.assem(edof[1, :], K, Ke2)
+cfc.assem(edof[2, :], K, Ke3)
+cfc.assem(edof[3, :], K, Ke4)
+cfc.assem(edof[4, :], K, Ke5)
 
 print("Stiffness matrix K:")
 print(K)
@@ -71,11 +73,11 @@ print(r)
 
 # ----- Element flows -------------------------------------------
 
-ed1 = cfc.extractEldisp(Edof[0, :], a)
-ed2 = cfc.extractEldisp(Edof[1, :], a)
-ed3 = cfc.extractEldisp(Edof[2, :], a)
-ed4 = cfc.extractEldisp(Edof[3, :], a)
-ed5 = cfc.extractEldisp(Edof[4, :], a)
+ed1 = cfc.extract_ed(edof[0, :], a)
+ed2 = cfc.extract_ed(edof[1, :], a)
+ed3 = cfc.extract_ed(edof[2, :], a)
+ed4 = cfc.extract_ed(edof[3, :], a)
+ed5 = cfc.extract_ed(edof[4, :], a)
 
 q1 = cfc.spring1s(ep1, ed1)
 q2 = cfc.spring1s(ep2, ed2)

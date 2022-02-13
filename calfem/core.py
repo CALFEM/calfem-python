@@ -12,21 +12,31 @@ import logging as cflog
 import sys
 import traceback
 
-# def exception_logging(exctype, value, tb):
-#     """
-#     Log exception by using the root logger.
+__prev_exception_hook = sys.excepthook
 
-#     Parameters
-#     ----------
-#     exctype : type
-#     value : NameError
-#     tb : traceback
-#     """
-#     write_val = {'exception_type': str(exctype),
-#                  'message': str(traceback.format_tb(tb, 10))}
-#     print('Error: %s \n  in "%s", line %d' % (value, tb.tb_frame.f_code.co_filename, tb.tb_lineno))
+def exception_logging(exctype, value, tb):
+    """
+    Log exception by using the root logger.
 
-# sys.excepthook = exception_logging
+    Parameters
+    ----------
+    exctype : type
+    value : NameError
+    tb : traceback
+    """
+    write_val = {'exception_type': str(exctype),
+                  'message': str(traceback.format_tb(tb, 10))}
+    print('Error: %s \n  in "%s", line %d' % (value, tb.tb_frame.f_code.co_filename, tb.tb_lineno))
+
+def enable_friendly_errors():
+    __prev_exception_hook = sys.excepthook
+    sys.excepthook = exception_logging
+    
+def disable_friendly_errors():
+    sys.excepthook = __prev_exception_hook
+    
+easy_on = enable_friendly_errors
+easy_off = disable_friendly_errors
 
 def check_list_array(v, error_string):
 
@@ -703,7 +713,7 @@ def beam2ws(ex,ey,ep,ed,eq=None):
               [N2, V2, M2]]     element forces, local direction
     """
     if np.asmatrix(ed).shape[0] > 1:
-        cferror("Only one row is allowed in the ed matrix !!!")
+        error("Only one row is allowed in the ed matrix !!!")
         return
 
     b = np.mat([
@@ -786,7 +796,7 @@ def beam2g(ex,ey,ep,N,eq=None):
     """
     if eq != None:
         if np.size(eq) > 1:
-            cferror("eq should be a scalar !!!")
+            error("eq should be a scalar !!!")
             return
         else:
             q = eq[0]
@@ -1613,7 +1623,7 @@ def flw2i4e(ex,ey,ep,D,eq=None):
             [ w1, w1]
         ])
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
     
     xsi = gp[:,0]
@@ -1643,7 +1653,7 @@ def flw2i4e(ex,ey,ep,D,eq=None):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobi determinant == 0")
+            info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
@@ -1735,7 +1745,7 @@ def flw2i4s(ex,ey,ep,D,ed):
             [ w1, w1]
         ])
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -1770,7 +1780,7 @@ def flw2i4s(ex,ey,ep,D,ed):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobi determinatn == 0")
+            info("Jacobi determinatn == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -1860,7 +1870,7 @@ def flw2i8e(ex,ey,ep,D,eq=None):
             [ w1, w1]
         ])
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -1902,7 +1912,7 @@ def flw2i8e(ex,ey,ep,D,eq=None):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobideterminanten lika med noll!")
+            info("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
@@ -1994,7 +2004,7 @@ def flw2i8s(ex,ey,ep,D,ed):
             [ w1, w1]
         ])
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
 
     xsi = gp[:,0]
@@ -2041,7 +2051,7 @@ def flw2i8s(ex,ey,ep,D,ed):
         indx = np.array([2*(i+1)-1,2*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobi determinant == 0")
+            info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -2129,7 +2139,7 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
         w[:,2] = np.mat([I3,I2,I3]).reshape(27,1)*w1
         w[:,2] = np.mat([I2,I3,I2]).reshape(27,1)*w2+w[:,2]
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
         return
 
     wp = np.multiply(np.multiply(w[:,0],w[:,1]),w[:,2])
@@ -2183,7 +2193,7 @@ def flw3i8e(ex,ey,ez,ep,D,eq=None):
         indx = np.array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobi determinant == 0")
+            info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
@@ -2275,7 +2285,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
         w[:,2] = np.mat([I3,I2,I3]).reshape(27,1)*w1
         w[:,2] = np.mat([I2,I3,I2]).reshape(27,1)*w2+w[:,2]
     else:
-        cfinfo("Used number of integration points not implemented")
+        info("Used number of integration points not implemented")
         return
 
     wp = np.multiply(np.multiply(w[:,0],w[:,1]),w[:,2])
@@ -2333,7 +2343,7 @@ def flw3i8s(ex,ey,ez,ep,D,ed):
         indx = np.array([3*(i+1)-2,3*(i+1)-1,3*(i+1)])
         detJ = np.linalg.det(JT[indx-1,:])
         if detJ < 10*np.finfo(float).eps:
-            cfinfo("Jacobideterminanten lika med noll!")
+            info("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1,:])
         B = JTinv*dNr[indx-1,:]
         p1 = -D*B*ed.T
@@ -2441,7 +2451,7 @@ def plante(ex,ey,ep,D,eq=None):
             return Ke,fe.T
 
     else:
-        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
+        info("Error ! Check first argument, ptype=1 or 2 allowed")
         if eq == None:
             return None
         else:
@@ -2682,7 +2692,7 @@ def plantf(ex,ey,ep,es):
         return np.reshape(np.asarray(ef),6)
   
     else:
-        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
+        info("Error ! Check first argument, ptype=1 or 2 allowed")
         return None
 
 def platre(ex,ey,ep,D,eq=None):
@@ -2973,7 +2983,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             [ w2, w1],
             [ w1, w1]])
     else:
-        cfinfo("Used number of integrat     ion points not implemented")
+        info("Used number of integrat     ion points not implemented")
     wp = np.multiply(w[:,0],w[:,1])
     xsi = gp[:,0]
     eta = gp[:,1]
@@ -3013,7 +3023,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             indx = np.array([2*(i+1)-1,2*(i+1)])
             detJ = np.linalg.det(JT[indx-1,:])
             if detJ < 10*np.finfo(float).eps:
-                cfinfo("Jacobi determinant equal or less than zero!")
+                info("Jacobi determinant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
 #   
@@ -3053,7 +3063,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             indx = np.array([2*(i+1)-1,2*(i+1)])
             detJ = np.linalg.det(JT[indx-1,:])
             if detJ < 10*np.finfo(float).eps:
-                cfinfo("Jacobideterminant equal or less than zero!")
+                info("Jacobideterminant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1,:])  
             dNx=JTinv*dNr[indx-1,:]
 #   
@@ -3080,7 +3090,7 @@ def plani4e(ex,ey,ep,D,eq=None):
             fe1 = fe1+N2.T*q*detJ*np.asscalar(wp[i])*t
         return Ke1,fe1
     else:
-        cfinfo("Error ! Check first argument, ptype=1 or 2 allowed")
+        info("Error ! Check first argument, ptype=1 or 2 allowed")
 
 def soli8e(ex, ey, ez, ep, D, eqp=None):
     """
@@ -3258,6 +3268,178 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
         return Ke, fe
     else:
         return Ke    
+
+def soli8s(ex, ey, ez, ep, D, ed):
+    """
+    Ke=soli8e(ex,ey,ez,ep,D)
+    [Ke,fe]=soli8e(ex,ey,ez,ep,D,eq)
+    -------------------------------------------------------------
+    PURPOSE
+    Calculate the stiffness matrix for a 8 node (brick)
+    isoparametric element.
+
+    INPUT:   ex = [x1 x2 x3 ... x8]
+            ey = [y1 y2 y3 ... y8]  element coordinates
+            ez = [z1 z2 z3 ... z8]
+
+            ep = [ir]               ir integration rule
+
+            D                       constitutive matrix
+
+            eq = [bx; by; bz]       bx: body force in x direction
+                                    by: body force in y direction
+                                    bz: body force in z direction
+
+    OUTPUT: Ke : element stiffness matrix
+            fe : equivalent nodal forces 
+    -------------------------------------------------------------
+
+    LAST MODIFIED: M Ristinmaa   1995-10-25
+                   J Lindemann   2022-01-24 (Python version)
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+    -------------------------------------------------------------    
+    """
+    print("NOT IMPLEMETED YET")
+    return
+    
+    ir = ep[0]
+    ngp = ir*ir*ir
+ 
+    if ir==1:
+        g1 = 0.0
+        w1 = 2.0
+        gp = np.array([ g1, g1, g1 ]).reshape(1,3)
+        w = np.array([ w1, w1, w1 ]).reshape(1,3)
+    elif ir==2:
+        g1=0.577350269189626
+        w1=1
+        gp = np.zeros((8,3))
+        w = np.zeros((8,3))
+        gp[:,0] = np.array([-1, 1, 1,-1,-1, 1, 1,-1])*g1 
+        w[:,0]  = np.array([ 1, 1, 1, 1, 1, 1, 1, 1])*w1
+        gp[:,1] = np.array([-1,-1, 1, 1,-1,-1, 1, 1])*g1
+        w[:,1]  = np.array([ 1, 1, 1, 1, 1, 1, 1, 1])*w1
+        gp[:,2] = np.array([-1,-1,-1,-1, 1, 1, 1, 1])*g1
+        w[:,2]  = np.array([ 1, 1, 1, 1, 1, 1, 1, 1])*w1
+    else:
+        g1=0.774596669241483,
+        g2=0.0
+        w1=0.555555555555555
+        w2=0.888888888888888
+
+        gp = np.zeros((27,3))
+        w = np.zeros((27,3))
+        
+        I1=np.array([-1, 0, 1,-1, 0, 1,-1, 0, 1]).reshape(1,9)
+        I2=np.array([ 0,-1, 0, 0, 1, 0, 0, 1, 0]).reshape(1,9)
+
+        gp[:,0]=np.concatenate((I1, I1, I1), axis=1)*g1
+        gp[:,0]=np.concatenate((I2, I2, I2), axis=1)*g2 + gp[:,0]
+
+        I1=np.abs(I1)
+        I2=np.abs(I2)
+
+        w[:,0]=np.concatenate((I1, I1, I1), axis=1)*w1
+        w[:,0]=np.concatenate((I2, I2, I2), axis=1)*w2 + w[:,0]
+
+        I1=np.array([-1,-1,-1, 0, 0, 0, 1, 1, 1]).reshape(1,9)
+        I2=np.array([ 0, 0, 0, 1, 1, 1, 0, 0, 0]).reshape(1,9)
+
+        gp[:,1]=np.concatenate((I1, I1, I1), axis=1)*g1
+        gp[:,1]=np.concatenate((I2, I2, I2), axis=1)*g2 + gp[:,1]
+
+        I1=np.abs(I1)
+        I2=np.abs(I2)
+
+        w[:,1]=np.concatenate((I1, I1, I1), axis=1)*w1
+        w[:,1]=np.concatenate((I2, I2, I2), axis=1)*w2 + w[:,1]
+        
+        I1=np.array([-1,-1,-1,-1,-1,-1,-1,-1,-1]).reshape(1,9)
+        I2=np.array([ 0, 0, 0, 0, 0, 0, 0, 0, 0]).reshape(1,9)
+        I3=np.abs(I1)
+
+        gp[:,2]=np.concatenate((I1, I2, I3), axis=1)*g1
+        gp[:,2]=np.concatenate((I2, I3, I2), axis=1)*g2 + gp[:,2]
+
+        w[:,2]=np.concatenate((I3, I2, I3), axis=1)*w1
+        w[:,2]=np.concatenate((I2, I3, I2), axis=1)*w2 + w[:,2]
+
+    wp = w[:,0]*w[:,1]*w[:,2]
+
+    xsi = gp[:,0]
+    eta = gp[:,1]
+    zet = gp[:,2]
+    r2 = ngp*3
+
+    N = np.zeros((ngp,8))
+    dNr = np.zeros((r2,8))
+
+    N[:,0]=(1-xsi)*(1-eta)*(1-zet)/8
+    N[:,1]=(1+xsi)*(1-eta)*(1-zet)/8
+    N[:,2]=(1+xsi)*(1+eta)*(1-zet)/8
+    N[:,3]=(1-xsi)*(1+eta)*(1-zet)/8
+    N[:,4]=(1-xsi)*(1-eta)*(1+zet)/8
+    N[:,5]=(1+xsi)*(1-eta)*(1+zet)/8
+    N[:,6]=(1+xsi)*(1+eta)*(1+zet)/8
+    N[:,7]=(1-xsi)*(1+eta)*(1+zet)/8
+
+    dNr[0:r2+1:3,0]=-(1-eta)*(1-zet);  dNr[0:r2+1:3,1]= (1-eta)*(1-zet)
+    dNr[0:r2+1:3,2]= (1+eta)*(1-zet);  dNr[0:r2+1:3,3]=-(1+eta)*(1-zet)
+    dNr[0:r2+1:3,4]=-(1-eta)*(1+zet);  dNr[0:r2+1:3,5]= (1-eta)*(1+zet)
+    dNr[0:r2+1:3,6]= (1+eta)*(1+zet);  dNr[0:r2+1:3,7]=-(1+eta)*(1+zet)
+    dNr[1:r2+2:3,0]=-(1-xsi)*(1-zet);  dNr[1:r2+2:3,1]=-(1+xsi)*(1-zet)
+    dNr[1:r2+2:3,2]= (1+xsi)*(1-zet);  dNr[1:r2+2:3,3]= (1-xsi)*(1-zet)
+    dNr[1:r2+2:3,4]=-(1-xsi)*(1+zet);  dNr[1:r2+2:3,5]=-(1+xsi)*(1+zet)
+    dNr[1:r2+2:3,6]= (1+xsi)*(1+zet);  dNr[1:r2+2:3,7]= (1-xsi)*(1+zet)
+    dNr[2:r2+3:3,0]=-(1-xsi)*(1-eta);  dNr[2:r2+3:3,1]=-(1+xsi)*(1-eta)
+    dNr[2:r2+3:3,2]=-(1+xsi)*(1+eta);  dNr[2:r2+3:3,3]=-(1-xsi)*(1+eta)
+    dNr[2:r2+3:3,4]= (1-xsi)*(1-eta);  dNr[2:r2+3:3,5]= (1+xsi)*(1-eta)
+    dNr[2:r2+3:3,6]= (1+xsi)*(1+eta);  dNr[2:r2+3:3,7]= (1-xsi)*(1+eta)
+
+    dNr = dNr/8.0
+
+    ex = np.asarray(ex).reshape((8,1))
+    ey = np.asarray(ey).reshape((8,1))
+    ez = np.asarray(ez).reshape((8,1))
+
+    JT = dNr@np.concatenate((ex, ey, ez), axis=1)
+
+    eps = np.finfo(float).eps
+
+    for i in range(ngp):
+        indx = [ i*3, i*3+1, i*3+2]
+        detJ = np.linalg.det(JT[indx,:])
+        if detJ<10*eps:
+            print('Jacobideterminant equal or less than zero!')
+        JTinv=np.linalg.inv(JT[indx,:])
+        dNx=JTinv@dNr[indx,:]
+
+        B=np.zeros((6,24))     
+        N2=np.zeros((3,24))
+
+        B[0,0:24:3] = dNx[0,:]
+        B[1,1:25:3] = dNx[1,:]
+        B[2,2:26:3] = dNx[2,:]
+        B[3,0:24:3] = dNx[1,:]
+        B[3,1:25:3] = dNx[0,:]
+        B[4,0:24:3] = dNx[2,:]
+        B[4,2:26:3] = dNx[0,:]
+        B[5,1:25:3] = dNx[2,:]
+        B[5,2:26:3] = dNx[1,:]
+
+        N2[0,0:24:3] = N[i,:]
+        N2[1,1:25:3] = N[i,:]
+        N2[2,2:26:3] = N[i,:]
+
+        Ke = Ke + (np.transpose(B)@D@B)*detJ*wp[i]
+        fe = fe + (np.transpose(N2)@eq)*detJ*wp[i]
+
+    if eqp!=None:
+        return Ke, fe
+    else:
+        return Ke            
  
 def assem(edof,K,Ke,f=None,fe=None):
     """
@@ -3637,7 +3819,7 @@ def hooke(ptype, E, v):
              [0, 0, 0, 0, 0, (1-2*v)/2]]
             )/(1+v)/(1-2*v)
     else:
-        cfinfo("ptype not supported.")
+        info("ptype not supported.")
         
     return D
 

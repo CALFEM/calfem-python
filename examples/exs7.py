@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+#
 # example exs7
 # ----------------------------------------------------------------
-# PURPOSE 
+# PURPOSE
 #    Set up a frame, consisting of both beams and bars, and
 #    illustrate the calculations by use of graphics functions.
 # ----------------------------------------------------------------
@@ -21,8 +23,8 @@ np.set_printoptions(precision=3, suppress=True)
 
 # ----- System matrices ------------------------------------------
 
-K = np.zeros((18,18))  
-f = np.zeros((18,1))  
+K = np.zeros((18, 18))
+f = np.zeros((18, 1))
 
 f[12] = 1
 
@@ -34,7 +36,7 @@ coord = np.array([
     [0., 2.],
     [1., 2.]
 ])
-    
+
 dof = np.array([
     [1,  2,  3],
     [4,  5,  6],
@@ -43,7 +45,7 @@ dof = np.array([
     [13, 14, 15],
     [16, 17, 18]
 ])
-    
+
 # ----- Element properties, topology and coordinates -------------
 
 ep1 = [1, 1, 1]
@@ -55,9 +57,9 @@ edof1 = np.array([
     [7,   8,   9,   10,  11,  12],
     [13,  14,  15,  16,  17,  18]
 ])
-                    
+
 ex1, ey1 = cfc.coordxtr(edof1, coord, dof, 2)
-    
+
 ep2 = [1, 1]
 edof2 = np.array([
     [1,   2,  10,  11],
@@ -65,15 +67,15 @@ edof2 = np.array([
     [7,   8,   4,   5],
     [13,  14,  10,  11]
 ])
-                
+
 ex2, ey2 = cfc.coordxtr(edof2, coord, dof, 2)
-                  
+
 # ----- Draw the fe-mesh as a check of the model -----------------
- 
+
 cfv.figure(1)
 cfv.eldraw2(ex1, ey1, [1, 3, 1])
 cfv.eldraw2(ex2, ey2, [1, 2, 1])
-  
+
 # ----- Create and assemble element matrices ---------------------
 
 for elx, ely, eltopo in zip(ex1, ey1, edof1):
@@ -93,7 +95,7 @@ a, r = cfc.solveq(K, f, bc)
 
 ed1 = cfc.extract_ed(edof1, a)
 ed2 = cfc.extract_ed(edof2, a)
- 
+
 sfac = cfv.scalfact2(ex1, ey1, ed1, 0.1)
 
 cfv.figure(2)

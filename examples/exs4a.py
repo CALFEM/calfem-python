@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # example exs4a
 # ----------------------------------------------------------------
 # PURPOSE
@@ -16,7 +18,7 @@ import calfem.core as cfc
 
 # ----- Topology matrix Edof -------------------------------------
 
-Edof = np.array([
+edof = np.array([
     [1, 2, 5, 6],
     [3, 4, 7, 8],
     [5, 6, 9, 10],
@@ -72,7 +74,7 @@ ey = np.array([
 
 # ----- Create element stiffness matrices Ke and assemble into K -
 
-for elx, ely, eltopo in zip(ex, ey, Edof):
+for elx, ely, eltopo in zip(ex, ey, edof):
     Ke = cfc.bar2e(elx, ely, ep)
     cfc.assem(eltopo, K, Ke)
 
@@ -92,8 +94,8 @@ print(r)
 
 # ----- Element forces -------------------------------------------
 
-ed = cfc.extractEldisp(Edof, a)
-N = np.zeros([Edof.shape[0]])
+ed = cfc.extract_ed(edof, a)
+N = np.zeros([edof.shape[0]])
 
 print("Element forces:")
 

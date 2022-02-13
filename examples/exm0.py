@@ -1,25 +1,36 @@
-# import needed modules
+# -*- coding: utf-8 -*-
+#
+# example exm0_mpl.py
+# ----------------------------------------------------------------
+# PURPOSE
+#    Setup a finite element flow model using the mesh functions
+#    in CALFEM.
+# ----------------------------------------------------------------
+#
+# REFERENCES
+#     J Lindemann  2021-12-29 
+# ----------------------------------------------------------------
+
+# ----- Import needed modules ------------------------------------
 
 import numpy as np
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 
-# problem parameters
+# ----- Problem parameters ---------------------------------------
 
 w = 100.0
 h = 10.0
 t = 1.0
 d = h/2
 
-# identity matrix
-
 D = np.identity(2, 'float')
 ep = [1.0, 1]
 
-# create geometry object
+# ----- Create geometry object -----------------------------------
 
 g = cfg.Geometry()
 
@@ -32,7 +43,7 @@ g.point([w-w/2-t/2, h-d])   # point 6
 g.point([w-w/2-t/2, h])     # point 7
 g.point([0, h])             # point 8
 
-# create lines between points
+# ----- Create lines between points ------------------------------
 
 g.spline([0, 1])
 g.spline([1, 2])
@@ -43,42 +54,41 @@ g.spline([5, 6])
 g.spline([6, 7], marker=90)
 g.spline([7, 0])
 
-# make an surface area
+# ----- Make surface area ----------------------------------------
 
 g.surface([0, 1, 2, 3, 4, 5, 6, 7])
 
-# plot geometry
-# cfv.drawGeometry(g)
-# cfv.showAndWait() 
+# ----- Mesh generation ------------------------------------------
 
-# mesh generation
-elType = 3          # quadrature element
-dofsPerNode = 1     # 1 dof
+el_type = 3           # quadrature element
+dofs_per_node = 1     # 1 dof
 
-meshGen = cfm.GmshMeshGenerator(g)
-meshGen.elSizeFactor = 1.0              # factor that changes element sizes
-meshGen.elType = elType
-meshGen.dofsPerNode = dofsPerNode
+# ----- Set mesh paramters ---------------------------------------
 
-coords, edof, dofs, bdofs, elementmarkers = meshGen.create()
+mesh = cfm.GmshMesh(g)
+mesh.el_size_factor = 1.0
+mesh.el_type = el_type
+mesh.dofs_per_node = dofs_per_node
 
-# assembly
+# ----- Create mesh ----------------------------------------------
+
+coords, edof, dofs, bdofs, elementmarkers = mesh.create()
+
+# ----- Assemble elements ----------------------------------------
 
 nDofs = np.size(dofs)
 ex, ey = cfc.coordxtr(edof, coords, dofs)
 K = np.zeros([nDofs, nDofs])
 
-# enable loop over topology and element coordinates
-
 for eltopo, elx, ely, in zip(edof, ex, ey):
     Ke = cfc.flw2i4e(elx, ely, ep, D)
     cfc.assem(eltopo, K, Ke)
 
-# empty array to store loading force
+# ----- Force vector ---------------------------------------------
 
 f = np.zeros([nDofs, 1])    
 
-# empty array to store boundary conditions
+# ----- Boundary conditions --------------------------------------
 
 bc = np.array([], int)
 bcVal = np.array([], int)
@@ -86,35 +96,31 @@ bcVal = np.array([], int)
 bc, bcVal = cfu.applybc(bdofs, bc, bcVal, 80, 0.0)
 bc, bcVal = cfu.applybc(bdofs, bc, bcVal, 90, 10.0)
 
-# solving equation
+# ----- Solve equation system ------------------------------------
 
 a, r = cfc.solveq(K, f, bc, bcVal)
 ed = cfc.extractEldisp(edof, a)
 
-maxFlow = []     # empty list to store flow
+# ----- Calculating element forces -------------------------------
 
-# calculating element force
+maxFlow = []     # empty list to store flow
 
 for i in range(edof.shape[0]):
     es, et, eci = cfc.flw2i4s(ex[i, :], ey[i, :], ep, D, ed[i, :])
     maxFlow.append(np.sqrt(pow(es[0, 0], 2) + pow(es[0, 1], 2)))
 
-# visualization
+# ----- Visualize results ----------------------------------------
 
 cfv.figure()
-cfv.drawGeometry(g, title='Geometry')
-cfv.showAndWait()
+cfv.draw_geometry(g, title='Geometry')
 
 cfv.figure()
-cfv.drawElementValues(maxFlow, coords, edof, dofsPerNode, elType, None,
-                      title='Max flows')
-
-cfv.colorBar().SetLabel("Flow")
-cfv.showAndWait()
+cfv.draw_element_values(maxFlow, coords, edof, dofs_per_node, el_type, None,
+                        title='Max flows')
 
 cfv.figure()
-cfv.drawNodalValues(a, coords, edof, dofsPerNode, elType,
-                    title= "Nodal values")
+cfv.draw_nodal_values(a, coords, edof, 
+                      dofs_per_node=dofs_per_node, 
+                      el_type=el_type)
 
-cfv.colorBar().SetLabel("Node values")
 cfv.showAndWait()

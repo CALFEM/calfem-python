@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # example exs1
 # ----------------------------------------------------------------
 # PURPOSE
@@ -19,7 +21,7 @@ import calfem.core as cfc
 
 # ----- Topology matrix Edof
 
-Edof = np.array([
+edof = np.array([
     [1, 2],      # element 1 between node 1 and 2
     [2, 3],      # element 2 between node 2 and 3
     [2, 3]       # element 3 between node 2 and 3
@@ -40,9 +42,9 @@ Ke2 = cfc.spring1e(ep2)
 
 # ----- Assemble Ke into K
 
-cfc.assem(Edof[0, :], K, Ke2)
-cfc.assem(Edof[1, :], K, Ke1)
-cfc.assem(Edof[2, :], K, Ke2)
+cfc.assem(edof[0, :], K, Ke2)
+cfc.assem(edof[1, :], K, Ke1)
+cfc.assem(edof[2, :], K, Ke2)
 
 print("Stiffness matrix K:")
 print(K)
@@ -64,9 +66,9 @@ print(r)
 
 # ----- Caculate element forces
 
-ed1 = cfc.extract_ed(Edof[0, :], a)
-ed2 = cfc.extract_ed(Edof[1, :], a)
-ed3 = cfc.extract_ed(Edof[2, :], a)
+ed1 = cfc.extract_ed(edof[0, :], a)
+ed2 = cfc.extract_ed(edof[1, :], a)
+ed3 = cfc.extract_ed(edof[2, :], a)
 
 es1 = cfc.spring1s(ep2, ed1)
 es2 = cfc.spring1s(ep1, ed2)

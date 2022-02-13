@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
+#
 # example exs5
 # ----------------------------------------------------------------
-# PURPOSE 
+# PURPOSE
 #    Analysis of a simply supported beam.
 # ----------------------------------------------------------------
 
 # REFERENCES
-#     G"oran Sandberg 94-03-08 
+#     Göran Sandberg 94-03-08
 #     Karl-Gunnar Olsson 95-09-28
 #     Ola Dahlblom 2004-09-21
 # ----------------------------------------------------------------
@@ -15,7 +17,7 @@ import calfem.core as cfc
 
 # ----- Topology -------------------------------------------------
 
-Edof = np.array([
+edof = np.array([
     [1, 2, 3, 4, 5, 6],
     [4, 5, 6, 7, 8, 9],
     [7, 8, 9, 10, 11, 12]
@@ -23,8 +25,8 @@ Edof = np.array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K = np.mat(np.zeros((12,12)))
-f = np.mat(np.zeros((12,1)))
+K = np.mat(np.zeros((12, 12)))
+f = np.mat(np.zeros((12, 1)))
 f[4] = -10000.
 
 # ----- Element stiffness matrices  ------------------------------
@@ -32,30 +34,30 @@ f[4] = -10000.
 E = 2.1e11
 A = 45.3e-4
 I = 2510e-8
-ep = np.array([E,A,I])
-ex = np.array([0.,3.])
-ey = np.array([0.,0.])
+ep = np.array([E, A, I])
+ex = np.array([0., 3.])
+ey = np.array([0., 0.])
 
-Ke = cfc.beam2e(ex,ey,ep)
+Ke = cfc.beam2e(ex, ey, ep)
 
 print(Ke)
 
 # ----- Assemble Ke into K ---------------------------------------
 
-K = cfc.assem(Edof,K,Ke);
+K = cfc.assem(edof, K, Ke)
 
 # ----- Solve the system of equations and compute support forces -
 
-bc = np.array([1,2,11])
-(a,r) = cfc.solveq(K,f,bc);
+bc = np.array([1, 2, 11])
+(a, r) = cfc.solveq(K, f, bc)
 
 # ----- Section forces -------------------------------------------
 
-Ed=cfc.extractEldisp(Edof,a);
+ed = cfc.extract_ed(edof, a)
 
-es1, ed1, ec1 = cfc.beam2s(ex, ey, ep, Ed[0,:], nep=10)
-es2, ed2, ec2 = cfc.beam2s(ex, ey, ep, Ed[1,:], nep=10)
-es3, ed3, ec3 = cfc.beam2s(ex, ey, ep, Ed[2,:], nep=10)
+es1, ed1, ec1 = cfc.beam2s(ex, ey, ep, ed[0, :], nep=10)
+es2, ed2, ec2 = cfc.beam2s(ex, ey, ep, ed[1, :], nep=10)
+es3, ed3, ec3 = cfc.beam2s(ex, ey, ep, ed[2, :], nep=10)
 
 # ----- Results --------------------------------------------------
 
