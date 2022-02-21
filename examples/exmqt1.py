@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         print(self.fig1._widget)
         
       
-    @pyqtSlot()
+    @Slot()
     def on_executeButton_clicked(self):
         self.solveProblem()        
         self.drawGeometry()

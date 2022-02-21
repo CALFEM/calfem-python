@@ -12,6 +12,8 @@ docs/pycalfem
 
 venv-calfem
 
+.spyproject/
+
 calfem/shapes - kopia.py
 
 .vscode/launch.json

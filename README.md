@@ -39,4 +39,6 @@ Install GMSH [here](http://gmsh.info/) and add to the PATH of your file or inste
 
 * Eriksson, K, 2021. CALFEM Geometry Editor - An interactive geometry editor for CALFEM
 
+* Åmand, A, 2022. Development of visualisation functions for CALFEM for Python
+
 

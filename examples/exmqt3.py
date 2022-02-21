@@ -26,9 +26,9 @@ class PlaneStress2DProblem(object):
         self.E = E
         self.maxArea = 0.08
         
-    def updateGeometry(self):
+    def update_geometry(self):
         """Update geometry from set parameters"""        
-        rect = cfs.Rectangle(self.w, self.h, elementType=3, dofsPerNode=2, maxArea=self.maxArea)
+        rect = cfs.Rectangle(self.w, self.h, element_type=3, dofs_per_node=2, max_area=self.maxArea)
         rect.t = self.t
         rect.v = self.v
         rect.E = self.E
@@ -39,9 +39,9 @@ class PlaneStress2DProblem(object):
         
         self.rect = rect
         
-    def updateMesh(self):
+    def update_mesh(self):
         """Generate mesh"""
-        self.updateGeometry()
+        self.update_geometry()
         self.mesh = cfs.ShapeMesh(self.rect)    
         
     def solve(self):
@@ -51,38 +51,38 @@ class PlaneStress2DProblem(object):
         
         solver = cfslv.Plan2DSolver(self.mesh)
         
-        solver.addBC(self.rect.leftId, 0.0)
-        solver.addForceTotal(self.rect.topId, -10e5, dimension=2)
+        solver.addBC(self.rect.left_id, 0.0)
+        solver.addForceTotal(self.rect.top_id, -10e5, dimension=2)
         
         self.results = solver.execute()       
         
         cfu.disableLogging()
 
         
-    def drawGeometry(self, figGeometry):
+    def draw_geometry(self, figGeometry):
         """Draw geometry in provided figure"""
         cfv.figure(figGeometry.nr) 
         cfv.clf()
         cfv.draw_geometry(self.rect.geometry(), title="Geometry")
         
-    def drawMesh(self, figMesh):
+    def draw_mesh(self, figMesh):
         """Draw mesh in provided figure"""
         cfv.figure(figMesh.nr)
         cfv.clf()
-        cfv.draw_mesh(self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, 
+        cfv.draw_mesh(self.mesh.coords, self.mesh.edof, self.rect.dofs_per_node, self.rect.element_type, 
                      filled=True, title="Mesh") #Draws the mesh.
         
-    def drawDisplacements(self, figDisplacements):
+    def draw_displacements(self, figDisplacements):
         """Draw displacements in provided figure"""
         cfv.figure(figDisplacements.nr)
         cfv.clf()
-        cfv.draw_displacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, draw_undisplaced_mesh=False, title="Displacements", magnfac=1)
+        cfv.draw_displacements(self.results.a, self.mesh.coords, self.mesh.edof, self.rect.dofs_per_node, self.rect.element_type, draw_undisplaced_mesh=False, title="Displacements", magnfac=1)
         
-    def drawElementValues(self, figElementValues):
+    def draw_elementValues(self, figElementValues):
         """Draw element values in provided figure"""
         cfv.figure(figElementValues.nr)
         cfv.clf()
-        cfv.draw_element_values(self.results.elForces, self.mesh.coords, self.mesh.edof, self.rect.dofsPerNode, self.rect.elementType, self.results.a, draw_elements=True, draw_undisplaced_mesh=False, title="Effective Stress", magnfac=1)
+        cfv.draw_element_values(self.results.el_forces, self.mesh.coords, self.mesh.edof, self.rect.dofs_per_node, self.rect.element_type, self.results.a, draw_elements=True, draw_undisplaced_mesh=False, title="Effective Stress", magnfac=1)
                       
 
 class MainWindow(QMainWindow):
@@ -93,34 +93,32 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exmqt11.ui', self)
+        loadUi('exmqt3.ui', self)
 
         # Query for figure class name
 
-        Figure = cfv.figureClass()
+        figure = cfv.figureClass()
 
         # Create figure widgets to insert in UI
 
-        self.figGeometry = Figure(self)
-        self.figMesh = Figure(self)
-        self.figElementValues = Figure(self)
-        self.figDisplacements = Figure(self)
+        self.fig_geometry = figure(self)
+        self.fig_mesh = figure(self)
+        self.fig_element_values = figure(self)
+        self.fig_displacements = figure(self)
 
         # Insert widgets in gridLayout
 
-        self.middleLayout.addWidget(self.figGeometry._widget, 20)
-        self.middleLayout.addWidget(self.figMesh._widget, 20)
-        self.resultLayout.addWidget(self.figElementValues._widget, 20)
-        self.resultLayout.addWidget(self.figDisplacements._widget, 20)
-        #self.gridLayout.addWidget(self.figElementValues._widget, 0, 1)
-        #self.gridLayout.addWidget(self.figDisplacements._widget, 1, 0)
+        self.middleLayout.addWidget(self.fig_geometry._widget, 20)
+        self.middleLayout.addWidget(self.fig_mesh._widget, 20)
+        self.resultLayout.addWidget(self.fig_element_values._widget, 20)
+        self.resultLayout.addWidget(self.fig_displacements._widget, 20)
 
         # Create our problem instance
 
         self.problem = PlaneStress2DProblem()
-        self.updateView()
+        self.update_view()
         
-    def updateView(self):
+    def update_view(self):
         """Update controls with values from problem"""
         self.lengthEdit.setText(str(self.problem.w))
         self.heightEdit.setText(str(self.problem.h))
@@ -129,7 +127,7 @@ class MainWindow(QMainWindow):
         self.youngEdit.setText(str(self.problem.v))
         self.maxAreaEdit.setText(str(self.problem.maxArea))
         
-    def updateProblem(self):
+    def update_problem(self):
         """Update problem with values from controls"""
         self.problem.w = float(self.lengthEdit.text())
         self.problem.h = float(self.heightEdit.text())
@@ -138,22 +136,22 @@ class MainWindow(QMainWindow):
         self.problem.v = float(self.youngEdit.text())
         self.problem.maxArea = float(self.maxAreaEdit.text())
         
-    @pyqtSlot()
+    @Slot()
     def on_updateButton_clicked(self):
         """Update geometry"""
 
-        self.updateProblem()        
-        self.problem.updateMesh()
+        self.update_problem()        
+        self.problem.update_mesh()
 
         # Draw geometry
 
-        self.problem.drawGeometry(self.figGeometry)
+        self.problem.draw_geometry(self.fig_geometry)
         
         # Draw mesh
         
-        self.problem.drawMesh(self.figMesh)
+        self.problem.draw_mesh(self.fig_mesh)
         
-    @pyqtSlot(int)
+    @Slot(int)
     def on_tabWidget_currentChanged(self, tabIndex):
         """Handle tab change"""
 
@@ -161,22 +159,22 @@ class MainWindow(QMainWindow):
             
             # Only calculate when on tab 1 (results)
        
-            self.updateProblem()        
-            self.problem.updateMesh()
+            self.update_problem()        
+            self.problem.update_mesh()
             self.problem.solve()
             
             # Draw geometry
     
-            self.problem.drawGeometry(self.figGeometry)
+            self.problem.draw_geometry(self.fig_geometry)
             
             # Draw mesh
             
-            self.problem.drawMesh(self.figMesh)
+            self.problem.draw_mesh(self.fig_mesh)
             
             # Draw results
             
-            self.problem.drawElementValues(self.figElementValues)
-            self.problem.drawDisplacements(self.figDisplacements)
+            self.problem.draw_elementValues(self.fig_element_values)
+            self.problem.draw_displacements(self.fig_displacements)
 
 if __name__ == "__main__":
 

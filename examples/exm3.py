@@ -7,7 +7,7 @@ Shows structured meshing in 2D.
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -56,6 +56,7 @@ mesh.el_type = 3
 # Degrees of freedom per node.
 
 mesh.dofs_per_node = 1 
+mesh.el_size_factor = 0.01
 
 # mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 

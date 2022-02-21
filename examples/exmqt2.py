@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exmqt6.ui', self)
+        loadUi('exmqt2.ui', self)
 
         # Query for figure class name
 
@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
 
         self.problem = PlaneStress2DProblem()
 
-    @pyqtSlot()
+    @Slot()
     def on_executeButton_clicked(self):
         """Execute calculation"""
 
