@@ -93,7 +93,7 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exmqt3.ui', self)
+        loadUi('exm_qt_app.ui', self)
 
         # Query for figure class name
 

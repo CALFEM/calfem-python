@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar  1 16:23:37 2017
-
-@author: Jonas Lindemann
+Example illustrating how to integrate CALFEM in a PyQt application
 """
 
 import sys
@@ -21,7 +19,7 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exmqt1.ui', self)
+        loadUi('exm_qt.ui', self)
         
         Figure = cfv.figureClass()
         

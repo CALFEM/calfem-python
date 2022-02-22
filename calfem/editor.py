@@ -605,6 +605,12 @@ def run_and_load(g : cfg.Geometry):
 
 
 def edit_geometry(g : cfg.Geometry = None):
+    """
+    Start interactive geometry editor
+    
+    :param g cfg.Geometry: Geometry to modify interactively ()
+    :return cfg.Geometry new_g, line_marker_dict: Modfied geometry and marker dictionary.
+    """
     app = init_app()
 
     widget = EditorWindow()

@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exmqt2.ui', self)
+        loadUi('exm_stress_2d_qt.ui', self)
 
         # Query for figure class name
 
