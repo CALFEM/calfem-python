@@ -54,7 +54,7 @@ def ugrid_from_edof_ec(edof, ex, ey, ez, ed=None, dofs_per_node=3, ignore_first=
 
     return UGrid([coords, topo, celltypes])
 
-def convert_to_node_topo(edof, ex, ey, ez, ed=None, es=None, dofs_per_node=3, ignore_first=True):
+def convert_to_node_topo(edof, ex, ey, ez, ed=None, es=None, dofs_per_node=3, ignore_first=False):
     """
     Routine to convert dof based topology and element coordinates to node based
     topology required for visualisation with VTK and other visualisation frameworks
