@@ -57,3 +57,4 @@ exm6.vtk
 
 # new notebook examples
 docs/source/examples/.ipynb_checkpoints/
+.DS_Store
