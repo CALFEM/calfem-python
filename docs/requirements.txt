@@ -2,5 +2,6 @@ visvis
 PyQt5
 pyvtk
 calfem-python
+ipython_genutils==0.2.0
 sphinx==4.1.0
 nbsphinx==0.8.6
