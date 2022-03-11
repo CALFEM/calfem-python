@@ -1,4 +1,4 @@
-lsvisvis
+visvis
 PyQt5
 pyvtk
 calfem-python
