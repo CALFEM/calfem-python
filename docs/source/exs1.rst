@@ -87,6 +87,11 @@ from the global displacements `a` using the function extract.
 The spring element forces at each element are evaluated using the function spring1s. 
 
  .. literalinclude:: ../../examples/exs1.py
+    :lines: 63-66
+
+
+Print those elements as N1, N2, and N3 (N for normal forces).
+ .. literalinclude:: ../../examples/exs1.py
     :lines: 68-70
 
 Output: ::
