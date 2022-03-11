@@ -1,6 +1,7 @@
-visvis
+lsvisvis
 PyQt5
 pyvtk
 calfem-python
+ipython
 sphinx==4.0.2
 nbsphinx==0.8.6
