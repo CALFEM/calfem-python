@@ -503,6 +503,12 @@ def draw_mesh(
     elif np.size(coord, axis = 1) == 2:
         coord = np.append(coord, np.zeros((np.size(coord, axis = 0),1)), axis=1)
 
+    if 1 <= element_type <= 6:
+        nel, ndof_per_el, nnode, ndim, ndof, ndof_per_n = vdu.check_input(edof,coord,dof,element_type,nseg=nseg)
+    else:
+        print("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
+        sys.exit()
+
     # OUTPUT FROM check_input
     # Number of elements:                       nel
     # Number of degrees of freedom per element: ndof_per_el
@@ -686,10 +692,6 @@ def draw_mesh(
             plot_window.meshes[plot_window.fig].extend(meshes)
             #print("Adding mesh to figure ",plot_window.fig+1)
         return meshes
-
-    else:
-        print("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
-        sys.exit()
 
 
 
