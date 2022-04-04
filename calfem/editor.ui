@@ -1,0 +1,2179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1493</width>
+    <height>785</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonTextBesideIcon</enum>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">QWidget{
+background: rgb(220, 220, 220);
+}</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>120</height>
+       </size>
+      </property>
+      <property name="cursor">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QTabWidget::pane { /* The tab widget frame */
+    border-bottom: 6px solid;
+	border-bottom-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 	 rgb(200, 200, 200), stop:1 rgba(220,220,220));
+ 	border-top: 8px solid rgb(0,0,128);
+	/*border-radius: 4px;*/
+}
+
+
+QTabWidget::tab-bar {
+    left: 20px; /* move to the right by 5px */
+	bottom: -8px;
+}
+
+QTabBar::tab {
+    /*border-bottom-color:   transparent;
+    border-top-left-radius: 4px;*/
+    min-width: 18ex;
+    padding: 4px;
+}
+
+QTabBar::tab:selected {
+	background: rgb(240,240,240);
+	 border: 2px solid rgb(200,200,200);
+	 border-bottom: 0 px solid;
+	 border-top-left-radius: 6px;
+	 border-top-right-radius: 6px;
+}
+
+QTabBar::tab:!selected {
+	border: 2px solid rgb(200,200,200);
+    margin-top: 4px; /* make non-selected tabs look smaller */
+	border-top-left-radius: 6px;
+	 border-top-right-radius: 6px;
+}</string>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_2">
+       <property name="styleSheet">
+        <string notr="true">QWidget{
+	background-color: rgb(240, 240, 240);
+}        </string>
+       </property>
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1100</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>10</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="1">
+            <widget class="QToolButton" name="zoomOutButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Zoom Out</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_out.png</normaloff>:/Images/zoom_out.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QToolButton" name="arrowButtonSurface">
+             <property name="cursor">
+              <cursorShape>ArrowCursor</cursorShape>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Arrow</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/select.png</normaloff>:/Images/select.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QToolButton" name="panningButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Panning</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/pan.png</normaloff>:/Images/pan.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QToolButton" name="zoomInButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Zoom In</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_in.png</normaloff>:/Images/zoom_in.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_2">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QToolButton" name="polyButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Draw Polygon</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/polygon.svg</normaloff>:/Images/polygon.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="rectButton">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Draw Rectangle</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/rectangle.svg</normaloff>:/Images/rectangle.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <widget class="QToolButton" name="addPolyHoleButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Draw Polygon Hole</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/polygon_hole.svg</normaloff>:/Images/polygon_hole.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="addRectHoleButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Draw Rectangle Hole</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/rectangle_hole.svg</normaloff>:/Images/rectangle_hole.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_12">
+           <item>
+            <widget class="QToolButton" name="mergeButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::LeftToRight</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Merge Overlapping Geometries</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/merge.svg</normaloff>:/Images/merge.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+             <property name="autoRaise">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="deleteButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Delete Item</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/erase.png</normaloff>:/Images/erase.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_5">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <item>
+            <widget class="QToolButton" name="gridSnapButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:checked {
+     background-color: rgb(191, 184, 175);
+}
+
+QToolButton:hover {
+    background-color: rgb(223, 219, 215);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Toggle Gridsnap</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid_snap.png</normaloff>:/Images/grid_snap.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="gridButtonSurface">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:checked {
+     background-color: rgb(191, 184, 175);
+}
+
+QToolButton:hover {
+    background-color: rgb(223, 219, 215);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Toggle Grid</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid.png</normaloff>:/Images/grid.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QSpinBox" name="gridSpacingSpinBox">
+             <property name="minimum">
+              <number>5</number>
+             </property>
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+             <property name="singleStep">
+              <number>10</number>
+             </property>
+             <property name="value">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="gridSpacingButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(191, 184, 175);
+}
+
+QToolButton:hover {
+    background-color: rgb(223, 219, 215);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Set Grid Spacing</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid_settings.png</normaloff>:/Images/grid_settings.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_6">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="lineWidth">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <item>
+            <widget class="QToolButton" name="loadGeometryButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Load Geometry</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/open.png</normaloff>:/Images/open.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <property name="styleSheet">
+        <string notr="true">QWidget{
+	background-color: rgb(240, 240, 240);
+}        </string>
+       </property>
+       <attribute name="title">
+        <string>Tab 1</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>464</width>
+          <height>81</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>10</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QToolButton" name="arrowButtonBorder">
+             <property name="cursor">
+              <cursorShape>ArrowCursor</cursorShape>
+             </property>
+             <property name="focusPolicy">
+              <enum>Qt::TabFocus</enum>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Arrow</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/select.png</normaloff>:/Images/select.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QToolButton" name="zoomOutButtonBorder">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Zoom Out</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_out.png</normaloff>:/Images/zoom_out.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QToolButton" name="zoomInButtonBorder">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Zoom In</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/zoom_in.png</normaloff>:/Images/zoom_in.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QToolButton" name="panningButtonBorder">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Panning</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/pan.png</normaloff>:/Images/pan.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line">
+           <property name="minimumSize">
+            <size>
+             <width>15</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QToolButton" name="setMarkerButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Set Marker</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/add_marker.svg</normaloff>:/Images/add_marker.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="splitEdgeButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Split Edge</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/split_edge.svg</normaloff>:/Images/split_edge.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="Line" name="line_3">
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <widget class="QToolButton" name="gridSnapButtonBorder">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:checked {
+     background-color: rgb(191, 184, 175);
+}
+
+QToolButton:hover {
+    background-color: rgb(223, 219, 215);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Toggle Gridsnap</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid_snap.png</normaloff>:/Images/grid_snap.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="gridButtonBorder">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:checked {
+     background-color: rgb(191, 184, 175);
+}
+
+QToolButton:hover {
+    background-color: rgb(223, 219, 215);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Toggle Grid</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/grid.png</normaloff>:/Images/grid.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <property name="styleSheet">
+        <string notr="true">QWidget{
+	background-color: rgb(240, 240, 240);
+}        </string>
+       </property>
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <widget class="QToolButton" name="saveGeomButton">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>141</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+        </property>
+        <property name="text">
+         <string>Save Geometry</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+          <normaloff>:/Images/save.png</normaloff>:/Images/save.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_3">
+       <property name="styleSheet">
+        <string notr="true">QWidget{
+	background-color: rgb(240, 240, 240);
+}        </string>
+       </property>
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
+       <widget class="QWidget" name="horizontalLayoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>0</y>
+          <width>351</width>
+          <height>71</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_9">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="../../../Exjobb/Examensarbete/resources.qrc">:/Images/save.png</pixmap>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_19">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QToolButton" name="saveMeshButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Save Mesh</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>12</width>
+               <height>12</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="saveArraysButton">
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Save Mesh Arrays</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>12</width>
+               <height>12</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="saveArraysMatlabButton">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+             </property>
+             <property name="text">
+              <string>Save Mesh Arrays to Matlab</string>
+             </property>
+             <property name="icon">
+              <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+               <normaloff>:/Images/blank.svg</normaloff>:/Images/blank.svg</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>12</width>
+               <height>12</height>
+              </size>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextBesideIcon</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Preferred</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelTooltip">
+        <property name="styleSheet">
+         <string notr="true">QLabel{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="styleSheet">
+         <string notr="true">QLabel{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="text">
+         <string>x: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelX">
+        <property name="styleSheet">
+         <string notr="true">QLabel{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_3">
+        <property name="styleSheet">
+         <string notr="true">QLabel{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="text">
+         <string>y:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelY">
+        <property name="styleSheet">
+         <string notr="true">QLabel{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>220</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QStackedWidget" name="stackedWidget">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>661</width>
+          <height>420</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QStackedWidget{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="page">
+         <property name="styleSheet">
+          <string notr="true">QWidget{
+	background: rgba(255,255,255,0);
+}</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="page_2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QWidget{
+	background: rgba(255,255,255,0);
+}</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QGraphicsView" name="graphicsView">
+            <property name="minimumSize">
+             <size>
+              <width>661</width>
+              <height>401</height>
+             </size>
+            </property>
+            <property name="cursor" stdset="0">
+             <cursorShape>ArrowCursor</cursorShape>
+            </property>
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QGraphicsView{
+	background: rgb(255,255,255);
+	border: 2px solid rgb(0,0,128);
+}</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+      <item>
+       <widget class="QStackedWidget" name="stackedWidgetRight">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>401</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QStackedWidget{
+	background: rgba(255,255,255,0);
+}</string>
+        </property>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="page_5">
+         <property name="styleSheet">
+          <string notr="true">QWidget{
+	background: rgba(255,255,255,0);
+}</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_14">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_15">
+            <item>
+             <widget class="QWidget" name="widget" native="true">
+              <property name="styleSheet">
+               <string notr="true">QWidget{
+	background: rgb(255,255,255);
+	border: 2px solid rgb(0,0,128);
+}</string>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_3">
+               <item row="5" column="0">
+                <widget class="QLabel" name="label_4">
+                 <property name="styleSheet">
+                  <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Element Size:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="5" column="1">
+                <widget class="QDoubleSpinBox" name="elSizeSpinBox">
+                 <property name="styleSheet">
+                  <string notr="true">QDoubleSpinBox{
+	background: rgb(255,255,255);
+	border: 1px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>1000.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>5.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>25.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QRadioButton" name="radioButtonQuadrangle">
+                 <property name="styleSheet">
+                  <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Quadrangle</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="10" column="0">
+                <spacer name="verticalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="7" column="0">
+                <widget class="QLabel" name="label_5">
+                 <property name="styleSheet">
+                  <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>DOFs per Node:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="1">
+                <widget class="QSpinBox" name="DOFSpinBox">
+                 <property name="styleSheet">
+                  <string notr="true">QSpinBox{
+	background: rgb(255,255,255);
+	border: 1px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="minimum">
+                  <number>1</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QRadioButton" name="radioButtonTriangle">
+                 <property name="styleSheet">
+                  <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Triangle</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <spacer name="verticalSpacer_3">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>10</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="6" column="1">
+                <spacer name="verticalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>10</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_2">
+                 <property name="styleSheet">
+                  <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+                 </property>
+                 <property name="text">
+                  <string>Element Type:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="8" column="1">
+                <spacer name="verticalSpacer_7">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Fixed</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>10</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item row="9" column="1">
+                <widget class="QPushButton" name="refreshMeshButton">
+                 <property name="text">
+                  <string>Refresh Mesh</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="page_6">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QWidget{
+	background: rgba(255,255,255,0);
+}</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_16">
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>200</width>
+              <height>300</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QScrollArea{
+	background: rgb(255,255,255);
+	border: 2px solid rgb(0,0,128);
+}</string>
+            </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QAbstractScrollArea::AdjustIgnored</enum>
+            </property>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents_2">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>196</width>
+               <height>296</height>
+              </rect>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QWidget{
+	background: rgb(255,255,255);
+}</string>
+             </property>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="page_7">
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QWidget" name="widget_2" native="true">
+            <property name="styleSheet">
+             <string notr="true">QWidget{
+	background: rgb(255,255,255);
+	border: 2px solid rgb(0,0,128);
+}</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="2" column="1">
+              <spacer name="verticalSpacer_5">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>10</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="3" column="1">
+              <widget class="QRadioButton" name="radioButtonDisplayPointLabelsTrue">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>True</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDisplayPointLabels</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QRadioButton" name="radioButtonDisplayEdgeLabelsTrue">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>True</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDOFsPerNode</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QRadioButton" name="radioButtonDisplayPointLabelsFalse">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>False</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDisplayPointLabels</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QRadioButton" name="radioButtonDrawPointFalse">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>False</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDrawPoints</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QRadioButton" name="radioButtonDrawPointTrue">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>True</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDrawPoints</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_8">
+               <property name="styleSheet">
+                <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>Display Point Labels:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_6">
+               <property name="styleSheet">
+                <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>Draw Points:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="label_7">
+               <property name="styleSheet">
+                <string notr="true">QLabel{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>Display Edge Labels</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="0">
+              <spacer name="verticalSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="7" column="1">
+              <widget class="QRadioButton" name="radioButtonDisplayEdgeLabelsFalse">
+               <property name="styleSheet">
+                <string notr="true">QRadioButton{
+	background: rgb(255,255,255);
+	border: 0px solid rgb(0,0,128);
+}</string>
+               </property>
+               <property name="text">
+                <string>False</string>
+               </property>
+               <attribute name="buttonGroup">
+                <string notr="true">buttonGroupDOFsPerNode</string>
+               </attribute>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <spacer name="verticalSpacer_6">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeType">
+                <enum>QSizePolicy::Fixed</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>10</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_17">
+        <item>
+         <widget class="QTextBrowser" name="textBrowser">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QTextBrowser{
+border: 2px solid rgb(0,0,128);
+background: rgb(255,255,255);
+}</string>
+          </property>
+          <property name="html">
+           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_18">
+        <item>
+         <widget class="QToolButton" name="hideTextBrowserButton">
+          <property name="styleSheet">
+           <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+            <normaloff>:/Images/minus.svg</normaloff>:/Images/minus.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="showTextBrowserButton">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+            <normaloff>:/Images/plus.svg</normaloff>:/Images/plus.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="clearTextBrowserButton">
+          <property name="styleSheet">
+           <string notr="true">QToolButton{
+	border: 0px;
+}
+
+QToolButton:pressed {
+     background-color: rgb(185, 211, 220);
+}
+
+QToolButton:hover {
+    background-color: rgba(185, 211, 220,100);
+}
+</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../../Exjobb/Examensarbete/resources.qrc">
+            <normaloff>:/Images/erase.png</normaloff>:/Images/erase.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1493</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources>
+  <include location="../../../Exjobb/Examensarbete/resources.qrc"/>
+ </resources>
+ <connections/>
+ <buttongroups>
+  <buttongroup name="buttonGroupDisplayPointLabels"/>
+  <buttongroup name="buttonGroupDOFsPerNode"/>
+  <buttongroup name="buttonGroupDrawPoints"/>
+ </buttongroups>
+</ui>

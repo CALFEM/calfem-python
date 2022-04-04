@@ -1,7 +1,10 @@
 #!/bin/env python
 # -*- coding: iso-8859-15 -*-
 
-import os, sys
+import os
+import sys
+import pickle
+import scipy.io
 
 import numpy as np
 import calfem.core as cfc
@@ -13,102 +16,113 @@ try:
     import pyvtk as vtk
 except:
     have_pyvtk = False
-    pass
 
 haveMatplotLib = True
 haveMlab = True
 
+have_mlab = haveMlab
+have_matplotlib = haveMatplotLib
+
+
 def error(msg):
     cflog.error(" "+msg)
+
 
 def info(msg):
     cflog.info(" "+msg)
 
-#haveWx = True
-#haveQt = True
-    
-#globalWxApp = None
-#globalQtApp = None
-#globalWindows = []
-#
-#try:
-#    from PyQt import QtGui
-#    from PyQt.QtOpenGL import *
-#    from calfem.classes_qt4 import ElementView
-#    globalQtApp = QtGui.QApplication(["PyCalfem"])
-#except:
-#    haveQt = False    
-#      
-#if not haveQt:
-#    try:
-#        import wx
-#        from calfem.classes_wx import ElementView
-#        globalWxApp = wx.App(0)
-#    except: 
-#        haveWx = False
 
 class ElementProperties(object):
     def __init__(self):
         self.ep = {}
         self.attributes = {}
-        
+
     def add(self, markerId, ep=[]):
         if not markerId in self.ep:
             self.ep[markerId] = ep
-            
+
     def addAttribute(self, markerId, name, value):
         if not markerId in self.attributes:
             self.attributes[markerId] = {}
             self.attributes[markerId][name] = value
 
-def enableLogging(def_level=cflog.INFO):
-    cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=def_level)
-    
-def disableLogging():
-    cflog.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.NOTSET)
-    
+
+def enable_logging(def_level=cflog.INFO):
+    cflog.basicConfig(
+        format='%(asctime)s:%(levelname)s:%(message)s', level=def_level)
+
+enableLogging = enable_logging
 
 
-def readInt(f):
+def disable_logging():
+    cflog.basicConfig(
+        format='%(asctime)s:%(levelname)s:%(message)s', level=cflog.NOTSET)
+
+disableLogging = disable_logging
+
+
+def read_int(f):
     """
     Read a row from file, f, and return a list of integers.
     """
     return list(map(int, f.readline().split()))
-    
-def readFloat(f):
+
+readInt = read_int
+
+
+def read_float(f):
     """
     Read a row from file, f, and return a list of floats.
     """
     return list(map(float, f.readline().split()))
-    
-def readSingleInt(f):
+
+readFloat = read_float
+
+
+def read_single_int(f):
     """
     Read a single integer from a row in file f. All other values on row are discarded.
     """
-    return readInt(f)[0] 
+    return readInt(f)[0]
 
-def readSingleFloat(f):
+readSingleInt = read_single_int
+
+
+def read_single_float(f):
     """
     Read a single float from a row in file f. All other values on row are discarded.
     """
     return readFloat(f)[0]
-    
-def writeSingleFloat(f, floatValue):
+
+readSingleFloat = read_single_float
+
+
+def write_single_float(f, floatValue):
     f.write("%g\n" % floatValue)
-    
-def writeSingleInt(f, intValue):
+
+writeSingleFloat = write_single_float
+
+
+def write_single_int(f, intValue):
     f.write("%d\n" % intValue)
 
-def writeFloatList(f, floatList):
+writeSingleInt = write_single_int
+
+
+def write_float_list(f, floatList):
     for floatValue in floatList:
         f.write("%g " % floatValue)
     f.write("\n")
-    
-def writeIntList(f, intList):
+
+writeFloatList = write_float_list
+
+def write_int_list(f, intList):
     for intValue in intList:
         f.write("%d " % intValue)
     f.write("\n")
-    
+
+writeIntList = write_int_list
+
 def which(filename):
     """
     Return complete path to executable given by filename.
@@ -117,21 +131,21 @@ def which(filename):
         p = os.defpath
     else:
         p = os.environ['PATH']
-                
-    pathlist = p.split (os.pathsep)
-    pathlist.insert(0,".")
-    pathlist.insert(0,"/bin")
-    pathlist.insert(0,"/usr/bin")
-    pathlist.insert(0,"/opt/local/bin")
-    pathlist.insert(0,"/usr/local/bin")
-    pathlist.insert(0,"/Applications/Gmsh.app/Contents/MacOS")
+
+    pathlist = p.split(os.pathsep)
+    pathlist.insert(0, ".")
+    pathlist.insert(0, "/bin")
+    pathlist.insert(0, "/usr/bin")
+    pathlist.insert(0, "/opt/local/bin")
+    pathlist.insert(0, "/usr/local/bin")
+    pathlist.insert(0, "/Applications/Gmsh.app/Contents/MacOS")
 
     # Add paths from site-packages
 
     for path in sys.path:
         if "site-packages" in path:
             pathlist.insert(0, path)
-    
+
     for path in pathlist:
         f = os.path.join(path, filename)
 
@@ -140,7 +154,8 @@ def which(filename):
 
     return None
 
-def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
+
+def apply_bc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
     Apply boundary condition to bcPresc and bcVal matrices. For 2D problems
     with 2 dofs per node.
@@ -163,24 +178,27 @@ def applybc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
 
     if marker in boundaryDofs:
-        if (dimension==0):
+        if (dimension == 0):
             bcAdd = np.array(boundaryDofs[marker])
             bcAddVal = np.ones([np.size(bcAdd)])*value
-        elif dimension in [1,2]:
+        elif dimension in [1, 2]:
             bcAdd = boundaryDofs[marker][(dimension-1)::2]
             bcAddVal = np.ones([np.size(bcAdd)])*value
         else:
             print("Error: wrong dimension, ", dimension)
 
-                              
-        newBcPrescr, prescrIdx = np.unique(np.hstack([bcPrescr,bcAdd]), return_index=True)
-        newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
-         
-        return newBcPrescr, newBcVal                     
+        newBcPrescr, prescrIdx = np.unique(
+            np.hstack([bcPrescr, bcAdd]), return_index=True)
+        newBcVal = np.hstack([bcVal, bcAddVal])[prescrIdx]
+
+        return newBcPrescr, newBcVal
     else:
         print("Error: Boundary marker", marker, "does not exist.")
-        
-def applybc3D(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
+
+applybc = apply_bc
+
+
+def apply_bc_3d(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
     Apply boundary condition to bcPresc and bcVal matrices. For 3D problems
     with 3 dofs per node.
@@ -204,47 +222,54 @@ def applybc3D(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     """
 
     if marker in boundaryDofs:
-        if (dimension==0):
+        if (dimension == 0):
             bcAdd = np.array(boundaryDofs[marker])
             bcAddVal = np.ones([np.size(bcAdd)])*value
-        elif dimension in [1,2,3]:
+        elif dimension in [1, 2, 3]:
             bcAdd = boundaryDofs[marker][(dimension-1)::3]
             bcAddVal = np.ones([np.size(bcAdd)])*value
         else:
             print("Error: wrong dimension, ", dimension)
 
-                              
-        newBcPrescr, prescrIdx = np.unique(np.hstack([bcPrescr,bcAdd]), return_index=True)
-        newBcVal = np.hstack([bcVal,bcAddVal])[prescrIdx]
-         
-        return newBcPrescr, newBcVal                     
+        newBcPrescr, prescrIdx = np.unique(
+            np.hstack([bcPrescr, bcAdd]), return_index=True)
+        newBcVal = np.hstack([bcVal, bcAddVal])[prescrIdx]
+
+        return newBcPrescr, newBcVal
     else:
         print("Error: Boundary marker", marker, "does not exist.")
-        
-def applybcnode(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
-    
-    if (dimension==0):
+
+applybc3D = apply_bc_3d
+
+
+def apply_bc_node(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
+
+    if (dimension == 0):
         bcAdd = np.asarray(dofs[nodeIdx])
         bcAddVal = np.ones([np.size(bcAdd)])*value
-    elif dimension in [1,2,3]:
-        bcAdd = np.asarray(dofs[nodeIdx,dimension-1])
+    elif dimension in [1, 2, 3]:
+        bcAdd = np.asarray(dofs[nodeIdx, dimension-1])
         bcAddVal = np.ones([np.size(bcAdd)])*value
     else:
         print("Error: wrong dimension, ", dimension)
 
-    return np.hstack([bcPrescr,bcAdd]), np.hstack([bcVal,bcAddVal])
-    
+    return np.hstack([bcPrescr, bcAdd]), np.hstack([bcVal, bcAddVal])
 
-def applyforcenode(nodeIdx, dofs, f, value=0.0, dimension=0):
+applybcnode = apply_bc_node
 
-    if (dimension==0):
-        f[dofs[nodeIdx]]+=value
-    elif (dimension==1):
-        f[dofs[nodeIdx,dimension-1]]+=value
+def apply_force_node(nodeIdx, dofs, f, value=0.0, dimension=0):
+
+    if (dimension == 0):
+        f[dofs[nodeIdx]] += value
+    elif (dimension == 1):
+        f[dofs[nodeIdx, dimension-1]] += value
     else:
-        f[dofs[nodeIdx,dimension-1]]+=value
-        
-def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
+        f[dofs[nodeIdx, dimension-1]] += value
+
+applyforcenode = apply_force_node
+
+
+def apply_force(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
     Apply boundary force to f matrix. The value is
     added to all boundaryDofs defined by marker. Applicable
@@ -264,15 +289,17 @@ def applyforce(boundaryDofs, f, marker, value=0.0, dimension=0):
     if marker in boundaryDofs:
         if dimension == 0:
             f[np.asarray(boundaryDofs[marker])-1] += value
-        elif dimension in [1,2]:
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value  
+        elif dimension in [1, 2]:
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += value
         else:
-            print("Error: The dimension, ", dimension,", is invalid")
+            print("Error: The dimension, ", dimension, ", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
+applyforce = apply_force
 
-def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
+
+def apply_traction_linear_element(boundaryElements, coords, dofs, F, marker, q):
     """
     Apply traction on part of boundarty with marker.
     q is added to all boundaryDofs defined by marker. Applicable
@@ -305,26 +332,30 @@ def applyTractionLinearElement(boundaryElements, coords, dofs, F, marker, q):
     W = [1, 1]
 
     # Shape functions:
-    N1 = lambda x: 1-(1+x)/2
-    N2 = lambda x: (1+x)/2
+    def N1(x): return 1-(1+x)/2
+    def N2(x): return (1+x)/2
 
     for element in boundaryElements[marker]:
         # Loop through integration points:
         f = np.zeros([4, 1])
-        for xi, w in zip(Xi,W):
+        for xi, w in zip(Xi, W):
             N = np.matrix([[N1(xi),      0,  N2(xi),       0],
-                           [     0, N1(xi),        0, N2(xi)]] )
-            coord = coords[ np.array(element['node-number-list'])-1] # The minus one is since the nodes in node-number-list start at 1...
+                           [0, N1(xi),        0, N2(xi)]])
+            # The minus one is since the nodes in node-number-list start at 1...
+            coord = coords[np.array(element['node-number-list'])-1]
             v1 = coord[0, :]
             v2 = coord[1, :]
             J = np.linalg.norm(v1-v2) / 2
             f += w * N.T * q * J
 
-        idx = dofs[np.array(element['node-number-list'])-1,:].flatten()-1 # Minus one since dofs start at 1...
+        # Minus one since dofs start at 1...
+        idx = dofs[np.array(element['node-number-list'])-1, :].flatten()-1
         F[idx] += f
 
+applyTractionLinearElement = apply_traction_linear_element
 
-def applyforce3D(boundaryDofs, f, marker, value=0.0, dimension=0):
+
+def apply_force_3d(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
     Apply boundary force to f matrix. The value is
     added to all boundaryDofs defined by marker. Applicable
@@ -345,14 +376,17 @@ def applyforce3D(boundaryDofs, f, marker, value=0.0, dimension=0):
     if marker in boundaryDofs:
         if dimension == 0:
             f[np.asarray(boundaryDofs[marker])-1] += value
-        elif dimension in [1,2,3]:
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += value  
+        elif dimension in [1, 2, 3]:
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += value
         else:
-            print("Error: The dimension, ", dimension,", is invalid")
+            print("Error: The dimension, ", dimension, ", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
-def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
+applyforce3D = apply_force_3d
+
+
+def apply_force_total(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
     Apply boundary force to f matrix. Total force, value, is
     distributed over all boundaryDofs defined by marker. Applicable
@@ -374,16 +408,20 @@ def applyforcetotal(boundaryDofs, f, marker, value=0.0, dimension=0):
             nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
-        elif dimension in [1,2]:
+        elif dimension in [1, 2]:
             nDofs = len(boundaryDofs[marker][(dimension-1)::2])
             valuePerDof = value / nDofs
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::2])-1] += valuePerDof
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::2]) -
+              1] += valuePerDof
         else:
-            print("Error: The dimension, ", dimension,", is invalid")
+            print("Error: The dimension, ", dimension, ", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
 
-def applyforcetotal3D(boundaryDofs, f, marker, value=0.0, dimension=0):
+applyforcetotal = apply_force_total
+
+
+def apply_force_total_3d(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
     Apply boundary force to f matrix. Total force, value, is
     distributed over all boundaryDofs defined by marker. Applicable
@@ -406,14 +444,18 @@ def applyforcetotal3D(boundaryDofs, f, marker, value=0.0, dimension=0):
             nDofs = len(boundaryDofs[marker])
             valuePerDof = value / nDofs
             f[np.asarray(boundaryDofs[marker])-1] += valuePerDof
-        elif dimension in [1,2,3]:
+        elif dimension in [1, 2, 3]:
             nDofs = len(boundaryDofs[marker][(dimension-1)::3])
             valuePerDof = value / nDofs
-            f[np.asarray(boundaryDofs[marker][(dimension-1)::3])-1] += valuePerDof
+            f[np.asarray(boundaryDofs[marker][(dimension-1)::3]) -
+              1] += valuePerDof
         else:
-            print("Error: The dimension, ", dimension,", is invalid")
+            print("Error: The dimension, ", dimension, ", is invalid")
     else:
         print("Error: Boundary marker", marker, "does not exist.")
+
+applyforcetotal3D = apply_force_total_3d
+
 
 def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=None, el_vec2=None):
     """
@@ -442,45 +484,58 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
     cell_data = None
 
     if a is not None:
-        for i in range(0,len(a),2):
+        for i in range(0, len(a), 2):
             displ.append([np.asscalar(a[i]), np.asscalar(a[i+1]), 0.0])
-                    
+
         point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
 
     if el_scalar is not None:
+        print("Adding cell scalars...")
         scalars = vtk.Scalars(el_scalar, name="scalar")
     if el_vec1 is not None:
+        print("Adding cell vector 1...")
         vectors1 = vtk.Vectors(el_vec1, name="principal1")
     if el_vec2 is not None:
+        print("Adding cell vector 2...")
         vectors2 = vtk.Vectors(el_vec2, name="principal2")
 
     if el_scalar is not None and el_vec1 is None and el_vec2 is None:
+        print("Exporting celldata, el_scalar...")
         cell_data = vtk.CellData(scalars)
     if el_scalar is not None and el_vec1 is None and el_vec2 is not None:
+        print("Exporting celldata, el_scalar, el_vec2...")
         cell_data = vtk.CellData(scalars, vectors2)
     if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_scalar, el_vec1...")
         cell_data = vtk.CellData(scalars, vectors1)
-    if el_scalar is not None and el_vec1 is not None and el_vec2 is None:
+    if el_scalar is not None and el_vec1 is not None and el_vec2 is not None:
+        print("Exporting celldata, el_scalar, el_vec1, el_vec2...")
         cell_data = vtk.CellData(scalars, vectors1, vectors2)
     if el_scalar is None and el_vec1 is None and el_vec2 is not None:
+        print("Exporting celldata, el_vec2...")
         cell_data = vtk.CellData(vectors2)
     if el_scalar is None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_vec1...")
         cell_data = vtk.CellData(vectors1)
     if el_scalar is None and el_vec1 is not None and el_vec2 is None:
+        print("Exporting celldata, el_vec1, el_vec2...")
         cell_data = vtk.CellData(vectors1, vectors2)
 
-    structure = vtk.PolyData(points = points, polygons = polygons)
+    structure = vtk.PolyData(points=points, polygons=polygons)
 
     if cell_data is not None and point_data is not None:
+        print("VTK includes cell_data and point_data")
         vtk_data = vtk.VtkData(structure, cell_data, point_data)
     if cell_data is None and point_data is not None:
+        print("VTK includes point_data")
         vtk_data = vtk.VtkData(structure, point_data)
     if cell_data is None and point_data is None:
+        print("VTK includes only structure")
         vtk_data = vtk.VtkData(structure)
 
     vtk_data.tofile("exm6.vtk", "ascii")
-               
-def scalfact2(ex,ey,ed,rat=0.2):
+
+def scalfact2(ex, ey, ed, rat=0.2):
     """
     Determine scale factor for drawing computational results, such as 
     displacements, section forces or flux.
@@ -496,29 +551,135 @@ def scalfact2(ex,ey,ed,rat=0.2):
         
     """
     # nen:   number of element nodes
-    # nel:   number of elements 
+    # nel:   number of elements
     nen = -1
     if ex.shape != ey.shape:
         print("ex and ey shapes do not match.")
         return 1.0
-    
+
     dlmax = 0.
     edmax = 1.
-    
-    if np.linalg.matrix_rank(ex)==1:
+
+    if np.linalg.matrix_rank(ex) == 1:
         nen = ex.shape[0]
         nel = 1
-        dxmax = max(ex.T.max(0)-ex.T.min(0)) # axis 0, return vector
+        dxmax = max(ex.T.max(0)-ex.T.min(0))  # axis 0, return vector
         dymax = max(ey.T.max(0)-ey.T.min(0))
-        dlmax = max(dxmax,dymax)
+        dlmax = max(dxmax, dymax)
         edmax = abs(ed).max()
     else:
         nen = ex.shape[1]
         nel = ex.shape[0]
         dxmax = max(ex.T.max(0)-ex.T.min(0))
         dymax = max(ey.T.max(0)-ey.T.min(0))
-        dlmax = max(dxmax,dymax)
+        dlmax = max(dxmax, dymax)
         edmax = abs(ed).max()
-        
+
     k = rat
     return k*dlmax/edmax
+
+
+'''
+Handle reading and writing of geometry and generated mesh from the program
+'''
+
+def load_geometry(name):
+    """Loads a geometry from a file."""
+
+    with open(name, 'rb') as file:
+        test = pickle.load(file)
+    return test
+
+
+def save_geometry(g, name="unnamed_geometry"):
+    """Save a geometry to file."""
+
+    if not name.endswith(".cfg"):
+        name = name + ".cfg"
+    with open(name, 'wb') as file:
+        pickle.dump(g, file)
+
+
+def load_mesh(name):
+    """Load a mesh from file."""
+
+    with open(name, 'rb') as file:
+        mesh = pickle.load(file)
+    return mesh
+
+
+def save_mesh(mesh, name="Untitled"):
+    """Save a mesh to file."""
+
+    if not name.endswith(".cfm"):
+        name = name + ".cfm"
+    with open(name, 'wb') as file:
+        pickle.dump(mesh, file)
+
+
+def save_arrays(coords, edof, dofs, bdofs, elementmarkers, boundaryElements, markerDict, name="unnamed_arrays"):
+    """Save arrays to file."""
+
+    if not name.endswith(".cfma"):
+        name = name + ".cfma"
+    with open(name, 'wb') as file:
+        pickle.dump(coords, file)
+        pickle.dump(edof, file)
+        pickle.dump(dofs, file)
+        #for key in bdofs.items():
+        #    print(key, markerDict[key])
+        pickle.dump(bdofs, file)
+        pickle.dump(elementmarkers, file)
+        pickle.dump(boundaryElements, file)
+        pickle.dump(markerDict, file)
+
+
+def load_arrays(name):
+    """Load arrays from file."""
+
+    with open(name, 'rb') as file:
+        coords = pickle.load(file)
+        edof = pickle.load(file)
+        dofs = pickle.load(file)
+        bdofs = pickle.load(file)
+        elementmarkers = pickle.load(file)
+        boundaryElements = pickle.load(file)
+        markerDict = pickle.load(file)
+
+    return coords, edof, dofs, bdofs, elementmarkers, boundaryElements, markerDict
+
+
+def save_matlab_arrays(coords, edof, dofs, bdofs, elementmarkers, boundaryElements, markerDict, name="Untitled"):
+    """Save arrays as MATLAB .mat files."""
+
+    if not name.endswith(".mat"):
+        name = name + ".mat"
+    saveDict = {}
+    saveDict["coords"] = coords.astype('double')
+
+    # Convert to CALFEM Edof definition with element number as first index
+
+    new_column = np.arange(1, np.size(edof, 0) + 1)[:, np.newaxis]
+    edof = np.append(new_column, edof, axis=1)
+
+    saveDict["edof"] = edof.astype('double')
+    saveDict["dofs"] = dofs.astype('double')
+    # bdofs = {str(k): v for k, v in bdofs.items()} # MATLAB struct needs keys as strings
+    print(bdofs)
+    print(markerDict)
+    newBdof = {}
+    for index, bdofs in bdofs.items():
+        print(index, bdofs)
+        if index == 0:
+            newBdof["None"] = bdofs
+        else:
+            newBdof[markerDict[index]] = bdofs
+
+    saveDict["bdofs"] = newBdof
+    elementmarkers = np.asarray(elementmarkers)
+
+    # To avoid problems with one indexing in MATLAB
+    
+    elementmarkers = elementmarkers + 1
+    saveDict["elementmarkers"] = elementmarkers
+    scipy.io.savemat(name, saveDict)

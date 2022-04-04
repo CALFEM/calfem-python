@@ -165,6 +165,7 @@ class GmshMeshGenerator:
         self.additional_options = additional_options
         self.mesh_dir = mesh_dir
         self.return_boundary_elements = return_boundary_elements
+        self.gmsh_options = {}
 
         # gmsh elements that have rectangle faces
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93]
@@ -180,7 +181,7 @@ class GmshMeshGenerator:
         self.remove_gmsh_signal_handler = True
         self.initialize_gmsh = True
 
-    def create(self, is3D=False):
+    def create(self, is3D=False, dim=3):
         '''
         Meshes a surface or volume defined by the geometry in geoData.
         Parameters:
@@ -383,9 +384,12 @@ class GmshMeshGenerator:
             if self.max_size is not None:
                 gmsh.option.setNumber('Mesh.MeshSizeMax', self.max_size)
 
+            for mesh_option in self.gmsh_options.keys():
+                gmsh.option.setNumber(mesh_option, self.gmsh_options[mesh_option])
+
             # Generate mesh
 
-            gmsh.model.mesh.generate(2)
+            gmsh.model.mesh.generate(dim)
 
             # Write .msh file
 

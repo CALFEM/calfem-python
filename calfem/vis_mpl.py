@@ -5,6 +5,7 @@ CALFEM Visualisation module (matplotlib)
 Contains all the functions implementing visualisation routines.
 """
 
+from matplotlib.transforms import Transform
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -13,6 +14,10 @@ import matplotlib.path as mpp
 import matplotlib.patches as patches
 import matplotlib as mpl
 import matplotlib.tri as tri
+from numpy.lib.function_base import place
+
+from calfem.core import beam2crd
+import calfem.core as cfc
 
 try:
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -25,6 +30,7 @@ from math import atan2
 
 import logging as cflog
 
+g_figures = []
 
 def error(msg):
     """Log error message"""
@@ -61,6 +67,13 @@ def colorbar(**kwargs):
     else:
         return plt.colorbar(**kwargs)
 
+def axis(*args, **kwargs):
+    """Define axis of figure (Matplotlib passthrough)"""
+    plt.axis(*args, **kwargs)
+
+def title(*args, **kwargs):
+    """Define title of figure (Matplotlib passthrough)"""
+    plt.title(*args, **kwargs)
 
 def figure(figure=None, show=True, fig_size=(4, 3)):
     """Create a visvis figure with extras."""
@@ -70,15 +83,19 @@ def figure(figure=None, show=True, fig_size=(4, 3)):
         f = plt.figure(figsize=fig_size)
     else:
         try:
-            f = plt.figure(figure)
+            f = plt.figure(figure.number)
         except:
             f = plt.figure(figsize=fig_size)
+
+    if f is not None:
+        g_figures.append(f)
 
     return f
 
 
 def figure_widget(fig, parent=None):
     widget = FigureCanvas(fig)
+    widget.axes = fig.add_subplot(111)
     if parent != None:
         widget.setParent(parent)
     toolbar = NavigationToolbar(widget, widget)
@@ -127,6 +144,10 @@ showAndWait = show_and_wait
 
 def show_and_wait_mpl():
     """Wait for plot to show"""
+    plt.show()
+
+def show():
+    """Use in Qt applications"""
     plt.show()
 
 
@@ -256,6 +277,146 @@ def draw_mesh(coords, edof, dofs_per_node, el_type, title=None, color=(0, 0, 0),
 
 
 drawMesh = draw_mesh
+
+
+def draw_elements(ex, ey, title='', color=(0, 0, 0), face_color=(0.8, 0.8, 0.8), node_color=(0, 0, 0), line_style='solid', filled=False, closed=True, show_nodes=False):
+    '''
+    Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
+    the mesh.
+    Args:
+        coords:
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+        edof:
+            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+        dofs_per_nodes:
+            Integer. Dofs per node.
+        el_type:
+            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+        axes:
+            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+        axes_adjust:
+            Boolean. True if the view should be changed to show the whole model. Default True.
+        title:
+            String. Changes title of the figure. Default "Mesh".
+        color: 
+            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+        face_color:
+            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
+        filled:
+            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    '''
+
+    # ex = [
+    #        [x1_1, x2_1, xn_1],
+    #        ...
+    #        [x1_m, x2_m, xn_m]
+    #      ]
+
+    # ex = [
+    #        [y1_1, y2_1, yn_1],
+    #        ...
+    #        [y1_m, y2_m, yn_m]
+    #      ]
+
+    if ex.ndim != 1:    
+        nnodes = ex.shape[1]
+        nel = ex.shape[0]
+    else:
+        nnodes = ex.shape[0]
+        nel = 1
+
+    polys = []
+
+    for elx, ely in zip(ex, ey):
+        pg = np.zeros((nnodes, 2))
+        pg[:, 0] = elx
+        pg[:, 1] = ely
+
+        polys.append(pg)
+
+    ax = plt.gca()
+
+    if filled:
+        pc = matplotlib.collections.PolyCollection(
+            polys, facecolor=face_color, edgecolor=color, linestyle=line_style, closed=closed)
+    else:
+        pc = matplotlib.collections.PolyCollection(
+            polys, facecolor='none', edgecolor=color, linestyle=line_style, closed=closed)
+
+    ax.add_collection(pc)
+    ax.autoscale()
+
+    ax.set_aspect('equal')
+
+    if title != None:
+        ax.set(title=title)
+
+
+def draw_node_circles(ex, ey, title='', color=(0, 0, 0), face_color=(0.8, 0.8, 0.8), filled=False, marker_type='o'):
+    '''
+    Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
+    the mesh.
+    Args:
+        coords:
+            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+        edof:
+            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+        dofs_per_nodes:
+            Integer. Dofs per node.
+        el_type:
+            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+        axes:
+            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+        axes_adjust:
+            Boolean. True if the view should be changed to show the whole model. Default True.
+        title:
+            String. Changes title of the figure. Default "Mesh".
+        color: 
+            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+        face_color:
+            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
+        filled:
+            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    '''
+
+    # ex = [
+    #        [x1_1, x2_1, xn_1],
+    #        ...
+    #        [x1_m, x2_m, xn_m]
+    #      ]
+
+    # ex = [
+    #        [y1_1, y2_1, yn_1],
+    #        ...
+    #        [y1_m, y2_m, yn_m]
+    #      ]
+
+    nel = ex.shape[0]
+    nnodes = ex.shape[1]
+
+    nodes = []
+
+    x = []
+    y = []
+
+    for elx, ely in zip(ex, ey):
+        for xx, yy in zip(elx, ely):
+            x.append(xx)
+            y.append(yy)
+
+    ax = plt.gca()
+
+    if filled:
+        ax.scatter(x, y, color=color, marker=marker_type)
+    else:
+        ax.scatter(x, y, edgecolor=color, color='none', marker=marker_type)
+
+    ax.autoscale()
+
+    ax.set_aspect('equal')
+
+    if title != None:
+        ax.set(title=title)
 
 
 def draw_element_values(values, coords, edof, dofs_per_node, el_type, displacements=None, draw_elements=True, draw_undisplaced_mesh=False, magnfac=1.0, title=None, color=(0, 0, 0), node_color=(0, 0, 0)):
@@ -616,7 +777,7 @@ def draw_nodal_values_shaded(values, coords, edof, title=None, dofs_per_node=Non
 draw_nodal_values = draw_nodal_values_contourf
 
 
-def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20, rel_margin=0.05, draw_axis=False):
+def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20, rel_margin=0.05, draw_axis=False, axes=None):
     '''
     Draws the geometry (points and curves) in geoData
     Args:
@@ -640,7 +801,11 @@ def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=Tr
             Extra spacing between geometry and axis
     '''
 
-    ax = plt.gca()
+    if axes is None:
+        ax = plt.gca()
+    else:
+        ax = axes
+        
     ax.set_aspect('equal')
     ax.set_frame_on(draw_axis)
 
@@ -897,40 +1062,45 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
         Rem. Default is solid white lines with circles at nodes.
     """
 
+    if ex.shape == ey.shape:
+        if ex.ndim !=1:
+            nen = ex.shape[1]
+        else:
+            nen = ex.shape[0]
+
+            ex = ex.reshape(1, nen)
+            ey = ey.reshape(1, nen)
+    else:
+        raise ValueError("Check size of ex, ey dimensions.")
+
     line_type = plotpar[0]
     line_color = plotpar[1]
     node_mark = plotpar[2]
 
     # Translate CALFEM plotpar to visvis
 
-    vv_line_type = '-'
-    vv_line_color = 'b'
-    vv_node_mark = 'o'
-
     if line_type == 1:
-        vv_line_type = '-'
+        mpl_line_style = 'solid'
     elif line_type == 2:
-        vv_line_type = '--'
+        mpl_line_style = (0, (5, 5))
     elif line_type == 3:
-        vv_line_type = ':'
+        mpl_line_style = 'dotted'
 
     if line_color == 1:
-        vv_line_color = 'k'
+        mpl_line_color = (0, 0, 0)  # 'k'
     elif line_color == 2:
-        vv_line_color = 'b'
+        mpl_line_color = (0, 0, 1)  # 'b'
     elif line_color == 3:
-        vv_line_color = 'm'
+        mpl_line_color = (1, 0, 1)  # 'm'
     elif line_color == 4:
-        vv_line_color = 'r'
+        mpl_line_color = (1, 0, 0)  # 'r'
 
     if node_mark == 1:
-        vv_node_mark = 'o'
+        mpl_node_mark = 'o'
     elif node_mark == 2:
-        vv_node_mark = 'x'
+        mpl_node_mark = 'x'
     elif node_mark == 0:
-        vv_node_mark = ''
-
-    vv_marker_color = vv_line_color
+        mpl_node_mark = ''
 
     plt.axis('equal')
 
@@ -939,27 +1109,73 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
     if len(elnum) == ex.shape[0]:
         draw_element_numbers = True
 
-    i = 0
+    draw_elements(ex, ey, color=mpl_line_color,
+                  line_style=mpl_line_style, filled=False)
+    if mpl_node_mark != '':
+        draw_node_circles(ex, ey, color=mpl_line_color,
+                          filled=False, marker_type=mpl_node_mark)
 
-    for elx, ely in zip(ex, ey):
-        x = elx.tolist()
-        x.append(elx[0])
-        y = ely.tolist()
-        y.append(ely[0])
+    return None
 
-        xm = sum(x)/len(x)
-        ym = sum(y)/len(y)
 
-        plt.plot(x, y, vv_line_color + vv_node_mark + vv_line_type)
+def scalfact2(ex, ey, ed, rat=0.2):
+    """
+    [sfac]=scalfact2(ex,ey,ed,rat)
+    [sfac]=scalfact2(ex,ey,ed)
+    -------------------------------------------------------------
+    PURPOSE 
+    Determine scale factor for drawing computational results, such as 
+    displacements, section forces or flux.
+
+    INPUT
+        ex,ey:  element node coordinates
+
+        ed:     element displacement matrix or section force matrix
+
+        rat: relation between illustrated quantity and element size. 
+        If not specified, 0.2 is used.
+
+    -------------------------------------------------------------
+
+    LAST MODIFIED: O Dahlblom  2004-09-15
+                   J Lindemann 2021-12-29 (Python)
+
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+    -------------------------------------------------------------
+    """
+
+    #  if ~((nargin==3)|(nargin==4))
+    #     disp('??? Wrong number of input arguments!')
+    #     return
+    #  end
+
+    if ex.shape == ey.shape:
+        if ex.ndim !=1:
+            nen = ex.shape[1]
+        else:
+            nen = ex.shape[0]
+    else:
+        raise ValueError("Check size of ex, ey dimensions.")
+
+    dx_max = float(np.max(ex))-float(np.min(ex))
+    dy_max = float(np.max(ey))-float(np.min(ey))
+    dl_max = max(dx_max, dy_max)
+    ed_max = float(np.max(np.max(np.abs(ed))))
+
+    # dxmax=max(max(ex')-min(ex')); dymax=max(max(ey')-min(ey'));
+    # dlmax=max(dxmax,dymax);
+    # edmax=max(max(abs(ed)));
+
+    k = rat
+
+    return k*dl_max/ed_max
 
 
 def eliso2_mpl(ex, ey, ed):
 
     plt.axis('equal')
-
-    print(np.shape(ex))
-    print(np.shape(ey))
-    print(np.shape(ed))
 
     gx = []
     gy = []
@@ -974,3 +1190,393 @@ def eliso2_mpl(ex, ey, ed):
             gz.append(y)
 
     plt.tricontour(gx, gy, gz, 5)
+
+
+def pltstyle(plotpar):
+    """
+    -------------------------------------------------------------
+     PURPOSE 
+       Define define linetype,linecolor and markertype character codes. 
+
+     INPUT 
+        plotpar=[ linetype, linecolor, nodemark ]
+
+                 linetype=1 -> solid    linecolor=1 -> black
+                          2 -> dashed             2 -> blue
+                          3 -> dotted             3 -> magenta
+                                                  4 -> red
+
+                 nodemark=1 -> circle       
+                          2 -> star               
+                          0 -> no mark             
+     OUTPUT
+         s1: linetype and color for mesh lines
+         s2: type and color for node markers
+    -------------------------------------------------------------
+
+     LAST MODIFIED: Ola Dahlblom 2004-09-15
+     Copyright (c)  Division of Structural Mechanics and
+                    Division of Solid Mechanics.
+                    Lund University
+    -------------------------------------------------------------
+    """
+    if type(plotpar) != list:
+        raise TypeError("plotpar should be a list.")
+    if len(plotpar)!=3:
+        raise ValueError("plotpar needs to be a list of 3 values.")
+
+    p1, p2, p3 = plotpar
+
+    s1 = ''
+    s2 = ''
+
+    if p1 == 1:
+        s1 += '-'
+    elif p1 == 2:
+        s1 += '--'
+    elif p1 == 3:
+        s1 += ':'
+    else:
+        raise ValueError("Invalid value for plotpar[0].")
+
+    if p2 == 1:
+        s1 += 'k'
+    elif p2 == 2:
+        s1 += 'b'
+    elif p2 == 3:
+        s1 += 'm'
+    elif p2 == 4:
+        s1 += 'r'
+    else:
+        raise ValueError("Invalid value for plotpar[1].")
+
+    if p3 == 1:
+        s2 = 'ko'
+    elif p3 == 2:
+        s2 = 'k*'
+    elif p3 == 3:
+        s2 = 'k.'
+    else:
+        raise ValueError("Invalid value for plotpar[2].")
+
+    return s1, s2
+
+def pltstyle2(plotpar):
+    """
+    -------------------------------------------------------------
+     PURPOSE 
+       Define define linetype,linecolor and markertype character codes. 
+
+     INPUT 
+        plotpar=[ linetype, linecolor, nodemark ]
+
+                 linetype=1 -> solid    linecolor=1 -> black
+                          2 -> dashed             2 -> blue
+                          3 -> dotted             3 -> magenta
+                                                  4 -> red
+
+                 nodemark=1 -> circle       
+                          2 -> star               
+                          0 -> no mark             
+     OUTPUT
+         s1: linetype and color for mesh lines
+         s2: type and color for node markers
+    -------------------------------------------------------------
+
+     LAST MODIFIED: Ola Dahlblom 2004-09-15
+     Copyright (c)  Division of Structural Mechanics and
+                    Division of Solid Mechanics.
+                    Lund University
+    -------------------------------------------------------------
+    """
+
+    cfc.check_list_array(plotpar, "plotpar needs to be a list or an array of 3 values.")
+    cfc.check_length(plotpar, 3, "plotpar needs to contain 3 values.")
+
+    p1, p2, p3 = plotpar
+
+    s1 = ''
+    s2 = ''
+
+    line_style = ''
+    line_color = ''
+    node_color = ''
+    node_type = ''
+
+    if p1 == 1:
+        line_style = 'solid'
+    elif p1 == 2:
+        line_style = (0, (5, 5))
+    elif p1 == 3:
+        line_style = 'dotted'
+    else:
+        raise ValueError("Invalid value for plotpar[0].")
+
+    if p2 == 1:
+        line_color = (0, 0, 0)
+    elif p2 == 2:
+        line_color = (0, 0, 1)
+    elif p2 == 3:
+        line_color = (1, 0, 1)
+    elif p2 == 4:
+        line_color = (1, 0, 0)
+    else:
+        raise ValueError("Invalid value for plotpar[1].")
+
+    if p3 == 1:
+        node_color = (0, 0, 0)
+        node_type = 'o'
+    elif p3 == 2:
+        node_color = (0, 0, 0)
+        node_type = '*'
+    elif p3 == 3:
+        node_color = (0, 0, 0)
+        node_type = '.'
+    else:
+        raise ValueError("Invalid value for plotpar[2].")
+
+    return line_color, line_style, node_color, node_type
+
+
+def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
+    """
+    eldisp2(ex,ey,ed,plotpar,sfac)
+    [sfac]=eldisp2(ex,ey,ed,plotpar)
+    [sfac]=eldisp2(ex,ey,ed)
+    -------------------------------------------------------------
+     PURPOSE 
+       Draw the deformed 2D mesh for a number of elements of 
+       the same type. Supported elements are:
+
+               1) -> bar element              2) -> beam el.  
+               3) -> triangular 3 node el.    4) -> quadrilateral 4 node el. 
+               5) -> 8-node isopar. element
+      INPUT
+        ex,ey:.......... nen:   number of element nodes
+                         nel:   number of elements   
+        ed:     element displacement matrix
+
+        plotpar=[  linetype, linecolor, nodemark] 
+
+                 linetype=1 -> solid    linecolor=1 -> black
+                          2 -> dashed             2 -> blue
+                          3 -> dotted             3 -> magenta
+                                                  4 -> red
+                 nodemark=1 -> circle       
+                          2 -> star              
+                          0 -> no mark 
+
+        sfac:  scale factor for displacements 
+
+        Rem. Default if sfac and plotpar is left out is auto magnification 
+             and dashed black lines with circles at nodes -> plotpar=[2 1 1] 
+    -------------------------------------------------------------
+
+     LAST MODIFIED: O Dahlblom 2004-10-01
+                    J Lindemann 2021-12-30 (Python)
+
+     Copyright (c)  Division of Structural Mechanics and
+                    Division of Solid Mechanics.
+                    Lund University
+    -------------------------------------------------------------
+    """
+
+    if ex.shape == ey.shape:
+        if ex.ndim !=1:
+            nen = ex.shape[1]
+
+            if ed.shape[0] != ex.shape[0]:
+                raise ValueError("Check size of ed/ex dimensions.")
+
+            ned = ed.shape[1]
+        else:
+            nen = ex.shape[0]
+            ned = ed.shape[0]
+
+            ex = ex.reshape(1, nen)
+            ey = ey.reshape(1, nen)
+            ed = ed.reshape(1, ned)
+    else:
+        raise ValueError("Check size of ex, ey dimensions.")
+
+
+    dx_max = float(np.max(ex))-float(np.min(ex))
+    dy_max = float(np.max(ey))-float(np.min(ey))
+    dl_max = max(dx_max, dy_max)
+    ed_max = float(np.max(np.max(np.abs(ed))))
+    krel = 0.1
+
+    if sfac is None:
+        sfac = krel*dl_max/ed_max
+
+    k = sfac
+
+    line_color, line_style, node_color, node_style = pltstyle2(plotpar)
+  
+    if nen == 2:
+        if ned == 4:
+            x = np.transpose(ex + k*ed[:, [0, 2]])
+            y = np.transpose(ey + k*ed[:, [1, 3]])
+            xc = np.transpose(x)
+            yc = np.transpose(y)
+        elif ned == 6:
+            x = np.transpose(ex + k*ed[:, [0, 3]])
+            y = np.transpose(ey + k*ed[:, [1, 4]])
+            exc, eyc = beam2crd(ex, ey, ed, k)
+            xc = exc
+            yc = eyc
+    elif nen == 3:
+        pass
+    elif nen == 4:
+        pass
+    elif nen == 8:
+        pass
+    else:
+        print("Error: Element type is not supported.")
+        return
+
+    draw_elements(xc, yc, color=line_color,
+                  line_style=line_style, filled=False, closed=False)
+
+    if node_style != '':
+        draw_node_circles(x, y, color=node_color,
+                          filled=False, marker_type=node_style)
+
+
+
+# % ********** Bar or Beam elements *************
+#     if nen==2
+#        if ned==4  % -----------  Bar elements -------------
+#           x=(ex+k*ed(:,[1 3]))';
+#           y=(ey+k*ed(:,[2 4]))';
+#           xc=x;
+#           yc=y;
+#        elseif ned==6  % -------- Beam elements ------------
+#           x=(ex+k*ed(:,[1 4]))';
+#           y=(ey+k*ed(:,[2 5]))';
+#           [exc,eyc]=beam2crd(ex,ey,ed,k);
+#           xc=exc';
+#           yc=eyc';
+#        end
+# % ********* 2D triangular elements ************
+#     elseif nen==3
+#        x=(ex+k*ed(:,[1 3 5]))';
+#        y=(ey+k*ed(:,[2 4 6]))';
+#        xc=[x; x(1,:)];
+#        yc=[y; y(1,:)];
+
+# % ********* 2D quadrilateral elements *********
+#     elseif nen==4
+#        x=(ex+k*ed(:,[1 3 5 7]))';
+#        y=(ey+k*ed(:,[2 4 6 8]))';
+#        xc=[x; x(1,:)];
+#        yc=[y; y(1,:)];
+#  % ********* 2D 8-node quadratic elements *********
+#     elseif nen==8
+#        x=(ex+k*ed(:,[1 3 5 7 9 11 13 15]));
+#        y=(ey+k*ed(:,[2 4 6 8 10 12 14 16]));
+# %       xc=[x(1); x(5); x(2); x(6); x(3); x(7); x(4); x(8);x(1)];
+# %       yc=[y(1); y(5); y(2); y(6); y(3); y(7); y(4); y(8);y(1)];
+# %
+# % isoparametric elements
+# %
+#     t=-1;
+#     n=0;
+#     for s=-1:0.4:1
+#       n=n+1;
+#       N1=-1/4*(1-t)*(1-s)*(1+t+s);
+#       N2=-1/4*(1+t)*(1-s)*(1-t+s);
+#       N3=-1/4*(1+t)*(1+s)*(1-t-s);
+#       N4=-1/4*(1-t)*(1+s)*(1+t-s);
+#       N5=1/2*(1-t*t)*(1-s);
+#       N6=1/2*(1+t)*(1-s*s);
+#       N7=1/2*(1-t*t)*(1+s);
+#       N8=1/2*(1-t)*(1-s*s);
+#       N=[ N1, N2, N3 ,N4, N5, N6, N7, N8 ];
+
+#       x1(n,:)=N*x';
+#       y1(n,:)=N*y';
+#     end;
+#     xc=[xc x1];
+#     yc=[yc y1];
+#     clear x1
+#     clear y1
+# %
+#     s=1;
+#     n=0;
+#     for t=-1:0.4:1
+#       n=n+1;
+#       N1=-1/4*(1-t)*(1-s)*(1+t+s);
+#       N2=-1/4*(1+t)*(1-s)*(1-t+s);
+#       N3=-1/4*(1+t)*(1+s)*(1-t-s);
+#       N4=-1/4*(1-t)*(1+s)*(1+t-s);
+#       N5=1/2*(1-t*t)*(1-s);
+#       N6=1/2*(1+t)*(1-s*s);
+#       N7=1/2*(1-t*t)*(1+s);
+#       N8=1/2*(1-t)*(1-s*s);
+#       N=[ N1, N2, N3 ,N4, N5, N6, N7, N8 ];
+
+#       x1(n,:)=N*x';
+#       y1(n,:)=N*y';
+#     end;
+#     xc=[xc x1];
+#     yc=[yc y1];
+#     clear x1
+#     clear y1
+# %
+#     t=1;
+#     n=0;
+#     for s=1:-0.4:-1
+#       n=n+1;
+#       N1=-1/4*(1-t)*(1-s)*(1+t+s);
+#       N2=-1/4*(1+t)*(1-s)*(1-t+s);
+#       N3=-1/4*(1+t)*(1+s)*(1-t-s);
+#       N4=-1/4*(1-t)*(1+s)*(1+t-s);
+#       N5=1/2*(1-t*t)*(1-s);
+#       N6=1/2*(1+t)*(1-s*s);
+#       N7=1/2*(1-t*t)*(1+s);
+#       N8=1/2*(1-t)*(1-s*s);
+#       N=[ N1, N2, N3 ,N4, N5, N6, N7, N8 ];
+
+#       x1(n,:)=N*x';
+#       y1(n,:)=N*y';
+#     end;
+#     xc=[xc x1];
+#     yc=[yc y1];
+#     clear x1
+#     clear y1
+# %
+#     s=-1;
+#     n=0;
+#     for t=1:-0.4:-1
+#       n=n+1;
+#       N1=-1/4*(1-t)*(1-s)*(1+t+s);
+#       N2=-1/4*(1+t)*(1-s)*(1-t+s);
+#       N3=-1/4*(1+t)*(1+s)*(1-t-s);
+#       N4=-1/4*(1-t)*(1+s)*(1+t-s);
+#       N5=1/2*(1-t*t)*(1-s);
+#       N6=1/2*(1+t)*(1-s*s);
+#       N7=1/2*(1-t*t)*(1+s);
+#       N8=1/2*(1-t)*(1-s*s);
+#       N=[ N1, N2, N3 ,N4, N5, N6, N7, N8 ];
+
+#       x1(n,:)=N*x';
+#       y1(n,:)=N*y';
+#     end;
+#     xc=[xc x1];
+#     yc=[yc y1];
+#     clear x1
+#     clear y1
+# %
+# %**********************************************************
+#     else
+#        disp('Sorry, this element is currently not supported!')
+#        return
+#     end
+# % ************* plot commands *******************
+#     hold on
+#     axis equal
+#     plot(xc,yc,s1)
+#     plot(x,y,s2)
+#     hold off
+# %--------------------------end--------------------------------
