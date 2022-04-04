@@ -83,7 +83,7 @@ def figure(figure=None, show=True, fig_size=(4, 3)):
         f = plt.figure(figsize=fig_size)
     else:
         try:
-            f = plt.figure(figure)
+            f = plt.figure(figure.number)
         except:
             f = plt.figure(figsize=fig_size)
 
@@ -95,6 +95,7 @@ def figure(figure=None, show=True, fig_size=(4, 3)):
 
 def figure_widget(fig, parent=None):
     widget = FigureCanvas(fig)
+    widget.axes = fig.add_subplot(111)
     if parent != None:
         widget.setParent(parent)
     toolbar = NavigationToolbar(widget, widget)
@@ -143,6 +144,10 @@ showAndWait = show_and_wait
 
 def show_and_wait_mpl():
     """Wait for plot to show"""
+    plt.show()
+
+def show():
+    """Use in Qt applications"""
     plt.show()
 
 
@@ -772,7 +777,7 @@ def draw_nodal_values_shaded(values, coords, edof, title=None, dofs_per_node=Non
 draw_nodal_values = draw_nodal_values_contourf
 
 
-def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20, rel_margin=0.05, draw_axis=False):
+def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=True, title=None, font_size=11, N=20, rel_margin=0.05, draw_axis=False, axes=None):
     '''
     Draws the geometry (points and curves) in geoData
     Args:
@@ -796,7 +801,11 @@ def draw_geometry(geometry, draw_points=True, label_points=True, label_curves=Tr
             Extra spacing between geometry and axis
     '''
 
-    ax = plt.gca()
+    if axes is None:
+        ax = plt.gca()
+    else:
+        ax = axes
+        
     ax.set_aspect('equal')
     ax.set_frame_on(draw_axis)
 

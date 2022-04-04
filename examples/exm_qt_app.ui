@@ -266,7 +266,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="middleLayout" stretch="">
+         <layout class="QHBoxLayout" name="middleLayout">
           <property name="leftMargin">
            <number>8</number>
           </property>

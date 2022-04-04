@@ -12,7 +12,7 @@ print("CALFEM/Python ui module initialising")
 print("------------------------------------")
 print()
 
-from qtpy.QtCore import Slot, Signal
+from qtpy.QtCore import Slot, Signal, QThread
 from qtpy.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
 from qtpy.QtGui import QPixmap
 from qtpy.uic import loadUi

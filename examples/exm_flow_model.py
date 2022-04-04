@@ -45,13 +45,16 @@ g.point([0, h])             # point 8
 
 # ----- Create lines between points ------------------------------
 
+left_side = 80
+right_side = 90
+
 g.spline([0, 1])
 g.spline([1, 2])
-g.spline([2, 3], marker=80)     # marker just to name
+g.spline([2, 3], marker=left_side)     # marker just to name
 g.spline([3, 4])
 g.spline([4, 5])
 g.spline([5, 6])
-g.spline([6, 7], marker=90)
+g.spline([6, 7], marker=right_side)
 g.spline([7, 0])
 
 # ----- Make surface area ----------------------------------------
@@ -93,8 +96,8 @@ f = np.zeros([nDofs, 1])
 bc = np.array([], int)
 bcVal = np.array([], int)
 
-bc, bcVal = cfu.applybc(bdofs, bc, bcVal, 80, 0.0)
-bc, bcVal = cfu.applybc(bdofs, bc, bcVal, 90, 10.0)
+bc, bcVal = cfu.applybc(bdofs, bc, bcVal, left_side, 0.0)
+bc, bcVal = cfu.applybc(bdofs, bc, bcVal, right_side, 10.0)
 
 # ----- Solve equation system ------------------------------------
 

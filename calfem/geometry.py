@@ -39,7 +39,7 @@ class Geometry:
 
     def removeCurve(self, ID):
         '''Removes the curve with this ID'''
-        self.curve.pop(ID)
+        self.curves.pop(ID)
 
     def removeSurface(self, ID):
         '''Removes the surface with this ID'''
