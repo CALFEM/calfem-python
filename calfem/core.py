@@ -136,7 +136,7 @@ def bar2e(ex, ey, ep):
     A = ep[1]
 
     b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
 
     Kle = np.mat([[1., -1.], [-1., 1.]])*E*A/L
 
@@ -168,7 +168,8 @@ def bar2g(ex, ey, ep, N):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+
+    L = np.sqrt(b.T*b).item()
 
     n = np.asarray(b.T/L).reshape(2,)
 
@@ -208,7 +209,7 @@ def bar2s(ex, ey, ep, ed):
     A = ep[1]
 
     b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
 
     #Kle = np.mat([[1.,-1.],[-1.,1.]])*E*A/L
 
@@ -221,7 +222,7 @@ def bar2s(ex, ey, ep, ed):
 
     u = np.asmatrix(ed).T
     N = E*A/L*np.mat([[-1., 1.]])*G*u
-    return np.asscalar(N)
+    return N.item()
 
 
 def bar3e(ex, ey, ez, ep):
@@ -242,7 +243,7 @@ def bar3e(ex, ey, ez, ep):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
 
     n = np.asarray(b.T/L).reshape(3)
 
@@ -278,7 +279,7 @@ def bar3s(ex, ey, ez, ep, ed):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
 
     n = np.asarray(b.T/L).reshape(3)
 
@@ -295,7 +296,7 @@ def bar3s(ex, ey, ez, ep, ed):
     u = np.asmatrix(ed).T
     N = E*A/L*np.mat([[-1., 1.]])*G*u
 
-    return np.asscalar(N)
+    return N.item()
 
 
 def beam2e(ex, ey, ep, eq=None):
@@ -311,7 +312,7 @@ def beam2e(ex, ey, ep, eq=None):
     """
 
     b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b.T/L).reshape(2,)
 
     E = ep[0]
@@ -395,7 +396,7 @@ def beam2s(ex, ey, ep, ed, eq=None, nep=None):
         [ey[1]-ey[0]]
     ])
 
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b.T/L).reshape(2,)
 
     qx = 0.
@@ -483,7 +484,7 @@ def beam2t(ex, ey, ep, eq=None):
     """
 
     b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b.T/L).reshape(2)
 
     E = ep[0]
@@ -580,7 +581,7 @@ def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b.T/L).reshape(2)
 
     qx = 0.
@@ -674,7 +675,7 @@ def beam2w(ex, ey, ep, eq=None):
         fe                  element load vector (6 x 1)
     """
     b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b/L).reshape(2)
 
     E, A, I, ka, kt = ep
@@ -757,7 +758,7 @@ def beam2ws(ex, ey, ep, ed, eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b/L).reshape(2,)
 
     E, A, I, ka, kt = ep
@@ -845,7 +846,7 @@ def beam2g(ex, ey, ep, N, eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b/L).reshape(2,)
 
     E, A, I = ep
@@ -939,7 +940,7 @@ def beam2gs(ex, ey, ep, ed, N, eq=None):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b/L).reshape(2,)
 
     E, A, I = ep
@@ -1028,7 +1029,7 @@ def beam2d(ex, ey, ep):
         [ex[1]-ex[0]],
         [ey[1]-ey[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n = np.asarray(b/L).reshape(2,)
 
     a = 0
@@ -1112,11 +1113,11 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n1 = np.asarray(b.T/L).reshape(3,)
 
     eo = np.asmatrix(eo)
-    lc = np.asscalar(np.sqrt(eo*eo.T))
+    lc = np.sqrt(eo*eo.T).item()
     n3 = np.asarray(eo/lc).reshape(3,)
 
     E, Gs, A, Iy, Iz, Kv = ep
@@ -1251,11 +1252,11 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, n=None):
         [ey[1]-ey[0]],
         [ez[1]-ez[0]]
     ])
-    L = np.asscalar(np.sqrt(b.T*b))
+    L = np.sqrt(b.T*b).item()
     n1 = np.asarray(b.T/L).reshape(3,)
 
     eo = np.asmatrix(eo)
-    lc = np.asscalar(np.sqrt(eo*eo.T))
+    lc = np.sqrt(eo*eo.T).item()
     n3 = np.asarray(eo/lc).reshape(3,)
 
     EA = ep[0]*ep[2]
@@ -1735,7 +1736,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
             info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1, :])
         B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
         fe1 = fe1+N[i, :].T*detJ*wp[i]
 
     if eq == None:
@@ -2011,7 +2012,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
             info("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1, :])
         B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
         fe1 = fe1+N[i, :].T*detJ*wp[i]
 
     if eq != None:
@@ -2316,7 +2317,7 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
             info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1, :])
         B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*np.asscalar(wp[i])
+        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
         fe1 = fe1+N[i, :].T*detJ*wp[i]
 
     if eq != None:
@@ -3190,8 +3191,8 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1+B.T*Dm*B*detJ*np.asscalar(wp[i])*t
-            fe1 = fe1 + N2.T * q * detJ * np.asscalar(wp[i]) * t
+            Ke1 = Ke1+B.T*Dm*B*detJ*wp[i].item()*t
+            fe1 = fe1 + N2.T * q * detJ * wp[i].item() * t
 
         return Ke1, fe1
 #--------- plane strain --------------------------------------
