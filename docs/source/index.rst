@@ -3,8 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to CALFEM for Python's documentation!
-=============================================
+.. image:: images/calfem.logo.png
+   :scale: 20 %
+
+CALFEM for Python - Documentation
+=================================
+
+Welcome to the documentation for CALFEM for Python. On this page you will find examples of how to use CALFEM for Python as well as reference documentation for the different modules contained in the CALFEM for Python distribution. This is not a replacement for the CALFEM Manual, but contain information on how to use CALFEM in a Python context.
 
 Contents:
 ---------

@@ -5,3 +5,4 @@ calfem-python
 ipython_genutils==0.1.0
 sphinx==4.0.2
 nbsphinx==0.8.6
+sphinx-material
