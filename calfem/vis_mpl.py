@@ -1580,3 +1580,128 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
 #     plot(x,y,s2)
 #     hold off
 # %--------------------------end--------------------------------
+
+def secforce2(ex, ey, es, plotpar=None, sfac=None, eci = None):
+    """
+    --------------------------------------------------------------------------
+     PURPOSE:
+      Draw section force diagram for a two dimensional bar or beam element.
+
+     INPUT:
+        ex = [ x1 x2 ]
+        ey = [ y1 y2 ]	element node coordinates.
+
+        es = [ S1;
+               S2;
+             ... ] 	vector containing the section force
+                    in Nbr evaluation points along the element.
+
+        plotpar=[linecolour, elementcolour]
+
+                linecolour=1 -> black     elementcolour=1 -> black
+                           2 -> blue                    2 -> blue
+                           3 -> magenta                 3 -> magenta
+                           4 -> red                     4 -> red
+
+        sfac = [scalar]	scale factor for section force diagrams.
+
+        eci = [  x1;
+                x2;
+               ... ]  local x-coordinates of the evaluation points (Nbr).
+           If not given, the evaluation points are assumed to be uniformly
+           distributed
+    """
+
+    if ex.shape == ey.shape:
+        if ex.ndim !=1:
+            nen = ex.shape[1]
+        else:
+            nen = ex.shape[0]
+
+            ex = ex.reshape(1, nen)
+            ey = ey.reshape(1, nen)
+    else:
+        raise ValueError("Check size of ex, ey dimensions.")
+
+    #bar2s returns a float - convert it to array
+    if isinstance(es, float):
+        es = np.array([es,es]).reshape(2,1)
+
+    Nbr = es.shape[0]
+    b = np.array([ex[0,1]-ex[0,0],ey[0,1]-ey[0,0]])
+    Length = np.sqrt(b@b)
+    n = (b/Length).reshape(1,len(b))
+
+    if plotpar is None:
+        mpl_diagram_color = (0, 0, 1)  # 'b'
+        mpl_elem_color = (0, 0, 0)  # 'k'
+    elif len(plotpar) != 2:
+        raise ValueError('Check size of "plotpar" input argument!')
+    else:
+        p1, p2 = plotpar
+        if p1 == 1:
+            mpl_diagram_color = (0, 0, 0) # 'k'
+        elif p1 == 2:
+            mpl_diagram_color = (0, 0, 1) # 'b'
+        elif p1 == 3:
+            mpl_diagram_color = (1, 0, 1) # 'm'
+        elif p1 == 4:
+            mpl_diagram_color = (1, 0, 0) # 'r'
+
+        if p2 == 1:
+            mpl_elem_color = (0, 0, 0) # 'k'
+        elif p2 == 2:
+            mpl_elem_color = (0, 0, 1) # 'b'
+        elif p2 == 3:
+            mpl_elem_color = (1, 0, 1) # 'm'
+        elif p2 == 4:
+            mpl_elem_color = (1, 0, 0) # 'r'
+
+
+    if sfac is None:
+        sfac=(0.2*Length)/np.max(np.abs(es))
+
+    if eci is None:
+        eci = np.linspace(0,Length,Nbr).reshape(Nbr,1)
+
+    if es.shape[0] != eci.shape[0]:
+        raise ValueError("Check size of 'es' or 'eci' input argument!")
+
+    es *= sfac
+
+    # From local x-coordinates to global coordinates of the element
+    A = np.zeros([Nbr,2])
+    A = [ex[0][0], ey[0][0]] + eci@n
+    Ax = np.zeros([Nbr-1,2])
+    Ax[:,0] = A[:-1,0]
+    Ax[:,1] = A[1:,0]
+    Ay = np.zeros([Nbr-1,2])
+    Ay[:,0] = A[:-1,1]
+    Ay[:,1] = A[1:,1]
+
+
+    Bx=np.copy(Ax)
+    By=np.copy(Ay)
+    for i in range(Nbr-1):
+        Ax[i,:] = [ Ax[i,0]+es[i]*n[0,1], Ax[i,1]+es[i+1]*n[0,1] ]
+        Ay[i,:] = [ Ay[i,0]-es[i]*n[0,0], Ay[i,1]-es[i+1]*n[0,0] ]
+
+    #plot diagram and its vertical stripes at the ends
+    plt.axis('equal')
+    draw_elements(Ax, Ay, color=mpl_diagram_color,
+                  line_style='solid', filled=False, closed=False)
+
+    draw_elements(np.array([ex[0][0], Ax[0,0]]).reshape(1,2), np.array([ey[0][0], Ay[0,0]]).reshape(1,2), color=mpl_diagram_color,
+                  line_style='solid', filled=False, closed=False)
+    draw_elements(np.array([ex[0][1], Ax[-1,-1]]).reshape(1,2), np.array([ey[0][1], Ay[-1,-1]]).reshape(1,2), color=mpl_diagram_color,
+                  line_style='solid', filled=False, closed=False)
+
+    #plot stripes in diagram
+    for i in range(0,Nbr-2):
+        np.array([Bx[i,1], Ax[i,1]]).reshape(1,2), np.array([By[i,1], Ay[i,1]]).reshape(1,2)
+        draw_elements(np.array([Bx[i,1], Ax[i,1]]).reshape(1,2), np.array([By[i,1], Ay[i,1]]).reshape(1,2), color=mpl_diagram_color,
+                  line_style='solid', filled=False, closed=False)
+
+    #plot elements
+    draw_elements(ex, ey, color=mpl_elem_color,
+                  line_style='solid', filled=False, closed=False)
