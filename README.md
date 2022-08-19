@@ -6,9 +6,9 @@
 
 ## Manuals
 
-Original manual: [manual.pdf](https://github.com/CALFEM/calfem-python/raw/master/manual.pdf)
+Original manual: [manual.pdf](https://github.com/CALFEM/calfem-python/tree/master/reports/manual.pdf)
 
-Manual for with improved mesh: [manual-mesh-module.pdf](https://github.com/CALFEM/calfem-python/raw/master/manual-mesh-module.pdf)
+Manual for with improved mesh: [manual-mesh-module.pdf](https://github.com/CALFEM/calfem-python/tree/master/reports/manual-mesh-module.pdf)
 
 ## Background
 
