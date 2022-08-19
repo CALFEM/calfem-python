@@ -6,6 +6,7 @@ Contains all the functions implementing CALFEM standard functionality
 """
 
 from scipy.sparse.linalg import dsolve
+from scipy.linalg import eig
 import numpy as np
 
 import logging as cflog
@@ -297,6 +298,113 @@ def bar3s(ex, ey, ez, ep, ed):
     N = E*A/L*np.mat([[-1., 1.]])*G*u
 
     return N.item()
+
+def beam1e(ex, ep, eq=None):
+    """
+    Compute the stiffness matrix for a one dimensional beam element.
+
+    :param list ex: element x coordinates [x1, x2]
+    :param list ep: element properties [E, I], E - Young's modulus, I - Moment of inertia
+    :param float eq: distributed load [qy]
+    :return mat Ke: element stiffness matrix [4 x 4]
+    :return mat fe: element stiffness matrix [4 x 1] (if eq!=None)
+    """
+    L = ex[1]-ex[0]
+
+    E = ep[0]
+    I = ep[1]
+
+    qy = 0.
+    if not eq is None:
+        qy = eq
+
+    Ke = E*I/(L**3) * np.mat([
+        [12,    6*L,    -12,    6*L],
+        [6*L,   4*L**2, -6*L,   2*L**2],
+        [-12,   -6*L,   12,     -6*L],
+        [6*L,   2*L**2, -6*L,   4*L**2]
+    ])
+
+    fe = qy*np.mat([L/2, L**2/12, L/2, -L**2/12]).T
+
+    if eq is None:
+        return Ke
+    else:
+        return Ke, fe
+
+def beam1s(ex, ep, ed, eq=None, nep=None):
+    """
+    Compute section forces in one dimensional beam element (beam1e).
+
+    Parameters:
+
+        ex = [x1 x2]        element node coordinates
+
+        ep = [E I]          element properties,
+                            E:  Young's modulus
+                            I:  moment of inertia
+
+        ed = [u1 ... u4]    element displacements
+
+        eq = qy             distributed load, local directions
+
+        nep                 number of evaluation points ( default=2 )
+
+    Returns:
+
+        es = [ V1 M1        section forces, local directions, in
+               V2 M2        n points along the beam, dim(es)= n x 2
+               .........]
+
+        edi = [ v1          element displacements, local directions,
+                v2          in n points along the beam, dim(es)= n x 1
+                .......]
+
+            eci = [ x1      local x-coordinates of the evaluation
+                    x2      points, (x1=0 and xn=L)
+                    ...]
+
+    """
+    EI = ep[0]*ep[1]
+    L = ex[1]-ex[0]
+
+    qy = 0.
+
+    if not eq is None:
+        qy = eq
+
+    ne = 2
+
+    if nep != None:
+        ne = nep
+
+    Cinv = np.mat([
+        [1, 0,  0,  0],
+        [0, 1,  0,  0],
+        [-3/(L**2), -2/L,   3/(L**2),   -1/L],
+        [2/(L**3),  1/(L**2),   -2/(L**3),  1/(L**2)]
+    ])
+
+    Ca = (Cinv@ed).T
+
+    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    zero = np.asmatrix(np.zeros([len(x)])).T
+    one = np.asmatrix(np.ones([len(x)])).T
+
+    v = np.concatenate((one, x, np.power(x, 2), np.power(x, 3)), 1)@Ca \
+                        + qy/(24*EI)*(np.power(x,4) - 2*L*np.power(x,3) + (L**2)*np.power(x,2))
+    d2v = np.concatenate((zero, zero, 2*one, 6*x), 1)@Ca \
+                        + qy/(2*EI)*(np.power(x,2) - L*x + L**2/12)
+    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca - qy*(x - L/2)
+
+    M = EI*d2v
+    V = -EI*d3v
+    edi = v
+    eci = x
+    es = np.concatenate((V, M), 1)
+
+    return (es, edi, eci)
+
 
 
 def beam2e(ex, ey, ep, eq=None):
@@ -3779,6 +3887,53 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     Q = K*a_m-f
     info("done...")
     return (a_m, Q)
+
+
+def eigen(K,M,b=None):
+    """
+    Solve the generalized eigenvalue problem
+    |K-LM|X = 0, considering boundary conditions
+
+    Parameters:
+
+        K           global stiffness matrix, dim(K) = ndof x ndof
+        M           global mass matrix, dim(M) = ndof x ndof
+        b           boundary condition vector, dim(b) = nbc x 1
+
+    Returns:
+
+        L           eigenvalue vector, dim(L) = (ndof-nbc) x 1
+        X           eigenvectors, dim(X) = ndof x (ndof-nbc)
+    """
+    nd, _ = K.shape
+    if b is not None:
+        fdof = np.setdiff1d(np.arange(nd), b-1)
+        D, X1 = eig(K[np.ix_(fdof,fdof)], M[np.ix_(fdof,fdof)])
+        D = np.real(D)
+        nfdof, _ = X1.shape
+        for j in range(nfdof):
+            mnorm = np.sqrt(X1[:,j].T@M[np.ix_(fdof,fdof)]@X1[:,j])
+            X1[:,j] /= mnorm
+        s_order = np.argsort(D)
+        L = np.sort(D)
+        X2 = np.zeros(X1.shape)
+        for ind,j in enumerate(s_order):
+            X2[:,ind] = X1[:,j]
+        X = np.zeros((nd,nfdof))
+        X[fdof,:] = X2
+        return L, X
+    else:
+        D, X1 = eig(K, M)
+        D = np.real(D)
+        for j in range(nd):
+            mnorm = np.sqrt(X1[:,j].T@M@X1[:,j])
+            X1[:,j] /= mnorm
+        s_order = np.argsort(D)
+        L = np.sort(D)
+        X = np.copy(X1)
+        for ind,j in enumerate(s_order):
+            X[:,ind] = X1[:,j]
+        return L, X
 
 
 def extract_eldisp(edof, a):
