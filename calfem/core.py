@@ -6,6 +6,7 @@ Contains all the functions implementing CALFEM standard functionality
 """
 
 from scipy.sparse.linalg import dsolve
+from scipy.linalg import eig
 import numpy as np
 
 import logging as cflog
@@ -3779,6 +3780,53 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     Q = K*a_m-f
     info("done...")
     return (a_m, Q)
+
+
+def eigen(K,M,b=None):
+    """
+    Solve the generalized eigenvalue problem
+    |K-LM|X = 0, considering boundary conditions
+
+    Parameters:
+
+        K           global stiffness matrix, dim(K) = ndof x ndof
+        M           global mass matrix, dim(M) = ndof x ndof
+        b           boundary condition vector, dim(b) = nbc x 1
+
+    Returns:
+
+        L           eigenvalue vector, dim(L) = (ndof-nbc) x 1
+        X           eigenvectors, dim(X) = ndof x (ndof-nbc)
+    """
+    nd, _ = K.shape
+    if b is not None:
+        fdof = np.setdiff1d(np.arange(nd), b-1)
+        D, X1 = eig(K[np.ix_(fdof,fdof)], M[np.ix_(fdof,fdof)])
+        D = np.real(D)
+        nfdof, _ = X1.shape
+        for j in range(nfdof):
+            mnorm = np.sqrt(X1[:,j].T@M[np.ix_(fdof,fdof)]@X1[:,j])
+            X1[:,j] /= mnorm
+        s_order = np.argsort(D)
+        L = np.sort(D)
+        X2 = np.zeros(X1.shape)
+        for ind,j in enumerate(s_order):
+            X2[:,ind] = X1[:,j]
+        X = np.zeros((nd,nfdof))
+        X[fdof,:] = X2
+        return L, X
+    else:
+        D, X1 = eig(K, M)
+        D = np.real(D)
+        for j in range(nd):
+            mnorm = np.sqrt(X1[:,j].T@M@X1[:,j])
+            X1[:,j] /= mnorm
+        s_order = np.argsort(D)
+        L = np.sort(D)
+        X = np.copy(X1)
+        for ind,j in enumerate(s_order):
+            X[:,ind] = X1[:,j]
+        return L, X
 
 
 def extract_eldisp(edof, a):
