@@ -2662,7 +2662,7 @@ def plante(ex, ey, ep, D, eq=None):
         if eq is None:
             return Ke
         else:
-            return Ke, fe.T
+            return Ke, fe
 
     #--------- plane strain --------------------------------------
 
@@ -2686,7 +2686,7 @@ def plante(ex, ey, ep, D, eq=None):
         if eq == None:
             return Ke
         else:
-            return Ke, fe.T
+            return Ke, fe
 
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
