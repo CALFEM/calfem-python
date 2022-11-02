@@ -42,7 +42,7 @@ setup(
 
     # Author details
     author='Jonas Lindemann, et al',
-    author_email='jonas.lindemann@byggmek.lth.se',
+    author_email='jonas.lindemann@lunarc.lu.se',
 
     # Choose your license
     license='MIT',
