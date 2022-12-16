@@ -11,7 +11,7 @@ import calfem.core as cfc
 import calfem.vis_mpl as cfv
 
 # ----- Generate the model ---------------------------------------
-# ----- Material data ---------------------------------------------
+# ----- Material data --------------------------------------------
 E = 3e10
 Av=0.1030e-2
 Ah=0.0764e-2
@@ -59,46 +59,46 @@ for elx, ely, eltopo, elprop in zip(ex, ey, edof, ep):
     cfc.assem(eltopo, K, Ke)
     cfc.assem(eltopo, M, Me)
 
-# ----- Draw a plot of the element mesh --------------------------
-cfv.figure(1,fig_size=(5.5, 4.5))
-cfv.eldraw2(ex,ey,[1, 2, 1])
-cfv.title('2-D Frame Structure')
-
 # ----- Eigenvalue analysis --------------------------------------
 b = np.array([1, 2, 3, 14])
 La, Egv = cfc.eigen(K,M,b)
 freq = np.sqrt(La)/(2*np.pi)
 
-# ----- Plot one eigenmode ---------------------------------------
-cfv.figure(2,fig_size=(5.5, 4.5))
-cfv.eldraw2(ex,ey,[2, 3, 1])
-Edb = cfc.extract_ed(edof, Egv[:,0])
-cfv.eldisp2(ex,ey,Edb,[1, 2, 2])
-cfv.title('The first eigenmode')
-cfv.text(f"{freq[0]:.2f}", [0.5,1.75])
-ax = cfv.gca()
-ax.grid()
+if __name__=='__main__':
+    # ----- Draw a plot of the element mesh --------------------------
+    cfv.figure(1,fig_size=(5.5, 4.5))
+    cfv.eldraw2(ex,ey,[1, 2, 1])
+    cfv.title('2-D Frame Structure')
 
+    # ----- Plot one eigenmode ---------------------------------------
+    cfv.figure(2,fig_size=(5.5, 4.5))
+    cfv.eldraw2(ex,ey,[2, 3, 1])
+    Edb = cfc.extract_ed(edof, Egv[:,0])
+    cfv.eldisp2(ex,ey,Edb,[1, 2, 2])
+    cfv.title('The first eigenmode')
+    cfv.text(f"{freq[0]:.2f}", [0.5,1.75])
+    ax = cfv.gca()
+    ax.grid()
 
-# ----- Plot eight eigenmodes ------------------------------------
-cfv.figure(3,fig_size=(7,5))
-for i in range(4):
-    Edb = cfc.extract_ed(edof,Egv[:,i])
-    ext = ex+i*3
-    cfv.eldraw2(ext,ey,[2,3,1])
-    cfv.eldisp2(ext,ey,Edb,[1,2,2],sfac=0.5)
-    cfv.text(f"{freq[i]:.2f}", [3*i+0.5,1.5])
-eyt = ey-4
-for i in range(4,8):
-    Edb = cfc.extract_ed(edof,Egv[:,i])
-    ext = ex+(i-4)*3
-    cfv.eldraw2(ext,eyt,[2,3,1])
-    cfv.eldisp2(ext,eyt,Edb,[1,2,2],sfac=0.5)
-    cfv.text(f"{freq[i]:.2f}", [3*(i-4)+0.5,-2.5])
-cfv.title("The first eight eigenmodes [Hz]")
-ax = cfv.gca()
-ax.set_axis_off()
-cfv.showAndWait()
+    # ----- Plot eight eigenmodes ------------------------------------
+    cfv.figure(3,fig_size=(7,5))
+    for i in range(4):
+        Edb = cfc.extract_ed(edof,Egv[:,i])
+        ext = ex+i*3
+        cfv.eldraw2(ext,ey,[2,3,1])
+        cfv.eldisp2(ext,ey,Edb,[1,2,2],sfac=0.5)
+        cfv.text(f"{freq[i]:.2f}", [3*i+0.5,1.5])
+    eyt = ey-4
+    for i in range(4,8):
+        Edb = cfc.extract_ed(edof,Egv[:,i])
+        ext = ex+(i-4)*3
+        cfv.eldraw2(ext,eyt,[2,3,1])
+        cfv.eldisp2(ext,eyt,Edb,[1,2,2],sfac=0.5)
+        cfv.text(f"{freq[i]:.2f}", [3*(i-4)+0.5,-2.5])
+    cfv.title("The first eight eigenmodes [Hz]")
+    ax = cfv.gca()
+    ax.set_axis_off()
+    cfv.showAndWait()
 
 # ----- End -------------------------------------------------------
 
