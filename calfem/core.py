@@ -307,7 +307,7 @@ def beam1e(ex, ep, eq=None):
     :param list ep: element properties [E, I], E - Young's modulus, I - Moment of inertia
     :param float eq: distributed load [qy]
     :return mat Ke: element stiffness matrix [4 x 4]
-    :return mat fe: element stiffness matrix [4 x 1] (if eq!=None)
+    :return mat fe: element load vector [4 x 1] (if eq!=None)
     """
     L = ex[1]-ex[0]
 
@@ -315,7 +315,7 @@ def beam1e(ex, ep, eq=None):
     I = ep[1]
 
     qy = 0.
-    if not eq is None:
+    if eq:
         qy = eq
 
     Ke = E*I/(L**3) * np.mat([
@@ -370,7 +370,7 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
     qy = 0.
 
-    if not eq is None:
+    if eq:
         qy = eq
 
     ne = 2
@@ -387,15 +387,15 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
     Ca = (Cinv@ed).T
 
-    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    x = np.asmatrix(np.linspace(0., L, nep)).T
     zero = np.asmatrix(np.zeros([len(x)])).T
     one = np.asmatrix(np.ones([len(x)])).T
 
     v = np.concatenate((one, x, np.power(x, 2), np.power(x, 3)), 1)@Ca \
                         + qy/(24*EI)*(np.power(x,4) - 2*L*np.power(x,3) + (L**2)*np.power(x,2))
     d2v = np.concatenate((zero, zero, 2*one, 6*x), 1)@Ca \
-                        + qy/(2*EI)*(np.power(x,2) - L*x + L**2/12)
-    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca - qy*(x - L/2)
+                        + qy/(12*EI)*(6*np.power(x,2) - 6*L*x + L**2)
+    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca + qy/(2*EI)*(2*x - L)
 
     M = EI*d2v
     V = -EI*d3v
