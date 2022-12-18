@@ -226,6 +226,67 @@ def bar2s(ex, ey, ep, ed):
     return N.item()
 
 
+def bar2gs(ex, ey, ep, ed):
+    """
+    Calculate section forces in a two dimensional geometric
+    nonlinear bar element (bar2g).
+    Parameters:
+            ex = [x1 x2]           element node coordinates
+            ey = [y1 y2]
+
+            ep = [E A]           element properties;
+                                     E: Young's modulus
+                                     A: cross section area
+
+            ed = [u1 ... u4]       element displacement vector
+
+    Returns:
+            es = [N1;
+                  N2 ]             section forces, local directions
+
+            QX:                    axial force
+
+            edi = [ u1 ;           element displacements, local directions,
+                    u2 ;           in n points along the bar, dim(es)= n x 1
+                   ...]
+
+            eci = [ x1  ;      local x-coordinates of the evaluation
+                    x2 ;       points, (x1=0 and xn=L)
+                    ...]
+    """
+    EA = ep[0]*ep[1]
+    ne = 2
+
+    dx = ex[1] - ex[0]
+    dy = ey[1] - ey[0]
+    L = np.sqrt(dx**2 + dy**2)
+
+    n = [dx/L, dy/L, -dy/L, dx/L]
+    G = np.array([
+        [n[0], n[1], 0., 0.],
+        [n[2], n[3], 0., 0.],
+        [0., 0., n[0], n[1]],
+        [0., 0., n[2], n[3]]
+    ])
+
+    edl = G@ed.reshape(-1,1)
+    a1 = np.array([edl[0], edl[2]]).reshape(-1,1)
+
+    C1 = np.array([[1., 0.,],
+                  [-1/L, 1/L]])
+    C1a = C1@a1
+
+    x = np.linspace(0,L,ne).reshape(-1,1)
+    zero = np.zeros(x.shape)
+    one = np.ones(x.shape)
+
+    u = np.concatenate((one, x),axis=1)@C1a
+    du = np.concatenate((zero, one),axis=1)@C1a
+
+    N = EA*du
+    return N, N[0].item(), u, x
+
+
 def bar3e(ex, ey, ez, ep):
     """
     Compute element stiffness matrix for three dimensional bar element.
