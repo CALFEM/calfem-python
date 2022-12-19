@@ -4073,7 +4073,7 @@ def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
                                             dim(dofhist['d2ahist']) = ndof x (nstep + 1)
     """
     ndof, _ = K.shape
-    if not C:
+    if not np.array(C).any():
         C = np.zeros((ndof,ndof))
     dt, tottime, alpha, delta = ip
     b1 = dt*dt*0.5*(1-2*alpha)
@@ -4108,7 +4108,7 @@ def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
 
     modelhist = {}
     sa=0
-    if not times.any():
+    if not np.array(times).any():
         ntimes=0
         sa=1
         modelhist['a'] = np.zeros((ndof,nstep+1))
@@ -4123,7 +4123,7 @@ def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
             modelhist['d2a'] = np.zeros((ndof,ntimes))
 
     dofhist = {}
-    if dofs.all():
+    if np.array(dofs).all():
         ndofs = len(dofs)
         if ndofs:
             dofhist['a'] = np.zeros((ndofs,nstep+1))
