@@ -14,67 +14,74 @@
 
 import numpy as np
 import calfem.core as cfc
+import calfem.vis_mpl as cfv
 
 # ----- Topology -------------------------------------------------
 
 edof = np.array([
-    [1, 2, 3, 4, 5, 6],
-    [4, 5, 6, 7, 8, 9],
-    [7, 8, 9, 10, 11, 12]
+    [1, 2, 3, 4],
+    [3, 4, 5, 6],
 ])
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K = np.mat(np.zeros((12, 12)))
-f = np.mat(np.zeros((12, 1)))
-f[4] = -10000.
+K = np.mat(np.zeros((6, 6)))
+f = np.mat(np.zeros((6, 1)))
+f[2] = -10000.
 
 # ----- Element stiffness matrices  ------------------------------
 
 E = 2.1e11
-A = 45.3e-4
 I = 2510e-8
-ep = np.array([E, A, I])
-ex = np.array([0., 3.])
-ey = np.array([0., 0.])
-
-Ke = cfc.beam2e(ex, ey, ep)
-
-print(Ke)
+ep = np.array([E, I])
+ex1 = np.array([0., 3.])
+ex2 = np.array([3., 9.])
+Ke1 = cfc.beam1e(ex1, ep)
+Ke2 = cfc.beam1e(ex2, ep)
 
 # ----- Assemble Ke into K ---------------------------------------
 
-K = cfc.assem(edof, K, Ke)
+K = cfc.assem(edof[0,:], K, Ke1)
+K = cfc.assem(edof[1,:], K, Ke2)
 
 # ----- Solve the system of equations and compute support forces -
 
-bc = np.array([1, 2, 11])
+bc = np.array([1, 5])
 (a, r) = cfc.solveq(K, f, bc)
 
 # ----- Section forces -------------------------------------------
 
 ed = cfc.extract_ed(edof, a)
 
-es1, ed1, ec1 = cfc.beam2s(ex, ey, ep, ed[0, :], nep=10)
-es2, ed2, ec2 = cfc.beam2s(ex, ey, ep, ed[1, :], nep=10)
-es3, ed3, ec3 = cfc.beam2s(ex, ey, ep, ed[2, :], nep=10)
+es1, ed1, ec1 = cfc.beam1s(ex1, ep, ed[0, :], nep=10)
+es2, ed2, ec2 = cfc.beam1s(ex2, ep, ed[1, :], nep=10)
 
-# ----- Results --------------------------------------------------
+es = np.vstack(([0,0],es1,es2,[0,0]))
+eD = np.vstack((0,ed1,ed2,0))
+ec = np.vstack((ex1[0],ec1+ex1[0],ec2+ex2[0],ex2[1]))
 
-print("a=")
-print(a)
-print("r=")
-print(r)
-print("es1=")
-print(es1)
-print("es2=")
-print(es2)
-print("es3=")
-print(es3)
+# ----- Draw deformed beam ----------------------------------------
+cfv.figure(1,fig_size=(6,2.5))
+cfv.plt.plot([0, 9],[0,0],'b',linewidth=0.5)
+cfv.plt.plot(ec,eD,'b')
+cfv.plt.axis([-1,10,-0.03, 0.01])
+cfv.title("Displacements")
 
-print("ed1=")
-print(ed1)
-print("ed2=")
-print(ed2)
-print("ed3=")
-print(ed3)
+# ----- Draw shear force diagram ----------------------------------
+cfv.figure(2,fig_size=(6,2.5))
+cfv.plt.plot([0, 9],[0,0],'b',linewidth=0.5)
+cfv.plt.plot(ec,es[:,0],'b')
+cfv.plt.axis([-1,10,-8000, 5000])
+cfv.title("Shear force")
+cfv.gca().invert_yaxis()
+
+# ----- Draw bending moment diagram -------------------------------
+cfv.figure(3,fig_size=(6,2.5))
+cfv.plt.plot([0, 9],[0,0],'b',linewidth=0.5)
+cfv.plt.plot(ec,es[:,1],'b')
+cfv.plt.axis([-1,10,-5000, 25000])
+cfv.title("Bending moment")
+cfv.gca().invert_yaxis()
+cfv.showAndWait()
+
+#------------------------ end -----------------------------------

@@ -6,7 +6,7 @@ Contains all the functions implementing CALFEM standard functionality
 """
 
 from scipy.sparse.linalg import dsolve
-from scipy.linalg import eig
+from scipy.linalg import eig, lu
 import numpy as np
 
 import logging as cflog
@@ -226,6 +226,67 @@ def bar2s(ex, ey, ep, ed):
     return N.item()
 
 
+def bar2gs(ex, ey, ep, ed):
+    """
+    Calculate section forces in a two dimensional geometric
+    nonlinear bar element (bar2g).
+    Parameters:
+            ex = [x1 x2]           element node coordinates
+            ey = [y1 y2]
+
+            ep = [E A]           element properties;
+                                     E: Young's modulus
+                                     A: cross section area
+
+            ed = [u1 ... u4]       element displacement vector
+
+    Returns:
+            es = [N1;
+                  N2 ]             section forces, local directions
+
+            QX:                    axial force
+
+            edi = [ u1 ;           element displacements, local directions,
+                    u2 ;           in n points along the bar, dim(es)= n x 1
+                   ...]
+
+            eci = [ x1  ;      local x-coordinates of the evaluation
+                    x2 ;       points, (x1=0 and xn=L)
+                    ...]
+    """
+    EA = ep[0]*ep[1]
+    ne = 2
+
+    dx = ex[1] - ex[0]
+    dy = ey[1] - ey[0]
+    L = np.sqrt(dx**2 + dy**2)
+
+    n = [dx/L, dy/L, -dy/L, dx/L]
+    G = np.array([
+        [n[0], n[1], 0., 0.],
+        [n[2], n[3], 0., 0.],
+        [0., 0., n[0], n[1]],
+        [0., 0., n[2], n[3]]
+    ])
+
+    edl = G@ed.reshape(-1,1)
+    a1 = np.array([edl[0], edl[2]]).reshape(-1,1)
+
+    C1 = np.array([[1., 0.,],
+                  [-1/L, 1/L]])
+    C1a = C1@a1
+
+    x = np.linspace(0,L,ne).reshape(-1,1)
+    zero = np.zeros(x.shape)
+    one = np.ones(x.shape)
+
+    u = np.concatenate((one, x),axis=1)@C1a
+    du = np.concatenate((zero, one),axis=1)@C1a
+
+    N = EA*du
+    return N, N[0].item(), u, x
+
+
 def bar3e(ex, ey, ez, ep):
     """
     Compute element stiffness matrix for three dimensional bar element.
@@ -307,7 +368,7 @@ def beam1e(ex, ep, eq=None):
     :param list ep: element properties [E, I], E - Young's modulus, I - Moment of inertia
     :param float eq: distributed load [qy]
     :return mat Ke: element stiffness matrix [4 x 4]
-    :return mat fe: element stiffness matrix [4 x 1] (if eq!=None)
+    :return mat fe: element load vector [4 x 1] (if eq!=None)
     """
     L = ex[1]-ex[0]
 
@@ -315,7 +376,7 @@ def beam1e(ex, ep, eq=None):
     I = ep[1]
 
     qy = 0.
-    if not eq is None:
+    if eq:
         qy = eq
 
     Ke = E*I/(L**3) * np.mat([
@@ -370,7 +431,7 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
     qy = 0.
 
-    if not eq is None:
+    if eq:
         qy = eq
 
     ne = 2
@@ -387,15 +448,15 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
     Ca = (Cinv@ed).T
 
-    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    x = np.asmatrix(np.linspace(0., L, nep)).T
     zero = np.asmatrix(np.zeros([len(x)])).T
     one = np.asmatrix(np.ones([len(x)])).T
 
     v = np.concatenate((one, x, np.power(x, 2), np.power(x, 3)), 1)@Ca \
                         + qy/(24*EI)*(np.power(x,4) - 2*L*np.power(x,3) + (L**2)*np.power(x,2))
     d2v = np.concatenate((zero, zero, 2*one, 6*x), 1)@Ca \
-                        + qy/(2*EI)*(np.power(x,2) - L*x + L**2/12)
-    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca - qy*(x - L/2)
+                        + qy/(12*EI)*(6*np.power(x,2) - 6*L*x + L**2)
+    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca + qy/(2*EI)*(2*x - L)
 
     M = EI*d2v
     V = -EI*d3v
@@ -3922,6 +3983,412 @@ def eigen(K,M,b=None):
         for ind,j in enumerate(s_order):
             X[:,ind] = X1[:,j]
         return L, X
+
+
+def gfunc(G,dt):
+    """
+    Form vector with function values at equally spaced
+    points by linear interpolation
+
+    Parameters:
+
+        G = [t_i, g_i]      t_i: time i, g_i: g(t_i)
+                            dim(G) = np x 2, np = number of points
+        dt                  time step
+
+    Returns:
+
+        t           1-D vector with equally spaced time points
+        g           1-D vector with corresponding function values
+    """
+    ti = np.arange(G[0,0],G[-1,0]+dt,dt)
+    g1 = np.interp(ti,G[:,0],G[:,1])
+    return ti, g1
+
+
+def step1(K,C,f,a0,bc,ip,times,dofs):
+    """
+    Algorithm for dynamic solution of first-order
+    FE equations considering boundary conditions.
+
+    Parameters:
+
+        K           conductivity matrix, dim(K) = ndof x ndof
+        C           capacity matrix, dim(C) = ndof x ndof
+        f           load vector, dim(f) = ndof x (nstep + 1),
+                    If dim(f) = ndof x 1, the values are kept constant
+                    during time integration
+        a0          initial vector a(0), dim(a0) = ndof x 1
+        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
+                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
+                    The first column contains the numbers of the prescribed degrees of freedom
+                    and the subsequent columns contain the time history.
+                    If dim(bc) = nbc x 2, the values from the second column are kept constant
+                    during time integration
+        ip          array [dt, tottime, alpha], where
+                    dt is the size of the time increment,
+                    tottime is the total time,
+                    alpha is time integration constant.
+                    Frequently used values of alpha are:
+                    alpha=0:            forward difference; forward Euler,
+                    alpha=1/2:          trapezoidal rule; Crank-Nicholson
+                    alpha=1:            backward difference; backward Euler
+        times       array [t(i) ...] of times at which output should be written to a and da
+        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
+                    should be written to ahist and dahist
+
+    Returns:
+
+        modelhist   dictionary containing solution history for the whole model at following keys:
+                    modelhist['a']          constains values of a at all timesteps,
+                                            alternatively at times specified in 'times'
+                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
+                    modelhist['da']         constains values of da at all timesteps,
+                                            alternatively at times specified in 'times'
+                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
+        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
+                    dofhist['a']        constains time history of a at the dofs specified in 'dofs'
+                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
+                    dofhist['da']       constains time history of daat the dofs specified in 'dofs'
+                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
+    """
+    ndof, _ = K.shape
+    dt, tottime, alpha = ip
+    a1 = (1-alpha)*dt
+    a2 = alpha*dt
+
+    nstep = 1
+    if np.array(f).any():
+        _, ncf = f.shape
+        if ncf>1:
+            nstep = ncf-1
+
+    if np.array(bc).any():
+        _, ncb = bc.shape
+        if ncb>2:
+            nstep = ncb-2
+        bound = 1
+    if not np.array(bc).any():
+        bound = 0
+
+    ns = int(tottime/dt)
+    if (ns < nstep or nstep==1):
+        nstep=ns
+
+    tf = np.zeros((ndof,nstep+1))
+    if np.array(f).any():
+        if ncf==1:
+            tf = f[:,0].reshape(-1,1)@np.ones((1,nstep+1))
+        if ncf>1:
+            tf = np.copy(f)
+
+    modelhist = {}
+    sa=0
+    if not np.array(times).any():
+        ntimes=0
+        sa=1
+        modelhist['a'] = np.zeros((ndof,nstep+1))
+        modelhist['da'] = np.zeros((ndof,nstep+1))
+    else:
+        ntimes = len(times)
+        if ntimes:
+            sa=2
+            modelhist['a'] = np.zeros((ndof,ntimes))
+            modelhist['da'] = np.zeros((ndof,ntimes))
+
+    dofhist = {}
+    if np.array(dofs).all():
+        ndofs = len(dofs)
+        if ndofs:
+            dofhist['a'] = np.zeros((ndofs,nstep+1))
+            dofhist['da'] = np.zeros((ndofs,nstep+1))
+    else:
+        ndofs=0
+
+    itime = 0
+
+    # Calculate initial second time derivative d2a0
+    da0 = np.linalg.solve(C,tf[:,0].reshape(-1,1) - K@a0)
+    # Save initial values
+    if sa==1:
+        modelhist['a'][:,0] = a0.ravel()
+        modelhist['da'][:,0] = da0.ravel()
+    elif sa==2:
+        if times[itime]==0:
+            modelhist['a'][:,itime] = a0.ravel()
+            modelhist['da'][:,itime] = da0.ravel()
+            itime += 1
+
+    if ndofs:
+        dofhist['a'][:,0] = a0[np.ix_(dofs-1)].ravel()
+        dofhist['da'][:,0] = da0[np.ix_(dofs-1)].ravel()
+
+    # Reduce matrices due to bcs
+    tempa = np.zeros((ndof,1))
+    tempda = np.zeros((ndof,1))
+    fdof=np.arange(1,ndof+1).astype(int)
+    if bound:
+        nrb, ncb = bc.shape
+        if ncb==2:
+            pa = bc[:,1].reshape(-1,1)@np.ones((1,nstep+1))
+            pda = np.zeros((nrb,nstep+1))
+        elif ncb>2:
+            pa = np.copy(bc[:,1:])
+            pda1 = (pa[:,1]-pa[:,0])/dt
+            pdarest = (pa[:,1:] - pa[:,0:-1])/dt
+            pda = np.hstack((pda1.reshape(-1,1),pdarest))
+        pdof = np.copy(bc[:,0]).astype(int)
+        fdof = np.setdiff1d(fdof,pdof).astype(int) - 1
+        pdof -= 1 #adjusting for indexing starting from 0
+        Keff = C[np.ix_(fdof,fdof)] + a2*K[np.ix_(fdof,fdof)]
+    else:
+        fdof -= 1 #adjusting for indexing starting from 0
+        Keff = C + a2*K
+
+    L, U = lu(Keff,permute_l=True)
+    anew = a0[np.ix_(fdof)]
+    danew = da0[np.ix_(fdof)]
+
+    # Iterate over time steps
+    for j in range(1,nstep+1):
+        time = dt*j
+        aold = np.copy(anew)
+        daold = np.copy(danew)
+        apred = aold + a1*daold
+        if not bound:
+            reff = tf[:,j].reshape(-1,1) - K@apred
+        else:
+            pdeff = C[np.ix_(fdof,pdof)]@pda[:,j].reshape(-1,1) + K[np.ix_(fdof,pdof)]@pa[:,j].reshape(-1,1)
+            reff = tf[np.ix_(fdof),j].reshape(-1,1) - K[np.ix_(fdof,fdof)]@apred - pdeff
+        y = np.linalg.solve(L,reff)
+        danew = np.linalg.solve(U,y)
+        anew = apred + a2*danew
+        # Save to modelhist and dofhist
+        if bound:
+            tempa[np.ix_(pdof)] = pa[:,j].reshape(-1,1)
+            tempda[np.ix_(pdof)] = pda[:,j].reshape(-1,1)
+        tempa[np.ix_(fdof)] = anew
+        tempda[np.ix_(fdof)] = danew
+        if sa==1:
+            modelhist['a'][:,j] = tempa.ravel()
+            modelhist['da'][:,j] = tempda.ravel()
+        elif sa==2:
+            if ntimes and itime < ntimes:
+                if time >= times[itime]:
+                    modelhist['a'][:,itime] = tempa.ravel()
+                    modelhist['da'][:,itime] = tempda.ravel()
+                    itime += 1
+            if ndofs:
+                dofhist['a'][:,j] = tempa[np.ix_(dofs-1)].ravel()
+                dofhist['da'][:,j] = tempda[np.ix_(dofs-1)].ravel()
+
+    return modelhist, dofhist
+
+
+def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
+    """
+    Algorithm for dynamic solution of second-order
+    FE equations considering boundary conditions.
+
+    Parameters:
+
+        K           global stiffness matrix, dim(K) = ndof x ndof
+        C           global damping matrix, dim(C) = ndof x ndof
+                    If there is no damping in the system, simply set C=[]
+        M           global mass matrix, dim(M) = ndof x ndof
+        f           global load vector, dim(f) = ndof x (nstep + 1),
+                    If dim(f) = ndof x 1, the values are kept constant
+                    during time integration
+        a0          initial displacement vector a(0), dim(a0) = ndof x 1
+        da0         initial velocity vector v(0), dim(da0) = ndof x 1
+        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
+                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
+                    The first column contains the numbers of the prescribed degrees of freedom
+                    and the subsequent columns contain the time history.
+                    If dim(bc) = nbc x 2, the values from the second column are kept constant
+                    during time integration
+        ip          array [dt, tottime, alpha, delta], where
+                    dt is the size of the time increment,
+                    tottime is the total time,
+                    alpha and delta are time integration constants for the Newmark family of methods.
+                    Frequently used values of alpha and delta are:
+                    alpha=1/4, delta=1/2:       average acceleration (trapezoidal) rule,
+                    alpha=1/6, delta=1/2:       linear acceleration
+                    alpha=0,   delta=1/2:       central difference
+        times       array [t(i) ...] of times at which output should be written to a, da and d2a
+        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
+                    should be written to ahist, dahist and d2ahist
+
+    Returns:
+
+        modelhist   dictionary containing solution history for the whole model at following keys:
+                    modelhist['a']          constains displacement values at all timesteps,
+                                            alternatively at times specified in 'times'
+                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
+                    modelhist['da']         constains velocity values at all timesteps,
+                                            alternatively at times specified in 'times'
+                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
+                    modelhist['d2a']        constains acceleration values at all timesteps,
+                                            alternatively at times specified in 'times'
+                                            dim(modelhist['d2a']) = ndof x (nstep + 1) or ndof x ntimes
+        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
+                    dofhist['a']        constains displacement time history at the dofs specified in 'dofs'
+                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
+                    dofhist['da']       constains velocity time history at the dofs specified in 'dofs'
+                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
+                    dofhist['d2a']      constains acceleration time history at the dofs specified in 'dofs'
+                                            dim(dofhist['d2ahist']) = ndof x (nstep + 1)
+    """
+    ndof, _ = K.shape
+    if not np.array(C).any():
+        C = np.zeros((ndof,ndof))
+    dt, tottime, alpha, delta = ip
+    b1 = dt*dt*0.5*(1-2*alpha)
+    b2 = (1-delta)*dt
+    b3 = delta*dt
+    b4 = alpha*dt*dt
+
+    nstep = 1
+    if np.array(f).any():
+        _, ncf = f.shape
+        if ncf>1:
+            nstep = ncf-1
+
+    if np.array(bc).any():
+        _, ncb = bc.shape
+        if ncb>2:
+            nstep = ncb-2
+        bound = 1
+    if not np.array(bc).any():
+        bound = 0
+
+    ns = int(tottime/dt)
+    if (ns < nstep or nstep==1):
+        nstep=ns
+
+    tf = np.zeros((ndof,nstep+1))
+    if np.array(f).any():
+        if ncf==1:
+            tf = f[:,0].reshape(-1,1)@np.ones((1,nstep+1))
+        if ncf>1:
+            tf = np.copy(f)
+
+    modelhist = {}
+    sa=0
+    if not np.array(times).any():
+        ntimes=0
+        sa=1
+        modelhist['a'] = np.zeros((ndof,nstep+1))
+        modelhist['da'] = np.zeros((ndof,nstep+1))
+        modelhist['d2a'] = np.zeros((ndof,nstep+1))
+    else:
+        ntimes = len(times)
+        if ntimes:
+            sa=2
+            modelhist['a'] = np.zeros((ndof,ntimes))
+            modelhist['da'] = np.zeros((ndof,ntimes))
+            modelhist['d2a'] = np.zeros((ndof,ntimes))
+
+    dofhist = {}
+    if np.array(dofs).all():
+        ndofs = len(dofs)
+        if ndofs:
+            dofhist['a'] = np.zeros((ndofs,nstep+1))
+            dofhist['da'] = np.zeros((ndofs,nstep+1))
+            dofhist['d2a'] = np.zeros((ndofs,nstep+1))
+    else:
+        ndofs=0
+
+    itime = 0
+
+    # Calculate initial second time derivative d2a0
+    d2a0 = np.linalg.solve(M,tf[:,0].reshape(-1,1) - C@da0 - K@a0)
+    # Save initial values
+    if sa==1:
+        modelhist['a'][:,0] = a0.ravel()
+        modelhist['da'][:,0] = da0.ravel()
+        modelhist['d2a'][:,0] = d2a0.ravel()
+    elif sa==2:
+        if times[itime]==0:
+            modelhist['a'][:,itime] = a0.ravel()
+            modelhist['da'][:,itime] = da0.ravel()
+            modelhist['d2a'][:,itime] = d2a0.ravel()
+            itime += 1
+
+    if ndofs:
+        dofhist['a'][:,0] = a0[np.ix_(dofs-1)].ravel()
+        dofhist['da'][:,0] = da0[np.ix_(dofs-1)].ravel()
+        dofhist['d2a'][:,0] = d2a0[np.ix_(dofs-1)].ravel()
+
+    # Reduce matrices due to bcs
+    tempa = np.zeros((ndof,1))
+    tempda = np.zeros((ndof,1))
+    tempd2a = np.zeros((ndof,1))
+    fdof=np.arange(1,ndof+1).astype(int)
+    if bound:
+        nrb, ncb = bc.shape
+        if ncb==2:
+            pa = bc[:,1].reshape(-1,1)@np.ones((1,nstep+1))
+            pda = np.zeros((nrb,nstep+1))
+        elif ncb>2:
+            pa = np.copy(bc[:,1:])
+            pda1 = (pa[:,1]-pa[:,0])/dt
+            pdarest = (pa[:,1:] - pa[:,0:-1])/dt
+            pda = np.hstack((pda1.reshape(-1,1),pdarest))
+        pdof = np.copy(bc[:,0]).astype(int)
+        fdof = np.setdiff1d(fdof,pdof).astype(int) - 1
+        pdof -= 1 #adjusting for indexing starting from 0
+        Keff = M[np.ix_(fdof,fdof)] + b3*C[np.ix_(fdof,fdof)] +b4*K[np.ix_(fdof,fdof)]
+    else:
+        fdof -= 1 #adjusting for indexing starting from 0
+        Keff = M + b3*C + b4*K
+
+    L, U = lu(Keff,permute_l=True)
+    anew = a0[np.ix_(fdof)]
+    danew = da0[np.ix_(fdof)]
+    d2anew = d2a0[np.ix_(fdof)]
+
+    # Iterate over time steps
+    for j in range(1,nstep+1):
+        time = dt*j
+        aold = np.copy(anew)
+        daold = np.copy(danew)
+        d2aold = np.copy(d2anew)
+        apred = aold + dt*daold + b1*d2aold
+        dapred = daold + b2*d2aold
+        if not bound:
+            reff = tf[:,j].reshape(-1,1) - C@dapred - K@apred
+        else:
+            pdeff = C[np.ix_(fdof,pdof)]@pda[:,j].reshape(-1,1) + K[np.ix_(fdof,pdof)]@pa[:,j].reshape(-1,1)
+            reff = tf[np.ix_(fdof),j].reshape(-1,1) - C[np.ix_(fdof,fdof)]@dapred - K[np.ix_(fdof,fdof)]@apred - pdeff
+        y = np.linalg.solve(L,reff)
+        d2anew = np.linalg.solve(U,y)
+        anew = apred + b4*d2anew
+        danew = dapred + b3*d2anew
+        # Save to modelhist and dofhist
+        if bound:
+            tempa[np.ix_(pdof)] = pa[:,j].reshape(-1,1)
+            tempda[np.ix_(pdof)] = pda[:,j].reshape(-1,1)
+        tempa[np.ix_(fdof)] = anew
+        tempda[np.ix_(fdof)] = danew
+        tempd2a[np.ix_(fdof)] = d2anew
+        if sa==1:
+            modelhist['a'][:,j] = tempa.ravel()
+            modelhist['da'][:,j] = tempda.ravel()
+            modelhist['d2a'][:,j] = tempd2a.ravel()
+        elif sa==2:
+            if ntimes and itime < ntimes:
+                if time >= times[itime]:
+                    modelhist['a'][:,itime] = tempa.ravel()
+                    modelhist['da'][:,itime] = tempda.ravel()
+                    modelhist['d2a'][:,itime] = tempd2a.ravel()
+                    itime += 1
+            if ndofs:
+                dofhist['a'][:,j] = tempa[np.ix_(dofs-1)].ravel()
+                dofhist['da'][:,j] = tempda[np.ix_(dofs-1)].ravel()
+                dofhist['d2a'][:,j] = tempd2a[np.ix_(dofs-1)].ravel()
+
+    return modelhist, dofhist
 
 
 def extract_eldisp(edof, a):
