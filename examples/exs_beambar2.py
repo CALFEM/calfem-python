@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 #
-# example exs7
+# example exs_beam2
 # ----------------------------------------------------------------
 # PURPOSE
-#    Set up a frame, consisting of both beams and bars, and
-#    illustrate the calculations by use of graphics functions.
+#    Analysis of a combined beam and bar structure.
 # ----------------------------------------------------------------
 
 # REFERENCES
-#     P-A Hansson  1994-01-20
-#     K-G Olsson   1995-09-28
-#     O Dahlblom   2004-10-07
-#     J Lindemann  2021-12-29 (Python version)
+#     Ola Dahlblom 2015-11-16
+#     Ola Dahlblom 2019-12-19
+#     Ola Dahlblom 2023-02-02
+#     Copyright (c)  Division of Structural Mechanics and
+#                    Division of Solid Mechanics.
+#                    Lund University
 # ----------------------------------------------------------------
 
 import numpy as np
@@ -19,92 +20,93 @@ import calfem.core as cfc
 import calfem.utils as cfu
 import calfem.vis_mpl as cfv
 
-np.set_printoptions(precision=3, suppress=True)
+#np.set_printoptions(precision=3, suppress=True)
 
-# ----- System matrices ------------------------------------------
+# ----- Topology -------------------------------------------------
 
-K = np.zeros((18, 18))
-f = np.zeros((18, 1))
-
-f[12] = 1
-
-coord = np.array([
-    [0., 0.],
-    [1., 0.],
-    [0., 1.],
-    [1., 1.],
-    [0., 2.],
-    [1., 2.]
-])
-
-dof = np.array([
-    [1,  2,  3],
-    [4,  5,  6],
-    [7,  8,  9],
-    [10, 11, 12],
-    [13, 14, 15],
-    [16, 17, 18]
-])
-
-# ----- Element properties, topology and coordinates -------------
-
-ep1 = [1, 1, 1]
 edof1 = np.array([
-    [1,   2,   3,   7,   8,   9],
-    [7,   8,   9,   13,  14,  15],
-    [4,   5,   6,   10,  11,  12],
-    [10,  11,  12,  16,  17,  18],
-    [7,   8,   9,   10,  11,  12],
-    [13,  14,  15,  16,  17,  18]
+    [1,  2,  3,  4,  5,  6],
+    [4,  5,  6,  7,  8,  9],
+    [7,  8,  9, 10, 11, 12]    
 ])
 
-ex1, ey1 = cfc.coordxtr(edof1, coord, dof, 2)
-
-ep2 = [1, 1]
 edof2 = np.array([
-    [1,   2,  10,  11],
-    [7,   8,  16,  17],
-    [7,   8,   4,   5],
-    [13,  14,  10,  11]
+    [13, 14,  4,  5],
+    [13, 14,  7,  8]    
 ])
 
-ex2, ey2 = cfc.coordxtr(edof2, coord, dof, 2)
+# ----- Stiffness matrix K and load vector f ---------------------
 
-# ----- Draw the fe-mesh as a check of the model -----------------
+K = np.array(np.zeros((14, 14)))
+f = np.array(np.zeros((14, 1)))
 
-cfv.figure(1)
-cfv.eldraw2(ex1, ey1, [1, 3, 1])
-cfv.eldraw2(ex2, ey2, [1, 2, 1])
+# ----- Element stiffness and element load matrices  -------------
 
-# ----- Create and assemble element matrices ---------------------
+E = 200.e9
+A1 = 4.e-3
+I1 = 5.4e-5
+A2 = 1.e-3
 
-for elx, ely, eltopo in zip(ex1, ey1, edof1):
-    Ke = cfc.beam2e(elx, ely, ep1)
-    K = cfc.assem(eltopo, K, Ke)
+ep1 = np.array([E, A1, I1])
+ep4 = np.array([E, A2])
 
-for elx, ely, eltopo in zip(ex2, ey2, edof2):
-    Ke = cfc.bar2e(elx, ely, ep2)
-    K = cfc.assem(eltopo, K, Ke)
+eq1 = np.array([0, 0])
+eq2 = np.array([0, -10e+3])
 
-# ----- Solve equation system ------------------------------------
+ex1 = np.array([0, 2])
+ex2 = np.array([2, 4])
+ex3 = np.array([4, 6])
+ex4 = np.array([0, 2])
+ex5 = np.array([0, 4])
+ey1 = np.array([2, 2])
+ey2 = np.array([2, 2])
+ey3 = np.array([2, 2])
+ey4 = np.array([0, 2])
+ey5 = np.array([0, 2])
 
-bc = np.array([1, 2, 3, 4, 5, 6])
+Ke1 = cfc.beam2e(ex1, ey1, ep1)
+Ke2, fe2 = cfc.beam2e(ex2, ey2, ep1, eq2)
+Ke3, fe3 = cfc.beam2e(ex3, ey3, ep1, eq2)
+Ke4 = cfc.bar2e(ex4, ey4, ep4)
+Ke5 = cfc.bar2e(ex5, ey5, ep4)
+
+# ----- Assemble Ke into K ---------------------------------------
+
+cfc.assem(edof1[0, :], K, Ke1)
+cfc.assem(edof1[1, :], K, Ke2, f, fe2)
+cfc.assem(edof1[2, :], K, Ke3, f, fe3)
+cfc.assem(edof2[0, :], K, Ke4)
+cfc.assem(edof2[1, :], K, Ke5)
+
+# ----- Solve the system of equations and compute reactions ------
+
+bc = np.array([1, 2, 3, 13, 14])
 a, r = cfc.solveq(K, f, bc)
 
-# ---- Extract element displacements and display the deformed mesh -
+print("a = ")
+print(a)
+print("r = ")
+print(r)
+
+# ----- Section forces -------------------------------------------
 
 ed1 = cfc.extract_ed(edof1, a)
 ed2 = cfc.extract_ed(edof2, a)
 
-sfac = cfv.scalfact2(ex1, ey1, ed1, 0.1)
+es1, _, _ = cfc.beam2s(ex1, ey1, ep1, ed1[0, :], eq1, nep=11)
+es2, _, _ = cfc.beam2s(ex2, ey2, ep1, ed1[1, :], eq2, nep=11)
+es3, _, _ = cfc.beam2s(ex3, ey3, ep1, ed1[2, :], eq2, nep=11)
+es4 = cfc.bar2s(ex4, ey4, ep4, ed2[0, :])
+es5 = cfc.bar2s(ex5, ey5, ep4, ed2[1, :])
 
-cfv.figure(2)
-cfv.eldraw2(ex1, ey1)
-cfv.eldraw2(ex2, ey2)
-cfv.eldisp2(ex1, ey1, ed1, [2, 1, 1], sfac)
-cfv.eldisp2(ex2, ey2, ed2, [2, 1, 1], sfac)
+print("es1 = ")
+print(es1)
+print("es2 = ")
+print(es2)
+print("es3 = ")
+print(es3)
+print("es4 = ")
+print(es4)
+print("es5 = ")
+print(es5)
 
-cfv.show_and_wait()
-
-
-# -------------------------- end --------------------------------
