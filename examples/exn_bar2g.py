@@ -42,8 +42,8 @@ while abs((QX1-QX01)/QX01) > eps:
     f[4] = -10e6
     f[5] = -0.2e6
 
-    Ke1 = cfc.bar2g(ex1,ey1,ep1,QX1)
-    Ke2 = cfc.bar2g(ex2,ey2,ep2,QX2)
+    Ke1 = cfc.bar2ge(ex1,ey1,ep1,QX1)
+    Ke2 = cfc.bar2ge(ex2,ey2,ep2,QX2)
     K = cfc.assem(edof[0,:],K,Ke1)
     K=cfc.assem(edof[1,:],K,Ke2)
     bc = np.array([1,2,3,4])
@@ -52,8 +52,8 @@ while abs((QX1-QX01)/QX01) > eps:
     Ed = cfc.extract_ed(edof,a)
 
     QX01 = QX1
-    es1, QX1, ed1, _ = cfc.bar2gs(ex1,ey1,ep1,Ed[0,:])
-    es2, QX2, ed2, _ = cfc.bar2gs(ex2,ey2,ep2,Ed[1,:])
+    es1, QX1 = cfc.bar2gs(ex1,ey1,ep1,Ed[0,:])
+    es2, QX2 = cfc.bar2gs(ex2,ey2,ep2,Ed[1,:])
 
     if n>20:
         print("The solution does not converge")

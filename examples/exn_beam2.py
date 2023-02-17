@@ -57,9 +57,9 @@ while abs((QX1-QX01)/QX01) > eps:
     f = np.zeros([12,1])
     f[3,0] = 10e3
 
-    Ke1 = cfc.beam2g(ex1,ey1,ep1,QX1)
-    Ke2 = cfc.beam2g(ex2,ey2,ep1,QX2)
-    Ke3, fe3 = cfc.beam2g(ex3,ey3,ep3,QX3,eq3)
+    Ke1 = cfc.beam2ge(ex1,ey1,ep1,QX1)
+    Ke2 = cfc.beam2ge(ex2,ey2,ep1,QX2)
+    Ke3, fe3 = cfc.beam2ge(ex3,ey3,ep3,QX3,eq3)
 
     K = cfc.assem(edof[0,:],K,Ke1)
     K = cfc.assem(edof[1,:],K,Ke2)
@@ -74,9 +74,9 @@ while abs((QX1-QX01)/QX01) > eps:
     es1 = cfc.beam2gs(ex1,ey1,ep1,ed[0,:],QX1,eq1)
     es2 = cfc.beam2gs(ex2,ey2,ep1,ed[1,:],QX2,eq2)
     es3 = cfc.beam2gs(ex3,ey3,ep3,ed[2,:],QX3,eq3)
-    QX1 = es1[0,0]
-    QX2 = es2[0,0]
-    QX3 = es3[0,0]
+    QX1 = es1[1]
+    QX2 = es2[1]
+    QX3 = es3[1]
 
     if n==1:
         ed0 = ed

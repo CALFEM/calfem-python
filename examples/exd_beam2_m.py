@@ -55,7 +55,7 @@ ex, ey = cfc.coordxtr(edof, coord, dof);
 ep = np.array([ep1, ep1, ep2, ep2])
 
 for elx, ely, eltopo, elprop in zip(ex, ey, edof, ep):
-    Ke, Me = cfc.beam2d(elx, ely, elprop)
+    Ke, Me = cfc.beam2de(elx, ely, elprop)
     cfc.assem(eltopo, K, Ke)
     cfc.assem(eltopo, M, Me)
 
