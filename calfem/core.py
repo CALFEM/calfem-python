@@ -78,1449 +78,6 @@ def info(msg):
     cflog.info(" calfem.core: "+msg)
 
 
-def spring1e(ep):
-    """
-    Compute element stiffness matrix for spring element.
-    
-    :param float ep: spring stiffness or analog quantity (ep = k).
-    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
-    """
-    k = ep
-    return np.mat([[k, -k], [-k, k]], 'd')
-
-
-def spring1s(ep, ed):
-    """
-    Compute element force in spring element (spring1e).
-    
-    :param float ep: spring stiffness or analog quantity
-    :param list ed: element displacements [d0, d1]
-    :return float es: element force [N]
-    """
-    k = ep
-    return k*(ed[1]-ed[0])
-
-
-def bar1e(ep):
-    """
-    Compute element stiffness matrix for spring element.
-    
-    :param ep float: spring stiffness or analog quantity
-    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
-    """
-    k = ep
-    return np.mat([[k, -k], [-k, k]], 'd')
-
-
-def bar1s(ep, ed):
-    """
-    Compute element force in spring element (spring1e).
-    
-    :param float ep: spring stiffness or analog quantity
-    :param list ed: element displacements [d0, d1]
-    :return float es: element force
-    """
-    k = ep
-    return k*(ed[1]-ed[0])
-
-
-def bar2e(ex, ey, ep):
-    """
-    Compute the element stiffness matrix for two dimensional bar element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ep: [E, A]: E - Young's modulus, A - Cross section area
-    :return mat Ke: stiffness matrix, [4 x 4]
-    """
-    E = ep[0]
-    A = ep[1]
-
-    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.sqrt(b.T*b).item()
-
-    Kle = np.mat([[1., -1.], [-1., 1.]])*E*A/L
-
-    n = np.asarray(b.T/L).reshape(2,)
-
-    G = np.mat([
-        [n[0], n[1], 0., 0.],
-        [0., 0., n[0], n[1]]
-    ])
-
-    return G.T*Kle*G
-
-
-def bar2g(ex, ey, ep, N):
-    """
-    Compute element stiffness matrix for two dimensional geometric
-    nonlinear bar element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
-    :param float N: normal force
-    :return mat Ke: stiffness matrix [4 x 4]
-    """
-    E = ep[0]
-    A = ep[1]
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-
-    L = np.sqrt(b.T*b).item()
-
-    n = np.asarray(b.T/L).reshape(2,)
-
-    G = np.mat([
-        [n[0], n[1], 0.,   0.],
-        [-n[1], n[0], 0.,   0.],
-        [0.,   0.,   n[0], n[1]],
-        [0.,   0.,  -n[1], n[0]]
-    ])
-
-    Kle = E*A/L*np.mat([
-        [1, 0, -1, 0],
-        [0, 0, 0, 0],
-        [-1, 0, 1, 0],
-        [0, 0, 0, 0]
-    ])+N/L*np.mat([
-        [0, 0, 0, 0],
-        [0, 1, 0, -1],
-        [0, 0, 0, 0],
-        [0, -1, 0, 1]
-    ])
-
-    return G.T*Kle*G
-
-
-def bar2s(ex, ey, ep, ed):
-    """
-    Compute normal force in two dimensional bar element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
-    :param list ed: element displacements [u1, u2, u3, u4]    
-    :return float N: element foce [N]    
-    """
-    E = ep[0]
-    A = ep[1]
-
-    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.sqrt(b.T*b).item()
-
-    #Kle = np.mat([[1.,-1.],[-1.,1.]])*E*A/L
-
-    n = np.asarray(b.T/L).reshape(2,)
-
-    G = np.mat([
-        [n[0], n[1], 0., 0.],
-        [0., 0., n[0], n[1]]
-    ])
-
-    u = np.asmatrix(ed).T
-    N = E*A/L*np.mat([[-1., 1.]])*G*u
-    return N.item()
-
-
-def bar2gs(ex, ey, ep, ed):
-    """
-    Calculate section forces in a two dimensional geometric
-    nonlinear bar element (bar2g).
-    Parameters:
-            ex = [x1 x2]           element node coordinates
-            ey = [y1 y2]
-
-            ep = [E A]           element properties;
-                                     E: Young's modulus
-                                     A: cross section area
-
-            ed = [u1 ... u4]       element displacement vector
-
-    Returns:
-            es = [N1;
-                  N2 ]             section forces, local directions
-
-            QX:                    axial force
-
-            edi = [ u1 ;           element displacements, local directions,
-                    u2 ;           in n points along the bar, dim(es)= n x 1
-                   ...]
-
-            eci = [ x1  ;      local x-coordinates of the evaluation
-                    x2 ;       points, (x1=0 and xn=L)
-                    ...]
-    """
-    EA = ep[0]*ep[1]
-    ne = 2
-
-    dx = ex[1] - ex[0]
-    dy = ey[1] - ey[0]
-    L = np.sqrt(dx**2 + dy**2)
-
-    n = [dx/L, dy/L, -dy/L, dx/L]
-    G = np.array([
-        [n[0], n[1], 0., 0.],
-        [n[2], n[3], 0., 0.],
-        [0., 0., n[0], n[1]],
-        [0., 0., n[2], n[3]]
-    ])
-
-    edl = G@ed.reshape(-1,1)
-    a1 = np.array([edl[0], edl[2]]).reshape(-1,1)
-
-    C1 = np.array([[1., 0.,],
-                  [-1/L, 1/L]])
-    C1a = C1@a1
-
-    x = np.linspace(0,L,ne).reshape(-1,1)
-    zero = np.zeros(x.shape)
-    one = np.ones(x.shape)
-
-    u = np.concatenate((one, x),axis=1)@C1a
-    du = np.concatenate((zero, one),axis=1)@C1a
-
-    N = EA*du
-    return N, N[0].item(), u, x
-
-
-def bar3e(ex, ey, ez, ep):
-    """
-    Compute element stiffness matrix for three dimensional bar element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ez: element z coordinates [z1, z2]
-    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
-    :return mat Ke: stiffness matrix, [6 x 6]
-    """
-    E = ep[0]
-    A = ep[1]
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-
-    n = np.asarray(b.T/L).reshape(3)
-
-    G = np.mat([
-        [n[0], n[1], n[2], 0.,   0.,   0.],
-        [0.,   0.,   0.,   n[0], n[1], n[2]]
-    ])
-
-    Kle = E*A/L*np.mat([
-        [1, -1],
-        [-1, 1]
-    ])
-
-    return G.T*Kle*G
-
-
-def bar3s(ex, ey, ez, ep, ed):
-    """
-    Compute normal force in three dimensional bar element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ez: element z coordinates [z1, z2]
-    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area   
-    :param list ed: element displacements [u1, ..., u6]
-    :return float N: normal force
-    """
-    E = ep[0]
-    A = ep[1]
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-
-    n = np.asarray(b.T/L).reshape(3)
-
-    G = np.mat([
-        [n[0], n[1], n[2], 0., 0., 0.],
-        [0., 0., 0., n[0], n[1], n[2]]
-    ])
-
-    #Kle = E*A/L*np.mat([
-    #    [ 1,-1],
-    #    [-1, 1]
-    #])
-
-    u = np.asmatrix(ed).T
-    N = E*A/L*np.mat([[-1., 1.]])*G*u
-
-    return N.item()
-
-def beam1e(ex, ep, eq=None):
-    """
-    Compute the stiffness matrix for a one dimensional beam element.
-
-    :param list ex: element x coordinates [x1, x2]
-    :param list ep: element properties [E, I], E - Young's modulus, I - Moment of inertia
-    :param float eq: distributed load [qy]
-    :return mat Ke: element stiffness matrix [4 x 4]
-    :return mat fe: element load vector [4 x 1] (if eq!=None)
-    """
-    L = ex[1]-ex[0]
-
-    E = ep[0]
-    I = ep[1]
-
-    qy = 0.
-    if eq:
-        qy = eq
-
-    Ke = E*I/(L**3) * np.mat([
-        [12,    6*L,    -12,    6*L],
-        [6*L,   4*L**2, -6*L,   2*L**2],
-        [-12,   -6*L,   12,     -6*L],
-        [6*L,   2*L**2, -6*L,   4*L**2]
-    ])
-
-    fe = qy*np.mat([L/2, L**2/12, L/2, -L**2/12]).T
-
-    if eq is None:
-        return Ke
-    else:
-        return Ke, fe
-
-def beam1s(ex, ep, ed, eq=None, nep=None):
-    """
-    Compute section forces in one dimensional beam element (beam1e).
-
-    Parameters:
-
-        ex = [x1 x2]        element node coordinates
-
-        ep = [E I]          element properties,
-                            E:  Young's modulus
-                            I:  moment of inertia
-
-        ed = [u1 ... u4]    element displacements
-
-        eq = qy             distributed load, local directions
-
-        nep                 number of evaluation points ( default=2 )
-
-    Returns:
-
-        es = [ V1 M1        section forces, local directions, in
-               V2 M2        n points along the beam, dim(es)= n x 2
-               .........]
-
-        edi = [ v1          element displacements, local directions,
-                v2          in n points along the beam, dim(es)= n x 1
-                .......]
-
-            eci = [ x1      local x-coordinates of the evaluation
-                    x2      points, (x1=0 and xn=L)
-                    ...]
-
-    """
-    EI = ep[0]*ep[1]
-    L = ex[1]-ex[0]
-
-    qy = 0.
-
-    if eq:
-        qy = eq
-
-    ne = 2
-
-    if nep != None:
-        ne = nep
-
-    Cinv = np.mat([
-        [1, 0,  0,  0],
-        [0, 1,  0,  0],
-        [-3/(L**2), -2/L,   3/(L**2),   -1/L],
-        [2/(L**3),  1/(L**2),   -2/(L**3),  1/(L**2)]
-    ])
-
-    Ca = (Cinv@ed).T
-
-    x = np.asmatrix(np.linspace(0., L, nep)).T
-    zero = np.asmatrix(np.zeros([len(x)])).T
-    one = np.asmatrix(np.ones([len(x)])).T
-
-    v = np.concatenate((one, x, np.power(x, 2), np.power(x, 3)), 1)@Ca \
-                        + qy/(24*EI)*(np.power(x,4) - 2*L*np.power(x,3) + (L**2)*np.power(x,2))
-    d2v = np.concatenate((zero, zero, 2*one, 6*x), 1)@Ca \
-                        + qy/(12*EI)*(6*np.power(x,2) - 6*L*x + L**2)
-    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca + qy/(2*EI)*(2*x - L)
-
-    M = EI*d2v
-    V = -EI*d3v
-    edi = v
-    eci = x
-    es = np.concatenate((V, M), 1)
-
-    return (es, edi, eci)
-
-
-
-def beam2e(ex, ey, ep, eq=None):
-    """
-    Compute the stiffness matrix for a two dimensional beam element.
-    
-    :param list ex: element x coordinates [x1, x2]
-    :param list ey: element y coordinates [y1, y2]
-    :param list ep: element properties [E, A, I], E - Young's modulus, A - Cross section area, I - Moment of inertia   
-    :param list eq: distributed loads, local directions [qx, qy]
-    :return mat Ke: element stiffness matrix [6 x 6]
-    :return mat fe: element stiffness matrix [6 x 1] (if eq!=None)
-    """
-
-    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b.T/L).reshape(2,)
-
-    E = ep[0]
-    A = ep[1]
-    I = ep[2]
-
-    qx = 0.
-    qy = 0.
-    if not eq is None:
-        qx = eq[0]
-        qy = eq[1]
-
-    Kle = np.mat([
-        [E*A/L,      0.,          0.,    -E*A/L,    0.,        0.],
-        [0.,    12*E*I/L**3., 6*E*I/L**2.,    0., -12*E*I/L**3., 6*E*I/L**2.],
-        [0.,    6*E*I/L**2.,  4*E*I/L,      0., -6*E*I/L**2.,  2*E*I/L],
-        [-E*A/L,     0.,          0.,     E*A/L,    0.,        0.],
-        [0.,   -12*E*I/L**3., -6*E*I/L**2.,    0.,  12*E*I/L**3., -6*E*I/L**2.],
-        [0.,    6*E*I/L**2.,  2*E*I/L,      0.,  -6*E*I/L**2., 4*E*I/L]
-    ])
-
-    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
-
-    G = np.mat([
-        [n[0], n[1],  0.,    0.,    0.,   0.],
-        [-n[1], n[0],  0.,    0.,    0.,   0.],
-        [0.,    0.,    1.,    0.,    0.,   0.],
-        [0.,    0.,    0.,   n[0],  n[1],  0.],
-        [0.,    0.,    0.,  -n[1],  n[0],  0.],
-        [0.,    0.,    0.,    0.,    0.,   1.]
-    ])
-
-    Ke = G.T*Kle*G
-    fe = G.T*fle
-
-    if eq is None:
-        return Ke
-    else:
-        return Ke, fe
-
-
-def beam2s(ex, ey, ep, ed, eq=None, nep=None):
-    """
-    Compute section forces in two dimensional beam element (beam2e).
-    
-    Parameters:
- 
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-
-        ep = [E A I]        element properties,
-                            E:  Young's modulus
-                            A:  cross section area
-                            I:  moment of inertia
-
-        ed = [u1 ... u6]    element displacements
-
-        eq = [qx qy]        distributed loads, local directions 
-
-        nep                 number of evaluation points ( default=2 )
-        
-    Returns:
-          
-        es = [ N1 V1 M1     section forces, local directions, in 
-               N2 V2 M2     n points along the beam, dim(es)= n x 3
-               .........]  
-           
-        edi = [ u1 v1       element displacements, local directions,
-                u2 v2       in n points along the beam, dim(es)= n x 2
-                .......]    
-
-            eci = [ x1      local x-coordinates of the evaluation 
-                    x2      points, (x1=0 and xn=L)
-                    ...]
-    
-    """
-    EA = ep[0]*ep[1]
-    EI = ep[0]*ep[2]
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b.T/L).reshape(2,)
-
-    qx = 0.
-    qy = 0.
-
-    if not eq is None:
-        qx = eq[0]
-        qy = eq[1]
-
-    ne = 2
-
-    if nep != None:
-        ne = nep
-
-    C = np.mat([
-        [0.,   0.,   0.,    1.,   0.,   0.],
-        [0.,   0.,   0.,    0.,   0.,   1.],
-        [0.,   0.,   0.,    0.,   1.,   0.],
-        [L,   0.,   0.,    1.,   0.,   0.],
-        [0.,   L**3, L**2,   0.,   L,    1.],
-        [0., 3*L**2, 2*L,   0.,   1.,   0.]
-    ])
-
-    G = np.mat([
-        [n[0], n[1],  0.,    0.,    0.,   0.],
-        [-n[1], n[0],  0.,    0.,    0.,   0.],
-        [0.,    0.,    1.,    0.,    0.,   0.],
-        [0.,    0.,    0.,   n[0],  n[1],  0.],
-        [0.,    0.,    0.,  -n[1],  n[0],  0.],
-        [0.,    0.,    0.,    0.,    0.,   1.]
-    ])
-
-    M = np.ravel(C.I*(G*np.asmatrix(ed).T -
-                 np.matrix([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI), qy*L**3/(6*EI)]).T))
-    A = np.matrix([M[0], M[3]]).T
-    B = np.matrix([M[1], M[2], M[4], M[5]]).T
-
-    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
-    zero = np.asmatrix(np.zeros([len(x)])).T
-    one = np.asmatrix(np.ones([len(x)])).T
-
-    u = np.concatenate((x, one), 1)*A-np.power(x, 2)*qx/(2*EA)
-    du = np.concatenate((one, zero), 1)*A-x*qx/EA
-    v = np.concatenate((np.power(x, 3), np.power(x, 2), x,
-                       one), 1)*B+np.power(x, 4)*qy/(24*EI)
-    d2v = np.concatenate((6*x, 2*one, zero, zero), 1) * \
-        B+np.power(x, 2)*qy/(2*EI)
-    d3v = np.concatenate((6*one, zero, zero, zero), 1)*B+x*qy/EI
-
-    N = EA*du
-    M = EI*d2v
-    V = -EI*d3v
-    edi = np.concatenate((u, v), 1)
-    eci = x
-    es = np.concatenate((N, V, M), 1)
-
-    return (es, edi, eci)
-
-
-def beam2t(ex, ey, ep, eq=None):
-    """
-    Compute the stiffness matrix for a two dimensional elastic
-    Timoshenko beam element.
-    
-    Parameters:
-     
-        ex = [x1 x2]
-        ey = [y1 y2]        element node coordinates
-    
-        ep = [E G A I ks]   element properties
-                              E: Young's modulus
-                              G: Shear modulus
-                              A: Cross section area
-                              I: Moment of inertia
-                             ks: Shear correction factor
-    
-        eq = [qx qy]        distributed loads, local directions
-        
-    Returns:
-     
-        Ke                  element stiffness matrix (6 x 6)
-    
-        fe                  element load vector (6 x 1)
-    
-    """
-
-    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b.T/L).reshape(2)
-
-    E = ep[0]
-    Gm = ep[1]
-    A = ep[2]
-    I = ep[3]
-    ks = ep[4]
-
-    qx = 0.
-    qy = 0.
-    if eq != None:
-        qx = eq[0]
-        qy = eq[1]
-
-    m = (12/L**2)*(E*I/(Gm*A*ks))
-
-    Kle = E/(1+m)*np.mat([
-        [A*(1+m)/L,      0.,         0.,        -A*(1+m)/L,     0.,          0.],
-        [0.,         12*I/L**3., 6*I/L**2.,         0.,    -12*I/L**3., 6*I/L**2.],
-        [0.,         6*I/L**2.,  4*I *
-            (1+m/4.)/L,    0.,    -6*I/L**2.,  2*I*(1-m/2)/L],
-        [-A*(1+m)/L,     0.,         0.,
-         A*(1+m)/L,     0.,          0.],
-        [0.,        -12*I/L**3., -6*I/L**2.,
-            0.,     12*I/L**3., -6*I/L**2.],
-        [0.,         6*I/L**2.,  2*I *
-            (1-m/2)/L,     0.,    -6*I/L**2.,  4*I*(1+m/4)/L]
-    ])
-
-    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
-
-    G = np.mat([
-        [n[0], n[1],  0.,   0.,   0.,   0.],
-        [-n[1], n[0],  0.,   0.,   0.,   0.],
-        [0.,   0.,   1.,   0.,   0.,   0.],
-        [0.,   0.,   0.,  n[0], n[1],  0.],
-        [0.,   0.,   0., -n[1], n[0],  0.],
-        [0.,   0.,   0.,   0.,   0.,   1.]
-    ])
-
-    Ke = G.T*Kle*G
-    fe = G.T*fle
-
-    if eq == None:
-        return Ke
-    else:
-        return Ke, fe
-
-
-def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
-    """
-    Compute section forces in two dimensional beam element (beam2e).
-    
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]       element node coordinates
-
-        ep = [E,G,A,I,ks]   element properties,
-                              E:  Young's modulus
-                              G:  shear modulus
-                              A:  cross section area
-                              I:  moment of inertia
-
-        ed = [u1, ... ,u6]  element displacements
-
-        eq = [qx, qy]       distributed loads, local directions 
-
-        nep                 number of evaluation points ( default=2 )
-        
-    Returns:
-          
-        es = [[N1,V1,M1],   section forces, local directions, in 
-              [N2,V2,M2],   n points along the beam, dim(es)= n x 3
-              ..........]  
-    
-        edi = [[u1,v1,teta1],   element displacements, local directions,
-               [u2,v2,teta2],   and rotation of cross section at
-               .............]   in n points along the beam, dim(es)= n x 2
-    
-    (Note! Rotation of the cross section is not equal to dv/dx for Timoshenko beam element)
-    
-        eci = [[x1],    local x-coordinates of the evaluation 
-               [x2],    points, (x1=0 and xn=L)
-               ....]
-    
-    """
-    EA = ep[0]*ep[2]
-    EI = ep[0]*ep[3]
-    GAK = ep[1]*ep[2]*ep[4]
-    alfa = EI/GAK
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b.T/L).reshape(2)
-
-    qx = 0.
-    qy = 0.
-    if eq != None:
-        qx = eq[0]
-        qy = eq[1]
-
-    ne = 2
-
-    if nep != None:
-        ne = nep
-
-    C = np.mat([
-        [0., 0.,              0.,   1., 0., 0.],
-        [0., 0.,              0.,   0., 0., 1.],
-        [0., 6*alfa,          0.,   0., 1., 0.],
-        [L,  0.,              0.,   1., 0., 0.],
-        [0., L**3,            L**2, 0., L,  1.],
-        [0., 3*(L**2+2*alfa), 2*L,  0., 1., 0.]
-    ])
-
-    G = np.mat([
-        [n[0], n[1], 0., 0.,   0.,   0.],
-        [-n[1], n[0], 0., 0.,   0.,   0.],
-        [0.,   0.,   1., 0.,   0.,   0.],
-        [0.,   0.,   0., n[0], n[1], 0.],
-        [0.,   0.,   0., -n[1], n[0], 0.],
-        [0.,   0.,   0., 0.,   0.,   1.]
-    ])
-
-    M = np.ravel(C.I*(G*np.asmatrix(ed).T-np.mat([0., 0., 0., -qx*L**2/(
-        2*EA), qy*L**4/(24*EI)-qy*L**2/(2*GAK), qy*L**3/(6*EI)]).T))
-    C2 = np.mat([M[0], M[3]]).T
-    C4 = np.mat([M[1], M[2], M[4], M[5]]).T
-
-    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
-    zero = np.asmatrix(np.zeros([len(x)])).T
-    one = np.asmatrix(np.ones([len(x)])).T
-
-    u = np.concatenate((x, one), 1)*C2-qx/(2*EA)*np.power(x, 2)
-    du = np.concatenate((one, zero), 1)*C2-qx*x/EA
-
-    v = np.concatenate((np.power(x, 3), np.power(x, 2), x, one), 1) * \
-        C4+qy/(24*EI)*np.np.power(x, 4)-qy/(2*GAK)*np.power(x, 2)
-    dv = np.concatenate((3*np.power(x, 2), 2*x, one, zero),
-                        1)*C4+qy*np.power(x, 3)/(6*EI)-qy*x/GAK
-
-    teta = np.concatenate((3*(np.power(x, 2)+2*alfa*one),
-                          2*x, one, zero), 1)*C4+qy*np.power(x, 3)/(6*EI)
-    dteta = np.concatenate((6*x, 2*one, zero, zero), 1) * \
-        C4+qy*np.power(x, 2)/(2*EI)
-
-    N = EA*du
-    M = EI*dteta
-    V = GAK*(dv-teta)
-
-    es = np.concatenate((N, V, M), 1)
-    edi = np.concatenate((u, v, teta), 1)
-    eci = x
-
-    if nep != None:
-        return es, edi, eci
-    else:
-        return es
-
-
-def beam2w(ex, ey, ep, eq=None):
-    """
-    Compute the stiffness matrix for a two dimensional beam element
-    on elastic foundation.
-    
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]       element node coordinates
-
-        ep = [E,A,I,ka,kt]  element properties,
-                              E:  Young's modulus
-                              A:  cross section area
-                              I:  moment of inertia
-                             ka:  axial foundation stiffness
-                             kt:  transversal foundation stiffness
-
-        eq = [qx, qy]       distributed loads, local directions
-
-    Returns:
-
-        Ke                  beam stiffness matrix (6 x 6)
-        
-        fe                  element load vector (6 x 1)
-    """
-    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b/L).reshape(2)
-
-    E, A, I, ka, kt = ep
-
-    qx = 0
-    qy = 0
-    if eq != None:
-        qx, qy = eq
-
-    K1 = np.mat([
-        [E*A/L,  0,           0,         -E*A/L, 0,           0],
-        [0,      12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
-        [0,      6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
-        [-E*A/L,  0,           0,          E*A/L, 0,           0],
-        [0,     -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
-        [0,      6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
-    ])
-
-    K2 = L/420*np.mat([
-        [140*ka, 0,       0,         70*ka,  0,       0],
-        [0,      156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L],
-        [0,      22*kt*L, 4*kt*L**2, 0,      13*kt*L, -3*kt*L**2],
-        [70*ka,  0,       0,         140*ka, 0,       0],
-        [0,      54*kt,   13*kt*L,   0,      156*kt, -22*kt*L],
-        [0,     -13*kt*L, -3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
-    ])
-
-    Kle = K1+K2
-    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
-
-    G = np.mat([
-        [n[0], n[1], 0, 0,    0,    0],
-        [-n[1], n[0], 0, 0,    0,    0],
-        [0,    0,    1, 0,    0,    0],
-        [0,    0,    0, n[0], n[1], 0],
-        [0,    0,    0, -n[1], n[0], 0],
-        [0,    0,    0, 0,    0,    1]
-    ])
-
-    Ke = G.T*Kle*G
-    fe = G.T*fle
-
-    if eq != None:
-        return Ke, fe
-    else:
-        return Ke
-
-
-def beam2ws(ex, ey, ep, ed, eq=None):
-    """
-    Compute section forces in a two dimensional beam element
-    on elastic foundation.
-    
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]           element node coordinates
-
-        ep = [E,A,I,ka,kt]      element properties,
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-                                 ka:  axial foundation stiffness
-                                 kt:  transversal foundation stiffness
-
-        ed = [u1, ... ,u6]      element displacement vector
-
-        eq = [qx, qy]           distributed loads, local directions
-
-    Returns:
-
-        es = [[N1, V1, M1],
-              [N2, V2, M2]]     element forces, local direction
-    """
-    if np.asmatrix(ed).shape[0] > 1:
-        error("Only one row is allowed in the ed matrix !!!")
-        return
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b/L).reshape(2,)
-
-    E, A, I, ka, kt = ep
-
-    qx = 0
-    qy = 0
-    if eq != None:
-        qx, qy = eq
-
-    K1 = np.mat([
-        [E*A/L, 0,           0,         -E*A/L, 0,           0],
-        [0,     12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
-        [0,     6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
-        [-E*A/L, 0,           0,          E*A/L, 0,           0],
-        [0,    -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
-        [0,     6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
-    ])
-
-    K2 = L/420*np.mat([
-        [140*ka, 0,       0,         70*ka,  0,       0],
-        [0,      156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L],
-        [0,      22*kt*L, 4*kt*L**2, 0,      13*kt*L, -3*kt*L**2],
-        [70*ka,  0,       0,         140*ka, 0,       0],
-        [0,      54*kt,   13*kt*L,   0,      156*kt, -22*kt*L],
-        [0,     -13*kt*L, -3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
-    ])
-
-    Kle = K1+K2
-    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
-
-    G = np.mat([
-        [n[0], n[1], 0, 0,    0,    0],
-        [-n[1], n[0], 0, 0,    0,    0],
-        [0,    0,    1, 0,    0,    0],
-        [0,    0,    0, n[0], n[1], 0],
-        [0,    0,    0, -n[1], n[0], 0],
-        [0,    0,    0, 0,    0,    1]
-    ])
-
-    P = Kle*G*np.asmatrix(ed).T-fle
-
-    es = np.mat([
-        [-P[0, 0], -P[1, 0], -P[2, 0]],
-        [P[3, 0], P[4, 0], P[5, 0]]
-    ])
-
-    return es
-
-
-def beam2g(ex, ey, ep, N, eq=None):
-    """
-    Compute the element stiffness matrix for a two dimensional
-    beam element with respect to geometric nonlinearity.
-    
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]           element node coordinates
-
-        ep = [E,A,I]            element properties;
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-
-        N                       axial force in the beam
-
-        eq                      distributed transverse load
-
-    Returns:
-
-        Ke                      element stiffness matrix (6 x 6)
-        
-        fe                      element load vector (6 x 1)
-    """
-    if eq != None:
-        if np.size(eq) > 1:
-            error("eq should be a scalar !!!")
-            return
-        else:
-            q = eq[0]
-    else:
-        q = 0
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b/L).reshape(2,)
-
-    E, A, I = ep
-
-    rho = -N*L**2/(np.pi**2*E*I)
-
-    kL = np.pi*np.sqrt(abs(rho))+np.finfo(float).eps
-
-    if rho > 0:
-        f1 = (kL/2)/np.tan(kL/2)
-        f2 = (1/12.)*kL**2/(1-f1)
-        f3 = f1/4+3*f2/4
-        f4 = -f1/2+3*f2/2
-        f5 = f1*f2
-        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
-    elif rho < 0:
-        f1 = (kL/2)/np.tanh(kL/2)
-        f2 = -(1/12.)*kL**2/(1-f1)
-        f3 = f1/4+3*f2/4
-        f4 = -f1/2+3*f2/2
-        f5 = f1*f2
-        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
-    else:
-        f1 = f2 = f3 = f4 = f5 = h = 1
-
-    Kle = np.mat([
-        [E*A/L, 0.,              0.,            -E*A/L, 0.,              0.],
-        [0.,    12*E*I*f5/L**3., 6*E*I*f2/L**2.,
-            0.,   -12*E*I*f5/L**3., 6*E*I*f2/L**2.],
-        [0.,    6*E*I*f2/L**2.,  4*E*I*f3/L,
-            0.,   -6*E*I*f2/L**2.,  2*E*I*f4/L],
-        [-E*A/L, 0.,              0.,             E*A/L, 0.,              0.],
-        [0.,   -12*E*I*f5/L**3., -6*E*I*f2/L**2.,
-            0.,    12*E*I*f5/L**3., -6*E*I*f2/L**2.],
-        [0.,    6*E*I*f2/L**2.,  2*E*I*f4/L,
-            0.,   -6*E*I*f2/L**2.,  4*E*I*f3/L]
-    ])
-
-    fle = q*L*np.mat([0., 1/2., L*h/12, 0., 1/2., -L*h/12]).T
-
-    G = np.mat([
-        [n[0], n[1], 0, 0,    0,    0],
-        [-n[1], n[0], 0, 0,    0,    0],
-        [0,    0,    1, 0,    0,    0],
-        [0,    0,    0, n[0], n[1], 0],
-        [0,    0,    0, -n[1], n[0], 0],
-        [0,    0,    0, 0,    0,    1]
-    ])
-
-    Ke = G.T*Kle*G
-    fe = G.T*fle
-
-    if eq != None:
-        return Ke, fe
-    else:
-        return Ke
-
-
-def beam2gs(ex, ey, ep, ed, N, eq=None):
-    """
-    Calculate section forces in a two dimensional nonlinear
-    beam element.
-
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]           element node coordinates
-
-        ep = [E,A,I]            element properties;
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-
-        ed = [u1, ... ,u6]      element displacement vector
-
-        N                       axial force
-
-        eq = [qy]               distributed transverse load
-
-    Returns:
-
-        es = [[N1,V1,M1],       element forces, local directions
-              [N2,V2,M2]]
-    """
-    if eq != None:
-        eq = eq[0]
-    else:
-        eq = 0
-
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b/L).reshape(2,)
-
-    E, A, I = ep
-
-    rho = -N*L**2/(np.pi**2*E*I)
-
-    eps = 2.2204e-16
-    kL = np.pi*np.sqrt(abs(rho))+eps
-
-    if rho > 0:
-        f1 = (kL/2)/np.tan(kL/2)
-        f2 = (1/12.)*kL**2/(1-f1)
-        f3 = f1/4+3*f2/4
-        f4 = -f1/2+3*f2/2
-        f5 = f1*f2
-        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
-    elif rho < 0:
-        f1 = (kL/2)/np.tanh(kL/2)
-        f2 = -(1/12.)*kL**2/(1-f1)
-        f3 = f1/4+3*f2/4
-        f4 = -f1/2+3*f2/2
-        f5 = f1*f2
-        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
-    else:
-        f1 = f2 = f3 = f4 = f5 = h = 1
-
-    Kle = np.mat([
-        [E*A/L, 0,              0,            -E*A/L, 0,              0],
-        [0,     12*E*I*f5/L**3, 6*E*I*f2/L**2,
-            0,    -12*E*I*f5/L**3, 6*E*I*f2/L**2],
-        [0,     6*E*I*f2/L**2,  4*E*I*f3/L,    0,    -6*E*I*f2/L**2,  2*E*I*f4/L],
-        [-E*A/L, 0,              0,             E*A/L, 0,              0],
-        [0,    -12*E*I*f5/L**3, -6*E*I*f2/L**2,
-            0,     12*E*I*f5/L**3, -6*E*I*f2/L**2],
-        [0,     6*E*I*f2/L**2,  2*E*I*f4/L,    0,    -6*E*I*f2/L**2,  4*E*I*f3/L]
-    ])
-
-    fle = eq*L*np.mat([0, 1/2., L*h/12, 0, 1/2., -L*h/12]).T
-
-    G = np.mat([
-        [n[0], n[1], 0, 0,    0,    0],
-        [-n[1], n[0], 0, 0,    0,    0],
-        [0,    0,    1, 0,    0,    0],
-        [0,    0,    0, n[0], n[1], 0],
-        [0,    0,    0, -n[1], n[0], 0],
-        [0,    0,    0, 0,    0,    1]
-    ])
-
-    u = np.asmatrix(ed).T
-    P = Kle*G*u-fle
-
-    es = np.mat([
-        [-P[0, 0], -P[1, 0], -P[2, 0]],
-        [P[3, 0], P[4, 0], P[5, 0]]
-    ])
-
-    return es
-
-
-def beam2d(ex, ey, ep):
-    """
-    Calculate the stiffness matrix Ke, the mass matrix Me
-    and the damping matrix Ce for a 2D elastic Bernoulli
-    beam element.
-
-    Parameters:
- 
-        ex = [x1, x2]
-        ey = [y1, y2]           element node coordinates
-
-        ep = [E,A,I,m,(a,b)]    element properties;
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-                                  m:  mass per unit length
-                                a,b:  damping coefficients,
-                                      Ce=aMe+bKe
-
-    Returns:
-
-        Ke                      element stiffness matrix (6 x 6)
-        Me                      element mass martix
-        Ce                      element damping matrix, optional
-    """
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n = np.asarray(b/L).reshape(2,)
-
-    a = 0
-    b = 0
-    if np.size(ep) == 4:
-        E, A, I, m = ep
-    elif np.size(ep) == 6:
-        E, A, I, m, a, b = ep
-
-    Kle = np.mat([
-        [E*A/L, 0,           0,         -E*A/L, 0,           0],
-        [0,     12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
-        [0,     6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
-        [-E*A/L, 0,           0,          E*A/L, 0,           0],
-        [0,    -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
-        [0,     6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
-    ])
-
-    Mle = m*L/420*np.mat([
-        [140, 0,    0,      70,  0,    0],
-        [0,   156,  22*L,   0,   54,  -13*L],
-        [0,   22*L, 4*L**2, 0,   13*L, -3*L**2],
-        [70,  0,    0,      140, 0,    0],
-        [0,   54,   13*L,   0,   156, -22*L],
-        [0,  -13*L, -3*L**2, 0,  -22*L, 4*L**2]
-    ])
-
-    Cle = a*Mle+b*Kle
-
-    G = np.mat([
-        [n[0], n[1], 0, 0,    0,    0],
-        [-n[1], n[0], 0, 0,    0,    0],
-        [0,    0,    1, 0,    0,    0],
-        [0,    0,    0, n[0], n[1], 0],
-        [0,    0,    0, -n[1], n[0], 0],
-        [0,    0,    0, 0,    0,    1]
-    ])
-
-    Ke = G.T*Kle*G
-    Me = G.T*Mle*G
-    Ce = G.T*Cle*G
-
-    if np.size(ep) == 4:
-        return Ke, Me
-    elif np.size(ep) == 6:
-        return Ke, Me, Ce
-
-
-def beam3e(ex, ey, ez, eo, ep, eq=None):
-    """
-    Calculate the stiffness matrix for a 3D elastic Bernoulli
-    beam element.
-    
-    Parameters:
-     
-        ex = [x1 x2]
-        ey = [y1 y2]
-        ez = [z1 z2]            element node coordinates
-        
-        eo = [xz yz zz]         orientation of local z axis
-        
-        ep = [E G A Iy Iz Kv]   element properties
-                                  E: Young's modulus
-                                  G: Shear modulus
-                                  A: Cross section area
-                                 Iy: Moment of inertia, local y-axis
-                                 Iz: Moment of inertia, local z-axis
-                                 Kv: Saint-Venant's torsion constant
-    
-        eq = [qx qy qz qw]      distributed loads
-
-    Returns:
-
-        Ke                      beam stiffness matrix (12 x 12)
-
-        fe                      equivalent nodal forces (12 x 1)
-
-    """
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n1 = np.asarray(b.T/L).reshape(3,)
-
-    eo = np.asmatrix(eo)
-    lc = np.sqrt(eo*eo.T).item()
-    n3 = np.asarray(eo/lc).reshape(3,)
-
-    E, Gs, A, Iy, Iz, Kv = ep
-
-    qx = 0.
-    qy = 0.
-    qz = 0.
-    qw = 0.
-    if eq != None:
-        qx, qy, qz, qw = eq
-
-    a = E*A/L
-    b = 12*E*Iz/L**3
-    c = 6*E*Iz/L**2
-    d = 12*E*Iy/L**3
-    e = 6*E*Iy/L**2
-    f = Gs*Kv/L
-    g = 2*E*Iy/L
-    h = 2*E*Iz/L
-
-    Kle = np.mat([
-        [a, 0, 0, 0, 0,   0,  -a, 0, 0, 0, 0,   0],
-        [0, b, 0, 0, 0,   c,   0, -b, 0, 0, 0,   c],
-        [0, 0, d, 0, -e,   0,   0, 0, -d, 0, -e,   0],
-        [0, 0, 0, f, 0,   0,   0, 0, 0, -f, 0,   0],
-        [0, 0, -e, 0, 2*g, 0,   0, 0, e, 0, g,   0],
-        [0, c, 0, 0, 0,   2*h, 0, -c, 0, 0, 0,   h],
-        [-a, 0, 0, 0, 0,   0,   a, 0, 0, 0, 0,   0],
-        [0, -b, 0, 0, 0,  -c,   0, b, 0, 0, 0,  -c],
-        [0, 0, -d, 0, e,   0,   0, 0, d, 0, e,   0],
-        [0, 0, 0, -f, 0,   0,   0, 0, 0, f, 0,   0],
-        [0, 0, -e, 0, g,   0,   0, 0, e, 0, 2*g, 0],
-        [0, c, 0, 0, 0,   h,   0, -c, 0, 0, 0,   2*h]
-    ])
-
-    fle = L/2*np.mat([qx, qy, qz, qw, -qz*L/6, qy*L/6,
-                     qx, qy, qz, qw, qz*L/6, -qy*L/6]).T
-
-    n2 = np.array([0., 0., 0.])
-    n2[0] =  n3[1]*n1[2]-n3[2]*n1[1]
-    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
-    n2[2] =  n3[0]*n1[1]-n1[0]*n3[1]
-
-    #An = np.append([n1,n2],[n3],0)
-
-    G = np.mat([
-        [n1[0], n1[1], n1[2], 0,     0,     0,         0,     0,     0,     0,     0,     0],
-        [n2[0], n2[1], n2[2], 0,     0,     0,    0,   0,     0,     0,     0,     0],
-        [n3[0], n3[1], n3[2], 0,     0,     0,    0,   0,     0,     0,     0,     0],
-        [0,     0,     0,     n1[0], n1[1], n1[2],     0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     n2[0], n2[1], n2[2],     0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     n3[0], n3[1], n3[2],     0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     0,     0,     0,         n1[0], n1[1], n1[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,         n2[0], n2[1], n2[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,         n3[0], n3[1], n3[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,     0,         0,     0,     n1[0], n1[1], n1[2]],
-        [0,     0,     0,     0,     0,     0,     0,         0,     0,     n2[0], n2[1], n2[2]],
-        [0,     0,     0,     0,     0,     0,         0,     0,     0,     n3[0], n3[1], n3[2]]
-    ])
-
-    Ke = G.T*Kle*G
-    fe = G.T*fle
-
-    if eq == None:
-        return Ke
-    else:
-        return Ke, fe
-
-
-def beam3s(ex, ey, ez, eo, ep, ed, eq=None, n=None):
-    """
-    Calculate the variation of the section forces and displacements
-    along a three-dimensional beam element.
-    
-    Parameters:
-     
-        ex = [x1 x2]                element node coordinates
-        ey = [y1 y2]
-        ez = [z1 z2]
-
-        eo = [xz yz zz]             orientation of local z axis
-        
-        ep = [E G A Iy Iz Kv]       element properties
-                                      E: Young's modulus
-                                      G: Shear modulus
-                                      A: Cross section area
-                                     Iy: Moment of inertia, local y-axis
-                                     Iz: Moment of inertia, local z-axis
-                                     Kv: Saint-Venant's torsion constant
-
-        ed                          the element displacement vector from the
-                                    global coordinate system
-    
-        eq = [qx qy qz qw]          the disibuted axial, transversal and
-                                    torsional loads
-
-        n                           the number of point in which displacements
-                                    and section forces are to be computed
-
-    Returns:
-
-        es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
-              [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
-              [..,...,...,..,...,...],
-              [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
-
-        edi = [[u1,v1,w1,fi1],          displacements in n points along
-               [u2,v2,w2,fi2],          the local x-axis
-               [..,..,..,...],
-               [un,vn,wn,fin]]
-
-        eci = [[x1],                    local x-coordinates of the evaluation
-               [x2],                    points
-               [..],
-               [xn]]
-
-    """
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n1 = np.asarray(b.T/L).reshape(3,)
-
-    eo = np.asmatrix(eo)
-    lc = np.sqrt(eo*eo.T).item()
-    n3 = np.asarray(eo/lc).reshape(3,)
-
-    EA = ep[0]*ep[2]
-    EIy = ep[0]*ep[3]
-    EIz = ep[0]*ep[4]
-    GKv = ep[1]*ep[5]
-
-    qx = 0.
-    qy = 0.
-    qz = 0.
-    qw = 0.
-    if eq != None:
-        qx, qy, qz, qw = eq
-
-    ne = 2
-    if n != None:
-        ne = n
-
-    n2 = np.array([0., 0., 0.])
-    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
-    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
-    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
-
-    G = np.mat([
-        [n1[0], n1[1], n1[2], 0,     0,     0,
-            0,     0,     0,     0,     0,     0],
-        [n2[0], n2[1], n2[2], 0,     0,     0,
-            0,     0,     0,     0,     0,     0],
-        [n3[0], n3[1], n3[2], 0,     0,     0,
-            0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     n1[0], n1[1], n1[2],
-            0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     n2[0], n2[1], n2[2],
-            0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     n3[0], n3[1], n3[2],
-            0,     0,     0,     0,     0,     0],
-        [0,     0,     0,     0,     0,     0,
-            n1[0], n1[1], n1[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,
-            n2[0], n2[1], n2[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,
-            n3[0], n3[1], n3[2], 0,     0,     0],
-        [0,     0,     0,     0,     0,     0,     0,
-            0,     0,     n1[0], n1[1], n1[2]],
-        [0,     0,     0,     0,     0,     0,     0,
-            0,     0,     n2[0], n2[1], n2[2]],
-        [0,     0,     0,     0,     0,     0,
-            0,     0,     0,     n3[0], n3[1], n3[2]]
-    ])
-
-    u = G*np.asmatrix(ed).T-np.array([    # u is the local element displacement
-        [0],        # vector minus the particular solution
-        [0],        # to the beam's diff.eq:s
-        [0],
-        [0],
-        [0],
-        [0],
-        [-qx*L**2/(2*EA)],
-        [qy*L**4/(24*EIz)],
-        [qz*L**4/(24*EIy)],
-        [-qw*L**2/(2*GKv)],
-        [-qz*L**3/(6*EIy)],
-        [qy*L**3/(6*EIz)]
-    ])
-
-    C = np.mat([
-        [0, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 1, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 1, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, 0, 1],
-        [0, 0, 0,      0,    0, 0, 0,      0,   -1, 0, 0, 0],
-        [0, 0, 0,      0,    1, 0, 0,      0,    0, 0, 0, 0],
-        [L, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0, ],
-        [0, 0, L**3,   L**2, L, 1, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 0, L**3,   L**2, L, 1, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, L, 1],
-        [0, 0, 0,      0,    0, 0, -3*L**2, -2*L, -1, 0, 0, 0],
-        [0, 0, 3*L**2, 2*L,  1, 0, 0,      0,    0, 0, 0, 0],
-    ])
-
-    m = np.linalg.inv(C)*u
-    eci = np.zeros((ne, 1))
-    es = np.zeros((ne, 6))
-    edi = np.zeros((ne, 4))
-    for i in np.arange(ne):
-        x = i*L/(ne-1)
-        eci[i, 0] = x
-        es[i, :] = (np.mat([
-            [EA, 0, 0,       0,     0, 0, 0,       0,     0, 0, 0,   0],
-            [0,  0, -6*EIz,   0,     0, 0, 0,       0,     0, 0, 0,   0],
-            [0,  0, 0,       0,     0, 0, -6*EIy,   0,     0, 0, 0,   0],
-            [0,  0, 0,       0,     0, 0, 0,       0,     0, 0, GKv, 0],
-            [0,  0, 0,       0,     0, 0, -6*EIy*x, -2*EIy, 0, 0, 0,   0],
-            [0,  0, 6*EIz*x, 2*EIz, 0, 0, 0,       0,     0, 0, 0,   0]
-        ])*m+np.array([-qx*x, -qy*x, -qz*x, -qw*x, -qz*x**2/2, qy*x**2/2]).reshape(6, 1)).T
-
-        edi[i, :] = (np.mat([
-            [x, 1, 0,    0,    0, 0, 0,    0,    0, 0, 0, 0],
-            [0, 0, x**3, x**2, x, 1, 0,    0,    0, 0, 0, 0],
-            [0, 0, 0,    0,    0, 0, x**3, x**2, x, 1, 0, 0],
-            [0, 0, 0,    0,    0, 0, 0,    0,    0, 0, x, 1]
-        ])*m+np.array([-qx*x**2/(2*EA), qy*x**4/(24*EIz), qz*x**4/(24*EIy), -qw*x**2/(2*GKv)]).reshape(4, 1)).T
-
-    if n == None:
-        return es
-    else:
-        return es, edi, eci
 
 
 def flw2te(ex, ey, ep, D, eq=None):
@@ -4875,3 +3432,1452 @@ def beam2crd(ex=None, ey=None, ed=None, mag=None):
         eycd[i, :] = xyc[1, :]+mag*cd[1, :]
 
     return excd, eycd
+
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
+
+def _spring1e(ep):
+    """
+    Compute element stiffness matrix for spring element.
+    
+    :param float ep: spring stiffness or analog quantity (ep = k).
+    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
+    """
+    k = ep
+    return np.mat([[k, -k], [-k, k]], 'd')
+
+
+def _spring1s(ep, ed):
+    """
+    Compute element force in spring element (spring1e).
+    
+    :param float ep: spring stiffness or analog quantity
+    :param list ed: element displacements [d0, d1]
+    :return float es: element force [N]
+    """
+    k = ep
+    return k*(ed[1]-ed[0])
+
+
+def _bar1e(ep):
+    """
+    Compute element stiffness matrix for spring element.
+    
+    :param ep float: spring stiffness or analog quantity
+    :return mat Ke: stiffness matrix, dim(Ke)= 2 x 2
+    """
+    k = ep
+    return np.mat([[k, -k], [-k, k]], 'd')
+
+
+def _bar1s(ep, ed):
+    """
+    Compute element force in spring element (spring1e).
+    
+    :param float ep: spring stiffness or analog quantity
+    :param list ed: element displacements [d0, d1]
+    :return float es: element force
+    """
+    k = ep
+    return k*(ed[1]-ed[0])
+
+
+def _bar2e(ex, ey, ep):
+    """
+    Compute the element stiffness matrix for two dimensional bar element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: [E, A]: E - Young's modulus, A - Cross section area
+    :return mat Ke: stiffness matrix, [4 x 4]
+    """
+    E = ep[0]
+    A = ep[1]
+
+    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
+    L = np.sqrt(b.T*b).item()
+
+    Kle = np.mat([[1., -1.], [-1., 1.]])*E*A/L
+
+    n = np.asarray(b.T/L).reshape(2,)
+
+    G = np.mat([
+        [n[0], n[1], 0., 0.],
+        [0., 0., n[0], n[1]]
+    ])
+
+    return G.T*Kle*G
+
+
+def _bar2g(ex, ey, ep, N):
+    """
+    Compute element stiffness matrix for two dimensional geometric
+    nonlinear bar element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :param float N: normal force
+    :return mat Ke: stiffness matrix [4 x 4]
+    """
+    E = ep[0]
+    A = ep[1]
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+
+    L = np.sqrt(b.T*b).item()
+
+    n = np.asarray(b.T/L).reshape(2,)
+
+    G = np.mat([
+        [n[0], n[1], 0.,   0.],
+        [-n[1], n[0], 0.,   0.],
+        [0.,   0.,   n[0], n[1]],
+        [0.,   0.,  -n[1], n[0]]
+    ])
+
+    Kle = E*A/L*np.mat([
+        [1, 0, -1, 0],
+        [0, 0, 0, 0],
+        [-1, 0, 1, 0],
+        [0, 0, 0, 0]
+    ])+N/L*np.mat([
+        [0, 0, 0, 0],
+        [0, 1, 0, -1],
+        [0, 0, 0, 0],
+        [0, -1, 0, 1]
+    ])
+
+    return G.T*Kle*G
+
+
+def _bar2s(ex, ey, ep, ed):
+    """
+    Compute normal force in two dimensional bar element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :param list ed: element displacements [u1, u2, u3, u4]    
+    :return float N: element foce [N]    
+    """
+    E = ep[0]
+    A = ep[1]
+
+    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
+    L = np.sqrt(b.T*b).item()
+
+    #Kle = np.mat([[1.,-1.],[-1.,1.]])*E*A/L
+
+    n = np.asarray(b.T/L).reshape(2,)
+
+    G = np.mat([
+        [n[0], n[1], 0., 0.],
+        [0., 0., n[0], n[1]]
+    ])
+
+    u = np.asmatrix(ed).T
+    N = E*A/L*np.mat([[-1., 1.]])*G*u
+    return N.item()
+
+
+def _bar2gs(ex, ey, ep, ed):
+    """
+    Calculate section forces in a two dimensional geometric
+    nonlinear bar element (bar2g).
+    Parameters:
+            ex = [x1 x2]           element node coordinates
+            ey = [y1 y2]
+
+            ep = [E A]           element properties;
+                                     E: Young's modulus
+                                     A: cross section area
+
+            ed = [u1 ... u4]       element displacement vector
+
+    Returns:
+            es = [N1;
+                  N2 ]             section forces, local directions
+
+            QX:                    axial force
+
+            edi = [ u1 ;           element displacements, local directions,
+                    u2 ;           in n points along the bar, dim(es)= n x 1
+                   ...]
+
+            eci = [ x1  ;      local x-coordinates of the evaluation
+                    x2 ;       points, (x1=0 and xn=L)
+                    ...]
+    """
+    EA = ep[0]*ep[1]
+    ne = 2
+
+    dx = ex[1] - ex[0]
+    dy = ey[1] - ey[0]
+    L = np.sqrt(dx**2 + dy**2)
+
+    n = [dx/L, dy/L, -dy/L, dx/L]
+    G = np.array([
+        [n[0], n[1], 0., 0.],
+        [n[2], n[3], 0., 0.],
+        [0., 0., n[0], n[1]],
+        [0., 0., n[2], n[3]]
+    ])
+
+    edl = G@ed.reshape(-1,1)
+    a1 = np.array([edl[0], edl[2]]).reshape(-1,1)
+
+    C1 = np.array([[1., 0.,],
+                  [-1/L, 1/L]])
+    C1a = C1@a1
+
+    x = np.linspace(0,L,ne).reshape(-1,1)
+    zero = np.zeros(x.shape)
+    one = np.ones(x.shape)
+
+    u = np.concatenate((one, x),axis=1)@C1a
+    du = np.concatenate((zero, one),axis=1)@C1a
+
+    N = EA*du
+    return N, N[0].item(), u, x
+
+
+def _bar3e(ex, ey, ez, ep):
+    """
+    Compute element stiffness matrix for three dimensional bar element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area
+    :return mat Ke: stiffness matrix, [6 x 6]
+    """
+    E = ep[0]
+    A = ep[1]
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+
+    n = np.asarray(b.T/L).reshape(3)
+
+    G = np.mat([
+        [n[0], n[1], n[2], 0.,   0.,   0.],
+        [0.,   0.,   0.,   n[0], n[1], n[2]]
+    ])
+
+    Kle = E*A/L*np.mat([
+        [1, -1],
+        [-1, 1]
+    ])
+
+    return G.T*Kle*G
+
+
+def _bar3s(ex, ey, ez, ep, ed):
+    """
+    Compute normal force in three dimensional bar element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ez: element z coordinates [z1, z2]
+    :param list ep: element properties [E, A], E - Young's modulus, A - Cross section area   
+    :param list ed: element displacements [u1, ..., u6]
+    :return float N: normal force
+    """
+    E = ep[0]
+    A = ep[1]
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+
+    n = np.asarray(b.T/L).reshape(3)
+
+    G = np.mat([
+        [n[0], n[1], n[2], 0., 0., 0.],
+        [0., 0., 0., n[0], n[1], n[2]]
+    ])
+
+    #Kle = E*A/L*np.mat([
+    #    [ 1,-1],
+    #    [-1, 1]
+    #])
+
+    u = np.asmatrix(ed).T
+    N = E*A/L*np.mat([[-1., 1.]])*G*u
+
+    return N.item()
+
+def _beam1e(ex, ep, eq=None):
+    """
+    Compute the stiffness matrix for a one dimensional beam element.
+
+    :param list ex: element x coordinates [x1, x2]
+    :param list ep: element properties [E, I], E - Young's modulus, I - Moment of inertia
+    :param float eq: distributed load [qy]
+    :return mat Ke: element stiffness matrix [4 x 4]
+    :return mat fe: element load vector [4 x 1] (if eq!=None)
+    """
+    L = ex[1]-ex[0]
+
+    E = ep[0]
+    I = ep[1]
+
+    qy = 0.
+    if eq:
+        qy = eq
+
+    Ke = E*I/(L**3) * np.mat([
+        [12,    6*L,    -12,    6*L],
+        [6*L,   4*L**2, -6*L,   2*L**2],
+        [-12,   -6*L,   12,     -6*L],
+        [6*L,   2*L**2, -6*L,   4*L**2]
+    ])
+
+    fe = qy*np.mat([L/2, L**2/12, L/2, -L**2/12]).T
+
+    if eq is None:
+        return Ke
+    else:
+        return Ke, fe
+
+def _beam1s(ex, ep, ed, eq=None, nep=None):
+    """
+    Compute section forces in one dimensional beam element (beam1e).
+
+    Parameters:
+
+        ex = [x1 x2]        element node coordinates
+
+        ep = [E I]          element properties,
+                            E:  Young's modulus
+                            I:  moment of inertia
+
+        ed = [u1 ... u4]    element displacements
+
+        eq = qy             distributed load, local directions
+
+        nep                 number of evaluation points ( default=2 )
+
+    Returns:
+
+        es = [ V1 M1        section forces, local directions, in
+               V2 M2        n points along the beam, dim(es)= n x 2
+               .........]
+
+        edi = [ v1          element displacements, local directions,
+                v2          in n points along the beam, dim(es)= n x 1
+                .......]
+
+            eci = [ x1      local x-coordinates of the evaluation
+                    x2      points, (x1=0 and xn=L)
+                    ...]
+
+    """
+    EI = ep[0]*ep[1]
+    L = ex[1]-ex[0]
+
+    qy = 0.
+
+    if eq:
+        qy = eq
+
+    ne = 2
+
+    if nep != None:
+        ne = nep
+
+    Cinv = np.mat([
+        [1, 0,  0,  0],
+        [0, 1,  0,  0],
+        [-3/(L**2), -2/L,   3/(L**2),   -1/L],
+        [2/(L**3),  1/(L**2),   -2/(L**3),  1/(L**2)]
+    ])
+
+    Ca = (Cinv@ed).T
+
+    x = np.asmatrix(np.linspace(0., L, nep)).T
+    zero = np.asmatrix(np.zeros([len(x)])).T
+    one = np.asmatrix(np.ones([len(x)])).T
+
+    v = np.concatenate((one, x, np.power(x, 2), np.power(x, 3)), 1)@Ca \
+                        + qy/(24*EI)*(np.power(x,4) - 2*L*np.power(x,3) + (L**2)*np.power(x,2))
+    d2v = np.concatenate((zero, zero, 2*one, 6*x), 1)@Ca \
+                        + qy/(12*EI)*(6*np.power(x,2) - 6*L*x + L**2)
+    d3v = np.concatenate((zero, zero, zero, 6*one), 1)@Ca + qy/(2*EI)*(2*x - L)
+
+    M = EI*d2v
+    V = -EI*d3v
+    edi = v
+    eci = x
+    es = np.concatenate((V, M), 1)
+
+    return (es, edi, eci)
+
+
+
+def _beam2e(ex, ey, ep, eq=None):
+    """
+    Compute the stiffness matrix for a two dimensional beam element.
+    
+    :param list ex: element x coordinates [x1, x2]
+    :param list ey: element y coordinates [y1, y2]
+    :param list ep: element properties [E, A, I], E - Young's modulus, A - Cross section area, I - Moment of inertia   
+    :param list eq: distributed loads, local directions [qx, qy]
+    :return mat Ke: element stiffness matrix [6 x 6]
+    :return mat fe: element stiffness matrix [6 x 1] (if eq!=None)
+    """
+
+    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b.T/L).reshape(2,)
+
+    E = ep[0]
+    A = ep[1]
+    I = ep[2]
+
+    qx = 0.
+    qy = 0.
+    if not eq is None:
+        qx = eq[0]
+        qy = eq[1]
+
+    Kle = np.mat([
+        [E*A/L,      0.,          0.,    -E*A/L,    0.,        0.],
+        [0.,    12*E*I/L**3., 6*E*I/L**2.,    0., -12*E*I/L**3., 6*E*I/L**2.],
+        [0.,    6*E*I/L**2.,  4*E*I/L,      0., -6*E*I/L**2.,  2*E*I/L],
+        [-E*A/L,     0.,          0.,     E*A/L,    0.,        0.],
+        [0.,   -12*E*I/L**3., -6*E*I/L**2.,    0.,  12*E*I/L**3., -6*E*I/L**2.],
+        [0.,    6*E*I/L**2.,  2*E*I/L,      0.,  -6*E*I/L**2., 4*E*I/L]
+    ])
+
+    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+
+    G = np.mat([
+        [n[0], n[1],  0.,    0.,    0.,   0.],
+        [-n[1], n[0],  0.,    0.,    0.,   0.],
+        [0.,    0.,    1.,    0.,    0.,   0.],
+        [0.,    0.,    0.,   n[0],  n[1],  0.],
+        [0.,    0.,    0.,  -n[1],  n[0],  0.],
+        [0.,    0.,    0.,    0.,    0.,   1.]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+
+    if eq is None:
+        return Ke
+    else:
+        return Ke, fe
+
+
+def _beam2s(ex, ey, ep, ed, eq=None, nep=None):
+    """
+    Compute section forces in two dimensional beam element (beam2e).
+    
+    Parameters:
+ 
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+
+        ep = [E A I]        element properties,
+                            E:  Young's modulus
+                            A:  cross section area
+                            I:  moment of inertia
+
+        ed = [u1 ... u6]    element displacements
+
+        eq = [qx qy]        distributed loads, local directions 
+
+        nep                 number of evaluation points ( default=2 )
+        
+    Returns:
+          
+        es = [ N1 V1 M1     section forces, local directions, in 
+               N2 V2 M2     n points along the beam, dim(es)= n x 3
+               .........]  
+           
+        edi = [ u1 v1       element displacements, local directions,
+                u2 v2       in n points along the beam, dim(es)= n x 2
+                .......]    
+
+            eci = [ x1      local x-coordinates of the evaluation 
+                    x2      points, (x1=0 and xn=L)
+                    ...]
+    
+    """
+    EA = ep[0]*ep[1]
+    EI = ep[0]*ep[2]
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b.T/L).reshape(2,)
+
+    qx = 0.
+    qy = 0.
+
+    if not eq is None:
+        qx = eq[0]
+        qy = eq[1]
+
+    ne = 2
+
+    if nep != None:
+        ne = nep
+
+    C = np.mat([
+        [0.,   0.,   0.,    1.,   0.,   0.],
+        [0.,   0.,   0.,    0.,   0.,   1.],
+        [0.,   0.,   0.,    0.,   1.,   0.],
+        [L,   0.,   0.,    1.,   0.,   0.],
+        [0.,   L**3, L**2,   0.,   L,    1.],
+        [0., 3*L**2, 2*L,   0.,   1.,   0.]
+    ])
+
+    G = np.mat([
+        [n[0], n[1],  0.,    0.,    0.,   0.],
+        [-n[1], n[0],  0.,    0.,    0.,   0.],
+        [0.,    0.,    1.,    0.,    0.,   0.],
+        [0.,    0.,    0.,   n[0],  n[1],  0.],
+        [0.,    0.,    0.,  -n[1],  n[0],  0.],
+        [0.,    0.,    0.,    0.,    0.,   1.]
+    ])
+
+    M = np.ravel(C.I*(G*np.asmatrix(ed).T -
+                 np.matrix([0., 0., 0., -qx*L**2/(2*EA), qy*L**4/(24*EI), qy*L**3/(6*EI)]).T))
+    A = np.matrix([M[0], M[3]]).T
+    B = np.matrix([M[1], M[2], M[4], M[5]]).T
+
+    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    zero = np.asmatrix(np.zeros([len(x)])).T
+    one = np.asmatrix(np.ones([len(x)])).T
+
+    u = np.concatenate((x, one), 1)*A-np.power(x, 2)*qx/(2*EA)
+    du = np.concatenate((one, zero), 1)*A-x*qx/EA
+    v = np.concatenate((np.power(x, 3), np.power(x, 2), x,
+                       one), 1)*B+np.power(x, 4)*qy/(24*EI)
+    d2v = np.concatenate((6*x, 2*one, zero, zero), 1) * \
+        B+np.power(x, 2)*qy/(2*EI)
+    d3v = np.concatenate((6*one, zero, zero, zero), 1)*B+x*qy/EI
+
+    N = EA*du
+    M = EI*d2v
+    V = -EI*d3v
+    edi = np.concatenate((u, v), 1)
+    eci = x
+    es = np.concatenate((N, V, M), 1)
+
+    return (es, edi, eci)
+
+
+def _beam2t(ex, ey, ep, eq=None):
+    """
+    Compute the stiffness matrix for a two dimensional elastic
+    Timoshenko beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]
+        ey = [y1 y2]        element node coordinates
+    
+        ep = [E G A I ks]   element properties
+                              E: Young's modulus
+                              G: Shear modulus
+                              A: Cross section area
+                              I: Moment of inertia
+                             ks: Shear correction factor
+    
+        eq = [qx qy]        distributed loads, local directions
+        
+    Returns:
+     
+        Ke                  element stiffness matrix (6 x 6)
+    
+        fe                  element load vector (6 x 1)
+    
+    """
+
+    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b.T/L).reshape(2)
+
+    E = ep[0]
+    Gm = ep[1]
+    A = ep[2]
+    I = ep[3]
+    ks = ep[4]
+
+    qx = 0.
+    qy = 0.
+    if eq != None:
+        qx = eq[0]
+        qy = eq[1]
+
+    m = (12/L**2)*(E*I/(Gm*A*ks))
+
+    Kle = E/(1+m)*np.mat([
+        [A*(1+m)/L,      0.,         0.,        -A*(1+m)/L,     0.,          0.],
+        [0.,         12*I/L**3., 6*I/L**2.,         0.,    -12*I/L**3., 6*I/L**2.],
+        [0.,         6*I/L**2.,  4*I *
+            (1+m/4.)/L,    0.,    -6*I/L**2.,  2*I*(1-m/2)/L],
+        [-A*(1+m)/L,     0.,         0.,
+         A*(1+m)/L,     0.,          0.],
+        [0.,        -12*I/L**3., -6*I/L**2.,
+            0.,     12*I/L**3., -6*I/L**2.],
+        [0.,         6*I/L**2.,  2*I *
+            (1-m/2)/L,     0.,    -6*I/L**2.,  4*I*(1+m/4)/L]
+    ])
+
+    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+
+    G = np.mat([
+        [n[0], n[1],  0.,   0.,   0.,   0.],
+        [-n[1], n[0],  0.,   0.,   0.,   0.],
+        [0.,   0.,   1.,   0.,   0.,   0.],
+        [0.,   0.,   0.,  n[0], n[1],  0.],
+        [0.,   0.,   0., -n[1], n[0],  0.],
+        [0.,   0.,   0.,   0.,   0.,   1.]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+
+    if eq == None:
+        return Ke
+    else:
+        return Ke, fe
+
+
+def _beam2ts(ex, ey, ep, ed, eq=None, nep=None):
+    """
+    Compute section forces in two dimensional beam element (beam2e).
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]       element node coordinates
+
+        ep = [E,G,A,I,ks]   element properties,
+                              E:  Young's modulus
+                              G:  shear modulus
+                              A:  cross section area
+                              I:  moment of inertia
+
+        ed = [u1, ... ,u6]  element displacements
+
+        eq = [qx, qy]       distributed loads, local directions 
+
+        nep                 number of evaluation points ( default=2 )
+        
+    Returns:
+          
+        es = [[N1,V1,M1],   section forces, local directions, in 
+              [N2,V2,M2],   n points along the beam, dim(es)= n x 3
+              ..........]  
+    
+        edi = [[u1,v1,teta1],   element displacements, local directions,
+               [u2,v2,teta2],   and rotation of cross section at
+               .............]   in n points along the beam, dim(es)= n x 2
+    
+    (Note! Rotation of the cross section is not equal to dv/dx for Timoshenko beam element)
+    
+        eci = [[x1],    local x-coordinates of the evaluation 
+               [x2],    points, (x1=0 and xn=L)
+               ....]
+    
+    """
+    EA = ep[0]*ep[2]
+    EI = ep[0]*ep[3]
+    GAK = ep[1]*ep[2]*ep[4]
+    alfa = EI/GAK
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b.T/L).reshape(2)
+
+    qx = 0.
+    qy = 0.
+    if eq != None:
+        qx = eq[0]
+        qy = eq[1]
+
+    ne = 2
+
+    if nep != None:
+        ne = nep
+
+    C = np.mat([
+        [0., 0.,              0.,   1., 0., 0.],
+        [0., 0.,              0.,   0., 0., 1.],
+        [0., 6*alfa,          0.,   0., 1., 0.],
+        [L,  0.,              0.,   1., 0., 0.],
+        [0., L**3,            L**2, 0., L,  1.],
+        [0., 3*(L**2+2*alfa), 2*L,  0., 1., 0.]
+    ])
+
+    G = np.mat([
+        [n[0], n[1], 0., 0.,   0.,   0.],
+        [-n[1], n[0], 0., 0.,   0.,   0.],
+        [0.,   0.,   1., 0.,   0.,   0.],
+        [0.,   0.,   0., n[0], n[1], 0.],
+        [0.,   0.,   0., -n[1], n[0], 0.],
+        [0.,   0.,   0., 0.,   0.,   1.]
+    ])
+
+    M = np.ravel(C.I*(G*np.asmatrix(ed).T-np.mat([0., 0., 0., -qx*L**2/(
+        2*EA), qy*L**4/(24*EI)-qy*L**2/(2*GAK), qy*L**3/(6*EI)]).T))
+    C2 = np.mat([M[0], M[3]]).T
+    C4 = np.mat([M[1], M[2], M[4], M[5]]).T
+
+    x = np.asmatrix(np.arange(0., L+L/(ne-1), L/(ne-1))).T
+    zero = np.asmatrix(np.zeros([len(x)])).T
+    one = np.asmatrix(np.ones([len(x)])).T
+
+    u = np.concatenate((x, one), 1)*C2-qx/(2*EA)*np.power(x, 2)
+    du = np.concatenate((one, zero), 1)*C2-qx*x/EA
+
+    v = np.concatenate((np.power(x, 3), np.power(x, 2), x, one), 1) * \
+        C4+qy/(24*EI)*np.np.power(x, 4)-qy/(2*GAK)*np.power(x, 2)
+    dv = np.concatenate((3*np.power(x, 2), 2*x, one, zero),
+                        1)*C4+qy*np.power(x, 3)/(6*EI)-qy*x/GAK
+
+    teta = np.concatenate((3*(np.power(x, 2)+2*alfa*one),
+                          2*x, one, zero), 1)*C4+qy*np.power(x, 3)/(6*EI)
+    dteta = np.concatenate((6*x, 2*one, zero, zero), 1) * \
+        C4+qy*np.power(x, 2)/(2*EI)
+
+    N = EA*du
+    M = EI*dteta
+    V = GAK*(dv-teta)
+
+    es = np.concatenate((N, V, M), 1)
+    edi = np.concatenate((u, v, teta), 1)
+    eci = x
+
+    if nep != None:
+        return es, edi, eci
+    else:
+        return es
+
+
+def _beam2w(ex, ey, ep, eq=None):
+    """
+    Compute the stiffness matrix for a two dimensional beam element
+    on elastic foundation.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]       element node coordinates
+
+        ep = [E,A,I,ka,kt]  element properties,
+                              E:  Young's modulus
+                              A:  cross section area
+                              I:  moment of inertia
+                             ka:  axial foundation stiffness
+                             kt:  transversal foundation stiffness
+
+        eq = [qx, qy]       distributed loads, local directions
+
+    Returns:
+
+        Ke                  beam stiffness matrix (6 x 6)
+        
+        fe                  element load vector (6 x 1)
+    """
+    b = np.mat([[ex[1]-ex[0]], [ey[1]-ey[0]]])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b/L).reshape(2)
+
+    E, A, I, ka, kt = ep
+
+    qx = 0
+    qy = 0
+    if eq != None:
+        qx, qy = eq
+
+    K1 = np.mat([
+        [E*A/L,  0,           0,         -E*A/L, 0,           0],
+        [0,      12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [0,      6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
+        [-E*A/L,  0,           0,          E*A/L, 0,           0],
+        [0,     -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
+        [0,      6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
+    ])
+
+    K2 = L/420*np.mat([
+        [140*ka, 0,       0,         70*ka,  0,       0],
+        [0,      156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L],
+        [0,      22*kt*L, 4*kt*L**2, 0,      13*kt*L, -3*kt*L**2],
+        [70*ka,  0,       0,         140*ka, 0,       0],
+        [0,      54*kt,   13*kt*L,   0,      156*kt, -22*kt*L],
+        [0,     -13*kt*L, -3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
+    ])
+
+    Kle = K1+K2
+    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+
+    G = np.mat([
+        [n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [0,    0,    1, 0,    0,    0],
+        [0,    0,    0, n[0], n[1], 0],
+        [0,    0,    0, -n[1], n[0], 0],
+        [0,    0,    0, 0,    0,    1]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+
+    if eq != None:
+        return Ke, fe
+    else:
+        return Ke
+
+
+def _beam2ws(ex, ey, ep, ed, eq=None):
+    """
+    Compute section forces in a two dimensional beam element
+    on elastic foundation.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I,ka,kt]      element properties,
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+                                 ka:  axial foundation stiffness
+                                 kt:  transversal foundation stiffness
+
+        ed = [u1, ... ,u6]      element displacement vector
+
+        eq = [qx, qy]           distributed loads, local directions
+
+    Returns:
+
+        es = [[N1, V1, M1],
+              [N2, V2, M2]]     element forces, local direction
+    """
+    if np.asmatrix(ed).shape[0] > 1:
+        error("Only one row is allowed in the ed matrix !!!")
+        return
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b/L).reshape(2,)
+
+    E, A, I, ka, kt = ep
+
+    qx = 0
+    qy = 0
+    if eq != None:
+        qx, qy = eq
+
+    K1 = np.mat([
+        [E*A/L, 0,           0,         -E*A/L, 0,           0],
+        [0,     12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [0,     6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
+        [-E*A/L, 0,           0,          E*A/L, 0,           0],
+        [0,    -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
+        [0,     6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
+    ])
+
+    K2 = L/420*np.mat([
+        [140*ka, 0,       0,         70*ka,  0,       0],
+        [0,      156*kt,  22*kt*L,   0,      54*kt,  -13*kt*L],
+        [0,      22*kt*L, 4*kt*L**2, 0,      13*kt*L, -3*kt*L**2],
+        [70*ka,  0,       0,         140*ka, 0,       0],
+        [0,      54*kt,   13*kt*L,   0,      156*kt, -22*kt*L],
+        [0,     -13*kt*L, -3*kt*L**2, 0,     -22*kt*L, 4*kt*L**2]
+    ])
+
+    Kle = K1+K2
+    fle = L*np.mat([qx/2, qy/2, qy*L/12, qx/2, qy/2, -qy*L/12]).T
+
+    G = np.mat([
+        [n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [0,    0,    1, 0,    0,    0],
+        [0,    0,    0, n[0], n[1], 0],
+        [0,    0,    0, -n[1], n[0], 0],
+        [0,    0,    0, 0,    0,    1]
+    ])
+
+    P = Kle*G*np.asmatrix(ed).T-fle
+
+    es = np.mat([
+        [-P[0, 0], -P[1, 0], -P[2, 0]],
+        [P[3, 0], P[4, 0], P[5, 0]]
+    ])
+
+    return es
+
+
+def _beam2g(ex, ey, ep, N, eq=None):
+    """
+    Compute the element stiffness matrix for a two dimensional
+    beam element with respect to geometric nonlinearity.
+    
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I]            element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+
+        N                       axial force in the beam
+
+        eq                      distributed transverse load
+
+    Returns:
+
+        Ke                      element stiffness matrix (6 x 6)
+        
+        fe                      element load vector (6 x 1)
+    """
+    if eq != None:
+        if np.size(eq) > 1:
+            error("eq should be a scalar !!!")
+            return
+        else:
+            q = eq[0]
+    else:
+        q = 0
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b/L).reshape(2,)
+
+    E, A, I = ep
+
+    rho = -N*L**2/(np.pi**2*E*I)
+
+    kL = np.pi*np.sqrt(abs(rho))+np.finfo(float).eps
+
+    if rho > 0:
+        f1 = (kL/2)/np.tan(kL/2)
+        f2 = (1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
+    elif rho < 0:
+        f1 = (kL/2)/np.tanh(kL/2)
+        f2 = -(1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
+    else:
+        f1 = f2 = f3 = f4 = f5 = h = 1
+
+    Kle = np.mat([
+        [E*A/L, 0.,              0.,            -E*A/L, 0.,              0.],
+        [0.,    12*E*I*f5/L**3., 6*E*I*f2/L**2.,
+            0.,   -12*E*I*f5/L**3., 6*E*I*f2/L**2.],
+        [0.,    6*E*I*f2/L**2.,  4*E*I*f3/L,
+            0.,   -6*E*I*f2/L**2.,  2*E*I*f4/L],
+        [-E*A/L, 0.,              0.,             E*A/L, 0.,              0.],
+        [0.,   -12*E*I*f5/L**3., -6*E*I*f2/L**2.,
+            0.,    12*E*I*f5/L**3., -6*E*I*f2/L**2.],
+        [0.,    6*E*I*f2/L**2.,  2*E*I*f4/L,
+            0.,   -6*E*I*f2/L**2.,  4*E*I*f3/L]
+    ])
+
+    fle = q*L*np.mat([0., 1/2., L*h/12, 0., 1/2., -L*h/12]).T
+
+    G = np.mat([
+        [n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [0,    0,    1, 0,    0,    0],
+        [0,    0,    0, n[0], n[1], 0],
+        [0,    0,    0, -n[1], n[0], 0],
+        [0,    0,    0, 0,    0,    1]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+
+    if eq != None:
+        return Ke, fe
+    else:
+        return Ke
+
+
+def _beam2gs(ex, ey, ep, ed, N, eq=None):
+    """
+    Calculate section forces in a two dimensional nonlinear
+    beam element.
+
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I]            element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+
+        ed = [u1, ... ,u6]      element displacement vector
+
+        N                       axial force
+
+        eq = [qy]               distributed transverse load
+
+    Returns:
+
+        es = [[N1,V1,M1],       element forces, local directions
+              [N2,V2,M2]]
+    """
+    if eq != None:
+        eq = eq[0]
+    else:
+        eq = 0
+
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b/L).reshape(2,)
+
+    E, A, I = ep
+
+    rho = -N*L**2/(np.pi**2*E*I)
+
+    eps = 2.2204e-16
+    kL = np.pi*np.sqrt(abs(rho))+eps
+
+    if rho > 0:
+        f1 = (kL/2)/np.tan(kL/2)
+        f2 = (1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = 6*(2/kL**2-(1+np.cos(kL))/(kL*np.sin(kL)))
+    elif rho < 0:
+        f1 = (kL/2)/np.tanh(kL/2)
+        f2 = -(1/12.)*kL**2/(1-f1)
+        f3 = f1/4+3*f2/4
+        f4 = -f1/2+3*f2/2
+        f5 = f1*f2
+        h = -6*(2/kL**2-(1+np.cosh(kL))/(kL*np.sinh(kL)))
+    else:
+        f1 = f2 = f3 = f4 = f5 = h = 1
+
+    Kle = np.mat([
+        [E*A/L, 0,              0,            -E*A/L, 0,              0],
+        [0,     12*E*I*f5/L**3, 6*E*I*f2/L**2,
+            0,    -12*E*I*f5/L**3, 6*E*I*f2/L**2],
+        [0,     6*E*I*f2/L**2,  4*E*I*f3/L,    0,    -6*E*I*f2/L**2,  2*E*I*f4/L],
+        [-E*A/L, 0,              0,             E*A/L, 0,              0],
+        [0,    -12*E*I*f5/L**3, -6*E*I*f2/L**2,
+            0,     12*E*I*f5/L**3, -6*E*I*f2/L**2],
+        [0,     6*E*I*f2/L**2,  2*E*I*f4/L,    0,    -6*E*I*f2/L**2,  4*E*I*f3/L]
+    ])
+
+    fle = eq*L*np.mat([0, 1/2., L*h/12, 0, 1/2., -L*h/12]).T
+
+    G = np.mat([
+        [n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [0,    0,    1, 0,    0,    0],
+        [0,    0,    0, n[0], n[1], 0],
+        [0,    0,    0, -n[1], n[0], 0],
+        [0,    0,    0, 0,    0,    1]
+    ])
+
+    u = np.asmatrix(ed).T
+    P = Kle*G*u-fle
+
+    es = np.mat([
+        [-P[0, 0], -P[1, 0], -P[2, 0]],
+        [P[3, 0], P[4, 0], P[5, 0]]
+    ])
+
+    return es
+
+
+def _beam2d(ex, ey, ep):
+    """
+    Calculate the stiffness matrix Ke, the mass matrix Me
+    and the damping matrix Ce for a 2D elastic Bernoulli
+    beam element.
+
+    Parameters:
+ 
+        ex = [x1, x2]
+        ey = [y1, y2]           element node coordinates
+
+        ep = [E,A,I,m,(a,b)]    element properties;
+                                  E:  Young's modulus
+                                  A:  cross section area
+                                  I:  moment of inertia
+                                  m:  mass per unit length
+                                a,b:  damping coefficients,
+                                      Ce=aMe+bKe
+
+    Returns:
+
+        Ke                      element stiffness matrix (6 x 6)
+        Me                      element mass martix
+        Ce                      element damping matrix, optional
+    """
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n = np.asarray(b/L).reshape(2,)
+
+    a = 0
+    b = 0
+    if np.size(ep) == 4:
+        E, A, I, m = ep
+    elif np.size(ep) == 6:
+        E, A, I, m, a, b = ep
+
+    Kle = np.mat([
+        [E*A/L, 0,           0,         -E*A/L, 0,           0],
+        [0,     12*E*I/L**3, 6*E*I/L**2, 0,    -12*E*I/L**3, 6*E*I/L**2],
+        [0,     6*E*I/L**2,  4*E*I/L,    0,    -6*E*I/L**2,  2*E*I/L],
+        [-E*A/L, 0,           0,          E*A/L, 0,           0],
+        [0,    -12*E*I/L**3, -6*E*I/L**2, 0,     12*E*I/L**3, -6*E*I/L**2],
+        [0,     6*E*I/L**2,  2*E*I/L,    0,    -6*E*I/L**2,  4*E*I/L]
+    ])
+
+    Mle = m*L/420*np.mat([
+        [140, 0,    0,      70,  0,    0],
+        [0,   156,  22*L,   0,   54,  -13*L],
+        [0,   22*L, 4*L**2, 0,   13*L, -3*L**2],
+        [70,  0,    0,      140, 0,    0],
+        [0,   54,   13*L,   0,   156, -22*L],
+        [0,  -13*L, -3*L**2, 0,  -22*L, 4*L**2]
+    ])
+
+    Cle = a*Mle+b*Kle
+
+    G = np.mat([
+        [n[0], n[1], 0, 0,    0,    0],
+        [-n[1], n[0], 0, 0,    0,    0],
+        [0,    0,    1, 0,    0,    0],
+        [0,    0,    0, n[0], n[1], 0],
+        [0,    0,    0, -n[1], n[0], 0],
+        [0,    0,    0, 0,    0,    1]
+    ])
+
+    Ke = G.T*Kle*G
+    Me = G.T*Mle*G
+    Ce = G.T*Cle*G
+
+    if np.size(ep) == 4:
+        return Ke, Me
+    elif np.size(ep) == 6:
+        return Ke, Me, Ce
+
+
+def _beam3e(ex, ey, ez, eo, ep, eq=None):
+    """
+    Calculate the stiffness matrix for a 3D elastic Bernoulli
+    beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]
+        ey = [y1 y2]
+        ez = [z1 z2]            element node coordinates
+        
+        eo = [xz yz zz]         orientation of local z axis
+        
+        ep = [E G A Iy Iz Kv]   element properties
+                                  E: Young's modulus
+                                  G: Shear modulus
+                                  A: Cross section area
+                                 Iy: Moment of inertia, local y-axis
+                                 Iz: Moment of inertia, local z-axis
+                                 Kv: Saint-Venant's torsion constant
+    
+        eq = [qx qy qz qw]      distributed loads
+
+    Returns:
+
+        Ke                      beam stiffness matrix (12 x 12)
+
+        fe                      equivalent nodal forces (12 x 1)
+
+    """
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n1 = np.asarray(b.T/L).reshape(3,)
+
+    eo = np.asmatrix(eo)
+    lc = np.sqrt(eo*eo.T).item()
+    n3 = np.asarray(eo/lc).reshape(3,)
+
+    E, Gs, A, Iy, Iz, Kv = ep
+
+    qx = 0.
+    qy = 0.
+    qz = 0.
+    qw = 0.
+    if eq != None:
+        qx, qy, qz, qw = eq
+
+    a = E*A/L
+    b = 12*E*Iz/L**3
+    c = 6*E*Iz/L**2
+    d = 12*E*Iy/L**3
+    e = 6*E*Iy/L**2
+    f = Gs*Kv/L
+    g = 2*E*Iy/L
+    h = 2*E*Iz/L
+
+    Kle = np.mat([
+        [a, 0, 0, 0, 0,   0,  -a, 0, 0, 0, 0,   0],
+        [0, b, 0, 0, 0,   c,   0, -b, 0, 0, 0,   c],
+        [0, 0, d, 0, -e,   0,   0, 0, -d, 0, -e,   0],
+        [0, 0, 0, f, 0,   0,   0, 0, 0, -f, 0,   0],
+        [0, 0, -e, 0, 2*g, 0,   0, 0, e, 0, g,   0],
+        [0, c, 0, 0, 0,   2*h, 0, -c, 0, 0, 0,   h],
+        [-a, 0, 0, 0, 0,   0,   a, 0, 0, 0, 0,   0],
+        [0, -b, 0, 0, 0,  -c,   0, b, 0, 0, 0,  -c],
+        [0, 0, -d, 0, e,   0,   0, 0, d, 0, e,   0],
+        [0, 0, 0, -f, 0,   0,   0, 0, 0, f, 0,   0],
+        [0, 0, -e, 0, g,   0,   0, 0, e, 0, 2*g, 0],
+        [0, c, 0, 0, 0,   h,   0, -c, 0, 0, 0,   2*h]
+    ])
+
+    fle = L/2*np.mat([qx, qy, qz, qw, -qz*L/6, qy*L/6,
+                     qx, qy, qz, qw, qz*L/6, -qy*L/6]).T
+
+    n2 = np.array([0., 0., 0.])
+    n2[0] =  n3[1]*n1[2]-n3[2]*n1[1]
+    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
+    n2[2] =  n3[0]*n1[1]-n1[0]*n3[1]
+
+    #An = np.append([n1,n2],[n3],0)
+
+    G = np.mat([
+        [n1[0], n1[1], n1[2], 0,     0,     0,         0,     0,     0,     0,     0,     0],
+        [n2[0], n2[1], n2[2], 0,     0,     0,    0,   0,     0,     0,     0,     0],
+        [n3[0], n3[1], n3[2], 0,     0,     0,    0,   0,     0,     0,     0,     0],
+        [0,     0,     0,     n1[0], n1[1], n1[2],     0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     n2[0], n2[1], n2[2],     0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     n3[0], n3[1], n3[2],     0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     0,     0,     0,         n1[0], n1[1], n1[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,         n2[0], n2[1], n2[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,         n3[0], n3[1], n3[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,     0,         0,     0,     n1[0], n1[1], n1[2]],
+        [0,     0,     0,     0,     0,     0,     0,         0,     0,     n2[0], n2[1], n2[2]],
+        [0,     0,     0,     0,     0,     0,         0,     0,     0,     n3[0], n3[1], n3[2]]
+    ])
+
+    Ke = G.T*Kle*G
+    fe = G.T*fle
+
+    if eq == None:
+        return Ke
+    else:
+        return Ke, fe
+
+
+def _beam3s(ex, ey, ez, eo, ep, ed, eq=None, n=None):
+    """
+    Calculate the variation of the section forces and displacements
+    along a three-dimensional beam element.
+    
+    Parameters:
+     
+        ex = [x1 x2]                element node coordinates
+        ey = [y1 y2]
+        ez = [z1 z2]
+
+        eo = [xz yz zz]             orientation of local z axis
+        
+        ep = [E G A Iy Iz Kv]       element properties
+                                      E: Young's modulus
+                                      G: Shear modulus
+                                      A: Cross section area
+                                     Iy: Moment of inertia, local y-axis
+                                     Iz: Moment of inertia, local z-axis
+                                     Kv: Saint-Venant's torsion constant
+
+        ed                          the element displacement vector from the
+                                    global coordinate system
+    
+        eq = [qx qy qz qw]          the disibuted axial, transversal and
+                                    torsional loads
+
+        n                           the number of point in which displacements
+                                    and section forces are to be computed
+
+    Returns:
+
+        es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
+              [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
+              [..,...,...,..,...,...],
+              [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
+
+        edi = [[u1,v1,w1,fi1],          displacements in n points along
+               [u2,v2,w2,fi2],          the local x-axis
+               [..,..,..,...],
+               [un,vn,wn,fin]]
+
+        eci = [[x1],                    local x-coordinates of the evaluation
+               [x2],                    points
+               [..],
+               [xn]]
+
+    """
+    b = np.mat([
+        [ex[1]-ex[0]],
+        [ey[1]-ey[0]],
+        [ez[1]-ez[0]]
+    ])
+    L = np.sqrt(b.T*b).item()
+    n1 = np.asarray(b.T/L).reshape(3,)
+
+    eo = np.asmatrix(eo)
+    lc = np.sqrt(eo*eo.T).item()
+    n3 = np.asarray(eo/lc).reshape(3,)
+
+    EA = ep[0]*ep[2]
+    EIy = ep[0]*ep[3]
+    EIz = ep[0]*ep[4]
+    GKv = ep[1]*ep[5]
+
+    qx = 0.
+    qy = 0.
+    qz = 0.
+    qw = 0.
+    if eq != None:
+        qx, qy, qz, qw = eq
+
+    ne = 2
+    if n != None:
+        ne = n
+
+    n2 = np.array([0., 0., 0.])
+    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
+    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
+    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
+
+    G = np.mat([
+        [n1[0], n1[1], n1[2], 0,     0,     0,
+            0,     0,     0,     0,     0,     0],
+        [n2[0], n2[1], n2[2], 0,     0,     0,
+            0,     0,     0,     0,     0,     0],
+        [n3[0], n3[1], n3[2], 0,     0,     0,
+            0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     n1[0], n1[1], n1[2],
+            0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     n2[0], n2[1], n2[2],
+            0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     n3[0], n3[1], n3[2],
+            0,     0,     0,     0,     0,     0],
+        [0,     0,     0,     0,     0,     0,
+            n1[0], n1[1], n1[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,
+            n2[0], n2[1], n2[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,
+            n3[0], n3[1], n3[2], 0,     0,     0],
+        [0,     0,     0,     0,     0,     0,     0,
+            0,     0,     n1[0], n1[1], n1[2]],
+        [0,     0,     0,     0,     0,     0,     0,
+            0,     0,     n2[0], n2[1], n2[2]],
+        [0,     0,     0,     0,     0,     0,
+            0,     0,     0,     n3[0], n3[1], n3[2]]
+    ])
+
+    u = G*np.asmatrix(ed).T-np.array([    # u is the local element displacement
+        [0],        # vector minus the particular solution
+        [0],        # to the beam's diff.eq:s
+        [0],
+        [0],
+        [0],
+        [0],
+        [-qx*L**2/(2*EA)],
+        [qy*L**4/(24*EIz)],
+        [qz*L**4/(24*EIy)],
+        [-qw*L**2/(2*GKv)],
+        [-qz*L**3/(6*EIy)],
+        [qy*L**3/(6*EIz)]
+    ])
+
+    C = np.mat([
+        [0, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0],
+        [0, 0, 0,      0,    0, 1, 0,      0,    0, 0, 0, 0],
+        [0, 0, 0,      0,    0, 0, 0,      0,    0, 1, 0, 0],
+        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, 0, 1],
+        [0, 0, 0,      0,    0, 0, 0,      0,   -1, 0, 0, 0],
+        [0, 0, 0,      0,    1, 0, 0,      0,    0, 0, 0, 0],
+        [L, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0, ],
+        [0, 0, L**3,   L**2, L, 1, 0,      0,    0, 0, 0, 0],
+        [0, 0, 0,      0,    0, 0, L**3,   L**2, L, 1, 0, 0],
+        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, L, 1],
+        [0, 0, 0,      0,    0, 0, -3*L**2, -2*L, -1, 0, 0, 0],
+        [0, 0, 3*L**2, 2*L,  1, 0, 0,      0,    0, 0, 0, 0],
+    ])
+
+    m = np.linalg.inv(C)*u
+    eci = np.zeros((ne, 1))
+    es = np.zeros((ne, 6))
+    edi = np.zeros((ne, 4))
+    for i in np.arange(ne):
+        x = i*L/(ne-1)
+        eci[i, 0] = x
+        es[i, :] = (np.mat([
+            [EA, 0, 0,       0,     0, 0, 0,       0,     0, 0, 0,   0],
+            [0,  0, -6*EIz,   0,     0, 0, 0,       0,     0, 0, 0,   0],
+            [0,  0, 0,       0,     0, 0, -6*EIy,   0,     0, 0, 0,   0],
+            [0,  0, 0,       0,     0, 0, 0,       0,     0, 0, GKv, 0],
+            [0,  0, 0,       0,     0, 0, -6*EIy*x, -2*EIy, 0, 0, 0,   0],
+            [0,  0, 6*EIz*x, 2*EIz, 0, 0, 0,       0,     0, 0, 0,   0]
+        ])*m+np.array([-qx*x, -qy*x, -qz*x, -qw*x, -qz*x**2/2, qy*x**2/2]).reshape(6, 1)).T
+
+        edi[i, :] = (np.mat([
+            [x, 1, 0,    0,    0, 0, 0,    0,    0, 0, 0, 0],
+            [0, 0, x**3, x**2, x, 1, 0,    0,    0, 0, 0, 0],
+            [0, 0, 0,    0,    0, 0, x**3, x**2, x, 1, 0, 0],
+            [0, 0, 0,    0,    0, 0, 0,    0,    0, 0, x, 1]
+        ])*m+np.array([-qx*x**2/(2*EA), qy*x**4/(24*EIz), qz*x**4/(24*EIy), -qw*x**2/(2*GKv)]).reshape(4, 1)).T
+
+    if n == None:
+        return es
+    else:
+        return es, edi, eci
