@@ -2923,7 +2923,7 @@ def plantf(ex, ey, ep, es):
         ])*np.linalg.inv(C)
 
         if colD > 3:
-            stress = np.asmatrix(es[np.ix_((1, 2, 4))])
+            stress = np.asmatrix(es[np.ix_((0, 1, 3))])
         else:
             stress = np.asmatrix(es)
 

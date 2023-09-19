@@ -78,7 +78,7 @@ mesh = cfm.GmshMesh(g)
 
 mesh.el_type = 3
 mesh.dofs_per_node = 1  # Degrees of freedom per node.
-mesh.el_size_factor = 0.15  # Factor that changes element sizes.
+mesh.el_size_factor = 0.05  # Factor that changes element sizes.
 # mesh.mesh_dir = "./mesh_files"
 # mesh.gmsh_exec_path = "D:\\vsmn20-software\\gmsh\gmsh.exe"
 
