@@ -7,7 +7,7 @@
 
 import numpy as np
 import calfem.core as cfc
-import calfem.vedo as cfvv
+import calfem.vis_vedo as cfv
 import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.utils as cfu

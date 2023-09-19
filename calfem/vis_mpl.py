@@ -1581,127 +1581,288 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
 #     hold off
 # %--------------------------end--------------------------------
 
-def secforce2(ex, ey, es, plotpar=None, sfac=None, eci = None):
+
+def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
     """
-    --------------------------------------------------------------------------
-     PURPOSE:
-      Draw section force diagram for a two dimensional bar or beam element.
+    dispbeam2(ex,ey,edi,plotpar,sfac)
+    [sfac]=dispbeam2(ex,ey,edi)
+    [sfac]=dispbeam2(ex,ey,edi,plotpar)
+------------------------------------------------------------------------
+    PURPOSE
+    Draw the displacement diagram for a two dimensional beam element.
+	
+    INPUT:   ex = [ x1 x2 ]
+            ey = [ y1 y2 ]	element node coordinates.
 
-     INPUT:
-        ex = [ x1 x2 ]
-        ey = [ y1 y2 ]	element node coordinates.
+            edi = [ u1 v1;
+                   u2 v2;
+ 		             .....] 	matrix containing the displacements
+ 			                  in Nbr evaluation points along the beam.
+ 	
+            plotpar=[linetype, linecolour, nodemark] 
 
-        es = [ S1;
-               S2;
-             ... ] 	vector containing the section force
-                    in Nbr evaluation points along the element.
+                     linetype=1 -> solid   linecolour=1 -> black
+                              2 -> dashed             2 -> blue
+                              3 -> dotted             3 -> magenta
+                                                     4 -> red
+                     nodemark=0 -> no mark 
+                              1 -> circle       
+                              2 -> star              
+                              3 -> point 
+ 
+                     sfac = [scalar] scale factor for displacements. 
+             
+            Rem. Default if sfac and plotpar is left out is auto magnification 
+           and dashed black lines with circles at nodes -> plotpar=[1 1 1] 
+------------------------------------------------------------------------
 
-        plotpar=[linecolour, elementcolour]
+    LAST MODIFIED: O Dahlblom  2015-11-18
+                   O Dahlblom  2023-01-31 (Python)
 
-                linecolour=1 -> black     elementcolour=1 -> black
-                           2 -> blue                    2 -> blue
-                           3 -> magenta                 3 -> magenta
-                           4 -> red                     4 -> red
-
-        sfac = [scalar]	scale factor for section force diagrams.
-
-        eci = [  x1;
-                x2;
-               ... ]  local x-coordinates of the evaluation points (Nbr).
-           If not given, the evaluation points are assumed to be uniformly
-           distributed
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+------------------------------------------------------------------------
     """
-
-    if ex.shape == ey.shape:
-        if ex.ndim !=1:
-            nen = ex.shape[1]
-        else:
-            nen = ex.shape[0]
-
-            ex = ex.reshape(1, nen)
-            ey = ey.reshape(1, nen)
-    else:
+    if ex.shape != ey.shape:
         raise ValueError("Check size of ex, ey dimensions.")
 
-    #bar2s returns a float - convert it to array
-    if isinstance(es, float):
-        es = np.array([es,es]).reshape(2,1)
+    rows, cols = edi.shape
+    if cols != 2:
+        raise ValueError("Check size of edi dimension.")
+    Nbr = rows   
 
-    Nbr = es.shape[0]
-    b = np.array([ex[0,1]-ex[0,0],ey[0,1]-ey[0,0]])
-    Length = np.sqrt(b@b)
-    n = (b/Length).reshape(1,len(b))
+    x1, x2 = ex
+    y1, y2 = ey
+    dx = x2-x1
+    dy = y2-y1
+    L = np.sqrt(dx*dx+dy*dy)
+    nxX=dx/L
+    nyX=dy/L
+    n = np.array([nxX, nyX])
+ 
+    line_color, line_style, node_color, node_style = pltstyle2(plotpar)
+ 
+    if sfac is None:
+        sfac=(0.1*L)/(np.max(abs(edi)))
 
-    if plotpar is None:
-        mpl_diagram_color = (0, 0, 1)  # 'b'
-        mpl_elem_color = (0, 0, 0)  # 'k'
-    elif len(plotpar) != 2:
-        raise ValueError('Check size of "plotpar" input argument!')
-    else:
-        p1, p2 = plotpar
-        if p1 == 1:
-            mpl_diagram_color = (0, 0, 0) # 'k'
-        elif p1 == 2:
-            mpl_diagram_color = (0, 0, 1) # 'b'
-        elif p1 == 3:
-            mpl_diagram_color = (1, 0, 1) # 'm'
-        elif p1 == 4:
-            mpl_diagram_color = (1, 0, 0) # 'r'
+    eci = np.arange(0., L+L/(Nbr-1), L/(Nbr-1)).reshape(Nbr,1) 
+         
+    edi1=edi*sfac
+# From local x-coordinates to global coordinates of the beam element.
+    A = np.zeros(2*Nbr).reshape(Nbr,2)
+    A[0,0] = ex[0]
+    A[0,1] = ey[0]
+    for i in range(1, Nbr):
+	    A[i,0]=A[0,0]+eci[i]*n[0]
+	    A[i,1]=A[0,1]+eci[i]*n[1]
 
-        if p2 == 1:
-            mpl_elem_color = (0, 0, 0) # 'k'
-        elif p2 == 2:
-            mpl_elem_color = (0, 0, 1) # 'b'
-        elif p2 == 3:
-            mpl_elem_color = (1, 0, 1) # 'm'
-        elif p2 == 4:
-            mpl_elem_color = (1, 0, 0) # 'r'
+    for i in range(0, Nbr):
+	    A[i,0]=A[i,0]+edi1[i,0]*n[0]-edi1[i,1]*n[1]
+	    A[i,1]=A[i,1]+edi1[i,0]*n[1]+edi1[i,1]*n[0]
+    xc=np.array(A[:,0])
+    yc=np.array(A[:,1])
 
+    plt.plot(xc,yc, color=line_color, linewidth=1)
+ 
+    A1=np.array([A[0,0], A[Nbr-1,0]]).reshape(1,2)
+    A2=np.array([A[0,1], A[Nbr-1,1]]).reshape(1,2)
+    draw_node_circles(A1, A2, color=node_color,
+                          filled=False, marker_type=node_style)
+
+
+def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
+    """
+    secforce2(ex,ey,es,plotpar,sfac)
+    secforce2(ex,ey,es,plotpar,sfac,eci)
+    [sfac]=secforce2(ex,ey,es)
+    [sfac]=secforce2(ex,ey,es,plotpar)
+--------------------------------------------------------------------------
+    PURPOSE: 
+    Draw section force diagram for a two dimensional bar or beam element.
+  	
+    INPUT:  ex = [ x1 x2 ]
+        	ey = [ y1 y2 ]	element node coordinates.
+
+        	es = [ S1;
+                   S2;
+            		... ] 	vector containing the section force
+  			                in Nbr evaluation points along the element.
+ 	
+            plotpar=[linecolour, elementcolour] 
+ 
+                linecolour=1 -> black      elementcolour=1 -> black
+                           2 -> blue                     2 -> blue
+                           3 -> magenta                  3 -> magenta
+                           4 -> red                       4 -> red
+ 
+         	sfac = [scalar]	scale factor for section force diagrams.
+
+            eci = [  x1;
+                     x2;
+                   ... ]  local x-coordinates of the evaluation points (Nbr).
+                          If not given, the evaluation points are assumed to be uniformly
+                          distributed
+--------------------------------------------------------------------------
+
+    LAST MODIFIED: O Dahlblom  2019-12-16
+                   O Dahlblom  2023-01-31 (Python)
+
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+--------------------------------------------------------------------------
+    """
+    if ex.shape != ey.shape:
+        raise ValueError("Check size of ex, ey dimensions.")
+
+    c=len(es)
+    Nbr=c
+
+    x1, x2 = ex
+    y1, y2 = ey
+    dx = x2-x1
+    dy = y2-y1
+    L = np.sqrt(dx*dx+dy*dy)
+    nxX=dx/L
+    nyX=dy/L
+    n = np.array([nxX, nyX])
 
     if sfac is None:
-        sfac=(0.2*Length)/np.max(np.abs(es))
+        sfac=(0.2*L)/max(abs(es))
 
     if eci is None:
-        eci = np.linspace(0,Length,Nbr).reshape(Nbr,1)
+        eci = np.arange(0., L+L/(Nbr-1), L/(Nbr-1)).reshape(Nbr,1) 
 
-    if es.shape[0] != eci.shape[0]:
-        raise ValueError("Check size of 'es' or 'eci' input argument!")
+    p1 = plotpar[0]
+    if p1 == 1:
+        line_color = (0, 0, 0)
+    elif p1 == 2:
+        line_color = (0, 0, 1)
+    elif p1 == 3:
+        line_color = (1, 0, 1)
+    elif p1 == 4:
+        line_color = (1, 0, 0)
+    else:
+        raise ValueError("Invalid value for plotpar[1].")
+    line_style = 'solid'
 
-    es *= sfac
+    p2 = plotpar[1]
+    if p2 == 1:
+        line_color1 = (0, 0, 0)
+    elif p2 == 2:
+        line_color1 = (0, 0, 1)
+    elif p2 == 3:
+        line_color1 = (1, 0, 1)
+    elif p2 == 4:
+        line_color1 = (1, 0, 0)
+    else:
+        raise ValueError("Invalid value for plotpar[1].")
 
-    # From local x-coordinates to global coordinates of the element
-    A = np.zeros([Nbr,2])
-    A = [ex[0][0], ey[0][0]] + eci@n
-    Ax = np.zeros([Nbr-1,2])
-    Ax[:,0] = A[:-1,0]
-    Ax[:,1] = A[1:,0]
-    Ay = np.zeros([Nbr-1,2])
-    Ay[:,0] = A[:-1,1]
-    Ay[:,1] = A[1:,1]
+    a = len(eci)
+    if a != c:
+        raise ValueError("Check size of eci dimension.")
 
+    es=es*sfac
 
-    Bx=np.copy(Ax)
-    By=np.copy(Ay)
-    for i in range(Nbr-1):
-        Ax[i,:] = [ Ax[i,0]+es[i]*n[0,1], Ax[i,1]+es[i+1]*n[0,1] ]
-        Ay[i,:] = [ Ay[i,0]-es[i]*n[0,0], Ay[i,1]-es[i+1]*n[0,0] ]
+# From local x-coordinates to global coordinates of the element
+    A = np.zeros(2*Nbr).reshape(Nbr,2)
+    A[0,0] = ex[0]
+    A[0,1] = ey[0]
+    for i in range(Nbr):
+	    A[i,0] = A[0,0]+eci[i]*n[0]
+	    A[i,1] = A[0,1]+eci[i]*n[1]
 
-    #plot diagram and its vertical stripes at the ends
-    plt.axis('equal')
-    draw_elements(Ax, Ay, color=mpl_diagram_color,
-                  line_style='solid', filled=False, closed=False)
+    B=np.array(A)
+    
+# Plot diagram
+    for i in range(0, Nbr):
+	    A[i,0]=A[i,0]+es[i]*n[1]
+	    A[i,1]=A[i,1]-es[i]*n[0]
 
-    draw_elements(np.array([ex[0][0], Ax[0,0]]).reshape(1,2), np.array([ey[0][0], Ay[0,0]]).reshape(1,2), color=mpl_diagram_color,
-                  line_style='solid', filled=False, closed=False)
-    draw_elements(np.array([ex[0][1], Ax[-1,-1]]).reshape(1,2), np.array([ey[0][1], Ay[-1,-1]]).reshape(1,2), color=mpl_diagram_color,
-                  line_style='solid', filled=False, closed=False)
+    xc=np.array(A[:,0])
+    yc=np.array(A[:,1])
 
-    #plot stripes in diagram
-    for i in range(0,Nbr-2):
-        np.array([Bx[i,1], Ax[i,1]]).reshape(1,2), np.array([By[i,1], Ay[i,1]]).reshape(1,2)
-        draw_elements(np.array([Bx[i,1], Ax[i,1]]).reshape(1,2), np.array([By[i,1], Ay[i,1]]).reshape(1,2), color=mpl_diagram_color,
-                  line_style='solid', filled=False, closed=False)
+    plt.plot(xc,yc, color=line_color, linewidth=1)
+    
+# Plot stripes in diagram
+    xs = np.zeros(2) 
+    ys = np.zeros(2) 
+    for i in range(Nbr):
+        xs[0]=B[i,0]
+        xs[1]=A[i,0]
+        ys[0]=B[i,1]
+        ys[1]=A[i,1]
+        print("i,xs,ys=")
+        print(i,xs,ys)
+        plt.plot(xs,ys, color=line_color, linewidth=1)
+# Plot element
+    plt.plot(ex,ey, color=line_color1, linewidth=2)
+ 
 
-    #plot elements
-    draw_elements(ex, ey, color=mpl_elem_color,
-                  line_style='solid', filled=False, closed=False)
+def scalgraph2(sfac, magnitude, plotpar=2):
+    """
+    scalgraph2(sfac, magnitude, plotpar)
+    scalgraph2(sfac, magnitude)
+    -------------------------------------------------------------
+    PURPOSE 
+    Draw a graphic scale
+
+    INPUT:  sfac = [scalar]	scale factor.
+
+            magnitude = [Ref x y]	The graphic scale has a length equivalent   
+        	to Ref and starts at coordinates (x,y).
+        	If no coordinates are given the starting
+            point will be (0,-0.5).
+
+            plotpar=[linecolor] 
+                linecolor=1 -> black
+                2 -> blue
+                3 -> magenta
+                4 -> red
+    -------------------------------------------------------------
+
+     LAST MODIFIED: O Dahlblom  2015-12-02
+                    O Dahlblom  2023-01-23 (Python)
+
+     Copyright (c)  Division of Structural Mechanics and
+                    Division of Solid Mechanics.
+                    Lund University
+    -------------------------------------------------------------
+    """
+    cols = len(magnitude)
+    if cols != 1 and cols != 3 : 
+        raise ValueError("Check size of magnitude input argument.")
+    if cols == 1 :
+        N = magnitude
+        x = 0
+        y = -0.5
+    if cols == 3 :
+        N, x, y = magnitude
+    
+    print("x= y=")
+    print(x,y)
+
+    L = N*sfac
+    print("L=")
+    print(L)
+    print("plotpar")
+    print(plotpar)
+
+    if plotpar == 1:
+        line_color = (0, 0, 0)
+    elif plotpar == 2:
+        line_color = (0, 0, 1)
+    elif plotpar == 3:
+        line_color = (1, 0, 1)
+    elif plotpar == 4:
+        line_color = (1, 0, 0)
+    else:
+        raise ValueError("Invalid value for plotpar[1].")
+    print("x=")
+    print(x)
+    plt.plot([x, (x+L)],[y, y], color=line_color, linewidth=1)
+    plt.plot([x, x],[(y-L/20), (y+L/20)], color=line_color, linewidth=1)
+    plt.plot([(x+L), (x+L)],[(y-L/20), (y+L/20)], color=line_color, linewidth=1)
+    plt.text(x+L*1.1, (y-L/20), str(N))
+

@@ -16,7 +16,7 @@ import sys
 import time
 from scipy.io import loadmat
 import calfem.core as cfc
-import vis_vedo_utils as vdu
+import calfem.vis_vedo_utils as vdu
 import vtk
 
 # Examples using this module:

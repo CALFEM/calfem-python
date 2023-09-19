@@ -3,7 +3,8 @@
 # example exs_bar2_la
 # ----------------------------------------------------------------
 # PURPOSE
-#    Analysis of a plane truss using loops.
+#    Analysis of a plane truss using loops and extraction of  
+#    element coordinates from a global coordinate matrix.
 # ----------------------------------------------------------------
 
 # REFERENCES
@@ -11,6 +12,7 @@
 #     K-G Olsson 1995-09-28
 #     O Dahlblom 2004-08-31
 #     J Lindemann 2009-01-25
+#     O Dahlblom 2019-12-16
 #     O Dahlblom 2023-02-02
 # ----------------------------------------------------------------
 
@@ -45,34 +47,30 @@ A = 25.0e-4
 E = 2.1e11
 ep = [E, A]
 
+#----- Global coordinates and topology --------------------------
+
+coord = np.array([
+    [0, 2],
+    [0, 0],
+    [2, 2],
+    [2, 0],
+    [4, 2],
+    [4, 0]
+])
+ 
+dof = np.array([
+    [ 1,  2],
+    [ 3,  4],
+    [ 5,  6],
+    [ 7,  8],
+    [ 9, 10],
+    [11, 12]
+])    
+
 # ----- Element coordinates --------------------------------------
 
-ex = np.array([
-    [0., 2.],
-    [0., 2.],
-    [2., 4.],
-    [2., 4.],
-    [2., 2.],
-    [4., 4.],
-    [0., 2.],
-    [2., 4.],
-    [0., 2.],
-    [2., 4.]
-])
-
-ey = np.array([
-    [2., 2.],
-    [0., 0.],
-    [2., 2.],
-    [0., 0.],
-    [0., 2.],
-    [0., 2.],
-    [0., 2.],
-    [0., 2.],
-    [2., 0.],
-    [2., 0.]
-])
-
+ex, ey = cfc.coordxtr(edof, coord, dof,2)
+ 
 # ----- Create element stiffness matrices Ke and assemble into K -
 
 for elx, ely, eltopo in zip(ex, ey, edof):

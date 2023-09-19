@@ -7,7 +7,7 @@ Example using Vedo, spring elements
 
 import numpy as np
 import calfem.core as cfc
-import calfem.vedo as cfv
+import calfem.vis_vedo as cfv
 
 coord = np.array([
     [0],
