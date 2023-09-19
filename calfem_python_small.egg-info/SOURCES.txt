@@ -12,6 +12,7 @@ calfem/core.py
 calfem/editor.py
 calfem/editor_resources.py
 calfem/editor_scene.py
+calfem/editor_ui.py
 calfem/experimental.py
 calfem/geometry.py
 calfem/intvis.py
