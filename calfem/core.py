@@ -2764,9 +2764,6 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
             0,     0,     0,     n3[0], n3[1], n3[2]]
     ])
 
-    print("G=")
-    print(G)
-
     Ke = G.T @ Kle @ G
     fe = G.T @ fle
 
