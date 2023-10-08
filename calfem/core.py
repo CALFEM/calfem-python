@@ -1188,65 +1188,72 @@ def beam2d(ex, ey, ep):
 
 def beam3e(ex, ey, ez, eo, ep, eq=None):
     """
+    Ke = beam3e(ex, ey, ez, eo, ep)
+    Ke, fe = beam3e(ex, ey, ez, eo, ep, eq)
+    -------------------------------------------------------------
+    PURPOSE
     Calculate the stiffness matrix for a 3D elastic Bernoulli
     beam element.
-    
-    Parameters:
-     
-        ex = [x1 x2]
-        ey = [y1 y2]
-        ez = [z1 z2]            element node coordinates
-        
-        eo = [xz yz zz]         orientation of local z axis
-        
-        ep = [E G A Iy Iz Kv]   element properties
-                                  E: Young's modulus
-                                  G: Shear modulus
-                                  A: Cross section area
-                                 Iy: Moment of inertia, local y-axis
-                                 Iz: Moment of inertia, local z-axis
-                                 Kv: Saint-Venant's torsion constant
-    
-        eq = [qx qy qz qw]      distributed loads
 
-    Returns:
+    INPUT:  ex = [x1 x2]    
+            ey = [y1 y2] 
+            ez = [z1 z2]            element node coordinates
 
-        Ke                      beam stiffness matrix (12 x 12)
+            eo = [xz yz zz]         orientation of local z-axis  
 
-        fe                      equivalent nodal forces (12 x 1)
+            ep = [E G A Iy Iz Kv]   element properties
+                                    E: Young's modulus
+                                    G: Shear modulus
+                                    A: Cross section area
+                                    Iy: Moment of inertia, local y-axis
+                                    Iz: Moment of inertia, local z-axis
+                                    Kv: Saint-Venant's torsion constant
 
+            eq = [qX qY qZ qW]      distributed loads, local directions
+            
+    OUTPUT: Ke : element stiffness matrix [12 x 12]
+
+            fe : element load vector [12 x 1] (if eq!=None)
+    -------------------------------------------------------------
+
+    LAST MODIFIED: O Dahlblom   2015-10-19
+                   O Dahlblom   2022-11-21 (Python version)
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+    -------------------------------------------------------------    
     """
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n1 = np.asarray(b.T/L).reshape(3,)
-
-    eo = np.asmatrix(eo)
-    lc = np.sqrt(eo*eo.T).item()
-    n3 = np.asarray(eo/lc).reshape(3,)
-
     E, Gs, A, Iy, Iz, Kv = ep
+    DEA = E*A 
+    DEIz = E*Iz
+    DEIy = E*Iy
+    DGK = Gs*Kv
 
-    qx = 0.
-    qy = 0.
-    qz = 0.
-    qw = 0.
-    if eq != None:
-        qx, qy, qz, qw = eq
+    qX = 0.
+    qY = 0.
+    qZ = 0.
+    qW = 0.
+    if not eq is None:
+        qX, qY, qZ, qW = eq
 
-    a = E*A/L
-    b = 12*E*Iz/L**3
-    c = 6*E*Iz/L**2
-    d = 12*E*Iy/L**3
-    e = 6*E*Iy/L**2
-    f = Gs*Kv/L
-    g = 2*E*Iy/L
-    h = 2*E*Iz/L
+    x1, x2 = ex
+    y1, y2 = ey
+    z1, z2 = ez
+    dx = x2-x1
+    dy = y2-y1
+    dz = z2-z1
+    L = np.sqrt(dx*dx+dy*dy+dz*dz)
 
-    Kle = np.mat([
+    a = DEA/L
+    b = 12*DEIz/L**3
+    c = 6*DEIz/L**2
+    d = 12*DEIy/L**3
+    e = 6*DEIy/L**2
+    f = DGK/L
+    g = 2*DEIy/L
+    h = 2*DEIz/L
+
+    Kle = np.array([
         [a, 0, 0, 0, 0,   0,  -a, 0, 0, 0, 0,   0],
         [0, b, 0, 0, 0,   c,   0, -b, 0, 0, 0,   c],
         [0, 0, d, 0, -e,   0,   0, 0, -d, 0, -e,   0],
@@ -1261,17 +1268,20 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
         [0, c, 0, 0, 0,   h,   0, -c, 0, 0, 0,   2*h]
     ])
 
-    fle = L/2*np.mat([qx, qy, qz, qw, -qz*L/6, qy*L/6,
-                     qx, qy, qz, qw, qz*L/6, -qy*L/6]).T
+    fle = L/2*np.array([qX, qY, qZ, qW, -qZ*L/6, qY*L/6,
+                     qX, qY, qZ, qW, qZ*L/6, -qY*L/6]).reshape(12,1)
 
-    n2 = np.array([0., 0., 0.])
-    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
-    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
-    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
-
-    #An = np.append([n1,n2],[n3],0)
-
-    G = np.mat([
+    n1 = np.array([dx, dy, dz])/L
+    
+    lc = np.sqrt(eo @ eo.T)
+    eo1= np.array(eo/lc)
+    n2a = np.cross(eo1,n1)
+    n2al = np.sqrt(n2a @ n2a.T)
+    n2=n2a/n2al
+    
+    n3 = np.cross(n1,n2)
+    
+    G = np.array([
         [n1[0], n1[1], n1[2], 0,     0,     0,
             0,     0,     0,     0,     0,     0],
         [n2[0], n2[1], n2[2], 0,     0,     0,
@@ -1298,8 +1308,8 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
             0,     0,     0,     n3[0], n3[1], n3[2]]
     ])
 
-    Ke = G.T*Kle*G
-    fe = G.T*fle
+    Ke = G.T @ Kle @ G
+    fe = G.T @ fle
 
     if eq is None:
         return Ke
@@ -1307,88 +1317,95 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
         return Ke, fe
 
 
-def beam3s(ex, ey, ez, eo, ep, ed, eq=None, n=None):
+def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     """
+    es = beam3s(ex, ey, ez, eo, ep, ed)
+    es = beam3s(ex, ey, ez, eo, ep, ed, eq)
+    es, edi, eci = beam3s(ex, ey, ez, eo, ep, ed, eq, nep)
+    -------------------------------------------------------------
+    PURPOSE
     Calculate the variation of the section forces and displacements
     along a three-dimensional beam element.
-    
-    Parameters:
-     
-        ex = [x1 x2]                element node coordinates
-        ey = [y1 y2]
-        ez = [z1 z2]
 
-        eo = [xz yz zz]             orientation of local z axis
-        
-        ep = [E G A Iy Iz Kv]       element properties
-                                      E: Young's modulus
-                                      G: Shear modulus
-                                      A: Cross section area
-                                     Iy: Moment of inertia, local y-axis
-                                     Iz: Moment of inertia, local z-axis
-                                     Kv: Saint-Venant's torsion constant
+    INPUT:  ex = [x1 x2]    
+            ey = [y1 y2] 
+            ez = [z1 z2]            element node coordinates
 
-        ed                          the element displacement vector from the
-                                    global coordinate system
-    
-        eq = [qx qy qz qw]          the disibuted axial, transversal and
-                                    torsional loads
+            eo = [xz yz zz]         orientation of local z-axis  
 
-        n                           the number of point in which displacements
-                                    and section forces are to be computed
+            ep = [E G A Iy Iz Kv]   element properties
+                                    E: Young's modulus
+                                    G: Shear modulus
+                                    A: Cross section area
+                                    Iy: Moment of inertia, local y-axis
+                                    Iz: Moment of inertia, local z-axis
+                                    Kv: Saint-Venant's torsion constant
 
-    Returns:
+            ed = [u1 ... u12]       element displacements
 
-        es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
-              [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
-              [..,...,...,..,...,...],
-              [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
+            eq = [qX qY qZ qW]      distributed loads, local directions
+            
+            nep                     number of evaluation points ( default=2 )
 
-        edi = [[u1,v1,w1,fi1],          displacements in n points along
-               [u2,v2,w2,fi2],          the local x-axis
-               [..,..,..,...],
-               [un,vn,wn,fin]]
+    OUTPUT: es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
+                  [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
+                  [..,...,...,..,...,...],
+                  [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
 
-        eci = [[x1],                    local x-coordinates of the evaluation
-               [x2],                    points
-               [..],
-               [xn]]
+            edi = [[u1,v1,w1,fi1],          displacements in n points along
+                   [u2,v2,w2,fi2],          the local x-axis
+                   [..,..,..,...],
+                   [un,vn,wn,fin]]
 
+            eci = [[x1],                    local x-coordinates of the evaluation
+                   [x2],                    points
+                   [..],
+                   [xn]]
+
+    -------------------------------------------------------------
+
+    LAST MODIFIED: O Dahlblom   2015-10-19
+                   O Dahlblom   2022-11-23 (Python version)
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
+    -------------------------------------------------------------    
     """
-    b = np.mat([
-        [ex[1]-ex[0]],
-        [ey[1]-ey[0]],
-        [ez[1]-ez[0]]
-    ])
-    L = np.sqrt(b.T*b).item()
-    n1 = np.asarray(b.T/L).reshape(3,)
+    E, Gs, A, Iy, Iz, Kv = ep
+    DEA = E*A 
+    DEIz = E*Iz
+    DEIy = E*Iy
+    DGK = Gs*Kv
 
-    eo = np.asmatrix(eo)
-    lc = np.sqrt(eo*eo.T).item()
-    n3 = np.asarray(eo/lc).reshape(3,)
-
-    EA = ep[0]*ep[2]
-    EIy = ep[0]*ep[3]
-    EIz = ep[0]*ep[4]
-    GKv = ep[1]*ep[5]
-
-    qx = 0.
-    qy = 0.
-    qz = 0.
-    qw = 0.
-    if eq != None:
-        qx, qy, qz, qw = eq
+    qX = 0.
+    qY = 0.
+    qZ = 0.
+    qW = 0.
+    if not eq is None:
+        qX, qY, qZ, qW = eq
 
     ne = 2
-    if n != None:
-        ne = n
+    if nep != None:
+        ne = nep
 
-    n2 = np.array([0., 0., 0.])
-    n2[0] = n3[1]*n1[2]-n3[2]*n1[1]
-    n2[1] = -n1[2]*n3[0]+n1[0]*n3[2]
-    n2[2] = n3[0]*n1[1]-n1[0]*n3[1]
-
-    G = np.mat([
+    x1, x2 = ex
+    y1, y2 = ey
+    z1, z2 = ez
+    dx = x2-x1
+    dy = y2-y1
+    dz = z2-z1
+    L = np.sqrt(dx*dx+dy*dy+dz*dz)
+    n1 = np.array([dx, dy, dz])/L
+    
+    lc = np.sqrt(eo @ eo.T)
+    eo1= np.array(eo/lc)
+    n2a = np.cross(eo1,n1)
+    n2al = np.sqrt(n2a @ n2a.T)
+    n2=n2a/n2al
+    
+    n3 = np.cross(n1,n2)
+        
+    G = np.array([
         [n1[0], n1[1], n1[2], 0,     0,     0,
             0,     0,     0,     0,     0,     0],
         [n2[0], n2[1], n2[2], 0,     0,     0,
@@ -1415,60 +1432,90 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, n=None):
             0,     0,     0,     n3[0], n3[1], n3[2]]
     ])
 
-    u = G*np.asmatrix(ed).T-np.array([    # u is the local element displacement
-        [0],        # vector minus the particular solution
-        [0],        # to the beam's diff.eq:s
-        [0],
-        [0],
-        [0],
-        [0],
-        [-qx*L**2/(2*EA)],
-        [qy*L**4/(24*EIz)],
-        [qz*L**4/(24*EIy)],
-        [-qw*L**2/(2*GKv)],
-        [-qz*L**3/(6*EIy)],
-        [qy*L**3/(6*EIz)]
+    edl = G @ ed.reshape(12,1)
+
+    a1 = np.array([
+        edl[0],
+        edl[6]
     ])
+    C1 = np.array([
+        [1.,      0.],
+        [-1/L,   1/L]
+    ]) 
+    C1a = C1 @ a1
 
-    C = np.mat([
-        [0, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 1, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 1, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, 0, 1],
-        [0, 0, 0,      0,    0, 0, 0,      0,   -1, 0, 0, 0],
-        [0, 0, 0,      0,    1, 0, 0,      0,    0, 0, 0, 0],
-        [L, 1, 0,      0,    0, 0, 0,      0,    0, 0, 0, 0, ],
-        [0, 0, L**3,   L**2, L, 1, 0,      0,    0, 0, 0, 0],
-        [0, 0, 0,      0,    0, 0, L**3,   L**2, L, 1, 0, 0],
-        [0, 0, 0,      0,    0, 0, 0,      0,    0, 0, L, 1],
-        [0, 0, 0,      0,    0, 0, -3*L**2, -2*L, -1, 0, 0, 0],
-        [0, 0, 3*L**2, 2*L,  1, 0, 0,      0,    0, 0, 0, 0],
+    a2 = np.array([
+        edl[1],
+        edl[5],
+        edl[7],
+        edl[11]
     ])
+    C2 = np.array([
+        [1.,      0.,    0.,     0.],
+        [0.,      1.,    0.,     0.],
+        [-3/L**2, -2/L,  3/L**2, -1/L],
+        [2/L**3,  1/L**2, -2/L**3, 1/L**2]
+    ]) 
+    C2a = C2 @ a2
 
-    m = np.linalg.inv(C)*u
-    eci = np.zeros((ne, 1))
-    es = np.zeros((ne, 6))
-    edi = np.zeros((ne, 4))
-    for i in np.arange(ne):
-        x = i*L/(ne-1)
-        eci[i, 0] = x
-        es[i, :] = (np.mat([
-            [EA, 0, 0,       0,     0, 0, 0,       0,     0, 0, 0,   0],
-            [0,  0, -6*EIz,   0,     0, 0, 0,       0,     0, 0, 0,   0],
-            [0,  0, 0,       0,     0, 0, -6*EIy,   0,     0, 0, 0,   0],
-            [0,  0, 0,       0,     0, 0, 0,       0,     0, 0, GKv, 0],
-            [0,  0, 0,       0,     0, 0, -6*EIy*x, -2*EIy, 0, 0, 0,   0],
-            [0,  0, 6*EIz*x, 2*EIz, 0, 0, 0,       0,     0, 0, 0,   0]
-        ])*m+np.array([-qx*x, -qy*x, -qz*x, -qw*x, -qz*x**2/2, qy*x**2/2]).reshape(6, 1)).T
+    a3 = np.array([
+        edl[2],
+        -edl[4],
+        edl[8],
+        -edl[10]
+    ])
+    C3 = C2
+    C3a = C3 @ a3
+  
+    a4 = np.array([
+        edl[3],
+        edl[9]
+    ])
+    C4 = C1
+    C4a = C4 @ a4
+  
+    X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
+    zero = np.zeros(ne).reshape(ne,1)    
+    one = np.ones(ne).reshape(ne,1)
+  
+    u = np.concatenate((one,  X), 1) @ C1a
+    du = np.concatenate((zero,  one), 1) @ C1a
+    if DEA != 0:
+       u = u-(X**2-L*X)*qX/(2*DEA)
+       du = du-(2*X-L)*qX/(2*DEA)
 
-        edi[i, :] = (np.mat([
-            [x, 1, 0,    0,    0, 0, 0,    0,    0, 0, 0, 0],
-            [0, 0, x**3, x**2, x, 1, 0,    0,    0, 0, 0, 0],
-            [0, 0, 0,    0,    0, 0, x**3, x**2, x, 1, 0, 0],
-            [0, 0, 0,    0,    0, 0, 0,    0,    0, 0, x, 1]
-        ])*m+np.array([-qx*x**2/(2*EA), qy*x**4/(24*EIz), qz*x**4/(24*EIy), -qw*x**2/(2*GKv)]).reshape(4, 1)).T
+    v = np.concatenate((one,  X, X**2, X**3), 1) @ C2a
+    d2v=np.concatenate((zero, zero, 2*one, 6*X), 1) @ C2a
+    d3v = np.concatenate((zero, zero, zero, 6*one), 1) @ C2a
+    if DEIz != 0:
+       v = v+(X**4 - 2*L*X**3 + L**2*X**2)*qY/(24*DEIz)
+       d2v = d2v+(6*X**2 - 6*L*X + L**2*one)*qY/(12*DEIz)
+       d3v = d3v+(2*X - L*one)*qY/(2*DEIz)
+ 
+    w = np.concatenate((one,  X, X**2, X**3), 1) @ C3a
+    d2w = np.concatenate((zero, zero, 2*one, 6*X), 1) @ C3a
+    d3w = np.concatenate((zero, zero, zero, 6*one), 1) @ C3a
+    if DEIy != 0:
+       w = w+(X**4 - 2*L*X**3 + L**2*X**2)*qZ/(24*DEIy)
+       d2w = d2w+(6*X**2 - 6*L*X + L**2*one)*qZ/(12*DEIy)
+       d3w = d3w+(2*X - L*one)*qZ/(2*DEIy)
+ 
+    fi = np.concatenate((one,  X), 1) @ C4a
+    dfi = np.concatenate((zero,  one), 1) @ C4a
+    if DGK != 0:
+       fi = fi-(X**2-L*X)*qW/(2*DGK)
+       dfi = dfi-(2*X-L)*qW/(2*DGK)
+    N = DEA*du
+    Mz = DEIz*d2v
+    Vy = -DEIz*d3v 
+    My = -DEIy*d2w
+    Vz = -DEIy*d3w
+    T = DGK*dfi
+    es = np.concatenate((N, Vy, Vz, T, My, Mz), 1)
+    edi = np.concatenate((u, v, w, fi), 1)
+    eci = X
 
-    if n is None:
+    if nep == None:
         return es
     else:
         return es, edi, eci
