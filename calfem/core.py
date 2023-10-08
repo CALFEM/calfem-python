@@ -268,7 +268,7 @@ def bar1s(ex, ep, ed, eq=None, nep=None):
     edi=u
     eci=X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -416,7 +416,7 @@ def bar1ws(ex, ep, ed, eq=None, nep=None):
     edi = u
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -580,7 +580,7 @@ def bar2s(ex, ey, ep, ed, eq=None, nep=None):
     edi = u
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -748,7 +748,7 @@ def bar2gs(ex, ey, ep, ed, nep=None):
     edi=u
     eci=X
 
-    if nep == None:
+    if nep is None:
         return es, QX
     else:
         return es, QX, edi, eci
@@ -918,7 +918,7 @@ def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
     edi=u
     eci=X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -1067,7 +1067,7 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
     edi = v
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -1240,7 +1240,7 @@ def beam1ws(ex, ep, ed, eq=None, nep=None):
     edi = v
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -1450,7 +1450,7 @@ def beam2s(ex, ey, ep, ed, eq=None, nep=None):
     edi = np.concatenate((u, v), 1)
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -1692,7 +1692,7 @@ def beam2ws(ex, ey, ep, ed, eq=None, nep=None):
     edi = np.concatenate((u, v), 1)
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -1934,7 +1934,7 @@ def beam2gs(ex, ey, ep, ed, QX, eq=None, nep=None):
     edi = np.concatenate((u, v), 1)
     eci = X
     
-    if nep == None:
+    if nep is None:
         return es, QX
     else:
         return es, QX, edi, eci
@@ -2221,7 +2221,7 @@ def beam2gxs(ex, ey, ep, ed, QX, eq=None, nep=None):
     edi = np.concatenate((u, v), 1)
     eci = X
     
-    if nep == None:
+    if nep is None:
         return es, QX
     else:
         return es, QX, edi, eci
@@ -2448,7 +2448,7 @@ def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
     edi = np.concatenate((u, v, theta), 1)
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
@@ -2970,7 +2970,7 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     edi = np.concatenate((u, v, w, fi), 1)
     eci = X
 
-    if nep == None:
+    if nep is None:
         return es
     else:
         return es, edi, eci
