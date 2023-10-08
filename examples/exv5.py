@@ -7,7 +7,7 @@
 
 import numpy as np
 import calfem.core as cfc
-import calfem.vedo as cfv
+import calfem.vis_vedo as cfv
 
 # Adaptation of platre from version 3.4 for MATLAB
 # This function is not in the Python version currently

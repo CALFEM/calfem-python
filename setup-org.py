@@ -26,7 +26,7 @@ def gen_data_files(*dirs):
     return results    
 
 setup(
-    name='calfem-python-small',
+    name='calfem-python',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -88,9 +88,26 @@ setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['numpy', 'visvis', 'matplotlib', 'scipy', 'gmsh', 'tabulate'],
+    install_requires=['numpy', 'visvis', 'pyvtk', 'matplotlib', 'scipy', 'gmsh', 'qtpy', 'vedo', 'tabulate'],
     include_package_data=True
+    #package_data={'calfem': ['examples/*']}
     
     #data_files=gen_data_files("examples", "doc")
     
+    #package_data={
+    #    'calfem': ['examples/*.py', 'examples/*.ui']
+    #}
+
+    # List additional groups of dependencies here (e.g. development
+    # dependencies). You can install these using the following syntax,
+    # for example:
+    # $ pip install -e .[dev,test]
+    #extras_require={
+    #    'dev': ['check-manifest'],
+    #    'test': ['coverage'],
+    #},
+
+    # If there are data files included in your packages that need to be
+    # installed, specify them here.  If using Python 2.6 or less, then these
+    # have to be included in MANIFEST.in as well.
 )

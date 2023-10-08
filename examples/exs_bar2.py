@@ -9,10 +9,12 @@
 # REFERENCES
 #     Ola Dahlblom 2004-09-07
 #     Jonas Lindemann 2009-01-25
+#     Ola Dahlblom 2023-02-02
 # ----------------------------------------------------------------
 
 import numpy as np
 import calfem.core as cfc
+import calfem.vis_mpl as cfv
 
 # ----- Topology matrix Edof -------------------------------------
 
@@ -83,6 +85,44 @@ N2 = cfc.bar2s(ex2, ey2, ep2, ed2)
 ed3 = cfc.extract_ed(edof[2, :], a)
 N3 = cfc.bar2s(ex3, ey3, ep3, ed3)
 
-print("N1 = "+str(N1))
-print("N2 = "+str(N2))
-print("N3 = "+str(N3))
+print("N1 = ")
+print(N1)
+print("N2 = ")
+print(N2)
+print("N3 = ")
+print(N3)
+
+# ----- Draw deformed frame ---------------------------------------
+
+plotpar = [2, 1, 0]
+sfac = cfv.scalfact2(ex3, ey3, ed1, 0.1)
+print("sfac=")
+print(sfac)
+
+cfv.figure(1)
+cfv.eldraw2(ex1, ey1, plotpar)
+cfv.eldraw2(ex2, ey2, plotpar)
+cfv.eldraw2(ex3, ey3, plotpar)
+
+plotpar = [1, 2, 1]
+cfv.eldisp2(ex1, ey1, ed1, plotpar, sfac)
+cfv.eldisp2(ex2, ey2, ed2, plotpar, sfac)
+cfv.eldisp2(ex3, ey3, ed3, plotpar, sfac)
+cfv.axis([-0.4, 2.0, -0.4, 1.4])
+plotpar1 = 2
+cfv.scalgraph2(sfac,[1e-3, 0, -0.3],plotpar1)
+cfv.title('Displacements')
+
+# ----- Draw normal force diagram --------------------------------
+
+plotpar = [2, 1]
+sfac = cfv.scalfact2(ex1, ey1, N2[:,0], 0.1)
+cfv.figure(2)
+cfv.secforce2(ex1, ey1, N1[:,0], plotpar, sfac)
+cfv.secforce2(ex2, ey2, N2[:,0], plotpar, sfac)
+cfv.secforce2(ex3, ey3, N3[:,0], plotpar, sfac)
+cfv.axis([-0.4, 2.0, -0.4, 1.4])
+cfv.scalgraph2(sfac,[5e4, 0, -0.3],plotpar1)
+cfv.title('Normal force')
+
+cfv.showAndWait()

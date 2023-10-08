@@ -20,6 +20,7 @@ from PyQt5.uic import loadUi
 import calfem.geometry as cfg
 import calfem.vis_mpl as cfv
 import calfem.editor_scene as editor_scene
+import calfem.editor_ui as editor_ui
 
 app = None
 
@@ -31,8 +32,11 @@ class EditorWindow(QMainWindow):
         super(QMainWindow, self).__init__()
         self.app = app
 
-        root = os.path.dirname(os.path.realpath(__file__))
-        loadUi(os.path.join(root, 'editor.ui'), self)
+        #root = os.path.dirname(os.path.realpath(__file__))
+        #loadUi(os.path.join(root, 'editor.ui'), self)
+
+        ui = editor_ui.Ui_MainWindow()
+        ui.setupUi(self)
 
         # loadUi('editor.ui', self)   loadUI kan ladd ui-fil och lägga till objekt direkt i klassen.
         self.setWindowTitle("CALFEM Geometry Editor")
