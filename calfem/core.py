@@ -4435,7 +4435,7 @@ def plantf(ex, ey, ep, es):
 
         ef = (A*t*B.T*stress.T).T
 
-        return np.reshape(np.asarray(ef), 6)
+        return np.reshape(np.asarray(ef), (6,1))
 
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
