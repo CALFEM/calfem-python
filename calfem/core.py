@@ -2764,9 +2764,6 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
             0,     0,     0,     n3[0], n3[1], n3[2]]
     ])
 
-    print("G=")
-    print(G)
-
     Ke = G.T @ Kle @ G
     fe = G.T @ fle
 
@@ -2822,7 +2819,6 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
                    [xn]]
 
     -------------------------------------------------------------
-
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-23 (Python version)
     Copyright (c)  Division of Structural Mechanics and
@@ -2933,7 +2929,8 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     C4 = C1
     C4a = C4 @ a4
   
-    X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
+    X = np.linspace(0., L+L/(ne-1), ne).reshape(ne,1) 
+    #X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
     zero = np.zeros(ne).reshape(ne,1)    
     one = np.ones(ne).reshape(ne,1)
   
@@ -3004,7 +3001,7 @@ def flw2te(ex, ey, ep, D, eq=None):
     
     """
     t = ep[0]
-    if eq == None:
+    if eq is None:
         eq = 0.
 
     exm = np.asmatrix(ex)
@@ -3114,7 +3111,7 @@ def flw2qe(ex, ey, ep, D, eq=None):
     K = np.zeros((5, 5))
     f = np.zeros((5, 1))
 
-    if eq == None:
+    if eq is None:
         k1 = flw2te([ex[0], ex[1], xc], [ey[0], ey[1], yc], ep, D)
         K = assem(np.array([1, 2, 5]), K, k1)
         k1 = flw2te([ex[1], ex[2], xc], [ey[1], ey[2], yc], ep, D)
@@ -3137,7 +3134,7 @@ def flw2qe(ex, ey, ep, D, eq=None):
     Ke = Ke1
     fe = fe1
 
-    if eq == None:
+    if eq is None:
         return Ke
     else:
         return Ke, fe
@@ -3178,7 +3175,7 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
     xm = sum(ex)/4
     ym = sum(ey)/4
 
-    if eq == None:
+    if eq is None:
         q = 0
     else:
         q = eq
@@ -3198,7 +3195,7 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
     ex4 = np.array([ex[3], ex[0], xm])
     ey4 = np.array([ey[3], ey[0], ym])
 
-    if eq == None:
+    if eq is None:
         k1 = flw2te(ex1, ey1, ep, D)
         K = assem(En[0], K, k1)
         k1 = flw2te(ex2, ey2, ep, D)
@@ -3264,7 +3261,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     ir = ep[1]
     ngp = ir*ir
 
-    if eq == None:
+    if eq is None:
         q = 0
     else:
         q = eq
@@ -3353,7 +3350,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
         Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
         fe1 = fe1+N[i, :].T*detJ*wp[i]
 
-    if eq == None:
+    if eq is None:
         return Ke1*t
     else:
         return Ke1*t, fe1*t*eq
@@ -3513,7 +3510,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     ir = ep[1]
     ngp = ir*ir
 
-    if eq == None:
+    if eq is None:
         q = 0
     else:
         q = eq
@@ -3817,7 +3814,7 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
     ir = ep[0]
     ngp = ir*ir*ir
 
-    if eq == None:
+    if eq is None:
         q = 0
     else:
         q = eq
@@ -4189,14 +4186,14 @@ def plante(ex, ey, ep, D, eq=None):
         Ke = B.T*Dm*B*A*t
         fe = A/3*np.mat([bx, by, bx, by, bx, by]).T*t
 
-        if eq == None:
+        if eq is None:
             return Ke
         else:
             return Ke, fe.T
 
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
-        if eq == None:
+        if eq is None:
             return None
         else:
             return None, None
@@ -4575,7 +4572,7 @@ def planqe(ex, ey, ep, D, eq=None):
     K, f = assem(np.array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
     Ke, fe = statcon(K, f, np.array([[9], [10]]))
 
-    if eq == None:
+    if eq is None:
         return Ke
     else:
         return Ke, fe
@@ -4695,7 +4692,7 @@ def plani4e(ex, ey, ep, D, eq=None):
     t = ep[1]
     ir = ep[2]
     ngp = ir*ir
-    if eq == None:
+    if eq is None:
         q = np.zeros((2, 1))
     else:
         q = np.reshape(eq, (2, 1))
@@ -4889,7 +4886,7 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
     ir = ep[0]
     ngp = ir*ir*ir
 
-    if eqp == None:
+    if eqp is None:
         eq = np.zeros((3, 1))
     else:
         eq = eqp
@@ -6332,4 +6329,3 @@ def beam2crd(ex=None, ey=None, ed=None, mag=None):
         eycd[i, :] = xyc[1, :]+mag*cd[1, :]
 
     return excd, eycd
-    
