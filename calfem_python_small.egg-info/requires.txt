@@ -1,6 +1,0 @@
-numpy
-visvis
-matplotlib
-scipy
-gmsh
-tabulate
