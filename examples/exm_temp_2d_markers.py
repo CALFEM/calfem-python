@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-'''Example 07
+"""Example 07
 
 Meshing 8-node-isoparametric elements (second order incomplete quads).
 Shows use of surfacemarkers/elementmarkers to apply different properties to 
 elements in different regions. 
-'''
+"""
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
@@ -32,14 +32,8 @@ t = 1.0
 n = 2
 ep = [t, n]
 
-D1 = np.matrix([
-    [kx1, 0.],
-    [0., ky1]
-])
-D2 = np.matrix([
-    [kx2, 0.],
-    [0., ky2]
-])
+D1 = np.matrix([[kx1, 0.0], [0.0, ky1]])
+D2 = np.matrix([[kx2, 0.0], [0.0, ky2]])
 
 # markers 10 & 11 will be used to specify different regions with different
 # conductivity.
@@ -52,15 +46,7 @@ g = cfg.geometry()
 
 # Add Points:
 
-points = [
-    [0, 0],
-    [0, 100],
-    [0, 150],
-    [100, 0],
-    [150, 0],
-    [100, -100],
-    [150, -100]
-]
+points = [[0, 0], [0, 100], [0, 150], [100, 0], [150, 0], [100, -100], [150, -100]]
 
 for p in points:
     g.point(p)
@@ -112,7 +98,6 @@ ex, ey = cfc.coordxtr(edof, coords, dofs)
 K = np.zeros([n_dofs, n_dofs])
 
 for eltopo, elx, ely, elMarker in zip(edof, ex, ey, elementmarkers):
-
     # Calc element stiffness matrix: Conductivity matrix D is taken
     # from Ddict and depends on which region (which marker) the element is in.
 
@@ -123,8 +108,8 @@ print("Solving equation system...")
 
 f = np.zeros([n_dofs, 1])
 
-bc = np.array([], 'i')
-bc_val = np.array([], 'i')
+bc = np.array([], "i")
+bc_val = np.array([], "i")
 
 bc, bc_val = cfu.applybc(bdofs, bc, bc_val, 2, 30.0)
 bc, bc_val = cfu.applybc(bdofs, bc, bc_val, 3, 0.0)
@@ -139,7 +124,8 @@ ed = cfc.extractEldisp(edof, a)
 
 for i in range(np.shape(ex)[0]):
     es, et, eci = cfc.flw2i8s(
-        ex[i, :], ey[i, :], ep, Ddict[elementmarkers[i]], ed[i, :])
+        ex[i, :], ey[i, :], ep, Ddict[elementmarkers[i]], ed[i, :]
+    )
 
     # Do something with es, et, eci here.
 
@@ -157,8 +143,15 @@ cfv.figure(fig_size=(10, 10))
 cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
 
 cfv.figure(fig_size=(10, 10))
-cfv.draw_nodal_values_shaded(a, coords, edof, title="Temperature",
-                             dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type, draw_elements=True)
+cfv.draw_nodal_values_shaded(
+    a,
+    coords,
+    edof,
+    title="Temperature",
+    dofs_per_node=mesh.dofs_per_node,
+    el_type=mesh.el_type,
+    draw_elements=True,
+)
 cbar = cfv.colorbar(orientation="vertical")
 cbar.set_label("Temperature")
 

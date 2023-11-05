@@ -9,12 +9,13 @@ import scipy.io
 import numpy as np
 import calfem.core as cfc
 import logging as cflog
+import tabulate as tab
 
 have_pyvtk = True
 
 try:
     import pyvtk as vtk
-except:
+except: 
     have_pyvtk = False
 
 haveMatplotLib = True
@@ -22,6 +23,14 @@ haveMlab = True
 
 have_mlab = haveMlab
 have_matplotlib = haveMatplotLib
+
+have_ipython = True
+
+try:
+    from IPython.core.display import display, HTML
+except:
+    have_ipython = False
+
 
 
 def error(msg):
@@ -31,6 +40,66 @@ def error(msg):
 def info(msg):
     cflog.info(" "+msg)
 
+def type_of_script():
+    try:
+        ipy_str = str(type(get_ipython()))
+        if 'zmqshell' in ipy_str:
+            return 'jupyter'
+        if 'terminal' in ipy_str:
+            return 'ipython'
+    except:
+        return 'terminal'
+
+def disp(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"{msg}"))
+    else:
+        print(msg)
+
+def disp_par(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<p>{msg}</p>"))
+    else:
+        print(f"\nmsg\n")
+
+def disp_bold(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<b>{msg}</b>"))
+    else:
+        print("**msg**")
+    
+def disp_bold_par(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<p><b>{msg}</b></p>"))
+    else:
+        print("\n**msg**\n")
+
+def disp_h1(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h1>{msg}</h1>"))
+    else:
+        print(f"\n# {msg}\n")
+
+def disp_h2(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h2>{msg}</h2>"))
+    else:
+        print(f"\n## {msg}\n")
+
+def disp_h3(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h3>{msg}</h3>"))
+    else:
+        print(f"\n## {msg}\n")
+
+def disp_array(a, headers=["array"], fmt=".4e", tablefmt="psql"):
+    """
+    Print a numpy array in a nice way.
+    """
+    if type_of_script() == 'jupyter':
+        display(tab.tabulate(a, tablefmt="html", floatfmt=".4e", showindex="always", headers=headers))
+    else:
+        print(tab.tabulate(a, tablefmt=tablefmt, floatfmt=fmt, showindex="always", headers=headers))
 
 class ElementProperties(object):
     def __init__(self):

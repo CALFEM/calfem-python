@@ -18,11 +18,7 @@ import calfem.vis_mpl as cfv
 
 # ----- Topology matrix Edof -------------------------------------
 
-edof = np.array([
-    [1, 2, 5, 6],
-    [5, 6, 7, 8],
-    [3, 4, 5, 6]
-])
+edof = np.array([[1, 2, 5, 6], [5, 6, 7, 8], [3, 4, 5, 6]])
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
@@ -41,13 +37,13 @@ ep3 = [E, A3]
 
 # ----- Element coordinates --------------------------------------
 
-ex1 = np.array([0., 1.6])
+ex1 = np.array([0.0, 1.6])
 ex2 = np.array([1.6, 1.6])
-ex3 = np.array([0., 1.6])
+ex3 = np.array([0.0, 1.6])
 
-ey1 = np.array([0., 0.])
-ey2 = np.array([0., 1.2])
-ey3 = np.array([1.2, 0.])
+ey1 = np.array([0.0, 0.0])
+ey2 = np.array([0.0, 1.2])
+ey3 = np.array([1.2, 0.0])
 
 # ----- Element stiffness matrices  ------------------------------
 
@@ -110,19 +106,19 @@ cfv.eldisp2(ex2, ey2, ed2, plotpar, sfac)
 cfv.eldisp2(ex3, ey3, ed3, plotpar, sfac)
 cfv.axis([-0.4, 2.0, -0.4, 1.4])
 plotpar1 = 2
-cfv.scalgraph2(sfac,[1e-3, 0, -0.3],plotpar1)
-cfv.title('Displacements')
+cfv.scalgraph2(sfac, [1e-3, 0, -0.3], plotpar1)
+cfv.title("Displacements")
 
 # ----- Draw normal force diagram --------------------------------
 
 plotpar = [2, 1]
-sfac = cfv.scalfact2(ex1, ey1, N2[:,0], 0.1)
+sfac = cfv.scalfact2(ex1, ey1, N2[:, 0], 0.1)
 cfv.figure(2)
-cfv.secforce2(ex1, ey1, N1[:,0], plotpar, sfac)
-cfv.secforce2(ex2, ey2, N2[:,0], plotpar, sfac)
-cfv.secforce2(ex3, ey3, N3[:,0], plotpar, sfac)
+cfv.secforce2(ex1, ey1, N1[:, 0], plotpar, sfac)
+cfv.secforce2(ex2, ey2, N2[:, 0], plotpar, sfac)
+cfv.secforce2(ex3, ey3, N3[:, 0], plotpar, sfac)
 cfv.axis([-0.4, 2.0, -0.4, 1.4])
-cfv.scalgraph2(sfac,[5e4, 0, -0.3],plotpar1)
-cfv.title('Normal force')
+cfv.scalgraph2(sfac, [5e4, 0, -0.3], plotpar1)
+cfv.title("Normal force")
 
 cfv.showAndWait()

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-'''Example 04.
+"""Example 04.
 
 Structured 3D meshing. Adding texts and labels to figures. Altering axis properties.
-'''
+"""
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
@@ -63,7 +63,7 @@ g.structuredVolume([0, 1, 2, 3, 4, 5], 0, marker=90)
 # ---- Create mesh ----------------------------------------------------------
 
 # Element type 5 is hexahedron. (See user manual for more element types)
-el_type = 5         # error here, element type not implemented
+el_type = 5  # error here, element type not implemented
 
 # Degrees of freedom per node.
 dofs_per_node = 1
@@ -90,32 +90,33 @@ cfv.draw_geometry(g, draw_points=False)
 # Draw mesh
 
 cfv.figure()
-cfv.draw_mesh(coords=coords, edof=edof,
-              dofs_per_node=dofs_per_node, el_type=el_type, filled=True)
+cfv.draw_mesh(
+    coords=coords, edof=edof, dofs_per_node=dofs_per_node, el_type=el_type, filled=True
+)
 
 # Add a text in world space
 
-#cfv.add_text("This is a Text", pos=(1, 0.5, 0.5), angle=45)
+# cfv.add_text("This is a Text", pos=(1, 0.5, 0.5), angle=45)
 
 # Add a label in the screen space
 
-#our_label = cfv.add_label("This is a Label", pos=(20,30), angle=-45)
+# our_label = cfv.add_label("This is a Label", pos=(20,30), angle=-45)
 
 # We can change the attributes of labels and texts, such as color and position.
 
-#our_label.text = "Label, changed."
+# our_label.text = "Label, changed."
 
 # Make it red. (1,0,0) would also have worked.
 
-#our_label.textColor = 'r'
+# our_label.textColor = 'r'
 
 # Matlab style axes (three axes in the background instead of a cube)
 
-#cfv.gca().axis.showBox = 0
+# cfv.gca().axis.showBox = 0
 
 # Change the limits of the axes.
 
-#cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02)
+# cfv.gca().SetLimits(rangeX=(0,2), rangeY=(-1,1.5), rangeZ=(-0.5,2), margin=0.02)
 
 # Enter main loop
 

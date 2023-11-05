@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-'''Example 01
+"""Example 01
 
 Shows how to create simple geometry from splines and ellipse arcs, and how to mesh a quad mesh in GmshMesher.
 Also demonstrates drawGeometry(), drawMesh, and drawing texts and labels in a figure.
-'''
+"""
 
 import numpy as np
 
@@ -27,10 +27,7 @@ t = 1.0
 n = 2
 ep = [t, n]
 
-D = np.matrix([
-    [kx1, 0.],
-    [0., ky1]
-])
+D = np.matrix([[kx1, 0.0], [0.0, ky1]])
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -85,7 +82,6 @@ ex, ey = cfc.coordxtr(edof, coords, dofs)
 K = np.zeros([n_dofs, n_dofs])
 
 for el_topo, elx, ely, marker in zip(edof, ex, ey, element_markers):
-
     # Calc element stiffness matrix: Conductivity matrix D is taken
     # from Ddict and depends on which region (which marker) the element is in.
 
@@ -104,8 +100,8 @@ print("Solving equation system...")
 
 f = np.zeros([n_dofs, 1])
 
-bc = np.array([], 'i')
-bc_val = np.array([], 'f')
+bc = np.array([], "i")
+bc_val = np.array([], "f")
 
 bc, bc_val = cfu.applybc(bdofs, bc, bc_val, id_outer, 30.0)
 bc, bc_val = cfu.applybc(bdofs, bc, bc_val, id_hole1, 300.0)
@@ -139,21 +135,19 @@ for i in range(np.shape(ex)[0]):
 # Draw the geometry. Note that surfaces and volumes are not drawn at all by
 # this function.
 
-cfv.draw_geometry(g)
-
-# New figure window
-
 cfv.figure()
+cfv.draw_geometry(g)
 
 # Draw the mesh.
 
+cfv.figure()
 cfv.draw_mesh(
     coords=coords,
     edof=edof,
     dofs_per_node=mesh.dofs_per_node,
     el_type=mesh.el_type,
     filled=True,
-    title="Example 01"
+    title="Example 01",
 )
 
 cfv.figure()
@@ -161,7 +155,15 @@ cfv.draw_nodal_values_shaded(a, coords, edof, title="Temperature")
 cfv.colorbar()
 
 cfv.figure()
-cfv.draw_nodal_values_contourf(a, coords, edof, title="Temperature", dofs_per_node=mesh.dofs_per_node, el_type=mesh.el_type, draw_elements=True)
+cfv.draw_nodal_values_contourf(
+    a,
+    coords,
+    edof,
+    title="Temperature",
+    dofs_per_node=mesh.dofs_per_node,
+    el_type=mesh.el_type,
+    draw_elements=True,
+)
 cfv.colorbar()
 
 cfv.figure()
@@ -173,7 +175,7 @@ cfv.colorbar()
 # ourLabel = cfv.label("This is a Label", pos=(100,200), angle=-45) #Adds a label in the screen space
 # ourLabel.text = "Label, changed." #We can change the attributes of labels and texts, such as color, text, and position.
 # ourLabel.textColor = 'r'  #Make it red. (1,0,0) would also have worked.
-#ourLabel.position = (20,30)
+# ourLabel.position = (20,30)
 
 # Enter main loop:
 
