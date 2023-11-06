@@ -92,14 +92,14 @@ def disp_h3(msg):
     else:
         print(f"\n## {msg}\n")
 
-def disp_array(a, headers=["array"], fmt=".4e", tablefmt="psql"):
+def disp_array(a, headers=["array"], fmt=".4e", tablefmt="psql", showindex=False):
     """
     Print a numpy array in a nice way.
     """
     if type_of_script() == 'jupyter':
-        display(tab.tabulate(a, tablefmt="html", floatfmt=".4e", showindex="always", headers=headers))
+        display(tab.tabulate(a, tablefmt="html", floatfmt=".4e", showindex=showindex, headers=headers))
     else:
-        print(tab.tabulate(a, tablefmt=tablefmt, floatfmt=fmt, showindex="always", headers=headers))
+        print(tab.tabulate(a, tablefmt=tablefmt, floatfmt=fmt, showindex=showindex, headers=headers))
 
 class ElementProperties(object):
     def __init__(self):

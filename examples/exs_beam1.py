@@ -55,10 +55,8 @@ cfc.assem(edof[1, :], K, Ke2)
 bc = np.array([1, 5])
 a, r = cfc.solveq(K, f, bc)
 
-print("a = ")
-print(a)
-print("r = ")
-print(r)
+cfu.disp_array(a, ["a"])
+cfu.disp_array(r, ["r"])
 
 # ----- Section forces -------------------------------------------
 
@@ -67,14 +65,18 @@ ed = cfc.extract_ed(edof, a)
 es1, ed1, ec1 = cfc.beam1s(ex1, ep, ed[0, :], eq1, nep=4)
 es2, ed2, ec2 = cfc.beam1s(ex2, ep, ed[1, :], eq2, nep=7)
 
-print("es1 = ")
-print(es1)
-print("ed1 = ")
-print(ed1)
-print("es2 = ")
-print(es2)
-print("ed2 = ")
-print(ed2)
+cfu.disp_h2("es1")
+cfu.disp_array(es1, ["V1", "M1"])
+cfu.disp_h2("ed1")
+cfu.disp_array(ed1, ["v1"])
+cfu.disp_h2("ec1")
+cfu.disp_array(ec1, ["x1"])
+cfu.disp_h2("es2")
+cfu.disp_array(es2, ["V2", "M2"])
+cfu.disp_h2("ed2")
+cfu.disp_array(ed2, ["v2"])
+cfu.disp_h2("ec2")
+cfu.disp_array(ec2, ["x2"])
 
 # ----- Draw deformed beam ---------------------------------------
 
