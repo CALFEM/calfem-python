@@ -6,13 +6,22 @@
 
 import numpy as np
 import calfem.core as cfc
+import calfem.utils as cfu
 import calfem.vis_mpl as cfv
 
-edof = np.array([[1, 2, 5, 6], [5, 6, 7, 8], [3, 4, 5, 6]])
+edof = np.array([
+    [1, 2, 5, 6], 
+    [5, 6, 7, 8], 
+    [3, 4, 5, 6]
+])
 
 bc = np.array([1, 2, 3, 4, 7, 8])
 
-ex = np.array([[0.0, 1.6], [1.6, 1.6], [0.0, 1.6]])
+ex = np.array([
+    [0.0, 1.6], 
+    [1.6, 1.6], 
+    [0.0, 1.6]
+])
 
 ey = np.array([[0.0, 0.0], [0.0, 1.2], [1.2, 0.0]])
 
@@ -64,14 +73,17 @@ for i in range(incr):
 
     ded = cfc.extract_ed(edof, da)
     des = np.zeros((3, 1))
+
     for j in range(3):
         ep = np.array([E[j], A[j]])
         desj = cfc.bar2s(ex[j, :], ey[j, :], ep, ded[j, :])
-        print("---")
-        print(desj)
-        print("---")
+        #print("---")
+        #print(desj)
+        #print("---")
         des[j, 0] = desj[0]
+
     es += des
+
     for j in range(3):
         if abs(es[j, 0]) >= Ns[j]:
             E[j] = 0
@@ -79,6 +91,7 @@ for i in range(incr):
     # Determine if the stress in a bar has reached the yield stress
 
     newplbar = np.sum(abs(es) > Ns)
+
     if newplbar > plbar:
         plbar = newplbar
         print(
