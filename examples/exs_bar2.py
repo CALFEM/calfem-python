@@ -130,4 +130,4 @@ cfv.axis([-0.4, 2.0, -0.4, 1.4])
 cfv.scalgraph2(sfac, [5e4, 0, -0.3], plotpar1)
 cfv.title("Normal force")
 
-cfv.showAndWait()
+cfv.show_and_wait()

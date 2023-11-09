@@ -145,5 +145,5 @@ cfv.secforce2(ex2, ey2, es2[:, 2], plotpar, sfac)
 cfv.secforce2(ex3, ey3, es3[:, 2], plotpar, sfac)
 cfv.plt.axis([-1.5, 7.5, -0.5, 5.5])
 cfv.title("Bending moment")
-cfv.showAndWait()
+cfv.show_and_wait()
 # ------------------------ end -----------------------------------

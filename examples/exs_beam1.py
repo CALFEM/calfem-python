@@ -111,4 +111,4 @@ plt.plot(
 )
 cfv.title("bending moment")
 
-cfv.showAndWait()
+cfv.show_and_wait()

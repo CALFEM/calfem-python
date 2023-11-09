@@ -77,6 +77,6 @@ for i in range(5, 10):
 cfv.title("Snapshots (sec), magnification = 20")
 ax = cfv.gca()
 ax.set_axis_off()
-cfv.showAndWait()
+cfv.show_and_wait()
 
 # ----- End -------------------------------------------------------

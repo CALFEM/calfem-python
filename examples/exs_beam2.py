@@ -153,4 +153,4 @@ cfv.axis([-1.5, 7.5, -0.5, 5.5])
 cfv.scalgraph2(sfac, [3e4, 0.5, 0], plotpar1)
 cfv.title("Moment")
 
-cfv.showAndWait()
+cfv.show_and_wait()

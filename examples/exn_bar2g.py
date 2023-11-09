@@ -6,6 +6,7 @@
 
 import numpy as np
 import calfem.core as cfc
+import calfem.utils as cfu
 
 # ----- Topology -----
 
@@ -60,8 +61,9 @@ while abs((QX1 - QX01) / QX01) > eps:
         break
 
 # ----- Results -----------------------------------------------
-print("Displacements:")
-print(a)
-print("Normal forces:")
-print(QX1)
-print(QX2)
+
+cfu.disp_h1("Displacements:")
+cfu.disp_array(a)
+cfu.disp_h1("Normal forces:")
+cfu.disp(QX1)
+cfu.disp(QX2)

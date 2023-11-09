@@ -77,9 +77,6 @@ for i in range(incr):
     for j in range(3):
         ep = np.array([E[j], A[j]])
         desj = cfc.bar2s(ex[j, :], ey[j, :], ep, ded[j, :])
-        #print("---")
-        #print(desj)
-        #print("---")
         des[j, 0] = desj[0]
 
     es += des
@@ -108,4 +105,4 @@ cfv.figure(1, fig_size=(7, 4))
 cfv.plt.plot(pl[:, 0], pl[:, 1])
 cfv.plt.xlabel("Displacement")
 cfv.plt.ylabel("Force")
-cfv.showAndWait()
+cfv.show_and_wait()

@@ -112,6 +112,6 @@ if __name__ == "__main__":
     cfv.title("The first eight eigenmodes [Hz]")
     ax = cfv.gca()
     ax.set_axis_off()
-    cfv.showAndWait()
+    cfv.show_and_wait()
 
 # ----- End -------------------------------------------------------

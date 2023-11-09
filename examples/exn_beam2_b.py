@@ -104,6 +104,6 @@ cfv.eldisp2(ex2, ey2, Ed[1, :], plotpar, sfac)
 cfv.eldisp2(ex3, ey3, Ed[2, :], plotpar, sfac)
 cfv.plt.axis([-1.5, 7.5, -0.5, 5.5])
 cfv.title("Shape at instability")
-cfv.showAndWait()
+cfv.show_and_wait()
 
 # ------------------------ end -----------------------------------
