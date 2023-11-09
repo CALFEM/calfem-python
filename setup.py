@@ -32,7 +32,7 @@ setup(
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
 
-    version='3.6.3',
+    version='3.6.4',
 
     description='CALFEM for Python',
     long_description='The computer program CALFEM is written for the software MATLAB and is an interactive tool for  learning the finite element method. CALFEM is an abbreviation of "Computer Aided Learning of the Finite Element  Method" and been developed by the Division of Structural Mechanics at Lund University since the late 70s.',
@@ -42,7 +42,7 @@ setup(
 
     # Author details
     author='Jonas Lindemann, et al',
-    author_email='jonas.lindemann@byggmek.lth.se',
+    author_email='jonas.lindemann@lunarc.lu.se',
 
     # Choose your license
     license='MIT',
@@ -68,7 +68,8 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
     ],
 
     # What does your project relate to?

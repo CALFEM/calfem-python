@@ -16,6 +16,9 @@ venv-calfem
 
 calfem/shapes - kopia.py
 
+calfem_python.egg-info/*
+calfem_python_small.egg-info/*
+
 .vscode/launch.json
 *.project
 .pydevproject
