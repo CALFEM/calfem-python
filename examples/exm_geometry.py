@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-'''Example 01
+"""Example 01
 
 Shows how to create simple geometry from splines and ellipse arcs, and how to mesh a quad mesh in GmshMesher.
 Also demonstrates drawGeometry(), drawMesh, and drawing texts and labels in a figure.
-'''
+"""
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
@@ -48,15 +48,15 @@ g.point([1.7, 0.7])
 
 g.ellipse([7, 8, 9, 10], marker=50)
 
-g.spline([0, 1], marker=80)           # 1 - A spline. Splines pass through the
-                                      #     points in the first parameter.
-g.spline([2, 1])                      # 2
-g.spline([3, 2])                      # 3
-g.spline([0, 3])                      # 4
-g.spline([7, 9], marker=50)           # 5
-g.spline([10, 9])                     # 6
-g.spline([4, 5, 6, 4])                # 7 - This is a closed spline.
-                                      #     The start and end points are the same
+g.spline([0, 1], marker=80)  # 1 - A spline. Splines pass through the
+#     points in the first parameter.
+g.spline([2, 1])  # 2
+g.spline([3, 2])  # 3
+g.spline([0, 3])  # 4
+g.spline([7, 9], marker=50)  # 5
+g.spline([10, 9])  # 6
+g.spline([4, 5, 6, 4])  # 7 - This is a closed spline.
+#     The start and end points are the same
 
 # Add a surface:
 #  Surfaces are defined by its curve boundaries.
@@ -101,21 +101,19 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 # Draw the geometry. Note that surfaces and volumes are not drawn at all by
 # this function.
 
-cfv.draw_geometry(g)
-
-# New figure window
-
 cfv.figure()
+cfv.draw_geometry(g)
 
 # Draw the mesh.
 
+cfv.figure()
 cfv.draw_mesh(
     coords=coords,
     edof=edof,
     dofs_per_node=mesh.dofs_per_node,
     el_type=mesh.el_type,
     filled=True,
-    title="Example 01"
+    title="Example 01",
 )
 
 # Adds a text in world space
@@ -129,7 +127,7 @@ our_label = cfv.label("This is a Label", pos=(1, 0.3), rotation=-45)
 # We can change the attributes of labels and texts, such as color, text, and position.
 
 our_label.set_text("Label, changed.")
-our_label.set_color('r')  # Make it red. (1,0,0) would also have worked.
+our_label.set_color("r")  # Make it red. (1,0,0) would also have worked.
 our_label.set_position((1, 0.3))
 
 # Enter main loop:

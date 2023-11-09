@@ -33,29 +33,9 @@ dist/
 *.iml
 .idea/
 .vscode/settings.json
-examples/.ipynb_checkpoints/exm0-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm1-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm2-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm3-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm6-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm7-checkpoint.ipynb
+examples/.ipynb_checkpoints/*
 # .vscode/settings.json
-examples/.ipynb_checkpoints/exm10-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm12-checkpoint.ipynb
-examples/.ipynb_checkpoints/exm13-checkpoint.ipynb
-calfem/.ipynb_checkpoints/core-checkpoint.py
-calfem/.ipynb_checkpoints/geometry-checkpoint.py
-calfem/.ipynb_checkpoints/mesh-checkpoint.py
-calfem/.ipynb_checkpoints/vis_mpl-checkpoint.py
-examples/.ipynb_checkpoints/exed1-checkpoint.py
-examples/.ipynb_checkpoints/exed1-checkpoint.ui
-examples/.ipynb_checkpoints/exm1-checkpoint.py
-examples/.ipynb_checkpoints/exm2_mpl-checkpoint.py
-examples/.ipynb_checkpoints/exm4_mpl-checkpoint.py
-examples/.ipynb_checkpoints/exm7_mpl-checkpoint.py
-examples/.ipynb_checkpoints/exs1-checkpoint.py
-examples/.ipynb_checkpoints/Untitled1-checkpoint.ipynb
-examples/.ipynb_checkpoints/exs4a-checkpoint.py
+calfem/.ipynb_checkpoints/*
 exm6.vtk
 
 # new notebook examples

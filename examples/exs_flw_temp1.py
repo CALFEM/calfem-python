@@ -15,6 +15,7 @@
 
 import numpy as np
 import calfem.core as cfc
+import calfem.utils as cfu
 
 # ----- Topology -------------------------------------------------
 
@@ -60,10 +61,11 @@ bc = np.array([1, 6])
 bcVal = np.array([-17, 20])
 a, r = cfc.solveq(K, f, bc, bcVal) 
 
-print("a = ")
-print(a)
-print("r = ")
-print(r)
+cfu.disp_h2("Temperatures a:")
+cfu.disp_array(a)
+
+cfu.disp_h2("Reaction flows r:")
+cfu.disp_array(r)
 
 # ----- Section forces -------------------------------------------
 
@@ -78,6 +80,8 @@ q2 = cfc.spring1s(ep2, ed2)
 q3 = cfc.spring1s(ep3, ed3)
 q4 = cfc.spring1s(ep4, ed4)
 q5 = cfc.spring1s(ep5, ed5)
+
+cfu.disp_h2("Element flows:")
 
 print("q1 = ")
 print(q1)

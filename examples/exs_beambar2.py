@@ -72,21 +72,22 @@ Ke5 = cfc.bar2e(ex5, ey5, ep4)
 
 # ----- Assemble Ke into K ---------------------------------------
 
-cfc.assem(edof1[0, :], K, Ke1)
-cfc.assem(edof1[1, :], K, Ke2, f, fe2)
-cfc.assem(edof1[2, :], K, Ke3, f, fe3)
-cfc.assem(edof2[0, :], K, Ke4)
-cfc.assem(edof2[1, :], K, Ke5)
+K = cfc.assem(edof1[0, :], K, Ke1)
+K, f = cfc.assem(edof1[1, :], K, Ke2, f, fe2)
+K, f = cfc.assem(edof1[2, :], K, Ke3, f, fe3)
+K = cfc.assem(edof2[0, :], K, Ke4)
+K = cfc.assem(edof2[1, :], K, Ke5)
 
 # ----- Solve the system of equations and compute reactions ------
 
 bc = np.array([1, 2, 3, 13, 14])
 a, r = cfc.solveq(K, f, bc)
 
-print("a = ")
-print(a)
-print("r = ")
-print(r)
+cfu.disp_h2("Displacements a:")
+cfu.disp_array(a)
+
+cfu.disp_h2("Reaction forces r:")
+cfu.disp_array(r)
 
 # ----- Section forces -------------------------------------------
 
@@ -99,14 +100,14 @@ es3, _, _ = cfc.beam2s(ex3, ey3, ep1, ed1[2, :], eq2, nep=11)
 es4 = cfc.bar2s(ex4, ey4, ep4, ed2[0, :])
 es5 = cfc.bar2s(ex5, ey5, ep4, ed2[1, :])
 
-print("es1 = ")
-print(es1)
-print("es2 = ")
-print(es2)
-print("es3 = ")
-print(es3)
-print("es4 = ")
-print(es4)
-print("es5 = ")
-print(es5)
+cfu.disp_h2("es1 = ")
+cfu.disp_array(es1, headers=["N", "Q", "M"])
+cfu.disp_h2("es2 = ")
+cfu.disp_array(es2, headers=["N", "Q", "M"])
+cfu.disp_h2("es3 = ")
+cfu.disp_array(es3, headers=["N", "Q", "M"])
+cfu.disp_h2("es4 = ")
+cfu.disp_array(es4, headers=["N"])
+cfu.disp_h2("es5 = ")
+cfu.disp_array(es5, headers=["N"])
 

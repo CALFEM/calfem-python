@@ -9,12 +9,13 @@ import scipy.io
 import numpy as np
 import calfem.core as cfc
 import logging as cflog
+import tabulate as tab
 
 have_pyvtk = True
 
 try:
     import pyvtk as vtk
-except:
+except: 
     have_pyvtk = False
 
 haveMatplotLib = True
@@ -23,14 +24,84 @@ haveMlab = True
 have_mlab = haveMlab
 have_matplotlib = haveMatplotLib
 
+have_ipython = True
+
+try:
+    from IPython.core.display import display, HTML
+except:
+    have_ipython = False
+
+
 
 def error(msg):
     cflog.error(" "+msg)
 
-
 def info(msg):
     cflog.info(" "+msg)
 
+def set_debug_level(level):
+    cflog.getLogger().setLevel(level)
+
+def type_of_script():
+    try:
+        ipy_str = str(type(get_ipython()))
+        if 'zmqshell' in ipy_str:
+            return 'jupyter'
+        if 'terminal' in ipy_str:
+            return 'ipython'
+    except:
+        return 'terminal'
+
+def disp(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"{msg}"))
+    else:
+        print(msg)
+
+def disp_par(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<p>{msg}</p>"))
+    else:
+        print(f"\nmsg\n")
+
+def disp_bold(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<b>{msg}</b>"))
+    else:
+        print(f"**{msg}**")
+    
+def disp_bold_par(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<p><b>{msg}</b></p>"))
+    else:
+        print(f"\n**{msg}**\n")
+
+def disp_h1(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h1>{msg}</h1>"))
+    else:
+        print(f"\n# {msg}\n")
+
+def disp_h2(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h2>{msg}</h2>"))
+    else:
+        print(f"\n## {msg}\n")
+
+def disp_h3(msg):
+    if type_of_script() == 'jupyter':
+        display(HTML(f"<h3>{msg}</h3>"))
+    else:
+        print(f"\n## {msg}\n")
+
+def disp_array(a, headers=[], fmt=".4e", tablefmt="psql", showindex=False):
+    """
+    Print a numpy array in a nice way.
+    """
+    if type_of_script() == 'jupyter':
+        display(tab.tabulate(np.asarray(a), tablefmt="html", floatfmt=".4e", showindex=showindex, headers=headers))
+    else:
+        print(tab.tabulate(np.asarray(a), tablefmt=tablefmt, floatfmt=fmt, showindex=showindex, headers=headers))
 
 class ElementProperties(object):
     def __init__(self):
@@ -472,7 +543,9 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
         el_vec2             Vector value for each element (list)
     """
 
-    points = coords.tolist()
+    points = np.zeros([coords.shape[0], 3], dtype=np.float64)
+    points[:,0:2] = coords
+    points = points.tolist()
     polygons = (topo-1).tolist()
 
     displ = []
@@ -485,7 +558,7 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
 
     if a is not None:
         for i in range(0, len(a), 2):
-            displ.append([np.asscalar(a[i]), np.asscalar(a[i+1]), 0.0])
+            displ.append([a[i].item(), a[i+1].item(), 0.0])
 
         point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
 

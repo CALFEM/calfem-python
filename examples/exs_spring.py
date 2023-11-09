@@ -18,6 +18,7 @@
 
 import numpy as np
 import calfem.core as cfc
+import calfem.utils as cfu
 
 # ----- Topology matrix Edof
 
@@ -46,8 +47,8 @@ cfc.assem(edof[0, :], K, Ke2)
 cfc.assem(edof[1, :], K, Ke1)
 cfc.assem(edof[2, :], K, Ke2)
 
-print("Stiffness matrix K:")
-print(K)
+cfu.disp_h2("Stiffness matrix K:")
+cfu.disp_array(K)
 
 # f[1] corresponds to edof 2
 
@@ -58,11 +59,11 @@ f[1] = 100.0
 bc = np.array([1, 3])
 a, r = cfc.solveq(K, f, bc)
 
-print("Displacements a:")
-print(a)
+cfu.disp_h2("Displacements a:")
+cfu.disp_array(a)
 
-print("Reaction forces Q:")
-print(r)
+cfu.disp_h2("Reaction forces r:")
+cfu.disp_array(r)
 
 # ----- Caculate element forces
 
@@ -74,7 +75,7 @@ es1 = cfc.spring1s(ep2, ed1)
 es2 = cfc.spring1s(ep1, ed2)
 es3 = cfc.spring1s(ep2, ed3)
 
-print("Element forces N:")
+cfu.disp_h2("Element forces N:")
 print("N1 = "+str(es1))
 print("N2 = "+str(es2))
 print("N3 = "+str(es3))

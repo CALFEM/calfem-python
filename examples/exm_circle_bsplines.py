@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Example 02
 Creating geometry from B-Splines and circle arcs.
 Also shows how to set ID numbers for geometry entities and how to specify element density. 
-'''
+"""
 
 import matplotlib.pyplot as plt
 import matplotlib.collections
@@ -21,16 +21,16 @@ g = cfg.Geometry()
 # Add points:
 #  In this example we set the IDs manually.
 
-g.point([-2,  0], ID=0)
+g.point([-2, 0], ID=0)
 # el_size determines the size of the elements near this point.
-g.point([0,  1], ID=1, el_size=5)
+g.point([0, 1], ID=1, el_size=5)
 # el_size is 1 by default. Larger number means less dense mesh.
-g.point([1,  0], 2, el_size=5)
+g.point([1, 0], 2, el_size=5)
 g.point([0, -2], 3)  # Size means the length of the sides of the elements.
-g.point([0,  0], 4, el_size=5)
-g.point([.5, .2], 5)
-g.point([-.5, .5], 6)
-g.point([-.7, -.5], 7)
+g.point([0, 0], 4, el_size=5)
+g.point([0.5, 0.2], 5)
+g.point([-0.5, 0.5], 6)
+g.point([-0.7, -0.5], 7)
 
 # Add curves:
 
@@ -78,25 +78,19 @@ coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
 # Draw the geometry.
 
-cfv.draw_geometry(
-    g,
-    label_curves=True,
-    title="Example 2 - Geometry"
-)
-
-# New figure window
-
 cfv.figure()
+cfv.draw_geometry(g, label_curves=True, title="Example 2 - Geometry")
 
 # Draws the mesh.
 
+cfv.figure()
 cfv.draw_mesh(
     coords=coords,
     edof=edof,
     dofs_per_node=mesh.dofs_per_node,
     el_type=mesh.el_type,
     filled=True,
-    title="Example 2 - Mesh"
+    title="Example 2 - Mesh",
 )
 
 # Enter main loop
