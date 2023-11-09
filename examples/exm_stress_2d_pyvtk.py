@@ -209,7 +209,9 @@ for i in range(edof.shape[0]):
 
 # ---- Export to VTK --------------------------------------------------------
 
-points = coords.tolist()
+points = np.zeros([coords.shape[0], 3], dtype=np.float64)
+points[:,0:2] = coords
+points = points.tolist()
 polygons = (mesh.topo - 1).tolist()
 
 displ = []
@@ -221,7 +223,7 @@ vectors2 = None
 cell_data = None
 
 for i in range(0, len(a), 2):
-    displ.append([np.asscalar(a[i]), np.asscalar(a[i + 1]), 0.0])
+    displ.append([a[i].item(), a[i + 1].item(), 0.0])
     point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
 
 scalars = vtk.Scalars(von_mises, name="scalar")

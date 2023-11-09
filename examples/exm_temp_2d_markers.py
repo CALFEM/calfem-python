@@ -133,16 +133,15 @@ for i in range(np.shape(ex)[0]):
 
 print("Visualising...")
 
-cfv.set_figure_dpi(100)
-cfv.figure(fig_size=(10, 10))
+cfv.figure()
 cfv.draw_geometry(g, title="Geometry")
 
 # 8-node quads are drawn as simple quads.
 
-cfv.figure(fig_size=(10, 10))
+cfv.figure()
 cfv.draw_mesh(coords, edof, dofs_per_node, el_type, filled=False)
 
-cfv.figure(fig_size=(10, 10))
+cfv.figure()
 cfv.draw_nodal_values_shaded(
     a,
     coords,

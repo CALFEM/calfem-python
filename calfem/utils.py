@@ -36,9 +36,11 @@ except:
 def error(msg):
     cflog.error(" "+msg)
 
-
 def info(msg):
     cflog.info(" "+msg)
+
+def set_debug_level(level):
+    cflog.getLogger().setLevel(level)
 
 def type_of_script():
     try:
@@ -541,7 +543,9 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
         el_vec2             Vector value for each element (list)
     """
 
-    points = coords.tolist()
+    points = np.zeros([coords.shape[0], 3], dtype=np.float64)
+    points[:,0:2] = coords
+    points = points.tolist()
     polygons = (topo-1).tolist()
 
     displ = []
@@ -554,7 +558,7 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
 
     if a is not None:
         for i in range(0, len(a), 2):
-            displ.append([np.asscalar(a[i]), np.asscalar(a[i+1]), 0.0])
+            displ.append([a[i].item(), a[i+1].item(), 0.0])
 
         point_data = vtk.PointData(vtk.Vectors(displ, name="displacements"))
 

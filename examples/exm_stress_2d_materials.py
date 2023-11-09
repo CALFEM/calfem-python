@@ -12,6 +12,7 @@ import calfem.mesh as cfm
 import calfem.vis_mpl as cfv
 import calfem.utils as cfu
 import numpy as np
+import math
 
 from scipy.sparse import lil_matrix
 
@@ -167,7 +168,7 @@ for i in range(edof.shape[0]):
         )
 
         von_mises.append(
-            np.math.sqrt(
+            math.sqrt(
                 pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2], 2)
             )
         )

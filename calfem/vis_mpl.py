@@ -5,6 +5,8 @@ CALFEM Visualisation module (matplotlib)
 Contains all the functions implementing visualisation routines.
 """
 
+import os
+
 from matplotlib.transforms import Transform
 import numpy as np
 
@@ -54,10 +56,20 @@ figureClass = figure_class
 
 cfv_def_mappable = None
 
-
 def set_mappable(mappable):
     global cfv_def_mappable
     cfv_def_mappable = mappable
+
+cfv_block_at_show = True
+
+def set_block_at_show(show_block):
+    cfv_block_at_show = show_block
+
+def ioff():
+    plt.ioff()
+
+def ion():
+    plt.ion()
 
 
 def colorbar(**kwargs):
@@ -142,7 +154,12 @@ def camera3d():
 
 def show_and_wait():
     """Wait for plot to show"""
-    plt.show()
+    global cfv_block_at_show
+
+    if "CFV_NO_BLOCK" in os.environ:
+        plt.show(block=False)
+    else:
+        plt.show(block=cfv_block_at_show)
 
 
 showAndWait = show_and_wait
