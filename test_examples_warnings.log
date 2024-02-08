@@ -1,0 +1,4 @@
+exs_bar2_la.py:  DeprecationWarning:  Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future. Ensure you extract a single element from your array before performing this operation. (Deprecated NumPy 1.25.)
+ at line: 109
+exs_bar2_lb.py:  DeprecationWarning:  Conversion of an array with ndim > 0 to a scalar is deprecated, and will error in future. Ensure you extract a single element from your array before performing this operation. (Deprecated NumPy 1.25.)
+ at line: 107

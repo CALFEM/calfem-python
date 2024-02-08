@@ -454,7 +454,7 @@ class Geometry:
         if len(outer_loop) not in [3, 4]:
             raise IndexError(
                 "Ruled Surface: outer_loop must be a list of 3 or 4 positive integers denoting curve indices")
-        self._addSurf("Ruled Surface", outer_loop, [],
+        self._addSurf("Surface", outer_loop, [],
                       ID, marker, is_structured=False)
 
     def addStructuredSurface(self, outer_loop, ID=None, marker=0):
@@ -472,7 +472,7 @@ class Geometry:
         marker    - Integer. Marker applied to this surface. Default 0.
         '''
         self._checkIfProperStructuredQuadBoundary(outer_loop, ID)
-        self._addSurf("Ruled Surface", outer_loop, [],
+        self._addSurf("Surface", outer_loop, [],
                       ID, marker, is_structured=True)
 
     def _addSurf(self, name, outer_loop, holes, ID, marker, is_structured):
