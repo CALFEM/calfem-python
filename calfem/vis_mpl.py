@@ -127,10 +127,16 @@ def close_all():
 
 closeAll = close_all
 
-
 def clf():
     """Clear visvis figure"""
     plt.clf()
+
+def close(fig=None):
+    """Close visvis figure"""
+    if fig == None:
+        plt.close()
+    else:
+        plt.close(fig)
 
 
 def gca():
