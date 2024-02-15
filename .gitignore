@@ -45,3 +45,4 @@ docs/source/examples/.ipynb_checkpoints/
 *.log
 *.log
 *.log
+.pdm-python
