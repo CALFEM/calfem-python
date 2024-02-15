@@ -17,7 +17,9 @@ of ”Computer Aided Learning of the Finite Element Method” and been developed
 
 ## Why CALFEM for Python?
 
-Unlike MATLAB, which have expensive licenses, Python is free to use and distribute both for personal and commercial use. This is the python version of CALFEM for scientific purposes/research.
+While both the MATLAB and Python versions of CALFEM are open-source (MIT Licensed), the key difference lies in the environments they operate in. MATLAB is not open-source and requires expensive licenses (for commercial use), which can be a barrier for many users. In contrast, Python is a free, open-source programming language, making CALFEM for Python more accessible and cost-effective for a broader audience, including those in academic, personal, or commercial settings. 
+
+CALFEM for Python is released under the MIT license, which enables its use in open-source as well as commercial projects.
 
 ## Installation
 
