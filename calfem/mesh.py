@@ -166,6 +166,7 @@ class GmshMeshGenerator:
         self.mesh_dir = mesh_dir
         self.return_boundary_elements = return_boundary_elements
         self.gmsh_options = {}
+        self.gmsh_verbosity = 0
 
         # gmsh elements that have rectangle faces
         self._ElementsWithQuadFaces = [3, 5, 10, 12, 16, 17, 92, 93]
@@ -270,9 +271,9 @@ class GmshMeshGenerator:
                 raise IOError(
                     "Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
             else:
-                print("Info    : GMSH -> %s" % gmshExe)
+                cflog.info(" GMSH -> %s" % gmshExe)
         else:
-            print("Info    : GMSH -> Python-module")
+            cflog.info(" GMSH -> Python-module")
 
         # Create a temporary directory for GMSH
 
@@ -351,7 +352,9 @@ class GmshMeshGenerator:
             # Meshing using gmsh extension module
 
             if self.initialize_gmsh:
-                gmsh.initialize(sys.argv)
+                gmsh.initialize(sys.argv, interruptible=False)
+
+            gmsh.option.setNumber("General.Verbosity", self.gmsh_verbosity)
 
             # This is a hack to enable the use of gmsh in
             # a separate thread.
@@ -411,7 +414,7 @@ class GmshMeshGenerator:
 
         with open(mshFileName, 'r') as mshFile:
 
-            info("Mesh file  : "+mshFileName)
+            info(" Mesh file  : "+mshFileName)
 
             # print("Reading msh file...")
 

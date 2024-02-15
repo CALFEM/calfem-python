@@ -113,7 +113,7 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
 
 def figure_widget(fig, parent=None):
     widget = FigureCanvas(fig)
-    widget.axes = fig.add_subplot(111)
+    #widget.axes = fig.add_subplot(111)
     if parent != None:
         widget.setParent(parent)
     toolbar = NavigationToolbar(widget, widget)
@@ -127,10 +127,16 @@ def close_all():
 
 closeAll = close_all
 
-
 def clf():
     """Clear visvis figure"""
     plt.clf()
+
+def close(fig=None):
+    """Close visvis figure"""
+    if fig == None:
+        plt.close()
+    else:
+        plt.close(fig)
 
 
 def gca():

@@ -106,6 +106,6 @@ cfu.disp_h2("Element forces:")
 i = 0
 for elx, ely, eld in zip(ex, ey, ed):
     es = cfc.bar2s(elx, ely, ep, eld)
-    N[i] = es[0]
+    N[i] = es[0][0]
     print("N%d = %g" % (i + 1, N[i]))
     i += 1

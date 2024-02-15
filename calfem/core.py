@@ -5279,7 +5279,7 @@ def assem(edof, K, Ke, f=None, fe=None):
         return K, f
 
 
-def solveq(K, f, bcPrescr, bcVal=None):
+def solveq(K, f, bcPrescr=None, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.
     
@@ -5305,6 +5305,9 @@ def solveq(K, f, bcPrescr, bcVal=None):
 
     if bcVal is None:
         bcVal = np.zeros([nPdofs], 'd')
+
+    if bcPrescr is None:
+        return np.asmatrix(np.linalg.solve(K, f))
 
     bc = np.ones(nDofs, 'bool')
     bcDofs = np.arange(nDofs)

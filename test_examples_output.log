@@ -1,0 +1,9 @@
+Comparing output of exs_bar2.py --- PASSED!
+Comparing output of exs_bar2_la.py --- PASSED!
+Comparing output of exs_bar2_lb.py --- PASSED!
+Comparing output of exs_beam1.py --- PASSED!
+Comparing output of exs_beam2.py --- PASSED!
+Comparing output of exs_flw_diff2.py --- PASSED!
+Comparing output of exs_flw_temp1.py --- PASSED!
+Comparing output of exs_flw_temp2.py --- PASSED!
+Comparing output of exs_spring.py --- PASSED!

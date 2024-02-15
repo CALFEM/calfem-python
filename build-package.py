@@ -14,7 +14,7 @@ def build_package():
 
 if __name__ == "__main__":
 
-    package_version = "3.6.5"
+    package_version = "3.6.6"
 
     update_setup("calfem-python", package_version, "'numpy', 'visvis', 'pyvtk', 'matplotlib', 'scipy', 'gmsh', 'qtpy', 'vedo', 'tabulate'")
 

@@ -1,0 +1,44 @@
+[project]
+name = "calfem-python"
+version = "3.6.5"
+description = "CALFEM for Python"
+authors = [
+    {name = "Jonas Lindemann", email = "jonas.lindemann@gmail.com"},
+    {name = "Jonas Lindemann, et al", email = "jonas.lindemann@lunarc.lu.se"},
+]
+dependencies = [
+    "gmsh",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "tabulate",
+    "visvis",
+    "vedo",
+    "pyvtk",
+    "qtpy",
+    "tabulate"
+]
+requires-python = ">=3.8"
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["finite element", "math", "numerics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development :: Build Tools",
+]
+
+[project.urls]
+Homepage = "https://github.com/CALFEM/calfem-python"
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
