@@ -508,7 +508,7 @@ def draw_element_values(
     Draws scalar element values in 2D or 3D.
 
     Args:
-        ev:
+        values:
             An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
 
         coords:
@@ -526,7 +526,7 @@ def draw_element_values(
         displacements:
             An N-by-2 or N-by-3 array. Row i contains the x,y,z displacements of node i.
 
-        draw_mesh:
+        draw_elements:
             Boolean. True if mesh wire should be drawn. Default True.
 
         draw_undisplaced_mesh:
