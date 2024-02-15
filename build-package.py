@@ -10,7 +10,7 @@ def update_setup(package_name, package_version, package_deps):
         f.write(setup_template.format(package_name=package_name, package_version=package_version, package_depends=package_deps)) 
 
 def build_package():
-    os.system("python -m build --wheel")   
+    os.system("C:\Users\Miniconda3\envs\calfem-dev\python.exe -m build --wheel")   
 
 if __name__ == "__main__":
 
