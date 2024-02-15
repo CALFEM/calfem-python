@@ -12,12 +12,8 @@ dependencies = [
     "numpy",
     "scipy",
     "tabulate",
-    "visvis",
-    "vedo",
-    "pyvtk",
-    "qtpy",
-    "tabulate",
 ]
+
 requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "MIT"}
@@ -48,3 +44,9 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[project.optional-dependencies]
+visvis = [ "visvis" ]
+vedo = [ "vedo" ]
+pyvtk = [ "pyvtk" ]
+qtpy = [ "qtpy" ]
