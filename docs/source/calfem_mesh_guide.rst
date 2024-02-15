@@ -79,18 +79,18 @@ Next, we need to set some desired properties on our mesh:
 
 .. code-block:: Python
 
-    mesh.elType = 3          # Degrees of freedom per node.
-    mesh.dofsPerNode = 1     # Factor that changes element sizes.
-    mesh.elSizeFactor = 0.15 # Element size Factor
+    mesh.el_type = 3          # Element type is quadrangle
+    mesh.dofs_per_node = 1     # Degrees of freedom per node
+    mesh.el_size_factor = 0.15 # Element size Factor
 
-The *eltype* property determines the element used for mesh generation. Elements that can be generated are:
+The *el_type* property determines the element used for mesh generation. Elements that can be generated are:
 
  * 2 - 3 node triangle element
  * 3 - 4 node quadrangle element
  * 5 - 8 node hexahedron
  * 16 - 8 node second order quadrangle
 
-The *dofsPerNode* defines the number of degrees of freedom for each node. *elSizeFactor* determines the coarseness of the mesh.
+The *dofs_per_node* defines the number of degrees of freedom for each node. *el_size_factor* determines the coarseness of the mesh.
 
 To generate the mesh and at the same time get the needed data structures for use with CALFEM we call the **.create()** method of the mesh object:
 
