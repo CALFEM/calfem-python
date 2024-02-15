@@ -113,7 +113,7 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
 
 def figure_widget(fig, parent=None):
     widget = FigureCanvas(fig)
-    widget.axes = fig.add_subplot(111)
+    #widget.axes = fig.add_subplot(111)
     if parent != None:
         widget.setParent(parent)
     toolbar = NavigationToolbar(widget, widget)

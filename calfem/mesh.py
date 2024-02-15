@@ -352,7 +352,7 @@ class GmshMeshGenerator:
             # Meshing using gmsh extension module
 
             if self.initialize_gmsh:
-                gmsh.initialize(sys.argv)
+                gmsh.initialize(sys.argv, interruptible=False)
 
             gmsh.option.setNumber("General.Verbosity", self.gmsh_verbosity)
 
