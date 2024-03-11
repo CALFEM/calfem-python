@@ -58,17 +58,26 @@ def disp(msg):
     else:
         print(msg)
 
+def str_disp(msg):
+    return f"\n{msg}\n"
+
 def disp_par(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<p>{msg}</p>"))
     else:
         print(f"\nmsg\n")
 
+def str_disp_par(msg):
+    return f"\n{msg}\n"
+
 def disp_bold(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<b>{msg}</b>"))
     else:
         print(f"**{msg}**")
+
+def str_disp_bold(msg):
+    return f"**{msg}**"
     
 def disp_bold_par(msg):
     if type_of_script() == 'jupyter':
@@ -76,11 +85,17 @@ def disp_bold_par(msg):
     else:
         print(f"\n**{msg}**\n")
 
+def str_disp_bold_par(msg):
+    return f"\n**{msg}**\n"
+
 def disp_h1(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<h1>{msg}</h1>"))
     else:
         print(f"\n# {msg}\n")
+
+def str_disp_h1(msg):    
+    return f"\n# {msg}\n"
 
 def disp_h2(msg):
     if type_of_script() == 'jupyter':
@@ -88,11 +103,17 @@ def disp_h2(msg):
     else:
         print(f"\n## {msg}\n")
 
+def str_disp_h2(msg):
+    return f"\n## {msg}\n"
+
 def disp_h3(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<h3>{msg}</h3>"))
     else:
         print(f"\n## {msg}\n")
+
+def str_disp_h3(msg):
+    return f"\n## {msg}\n"
 
 def disp_array(a, headers=[], fmt=".4e", tablefmt="psql", showindex=False):
     """
@@ -102,6 +123,12 @@ def disp_array(a, headers=[], fmt=".4e", tablefmt="psql", showindex=False):
         display(tab.tabulate(np.asarray(a), tablefmt="html", floatfmt=".4e", showindex=showindex, headers=headers))
     else:
         print(tab.tabulate(np.asarray(a), tablefmt=tablefmt, floatfmt=fmt, showindex=showindex, headers=headers))
+
+def str_disp_array(a, headers=[], fmt=".4e", tablefmt="psql", showindex=False):
+    """
+    Return a numpy array in a nice way as a string.
+    """
+    return tab.tabulate(np.asarray(a), tablefmt=tablefmt, floatfmt=fmt, showindex=showindex, headers=headers)
 
 class ElementProperties(object):
     def __init__(self):
