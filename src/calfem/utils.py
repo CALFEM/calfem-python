@@ -59,7 +59,7 @@ def disp(msg):
         print(msg)
 
 def str_disp(msg):
-    return f"\n{msg}\n"
+    return f"{msg}\n"
 
 def disp_par(msg):
     if type_of_script() == 'jupyter':
@@ -110,10 +110,10 @@ def disp_h3(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<h3>{msg}</h3>"))
     else:
-        print(f"\n## {msg}\n")
+        print(f"\n### {msg}\n")
 
 def str_disp_h3(msg):
-    return f"\n## {msg}\n"
+    return f"\n### {msg}\n"
 
 def disp_array(a, headers=[], fmt=".4e", tablefmt="psql", showindex=False):
     """
