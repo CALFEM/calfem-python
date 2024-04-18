@@ -134,14 +134,15 @@ html_theme_options = {
     'globaltoc_collapse': True,
     # If True, show hidden TOC entries
     'globaltoc_includehidden': False,
-    #'logo_icon': "&#xe913;"
+    'logo_icon': "&#xe913;",
+    #'logo_icon': 'images/calfem.logo.sw.svg'
 }
 
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
 }
 
-html_logo = 'images/calfem.logo.bw.svg'
+#html_logo = 'images/calfem.logo.png'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

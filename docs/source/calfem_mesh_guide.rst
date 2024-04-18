@@ -20,7 +20,7 @@ To use the CALFEM geometry and mesh generation routines, we use the following im
 
     import calfem.geometry as cfg
     import calfem.mesh as cfm
-    import calfem.vis as cfv
+    import calfem.vis_mpl as cfv
 
 Defining geometry
 -----------------
@@ -264,7 +264,7 @@ As previous, to show the finished mesh you can use:
 .. code-block:: Python
 
 	cfv.figure()
-	cfv.drawMesh(
+	cfv.draw_mesh(
 	    coords=coords,
 	    edof=edof,
 	    dofs_per_node=mesh.dofsPerNode,
