@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
 
         # Load user interface from UI-file
 
-        loadUi('exm_qt.ui', self)
+        loadUi('exm_qt_vis.ui', self)
         
         Figure = cfv.figureClass()
         

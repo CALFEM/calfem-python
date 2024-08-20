@@ -16,7 +16,12 @@ import matplotlib.path as mpp
 import matplotlib.patches as patches
 import matplotlib as mpl
 import matplotlib.tri as tri
-from numpy.lib.function_base import place
+
+try:
+    from numpy.lib.function_base import place
+except:
+    print("from numpy.lib.function_base import place - Not available")
+    pass
 
 from calfem.core import beam2crd
 import calfem.core as cfc
