@@ -3270,18 +3270,18 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.mat([g1, g1])
-        w = np.mat([w1, w1])
+        gp = np.matrix([g1, g1])
+        w = np.matrix([w1, w1])
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3292,7 +3292,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3303,7 +3303,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3327,7 +3327,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
     N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 4)))
+    dNr = np.matrix(np.zeros((r2, 4)))
     dNr[0:r2:2, 0] = -(1-eta)/4.
     dNr[0:r2:2, 1] = (1-eta)/4.
     dNr[0:r2:2, 2] = (1+eta)/4.
@@ -3337,9 +3337,9 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     dNr[1:r2+1:2, 2] = (1+xsi)/4.
     dNr[1:r2+1:2, 3] = (1-xsi)/4.
 
-    Ke1 = np.mat(np.zeros((4, 4)))
-    fe1 = np.mat(np.zeros((4, 1)))
-    JT = dNr*np.mat([ex, ey]).T
+    Ke1 = np.matrix(np.zeros((4, 4)))
+    fe1 = np.matrix(np.zeros((4, 1)))
+    JT = dNr*np.matrix([ex, ey]).T
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
@@ -3393,18 +3393,18 @@ def flw2i4s(ex, ey, ep, D, ed):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.mat([g1, g1])
-        w = np.mat([w1, w1])
+        gp = np.matrix([g1, g1])
+        w = np.matrix([w1, w1])
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3415,7 +3415,7 @@ def flw2i4s(ex, ey, ep, D, ed):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3426,7 +3426,7 @@ def flw2i4s(ex, ey, ep, D, ed):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3450,7 +3450,7 @@ def flw2i4s(ex, ey, ep, D, ed):
     N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
     N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 4)))
+    dNr = np.matrix(np.zeros((r2, 4)))
     dNr[0:r2:2, 0] = -(1-eta)/4.
     dNr[0:r2:2, 1] = (1-eta)/4.
     dNr[0:r2:2, 2] = (1+eta)/4.
@@ -3460,15 +3460,15 @@ def flw2i4s(ex, ey, ep, D, ed):
     dNr[1:r2+1:2, 2] = (1+xsi)/4.
     dNr[1:r2+1:2, 3] = (1-xsi)/4.
 
-    eci = N*np.mat([ex, ey]).T
+    eci = N*np.matrix([ex, ey]).T
     if ed.ndim == 1:
         ed = np.array([ed])
 
     red, ced = np.shape(ed)
-    JT = dNr*np.mat([ex, ey]).T
+    JT = dNr*np.matrix([ex, ey]).T
 
-    es = np.mat(np.zeros((ngp*red, 2)))
-    et = np.mat(np.zeros((ngp*red, 2)))
+    es = np.matrix(np.zeros((ngp*red, 2)))
+    et = np.matrix(np.zeros((ngp*red, 2)))
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
         detJ = np.linalg.det(JT[indx-1, :])
@@ -3519,18 +3519,18 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.mat([g1, g1])
-        w = np.mat([w1, w1])
+        gp = np.matrix([g1, g1])
+        w = np.matrix([w1, w1])
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3541,7 +3541,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3552,7 +3552,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3587,7 +3587,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     N = np.append(N, np.multiply(
         (1-xsi), (1-np.multiply(eta, eta)))/2., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 8)))
+    dNr = np.matrix(np.zeros((r2, 8)))
     dNr[0:r2:2, 0] = -(-np.multiply((1-eta), (1+xsi+eta)) +
                        np.multiply((1-xsi), (1-eta)))/4.
     dNr[0:r2:2, 1] = -(np.multiply((1-eta), (1-xsi+eta)) -
@@ -3613,9 +3613,9 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     dNr[1:r2+1:2, 6] = (1-np.multiply(xsi, xsi))/2.
     dNr[1:r2+1:2, 7] = -np.multiply(eta, (1-xsi))
 
-    Ke1 = np.mat(np.zeros((8, 8)))
-    fe1 = np.mat(np.zeros((8, 1)))
-    JT = dNr*np.mat([ex, ey]).T
+    Ke1 = np.matrix(np.zeros((8, 8)))
+    fe1 = np.matrix(np.zeros((8, 1)))
+    JT = dNr*np.matrix([ex, ey]).T
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
@@ -3669,18 +3669,18 @@ def flw2i8s(ex, ey, ep, D, ed):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.mat([g1, g1])
-        w = np.mat([w1, w1])
+        gp = np.matrix([g1, g1])
+        w = np.matrix([w1, w1])
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3691,7 +3691,7 @@ def flw2i8s(ex, ey, ep, D, ed):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3702,7 +3702,7 @@ def flw2i8s(ex, ey, ep, D, ed):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3737,7 +3737,7 @@ def flw2i8s(ex, ey, ep, D, ed):
     N = np.append(N, np.multiply(
         (1-xsi), (1-np.multiply(eta, eta)))/2., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 8)))
+    dNr = np.matrix(np.zeros((r2, 8)))
     dNr[0:r2:2, 0] = -(-np.multiply((1-eta), (1+xsi+eta)) +
                        np.multiply((1-xsi), (1-eta)))/4.
     dNr[0:r2:2, 1] = -(np.multiply((1-eta), (1-xsi+eta)) -
@@ -3763,14 +3763,14 @@ def flw2i8s(ex, ey, ep, D, ed):
     dNr[1:r2+1:2, 6] = (1-np.multiply(xsi, xsi))/2.
     dNr[1:r2+1:2, 7] = -np.multiply(eta, (1-xsi))
 
-    eci = N*np.mat([ex, ey]).T
+    eci = N*np.matrix([ex, ey]).T
     if ed.ndim == 1:
         ed = np.array([ed])
     red, ced = np.shape(ed)
-    JT = dNr*np.mat([ex, ey]).T
+    JT = dNr*np.matrix([ex, ey]).T
 
-    es = np.mat(np.zeros((ngp*red, 2)))
-    et = np.mat(np.zeros((ngp*red, 2)))
+    es = np.matrix(np.zeros((ngp*red, 2)))
+    et = np.matrix(np.zeros((ngp*red, 2)))
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
@@ -3823,7 +3823,7 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
     if ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-1, -1, -1],
             [1, -1, -1],
             [1, 1, -1],
@@ -3833,37 +3833,37 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
             [1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.mat(np.ones((8, 3)))*w1
+        w = np.matrix(np.ones((8, 3)))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat(np.zeros((27, 3)))
-        w = np.mat(np.zeros((27, 3)))
+        gp = np.matrix(np.zeros((27, 3)))
+        w = np.matrix(np.zeros((27, 3)))
         I1 = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
         I2 = np.array([0, -1, 0, 0, 1, 0, 0, 1, 0])
-        gp[:, 0] = np.mat([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 0] = np.mat([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
+        gp[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
+        gp[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
         I1 = abs(I1)
         I2 = abs(I2)
-        w[:, 0] = np.mat([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 0] = np.mat([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
+        w[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
+        w[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
         I1 = np.array([-1, -1, -1, 0, 0, 0, 1, 1, 1])
         I2 = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0])
-        gp[:, 1] = np.mat([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 1] = np.mat([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
+        gp[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
+        gp[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
         I1 = abs(I1)
         I2 = abs(I2)
-        w[:, 1] = np.mat([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 1] = np.mat([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
+        w[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
+        w[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
         I1 = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1])
         I2 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
         I3 = abs(I1)
-        gp[:, 2] = np.mat([I1, I2, I3]).reshape(27, 1)*g1
-        gp[:, 2] = np.mat([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
-        w[:, 2] = np.mat([I3, I2, I3]).reshape(27, 1)*w1
-        w[:, 2] = np.mat([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
+        gp[:, 2] = np.matrix([I1, I2, I3]).reshape(27, 1)*g1
+        gp[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
+        w[:, 2] = np.matrix([I3, I2, I3]).reshape(27, 1)*w1
+        w[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
     else:
         info("Used number of integration points not implemented")
         return
@@ -3891,7 +3891,7 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
     N = np.append(N, np.multiply(np.multiply(
         (1-xsi), (1+eta)), (1+zet))/8., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 8)))
+    dNr = np.matrix(np.zeros((r2, 8)))
     dNr[0:r2:3, 0] = np.multiply(-(1-eta), (1-zet))
     dNr[0:r2:3, 1] = np.multiply((1-eta), (1-zet))
     dNr[0:r2:3, 2] = np.multiply((1+eta), (1-zet))
@@ -3918,9 +3918,9 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
     dNr[2:r2+2:3, 7] = np.multiply((1-xsi), (1+eta))
     dNr = dNr/8.
 
-    Ke1 = np.mat(np.zeros((8, 8)))
-    fe1 = np.mat(np.zeros((8, 1)))
-    JT = dNr*np.mat([ex, ey, ez]).T
+    Ke1 = np.matrix(np.zeros((8, 8)))
+    fe1 = np.matrix(np.zeros((8, 1)))
+    JT = dNr*np.matrix([ex, ey, ez]).T
 
     for i in range(ngp):
         indx = np.array([3*(i+1)-2, 3*(i+1)-1, 3*(i+1)])
@@ -3977,7 +3977,7 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
     if ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-1, -1, -1],
             [1, -1, -1],
             [1, 1, -1],
@@ -3987,37 +3987,37 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
             [1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.mat(np.ones((8, 3)))*w1
+        w = np.matrix(np.ones((8, 3)))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat(np.zeros((27, 3)))
-        w = np.mat(np.zeros((27, 3)))
+        gp = np.matrix(np.zeros((27, 3)))
+        w = np.matrix(np.zeros((27, 3)))
         I1 = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
         I2 = np.array([0, -1, 0, 0, 1, 0, 0, 1, 0])
-        gp[:, 0] = np.mat([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 0] = np.mat([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
+        gp[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
+        gp[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
         I1 = abs(I1)
         I2 = abs(I2)
-        w[:, 0] = np.mat([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 0] = np.mat([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
+        w[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
+        w[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
         I1 = np.array([-1, -1, -1, 0, 0, 0, 1, 1, 1])
         I2 = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0])
-        gp[:, 1] = np.mat([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 1] = np.mat([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
+        gp[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
+        gp[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
         I1 = abs(I1)
         I2 = abs(I2)
-        w[:, 1] = np.mat([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 1] = np.mat([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
+        w[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
+        w[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
         I1 = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1])
         I2 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
         I3 = abs(I1)
-        gp[:, 2] = np.mat([I1, I2, I3]).reshape(27, 1)*g1
-        gp[:, 2] = np.mat([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
-        w[:, 2] = np.mat([I3, I2, I3]).reshape(27, 1)*w1
-        w[:, 2] = np.mat([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
+        gp[:, 2] = np.matrix([I1, I2, I3]).reshape(27, 1)*g1
+        gp[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
+        w[:, 2] = np.matrix([I3, I2, I3]).reshape(27, 1)*w1
+        w[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
     else:
         info("Used number of integration points not implemented")
         return
@@ -4045,7 +4045,7 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
     N = np.append(N, np.multiply(np.multiply(
         (1-xsi), (1+eta)), (1+zet))/8., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 8)))
+    dNr = np.matrix(np.zeros((r2, 8)))
     dNr[0:r2:3, 0] = np.multiply(-(1-eta), (1-zet))
     dNr[0:r2:3, 1] = np.multiply((1-eta), (1-zet))
     dNr[0:r2:3, 2] = np.multiply((1+eta), (1-zet))
@@ -4072,14 +4072,14 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
     dNr[2:r2+2:3, 7] = np.multiply((1-xsi), (1+eta))
     dNr = dNr/8.
 
-    eci = N*np.mat([ex, ey, ez]).T
+    eci = N*np.matrix([ex, ey, ez]).T
     if ed.ndim == 1:
         ed = np.array([ed])
         red, ced = np.shape(ed)
-    JT = dNr*np.mat([ex, ey, ez]).T
+    JT = dNr*np.matrix([ex, ey, ez]).T
 
-    es = np.mat(np.zeros((ngp*red, 3)))
-    et = np.mat(np.zeros((ngp*red, 3)))
+    es = np.matrix(np.zeros((ngp*red, 3)))
+    et = np.matrix(np.zeros((ngp*red, 3)))
     for i in range(ngp):
         indx = np.array([3*(i+1)-2, 3*(i+1)-1, 3*(i+1)])
         detJ = np.linalg.det(JT[indx-1, :])
@@ -4128,7 +4128,7 @@ def plante(ex, ey, ep, D, eq=None):
         bx = eq[0]
         by = eq[1]
 
-    C = np.mat([
+    C = np.matrix([
         [1, ex[0], ey[0], 0,     0,     0],
         [0,     0,     0, 1, ex[0], ey[0]],
         [1, ex[1], ey[1], 0,     0,     0],
@@ -4137,7 +4137,7 @@ def plante(ex, ey, ep, D, eq=None):
         [0,     0,     0, 1, ex[2], ey[2]]
     ])
 
-    A = 0.5*np.linalg.det(np.mat([
+    A = 0.5*np.linalg.det(np.matrix([
         [1, ex[0], ey[0]],
         [1, ex[1], ey[1]],
         [1, ex[2], ey[2]]
@@ -4146,7 +4146,7 @@ def plante(ex, ey, ep, D, eq=None):
     # --------- plane stress --------------------------------------
 
     if ptype == 1:
-        B = np.mat([
+        B = np.matrix([
             [0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1],
             [0, 0, 1, 0, 1, 0]
@@ -4161,7 +4161,7 @@ def plante(ex, ey, ep, D, eq=None):
             Dm = D
 
         Ke = B.T*Dm*B*A*t
-        fe = A/3*np.mat([bx, by, bx, by, bx, by]).T*t
+        fe = A/3*np.matrix([bx, by, bx, by, bx, by]).T*t
 
         if eq is None:
             return Ke
@@ -4171,7 +4171,7 @@ def plante(ex, ey, ep, D, eq=None):
     #--------- plane strain --------------------------------------
 
     elif ptype == 2:
-        B = np.mat([
+        B = np.matrix([
             [0, 1, 0, 0, 0, 0, ],
             [0, 0, 0, 0, 0, 1, ],
             [0, 0, 1, 0, 1, 0, ]
@@ -4185,7 +4185,7 @@ def plante(ex, ey, ep, D, eq=None):
             Dm = D
 
         Ke = B.T*Dm*B*A*t
-        fe = A/3*np.mat([bx, by, bx, by, bx, by]).T*t
+        fe = A/3*np.matrix([bx, by, bx, by, bx, by]).T*t
 
         if eq is None:
             return Ke
@@ -4371,7 +4371,7 @@ def plantf(ex, ey, ep, es):
 
     if ptype == 1:
 
-        C = np.mat([
+        C = np.matrix([
             [1, ex[0], ey[0], 0, 0,     0],
             [0, 0,     0,     1, ex[0], ey[0]],
             [1, ex[1], ey[1], 0, 0,     0],
@@ -4380,13 +4380,13 @@ def plantf(ex, ey, ep, es):
             [0, 0,     0,     1, ex[2], ey[2]]
         ])
 
-        A = 0.5*np.linalg.det(np.mat([
+        A = 0.5*np.linalg.det(np.matrix([
             [1, ex[0], ey[0]],
             [1, ex[1], ey[1]],
             [1, ex[2], ey[2]]
         ]))
 
-        B = np.mat([
+        B = np.matrix([
             [0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1],
             [0, 0, 1, 0, 1, 0]
@@ -4405,7 +4405,7 @@ def plantf(ex, ey, ep, es):
 
     elif ptype == 2:
 
-        C = np.mat([
+        C = np.matrix([
             [1, ex[0], ey[0], 0, 0,     0],
             [0, 0,     0,     1, ex[0], ey[0]],
             [1, ex[1], ey[1], 0, 0,     0],
@@ -4414,13 +4414,13 @@ def plantf(ex, ey, ep, es):
             [0, 0,     0,     1, ex[2], ey[2]]
         ])
 
-        A = 0.5*np.linalg.det(np.mat([
+        A = 0.5*np.linalg.det(np.matrix([
             [1, ex[0], ey[0]],
             [1, ex[1], ey[1]],
             [1, ex[2], ey[2]]
         ]))
 
-        B = np.mat([
+        B = np.matrix([
             [0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1],
             [0, 0, 1, 0, 1, 0]
@@ -4502,7 +4502,7 @@ def platre(ex, ey, ep, D, eq=None):
     C20 = 1/3.*A8*D[0, 0]+2/15.*A9*D[2, 2]
     C21 = D[0, 1]
 
-    Keq = np.mat(np.zeros((12, 12)))
+    Keq = np.matrix(np.zeros((12, 12)))
     Keq[0, 0:13] = C1, C5, -C6, C2, C9, -C8, C4, C11, -C12, C3, C7, -C10
     Keq[1, 1:13] = C13, -C21, C9, C15, 0, -C11, C19, 0, -C7, C17, 0
     Keq[2, 2:13] = C14, C8, 0, C18, C12, 0, C20, -C10, 0, C16
@@ -4523,7 +4523,7 @@ def platre(ex, ey, ep, D, eq=None):
         R2 = q*Lx*Ly**2/24
         R3 = q*Ly*Lx**2/24
 
-        feq = np.mat([R1, R2, -R3, R1, R2, R3, R1, -R2, R3, R1, -R2, -R3])
+        feq = np.matrix([R1, R2, -R3, R1, R2, R3, R1, -R2, R3, R1, -R2, -R3])
 
     if eq != None:
         return Keq, feq
@@ -4634,22 +4634,22 @@ def planqs(ex, ey, ep, D, ed, eq=None):
 
     A1 = 0.5 * \
         np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.mat(ex1).T, np.mat(ey1).T]))
+            np.hstack([np.ones((3, 1)), np.matrix(ex1).T, np.matrix(ey1).T]))
     A2 = 0.5 * \
         np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.mat(ex2).T, np.mat(ey2).T]))
+            np.hstack([np.ones((3, 1)), np.matrix(ex2).T, np.matrix(ey2).T]))
     A3 = 0.5 * \
         np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.mat(ex3).T, np.mat(ey3).T]))
+            np.hstack([np.ones((3, 1)), np.matrix(ex3).T, np.matrix(ey3).T]))
     A4 = 0.5 * \
         np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.mat(ex4).T, np.mat(ey4).T]))
+            np.hstack([np.ones((3, 1)), np.matrix(ex4).T, np.matrix(ey4).T]))
     Atot = A1+A2+A3+A4
 
     a, _ = solveq(K, f, np.array(range(1, 9)), ed)
 
 #    ni = ed.shape[0]
-#    a = np.mat(empty((10,ni)))
+#    a = np.matrix(empty((10,ni)))
 #    for i in range(ni):
 #        a[:,i] = solveq(K, f, np.array(range(1,9)), ed[i,:])[0]
 #        #a = np.hstack([a, solveq(K, f, np.hstack([matrix(range(1,9)).T, ed[i,:].T]) ) ])
@@ -4701,17 +4701,17 @@ def plani4e(ex, ey, ep, D, eq=None):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.mat([g1, g1])
-        w = np.mat([w1, w1])
+        gp = np.matrix([g1, g1])
+        w = np.matrix([w1, w1])
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -4721,7 +4721,7 @@ def plani4e(ex, ey, ep, D, eq=None):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.mat([
+        gp = np.matrix([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -4731,7 +4731,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             [-g1, g1],
             [g2, g1],
             [g1, g1]])
-        w = np.mat([
+        w = np.matrix([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -4753,7 +4753,7 @@ def plani4e(ex, ey, ep, D, eq=None):
     N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
     N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
 
-    dNr = np.mat(np.zeros((r2, 4)))
+    dNr = np.matrix(np.zeros((r2, 4)))
     dNr[0:r2:2, 0] = -(1-eta)/4.
     dNr[0:r2:2, 1] = (1-eta)/4.
     dNr[0:r2:2, 2] = (1+eta)/4.
@@ -4764,9 +4764,9 @@ def plani4e(ex, ey, ep, D, eq=None):
     dNr[1:r2+1:2, 3] = (1-xsi)/4.
 
 #
-    Ke1 = np.mat(np.zeros((8, 8)))
-    fe1 = np.mat(np.zeros((8, 1)))
-    JT = dNr*np.mat([ex, ey]).T
+    Ke1 = np.matrix(np.zeros((8, 8)))
+    fe1 = np.matrix(np.zeros((8, 1)))
+    JT = dNr*np.matrix([ex, ey]).T
     # --------- plane stress --------------------------------------
     if ptype == 1:
         colD = np.shape(D)[0]
@@ -5913,12 +5913,12 @@ def statcon(K, f, cd):
     aindx = np.delete(aindx, cd, 0)
     bindx = cd
 
-    Kaa = np.mat(K[np.ix_(aindx, aindx)])
-    Kab = np.mat(K[np.ix_(aindx, bindx)])
-    Kbb = np.mat(K[np.ix_(bindx, bindx)])
+    Kaa = np.matrix(K[np.ix_(aindx, aindx)])
+    Kab = np.matrix(K[np.ix_(aindx, bindx)])
+    Kbb = np.matrix(K[np.ix_(bindx, bindx)])
 
-    fa = np.mat(f[aindx])
-    fb = np.mat(f[bindx])
+    fa = np.matrix(f[aindx])
+    fb = np.matrix(f[bindx])
 
     K1 = Kaa-Kab*Kbb.I*Kab.T
     f1 = fa-Kab*Kbb.I*fb
