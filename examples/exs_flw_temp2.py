@@ -29,8 +29,8 @@ edof = np.array([
 
 # ----- Stiffness matrix K and load vector f ---------------------
 
-K = np.mat(np.zeros((6, 6)))
-f = np.mat(np.zeros((6, 1)))
+K = np.matrix(np.zeros((6, 6)))
+f = np.matrix(np.zeros((6, 1)))
 f[3] = 10.0
 
 # ----- Element properties ---------------------------------------

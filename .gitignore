@@ -46,3 +46,6 @@ docs/source/examples/.ipynb_checkpoints/
 *.log
 *.log
 .pdm-python
+test_examples_output.log
+*.log
+test_examples.log

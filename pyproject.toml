@@ -1,6 +1,6 @@
 [project]
 name = "calfem-python"
-version = "3.6.9"
+version = "3.6.10"
 description = "CALFEM for Python"
 authors = [
     {name = "Jonas Lindemann", email = "jonas.lindemann@lunarc.lu.se"},
