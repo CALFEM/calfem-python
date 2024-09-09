@@ -269,7 +269,7 @@ class GmshMeshGenerator:
 
             if gmshExe == None:
                 raise IOError(
-                    "Error: Could not find GMSH. Please make sure that the \GMSH executable is available on the search path (PATH).")
+                    "Error: Could not find GMSH. Please make sure that the \\GMSH executable is available on the search path (PATH).")
             else:
                 cflog.info(" GMSH -> %s" % gmshExe)
         else:
