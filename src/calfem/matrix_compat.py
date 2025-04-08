@@ -294,3 +294,4 @@ def restore_numpy_matrix():
     Restore the original np.matrix function
     """
     np.matrix = np_matrix_original
+    np.mat = np_matrix_original  # Restore alias as well

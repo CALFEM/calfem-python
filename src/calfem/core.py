@@ -3055,36 +3055,53 @@ def flw2ts(ex, ey, D, ed):
         qt = np.zeros([ex.shape[0], 2])
         row = 0
         for exr, eyr, edr in zip(ex, ey, ed):
-            exm = np.asmatrix(exr)
-            eym = np.asmatrix(eyr)
-            edm = np.asmatrix(edr)
-            C = np.asmatrix(np.hstack([np.ones((3, 1)), exm.T, eym.T]))
-            B = np.matrix([
+            exm = np.asarray(exr).reshape(-1)  # Ensure 1D array
+            eym = np.asarray(eyr).reshape(-1)  # Ensure 1D array
+            edm = np.asarray(edr).reshape(-1)  # Ensure 1D array
+            
+            # Create C matrix with consistent dimensions
+            ones_col = np.ones((3, 1))
+            # Reshape column vectors properly
+            ex_col = exm.reshape(-1, 1)
+            ey_col = eym.reshape(-1, 1)
+            
+            # Stack horizontally with consistent 2D shapes
+            C = np.hstack([ones_col, ex_col, ey_col])
+            
+            B = np.array([
                 [0., 1., 0.],
                 [0., 0., 1.]
-            ])*C.I
+            ]) @ np.linalg.inv(C)
 
-            qs[row, :] = (-D*B*edm.T).T
-            qt[row, :] = (B*edm.T).T
+            qs[row, :] = (-D @ B @ edm.T).T
+            qt[row, :] = (B @ edm.T).T
             row += 1
 
         return qs, qt
     else:
-        exm = np.asmatrix(ex)
-        eym = np.asmatrix(ey)
-        edm = np.asmatrix(ed)
-        C = np.asmatrix(np.hstack([np.ones((3, 1)), exm.T, eym.T]))
-        B = np.matrix([
+        exm = np.asarray(ex).reshape(-1)  # Ensure 1D array
+        eym = np.asarray(ey).reshape(-1)  # Ensure 1D array
+        edm = np.asarray(ed).reshape(-1)  # Ensure 1D array
+        
+        # Create C matrix with consistent dimensions
+        ones_col = np.ones((3, 1))
+        # Reshape column vectors properly
+        ex_col = exm.reshape(-1, 1)
+        ey_col = eym.reshape(-1, 1)
+        
+        # Stack horizontally with consistent 2D shapes
+        C = np.hstack([ones_col, ex_col, ey_col])
+        
+        B = np.array([
             [0., 1., 0.],
             [0., 0., 1.]
-        ])*C.I
+        ]) @ np.linalg.inv(C)
 
-        qs = -D*B*edm.T
-        qt = B*edm.T
+        qs = -D @ B @ edm.T
+        qt = B @ edm.T
 
         return qs.T, qt.T
-
-
+    
 def flw2qe(ex, ey, ep, D, eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
@@ -3151,18 +3168,16 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
     Parameters:
     
         ex = [x1, x2, x3, x4]
-        ey = [y1, y2, y3, y4]      element coordinates
-    
-        ep = [t]                   element thickness    
+        ey = [y1, y2, y3, y4]   element coordinates
+
+        ep = [t]                element thickness    
 
         D = [[kxx, kxy],
-             [kyx, kyy]]           constitutive matrix
-
+             [kyx, kyy]]        constitutive matrix
+    
         ed = [[u1, u2, u3, u4],
               [.., .., .., ..]]    u1,u2,u3,u4: nodal values
     
-        eq                         heat supply per unit volume
-             
     Returns:
     
         es = [[qx, qy],
@@ -3236,7 +3251,6 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
     et = (t1+t2+t3+t4)/4.
 
     return es, et
-
 
 def flw2i4e(ex, ey, ep, D, eq=None):
     """
