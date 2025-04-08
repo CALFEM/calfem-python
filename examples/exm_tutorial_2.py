@@ -84,7 +84,7 @@ vonMises = []
 
 for i in range(edof.shape[0]):
     es, et = cfc.planqs(ex[i, :], ey[i, :], ep, D, ed[i, :])
-    vonMises.append(sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * es[2]))
+    vonMises.append(sqrt(pow(es[0][0], 2) - es[0][0] * es[0][1] + pow(es[0][1], 2) + 3 * es[0][2]))
 
 # ----- Draw geometry
 

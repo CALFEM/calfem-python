@@ -1100,6 +1100,8 @@ def _circleArc(start, center, end, pointsOnCurve=20):
     return _ellipseArc(start, center, start, end, pointsOnCurve)
 
 
+# Update function causing the error
+
 def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     """Input are 3D 1-by-3 numpy arrays or vectors"""
     # First part is to find a similarity transform in 3D that transform the ellipse to
@@ -1126,17 +1128,18 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     # Rotation matrix from ordinary coords to system where ellipse is in the XY-plane. (Actually hstack)
     R = np.vstack((xPrim, yPrim, zPrim)).T
     # Building Transformation matrix. -center is translation vector from ellipse center to origin.
-    T = np.hstack((R, np.asmatrix(center).T))
+    T = np.hstack((R, np.asarray(center).reshape(-1, 1)))
     # Transformation matrix for homogenous coordinates.
-    T = np.mat(np.vstack((T, [0, 0, 0, 1])))
+    T = np.vstack((T, [0, 0, 0, 1]))
 
-    startHC = np.vstack((np.matrix(start).T, [1]))
+    # Convert to arrays explicitly to avoid matrix issues
+    startHC = np.vstack((np.asarray(start).reshape(-1, 1), [1]))
     # start and end points as column vectors in homogenous coordinates
-    endHC = np.vstack((np.matrix(end).T, [1]))
+    endHC = np.vstack((np.asarray(end).reshape(-1, 1), [1]))
 
-    s = np.linalg.inv(T) * startHC
+    s = np.linalg.inv(T) @ startHC
     # start and end points in the new coordinate system
-    e = np.linalg.inv(T) * endHC
+    e = np.linalg.inv(T) @ endHC
 
     xs, ys = s[0, 0], s[1, 0]
     # Just extract x & y from the new start and endpoints
@@ -1156,7 +1159,7 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     # We can't use the (transformed) start- and endpoints directly, but we divide x and y by the
     te = atan2(ye / b, xe / a)
     # ellipse minor&major axes to get the parameter t that corresponds to the point on the ellipse.
-    # See ellipse formula: x = a * cos (t), y = b * sin(t).
+    # See ellipse formula: x = a * cos (t), y = b * sin (t).
     # So ts and te are the parameter values of the start- and endpoints (in the transformed coordinate system).
 
     if ts > te:
@@ -1177,10 +1180,11 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
         [[a * cos(t), b * sin(t)] for t in times]
     ).T  # points on arc (in 2D)
     # Make 3D homogenous coords by adding rows of 0s and 1s.
-    ellArc = np.vstack((ellArc, np.repeat(np.matrix([[0], [1]]), ellArc.shape[1], 1)))
-    ellArc = T * ellArc  # Transform back to the original coordinate system
+    zeros_row = np.zeros((1, ellArc.shape[1]))
+    ones_row = np.ones((1, ellArc.shape[1]))
+    ellArc = np.vstack((ellArc, zeros_row, ones_row))
+    ellArc = T @ ellArc  # Transform back to the original coordinate system
     return np.asarray(ellArc.T[:, 0:3])  # return points as an N-by-3 array.
-
 
 def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
     """
