@@ -1,6 +1,6 @@
 [project]
 name = "calfem-python"
-version = "3.6.10"
+version = "3.6.11"
 description = "CALFEM for Python"
 authors = [
     {name = "Jonas Lindemann", email = "jonas.lindemann@lunarc.lu.se"},
@@ -9,7 +9,7 @@ authors = [
 dependencies = [
     "gmsh",
     "matplotlib",
-    "numpy",
+    "numpy < 2",
     "scipy",
     "tabulate",
 ]

@@ -1,4 +1,5 @@
 ## EXAMPLE: exs_bar2.py ----------------------------- 
+Could not import Matplotlib backends. Probarbly due to missing Qt.
 
 # Analysis of a plane truss.
 
@@ -55,6 +56,7 @@ N3 =
  [37305.69948187]]
 sfac=
 138.8489208633094
+Ignoring fixed x limits to fulfill fixed data aspect with adjustable data limits.
 ## EXAMPLE: exs_bar2_la.py -------------------------- 
 
 # Analysis of a plane truss using loops
@@ -192,6 +194,7 @@ N8 = -241321
 N9 = 339534
 N10 = 371051
 ## EXAMPLE: exs_beam1.py ---------------------------- 
+Could not import Matplotlib backends. Probarbly due to missing Qt.
 +-------------+
 |           a |
 |-------------|
@@ -206,11 +209,11 @@ N10 = 371051
 |           r |
 |-------------|
 |  6.6667e+03 |
-| -3.6380e-12 |
+| -1.8190e-11 |
 |  7.2760e-12 |
 | -1.0914e-11 |
 |  3.3333e+03 |
-|  0.0000e+00 |
+| -7.2760e-12 |
 +-------------+
 
 ## es1
@@ -218,7 +221,7 @@ N10 = 371051
 +-------------+------------+
 |          V1 |         M1 |
 |-------------+------------|
-| -6.6667e+03 | 9.1437e-12 |
+| -6.6667e+03 | 1.8287e-11 |
 | -6.6667e+03 | 6.6667e+03 |
 | -6.6667e+03 | 1.3333e+04 |
 | -6.6667e+03 | 2.0000e+04 |
@@ -257,7 +260,7 @@ N10 = 371051
 | 3.3333e+03 | 1.0000e+04 |
 | 3.3333e+03 | 6.6667e+03 |
 | 3.3333e+03 | 3.3333e+03 |
-| 3.3333e+03 | 4.5719e-12 |
+| 3.3333e+03 | 0.0000e+00 |
 +------------+------------+
 
 ## ed2
@@ -271,7 +274,7 @@ N10 = 371051
 | -1.9920e-02 |
 | -1.4334e-02 |
 | -7.4833e-03 |
-|  6.9389e-18 |
+| -3.4694e-18 |
 +-------------+
 
 ## ec2
@@ -288,6 +291,7 @@ N10 = 371051
 | 6.0000e+00 |
 +------------+
 ## EXAMPLE: exs_beam2.py ---------------------------- 
+Could not import Matplotlib backends. Probarbly due to missing Qt.
 +-------------+
 |           a |
 |-------------|
@@ -311,11 +315,11 @@ N10 = 371051
 |  2.8741e+04 |
 |  4.4527e+02 |
 |  0.0000e+00 |
-|  0.0000e+00 |
-|  0.0000e+00 |
+|  3.6380e-12 |
+| -7.2760e-12 |
 | -2.3283e-10 |
 |  3.6380e-12 |
-|  3.6380e-12 |
+|  0.0000e+00 |
 | -3.9268e+03 |
 |  3.1259e+04 |
 |  0.0000e+00 |
@@ -489,10 +493,12 @@ N10 = 371051
 | 7.5161e-03 | -3.1259e-04 |
 +------------+-------------+
 sfac=
-54.77300198398877
+54.77300198398879
 sfac=
-3.628630851048567e-05
+3.628630851048566e-05
+Ignoring fixed y limits to fulfill fixed data aspect with adjustable data limits.
 ## EXAMPLE: exs_beambar2.py ------------------------- 
+Could not import Matplotlib backends. Probarbly due to missing Qt.
 
 ## Displacements a:
 
@@ -604,6 +610,7 @@ sfac=
 | -7.6244e+04 |
 +-------------+
 ## EXAMPLE: exs_flw_diff2.py ------------------------ 
+Could not import Matplotlib backends. Probarbly due to missing Qt.
 
 ## Ex
 
