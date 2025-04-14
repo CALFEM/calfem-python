@@ -50,9 +50,9 @@ g.surface([0, 1, 2, 3])
 
 mesh = cfm.GmshMesh(g)
 
-mesh.elType = 3  # Degrees of freedom per node.
-mesh.dofsPerNode = 2  # Factor that changes element sizes.
-mesh.elSizeFactor = 0.10
+mesh.el_type = 3  # Degrees of freedom per node.
+mesh.dofs_per_node = 2  # Factor that changes element sizes.
+mesh.el_size_factor = 0.10
 
 coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
@@ -79,7 +79,7 @@ cfu.applyforcetotal(bdofs, f, top_line, -10e5, 2)
 
 a, r = cfc.solveq(K, f, bc, bcVal)
 
-ed = cfc.extractEldisp(edof, a)
+ed = cfc.extract_eldisp(edof, a)
 vonMises = []
 
 for i in range(edof.shape[0]):
@@ -97,8 +97,8 @@ cfv.figure()
 cfv.draw_mesh(
     coords=coords,
     edof=edof,
-    dofs_per_node=mesh.dofsPerNode,
-    el_type=mesh.elType,
+    dofs_per_node=mesh.dofs_per_node,
+    el_type=mesh.el_type,
     filled=True,
     title="Example 01",
 )

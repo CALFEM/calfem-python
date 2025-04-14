@@ -165,18 +165,20 @@ cfu.info("Solving equation system...")
 f = np.zeros([nDofs, 1])
 
 bc = np.array([], "i")
-bcVal = np.array([], "f")
+bc_val = np.array([], "f")
 
-bc, bcVal = cfu.applybc(bdofs, bc, bcVal, 5, 0.0, 0)
+bc, bc_val = cfu.apply_bc(bdofs, bc, bc_val, 5, 0.0, 0)
 
-cfu.applyforce(bdofs, f, 7, 10e5, 1)
+cfu.apply_force(bdofs, f, 7, 10e5, 1)
 
-a, r = cfc.solveq(K, f, bc, bcVal)
+a, r = cfc.solveq(K, f, bc, bc_val)
 
 cfu.info("Computing element forces...")
 
-ed = cfc.extractEldisp(edof, a)
-vonMises = []
+ed = cfc.extract_eldisp(edof, a)
+von_mises = np.zeros((edof.shape[0]))
+
+stress_table = np.zeros((edof.shape[0], 3))
 
 # For each element:
 
@@ -185,11 +187,15 @@ for i in range(edof.shape[0]):
 
     es, et = cfc.planqs(ex[i, :], ey[i, :], ep, D, ed[i, :])
 
-    # Calc and append effective stress to list.
+    # Calc and append effective stress to list
+    
+    von_mises[i] = sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * es[2])
 
-    vonMises.append(sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * es[2]))
+    stress_table[i, :] = es
 
-    # es: [sigx sigy tauxy]
+# ---- Tabulate results -----------------------------------------------------
+
+cfu.disp_array(stress_table, ["sigx", "sigy", "tauxy"])
 
 # ---- Visualise results ----------------------------------------------------
 
@@ -215,7 +221,7 @@ cfv.draw_mesh(
 
 cfv.figure()
 cfv.draw_element_values(
-    vonMises,
+    von_mises,
     coords,
     edof,
     mesh.dofs_per_node,

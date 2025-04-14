@@ -128,8 +128,10 @@ a, r = cfc.spsolveq(K, f, bc, bcVal)
 
 cfu.info("Extracting ed...")
 
-ed = cfc.extractEldisp(edof, a)
+ed = cfc.extract_eldisp(edof, a)
 von_mises = []
+
+stress_table = np.zeros((edof.shape[0], 3))
 
 # ---- Calculate elementr stresses and strains ------------------------------
 
@@ -156,6 +158,9 @@ for i in range(edof.shape[0]):
             )
         )
 
+        stress_table[i, :] = es
+
+
     else:
         # Handle quad elements
 
@@ -172,6 +177,12 @@ for i in range(edof.shape[0]):
                 pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2], 2)
             )
         )
+
+        stress_table[i, :] = es
+
+# ---- Tabulate results -----------------------------------------------------
+
+cfu.disp_array(stress_table, ["sig1", "sig2", "sig3"])
 
 # ---- Visualise results ----------------------------------------------------
 

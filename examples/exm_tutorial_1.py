@@ -27,9 +27,9 @@ g.surface([0, 1, 2])
 
 mesh = cfm.GmshMesh(g)
 
-mesh.elType = 2  # Degrees of freedom per node.
-mesh.dofsPerNode = 1  # Factor that changes element sizes.
-mesh.elSizeFactor = 0.15
+mesh.el_type = 2  # Degrees of freedom per node.
+mesh.dofs_per_node = 1  # Factor that changes element sizes.
+mesh.el_size_factor = 0.15
 
 coords, edof, dofs, bdofs, elementmarkers = mesh.create()
 
