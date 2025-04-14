@@ -6,6 +6,7 @@ Contains all the functions implementing CALFEM standard functionality
 """
 
 from scipy.sparse.linalg import dsolve
+from scipy.sparse import csc_matrix, csr_matrix, linalg, lil_matrix
 from scipy.linalg import eig, lu
 import numpy as np
 
@@ -4870,7 +4871,7 @@ def planqs(ex, ey, ep, D, ed, eq=None):
     es = (s1*A1+s2*A2+s3*A3+s4*A4)/Atot
     et = (t1*A1+t2*A2+t3*A3+t4*A4)/Atot
 
-    return es, et
+    return es[0], et[0]
 
 def plani4e(ex, ey, ep, D, eq=None):
     """
@@ -5467,37 +5468,78 @@ def assem(edof, K, Ke, f=None, fe=None):
     
     """
 
-    if edof.ndim == 1:
-        idx = edof-1
-        K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
-        if (not f is None) and (not fe is None):
-            # Make sure fe is properly shaped for the operation
-            fe_array = np.asarray(fe)
-            if fe_array.ndim == 2 and fe_array.shape[1] > 1:
-                # If fe is a matrix-like with multiple columns, ensure correct orientation
-                fe_shaped = fe_array.reshape(-1, 1)
-            else:
-                fe_shaped = fe_array
-            f[np.ix_(idx)] = f[np.ix_(idx)] + fe_shaped
-    else:
-        for row in edof:
-            idx = row-1
-            K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+    import scipy.sparse as sp
+    import numpy as np
+    
+    # Handle sparse matrices case
+    if isinstance(K, sp.lil_matrix) or isinstance(K, sp.csr_matrix) or isinstance(K, sp.csc_matrix):
+        if edof.ndim == 1:
+            idx = edof-1
+            # Convert to COO format for efficient modification
+            if not isinstance(K, sp.lil_matrix):
+                K = K.tolil()
+                
+            # Manually update each element
+            for i in range(len(idx)):
+                for j in range(len(idx)):
+                    K[idx[i], idx[j]] += Ke[i, j]
+            
             if (not f is None) and (not fe is None):
-                # Make sure fe is properly shaped for the operation
                 fe_array = np.asarray(fe)
                 if fe_array.ndim == 2 and fe_array.shape[1] > 1:
-                    # If fe is a matrix-like with multiple columns, ensure correct orientation
+                    fe_shaped = fe_array.reshape(-1, 1)
+                else:
+                    fe_shaped = fe_array
+                f[idx] += fe_shaped.flatten()
+        else:
+            for row in edof:
+                idx = row-1
+                # Convert to LIL format for efficient modification
+                if not isinstance(K, sp.lil_matrix):
+                    K = K.tolil()
+                    
+                # Manually update each element    
+                for i in range(len(idx)):
+                    for j in range(len(idx)):
+                        K[idx[i], idx[j]] += Ke[i, j]
+                
+                if (not f is None) and (not fe is None):
+                    fe_array = np.asarray(fe)
+                    if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                        fe_shaped = fe_array.reshape(-1, 1)
+                    else:
+                        fe_shaped = fe_array
+                    f[idx] += fe_shaped.flatten()
+    else:
+        # Original code for dense matrices
+        if edof.ndim == 1:
+            idx = edof-1
+            K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+            
+            if (not f is None) and (not fe is None):
+                fe_array = np.asarray(fe)
+                if fe_array.ndim == 2 and fe_array.shape[1] > 1:
                     fe_shaped = fe_array.reshape(-1, 1)
                 else:
                     fe_shaped = fe_array
                 f[np.ix_(idx)] = f[np.ix_(idx)] + fe_shaped
+        else:
+            for row in edof:
+                idx = row-1
+                K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+                if (not f is None) and (not fe is None):
+                    fe_array = np.asarray(fe)
+                    if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                        fe_shaped = fe_array.reshape(-1, 1)
+                    else:
+                        fe_shaped = fe_array
+                    f[np.ix_(idx)] = f[np.ix_(idx)] + fe_shaped
 
     if f is None:
         return K
     else:
         return K, f
-
+    
 def solveq(K, f, bcPrescr=None, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.

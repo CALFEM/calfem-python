@@ -42,7 +42,10 @@ def test_examples():
         "exs_flw_diff2.py",
         "exs_flw_temp1.py",
         "exs_flw_temp2.py",
-        "exs_spring.py"
+        "exs_spring.py",
+        "exm_stress_2d.py",
+        "exm_stress_2d_materials.py",
+        "exm_flow_model.py"
     ]
 
     # Set environment variable to avoid blocking of plots
