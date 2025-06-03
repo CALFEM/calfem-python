@@ -638,6 +638,7 @@ class Geometry:
     structured_volume = addStructuredVolume
     get_point_coords = getPointCoords
     curve_marker = curveMarker
+    line_marker = curveMarker
 
 
 def geometry():

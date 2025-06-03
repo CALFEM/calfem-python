@@ -102,7 +102,7 @@ bc, bcVal = cfu.applybc(bdofs, bc, bcVal, right_side, 10.0)
 # ----- Solve equation system ------------------------------------
 
 a, r = cfc.solveq(K, f, bc, bcVal)
-ed = cfc.extractEldisp(edof, a)
+ed = cfc.extract_eldisp(edof, a)
 
 # ----- Calculating element forces -------------------------------
 
