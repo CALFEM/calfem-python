@@ -2,46 +2,46 @@
 """
 CALFEM Core module
 
-Contains all the functions implementing CALFEM standard functionality
+Contains all the functions implementing CALFEM standard functionality.
+
+Copyright (c) Division of Structural Mechanics and
+Division of Solid Mechanics, Lund University.
 """
+
+from __future__ import annotations
+from typing import Optional, Tuple, Union
 
 from scipy.sparse.linalg import dsolve
 from scipy.sparse import csc_matrix, csr_matrix, linalg, lil_matrix
 from scipy.linalg import eig, lu
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 from calfem.matrix_compat import MatrixCompat
 
 import logging as cflog
 import sys
-import traceback
-
-__prev_exception_hook = sys.excepthook
-
-
-def exception_logging(exctype, value, tb):
-    """
-    Log exception by using the root logger.
-
-    Parameters
-    ----------
-    exctype : type
-    value : NameError
-    tb : traceback
-    """
-    write_val = {'exception_type': str(exctype),
-                 'message': str(traceback.format_tb(tb, 10))}
-    print('Error: %s \n  in "%s", line %d' %
-          (value, tb.tb_frame.f_code.co_filename, tb.tb_lineno))
-
-
-def enable_friendly_errors():
-    __prev_exception_hook = sys.excepthook
-    sys.excepthook = exception_logging
-
 
 def disable_friendly_errors():
+    """
+    Disable friendly error logging and restore the previous exception hook.
+    """
     sys.excepthook = __prev_exception_hook
+
+def enable_friendly_errors():
+    """
+    Enable friendly error logging by setting a custom exception hook.
+    """
+    def __friendly_exception_hook(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        cflog.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        sys.exit(1)
+
+    global __prev_exception_hook
+    __prev_exception_hook = sys.excepthook
+    sys.excepthook = __friendly_exception_hook
 
 
 easy_on = enable_friendly_errors
@@ -49,55 +49,96 @@ easy_off = disable_friendly_errors
 
 
 def check_list_array(v, error_string):
+    """
+    Check if the input is a list or numpy array, raise TypeError if not.
 
+    Parameters
+    ----------
+    v : object
+        Object to check.
+    error_string : str
+        Error message to display if check fails.
+    """
     fname = sys._getframe(1).f_code.co_name
-
     if (type(v) != list) and (type(v) != np.ndarray):
         raise TypeError("%s (%s)" % (error_string, fname))
 
 
 def check_length(v, length, error_string):
+    """
+    Check if the input has the specified length, raise ValueError if not.
+
+    Parameters
+    ----------
+    v : object
+        Object to check (must support len()).
+    """
 
     fname = sys._getframe(1).f_code.co_name
 
     if len(v) != length:
         raise ValueError("%s (%s)" % (error_string, fname))
 
+def user_warning(msg: str) -> None:
+    """
+    Print a user warning message.
 
-def user_warning(msg):
+    Parameters
+    ----------
 
+    msg : str
+        Warning message to display.
+    """
     fname = sys._getframe(1).f_code.co_name
-
     print("Warning: %s (%s)" % (msg, fname))
 
+def error(msg: str) -> None:
+    """
+    Log an error message.
 
-def error(msg):
-    """Write ``msg`` to error log."""
+    Parameters
+    ----------
+
+    msg : str
+        Error message to log.
+    """
     cflog.error(" calfem.core: "+msg)
 
-
-def info(msg):
-    """Write ``msg`` to info log."""
-    cflog.info(" calfem.core: "+msg)
-
-def spring1e(ep):
+def info(msg: str) -> None:
     """
-    Ke = spring1e(ep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute element stiffness matrix for spring element.
- 
-    INPUT:  ep = [k]      spring stiffness or analog quantity
- 
-    OUTPUT: Ke :          spring stiffness matrix, [2 x 2]
-    -------------------------------------------------------------
+    Log an informational message.
 
+    Parameters
+    ----------
+    msg : str
+        Informational message to log.
+    """
+    cflog.info(" calfem.core: "+msg)        
+    
+def spring1e(ep: ArrayLike) -> NDArray[np.floating]:
+    """
+    Compute the element stiffness matrix for a spring element.
+
+    Parameters
+    ----------
+    ep : array_like
+        Spring stiffness or analog quantity [k].
+
+    Returns
+    -------
+    Ke : ndarray
+        Spring stiffness matrix, shape (2, 2).
+
+    Examples
+    --------
+    >>> spring1e(100)
+    array([[ 100, -100],
+           [-100,  100]])
+
+    History
+    -------
     LAST MODIFIED: P-E Austrell 1994-11-02
                    O Dahlblom   2022-11-15 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------
     """
     k = ep  
 
@@ -109,26 +150,31 @@ def spring1e(ep):
     return Ke
 
 
-def spring1s(ep, ed):
+def spring1s(ep: ArrayLike, ed: ArrayLike) -> float:
     """
-    es = spring1s(ep, ed)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute element force in spring element (spring1e).
-    
-    INPUT:  ep = [k]      spring stiffness or analog quantity
-    
-            ed = [u1 u2]  element displacement vector
- 
-    OUTPUT: es  = [N]     element force
-    -------------------------------------------------------------
+    Compute the element force in a spring element.
 
-    LAST MODIFIED: P-E AUSTRELL 1994-11-02
-                   O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------
+    Parameters
+    ----------
+    ep : array_like
+        Spring stiffness or analog quantity [k].
+    ed : array_like
+        Element displacement vector [u1, u2].
+
+    Returns
+    -------
+    es : float
+        Element force.
+
+    Examples
+    --------
+    >>> spring1s(100, [0.1, 0.2])
+    10.0
+
+    History
+    -------
+    LAST MODIFIED: P-E Austrell 1994-11-02
+                   O Dahlblom   2022-11-14 (Python version)
     """
     k = ep
 
@@ -138,33 +184,36 @@ def spring1s(ep, ed):
     return es
 
 
-def bar1e(ex, ep, eq=None):
+def bar1e(ex: ArrayLike, ep: ArrayLike, eq: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Ke = bar1e (ex, ep)
-    Ke, fe = bar1e(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a onedimensional bar element.
+    Compute the stiffness matrix (and optionally load vector) for a 1D bar element.
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
-                             ka: axial spring stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (2, 2).
+    fe : ndarray, optional
+        Element load vector, shape (2, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [2 x 2]
-            fe : element load vector [2 x 1] (if eq!=None)
-    -------------------------------------------------------------
+    Examples
+    --------
+    >>> bar1e([0, 2], [210e9, 0.01])
+    array([[ 1.05e+09, -1.05e+09],
+           [-1.05e+09,  1.05e+09]])
 
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-22
                    O Dahlblom   2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -192,44 +241,40 @@ def bar1e(ex, ep, eq=None):
 
 def bar1s(ex, ep, ed, eq=None, nep=None):
     """
-    es = bar1s(ex, ep, ed)
-    es = bar1s(ex, ep, ed, eq)
-    es, edi, eci = bar1s(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional bar element
+    Compute section forces in a 1D bar element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, u2].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]      element properties,
-                            E:  Young's modulus
-                            A:  cross section area
- 
-            ed = [u1 u2]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]       distributed load
+    Examples
+    --------
+    >>> bar1s([0, 2], [210e9, 0.01], [0.0, 0.001])
+    array([[1.05e+06],
+           [1.05e+06]])
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-02-25
                    O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -279,32 +324,28 @@ def bar1s(ex, ep, ed, eq=None, nep=None):
 
 def bar1we(ex, ep, eq=None):
     """
-    Ke = bar1we (ex, ep)
-    Ke, fe = bar1we(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a onedimensional bar element with
-    axial springs.
+    Compute the stiffness matrix (and optionally load vector) for a 1D bar element with axial springs.
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A, kX], where E is Young's modulus, A is cross-sectional area, and kX is axial spring stiffness.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A kX]    element properties;
-                             E: Young's modulus
-                             A: cross section area
-                             kX: axial spring stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (2, 2).
+    fe : ndarray, optional
+        Element load vector, shape (2, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [2 x 2]
-            fe : element load vector [2 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-10-19 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, kX = ep
     DEA = E*A;
@@ -339,45 +380,34 @@ def bar1we(ex, ep, eq=None):
 
 def bar1ws(ex, ep, ed, eq=None, nep=None):
     """
-    es = bar1ws(ex, ep, ed)
-    es = bar1ws(ex, ep, ed, eq)
-    es, edi, eci = bar1ws(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional bar element
+    Compute section forces in a 1D bar element with axial springs.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A, kX], where E is Young's modulus, A is cross-sectional area, and kX is axial spring stiffness.
+    ed : array_like
+        Element displacement vector [u1, u2].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A kX]   element properties,
-                            E:  Young's modulus
-                            A:  cross section area
-                            kX: axial spring stiffness
-                            
-            ed = [u1 u2]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]       distributed load
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-02-25
                    O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, kX = ep
     DEA = E*A
@@ -427,32 +457,30 @@ def bar1ws(ex, ep, ed, eq=None, nep=None):
 
 def bar2e(ex, ey, ep, eq=None):
     """
-    Ke = bar2e(ex, ey, ep)
-    Ke, fe = bar2e(ex, ey, ep, eq)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute the element stiffness matrix for two dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D bar element.
 
-            ey = [y1 y2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [4 x 4]
-            fe : element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-20
                    O Dahlblom   2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -492,46 +520,36 @@ def bar2e(ex, ey, ep, eq=None):
 
 def bar2s(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = bar2s(ex, ey, ep, ed)
-    es = bar2s(ex, ey, ep, ed, eq)
-    es, edi, eci = bar2s(ex, ey, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in two dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
+    Compute normal force in a 2D bar element.
 
-            ey = [y1 y2]        element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]           distributed load
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2015-12-04
                    O Dahlblom  2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -591,31 +609,28 @@ def bar2s(ex, ey, ep, ed, eq=None, nep=None):
 
 def bar2ge(ex, ey, ep, QX):
     """
-    Ke = bar2ge(ex, ey, ep, QX)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute element stiffness matrix for two dimensional geometric
-    nonlinear bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Compute the element stiffness matrix for a 2D bar element with additional axial force QX.
 
-            ey = [y1 y2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    QX : float
+        Additional axial force.
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (4, 4).
 
-            QX:              axial force in the bar
-            
-    OUTPUT: Ke : bar stiffness matrix [4 x 4]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -661,45 +676,36 @@ def bar2ge(ex, ey, ep, QX):
 
 def bar2gs(ex, ey, ep, ed, nep=None):
     """
-    es, QX, edi, eci = bar2s(ex, ey, ep, ed)
-    es, QX, edi, eci = bar2s(ex, ey, ep, ed, nep)
-   -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in two dimensional bar element (bar2ge).
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
+    Compute normal force and axial force in a 2D bar element (bar2ge).
 
-            ey = [y1 y2]        element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            QX:          axial force
-
-             edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2015-10-20
                    O Dahlblom  2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -759,32 +765,32 @@ def bar2gs(ex, ey, ep, ed, nep=None):
 
 def bar3e(ex, ey, ez, ep, eq=None):
     """
-    Ke = bar2e(ex, ey, ez, ep)
-    Ke, fe = bar2e(ex, ey, ez, ep, eq)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute the element stiffness matrix for three dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
-            ey = [y1 y2]     
-            ez = [z1 z2]     
+    Compute the element stiffness matrix (and optionally load vector) for a 3D bar element.
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -827,46 +833,38 @@ def bar3e(ex, ey, ez, ep, eq=None):
 
 def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
     """
-    es = bar3s(ex, ey, ez, ep, ed)
-    es = bar3s(ex, ey, ez, ep, ed, eq)
-    es, edi, eci = bar3s(ex, ey, ez, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in three dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
-            ey = [y1 y2]       
-            ez = [z1 z2]
+    Compute normal force in a 3D bar element.
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            eq = [qX]           distributed load
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-11-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -930,30 +928,28 @@ def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
 
 def beam1e(ex, ep, eq=None):
     """
-    Ke = beam1e(ex, ep)
-    Ke, fe = beam1e(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a one dimensional beam element.
+    Compute the stiffness matrix (and optionally load vector) for a 1D beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I], where E is Young's modulus and I is moment of inertia.
+    eq : array_like, optional
+        Distributed load [qY].
 
-            ep = [E I]      element properties;
-                            E: Young's modulus
-                            I: moment of inertia
+    Returns
+    -------
+    Ke : ndarray
+        Beam stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qY]       distributed load 
-            
-    OUTPUT: Ke : beam stiffness matrix [4 x 4]
-            fe : element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2019-01-09
                    O Dahlblom   2022-10-25 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I = ep
     DEI = E*I
@@ -983,44 +979,34 @@ def beam1e(ex, ep, eq=None):
 
 def beam1s(ex, ep, ed, eq=None, nep=None):
     """
-    es = beam1s(ex, ep, ed)
-    es = beam1s(ex, ep, ed, eq)
-    es, ed, ec = beam1s(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional beam element (beam1e).
+    Compute section forces in a 1D beam element (beam1e).
 
-    INPUT  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I], where E is Young's modulus and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed loads [qy], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-           ep = [E I]       element properties,
-                            E:  Young's modulus
-                            I:  moment of inertia
- 
-            ed = [u1 ... u4] element displacements 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 2).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qy]     distributed loads, local directions 
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [V1 M1 ;  section forces, local directions, in 
-                  V2 M2 ;  nep points along the beam, dim(es)= nep x 2
-                  ......]  
-           
-            edi = [v1 ;    element displacements, local directions,
-                   v2 ;    in nep points along the beam, dim(edi)= nep x 1
-                  ....]
-
-            eci = [x1;     evaluation points on the local x-axis 
-                   x2;      
-                   ..] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-10-25 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
  
     E, I = ep
@@ -1079,32 +1065,28 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
 def beam1we(ex, ep, eq=None):
     """
-    Ke = beam1we(ex, ep)
-    Ke, fe = beam1we(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a one dimensional beam element 
-    on elastic foundation.
+    Compute the stiffness matrix (and optionally load vector) for a 1D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I, kY], where E is Young's modulus, I is moment of inertia, and kY is transversal foundation stiffness.
+    eq : array_like, optional
+        Distributed load [qY].
 
-            ep = [E I kY]   element properties;
-                            E: Young's modulus
-                            I: moment of inertia
-                            kY: transversal found. stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Beam stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qY]       distributed load 
-
-    OUTPUT: Ke: beam stiffness matrix [4 x 4]
-            fe: element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2016-02-17
                    O Dahlblom   2022-10-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I, kY =ep
     DEI = E*I;
@@ -1142,47 +1124,34 @@ def beam1we(ex, ep, eq=None):
 
 def beam1ws(ex, ep, ed, eq=None, nep=None):
     """
-    es = beam1ws(ex, ep, ed)
-    es = beam1ws(ex, ep, ed, eq)
-    es, ed, ec = beam1ws(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional beam element 
-    on elastic foundation (beam1we). 
+    Compute section forces in a 1D beam element on elastic foundation (beam1we).
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I, kY], where E is Young's modulus, I is moment of inertia, and kY is transversal foundation stiffness.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed loads [qy], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E I kY]    element properties,
-                             E:  Young's modulus
-                             I:  moment of inertia
-                             kY: transversal foundation stiffness
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 2).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u4] element displacements
- 
-            eq = [qy]        distributed loads, local directions 
-
-            nep              number of evaluation points ( default=2 )          
-    
-    OUTPUT: es = [V1 M1 ;  section forces, local directions, in 
-                  V2 M2 ;  nep points along the beam, dim(es)= n x 2
-                  ......]  
-            
-            edi = [v1 ;    element displacements, local directions,
-                   v2 ;    in nep points along the beam, dim(edi)= n x 1
-                   ...]    
-
-            eci = [x1 ;    evaluation points on the local x-axis 
-                   x2 ;      
-                   ...] 
-
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-10-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I, kY = ep
     DEI = E*I
@@ -1250,35 +1219,33 @@ def beam1ws(ex, ep, ed, eq=None, nep=None):
         return es, edi, eci
  
 
-def beam2e(ex, ey, ep, eq=None):
+def beam2e(ex: ArrayLike, ey: ArrayLike, ep: ArrayLike, eq: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Ke = beam2e(ex, ey, ep)
-    Ke, fe = beam2e(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a two dimensional beam element.
+    Compute the stiffness matrix (and optionally load vector) for a 2D beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
 
-            ep = [E A I]    element properties;
-                            E: Young's modulus
-                            A: Cross section area
-                            I: moment of inertia
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]    distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-08-17
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
-   """
+    """
     E, A, I = ep
     DEA = E*A
     DEI = E*I
@@ -1329,45 +1296,36 @@ def beam2e(ex, ey, ep, eq=None):
 
 def beam2s(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2s(ex, ey, ep, ed)
-    es = beam2s(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2s(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-    Compute section forces in two dimensional beam element (beam2e).
-    
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]        element node coordinates
+    Compute section forces in a 2D beam element (beam2e).
 
-            ep = [E A I]        element properties,
-                                E:  Young's modulus
-                                A:  cross section area
-                                I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ed = [u1 ... u6]    element displacements
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qx qy]        distributed loads, local directions 
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-
-    LAST MODIFIED: O Dahlblom   2021-09-08
+    History
+    -------
+    LAST MODIFIED: O Dahlblom   2015-08-17
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1462,35 +1420,30 @@ def beam2s(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2we(ex, ey, ep, eq=None):
     """
-    Ke = beam2we(ex, ey, ep)
-    Ke, fe = beam2we(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the stiffness matrix for a two dimensional beam element
-        on elastic foundation.
+    Compute the stiffness matrix (and optionally load vector) for a 2D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]          element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, kX, kY], where E is Young's modulus, A is cross-sectional area, I is moment of inertia, kX is axial foundation stiffness, and kY is transversal foundation stiffness.
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
 
-            ep = [E,A,I,kX,kY]    element properties;
-                                  E: Young's modulus
-                                  A: Cross section area
-                                  I: moment of inertia
-                                  kX: axial foundation stiffness
-                                  kY: transversal foundation stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]          distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-08-07
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I, kX, kY = ep
     DEA = E*A
@@ -1553,49 +1506,36 @@ def beam2we(ex, ey, ep, eq=None):
 
 def beam2ws(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2ws(ex, ey, ep, ed)
-    es = beam2ws(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2ws(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-        Compute section forces in a two dimensional beam element
-        on elastic foundation.
+    Compute section forces in a 2D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]          element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, kX, kY], where E is Young's modulus, A is cross-sectional area, I is moment of inertia, kX is axial foundation stiffness, and kY is transversal foundation stiffness.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E,A,I,kX,kY]    element properties,
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-                                  kX: axial foundation stiffness
-                                  kY: transversal foundation stiffness
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u6]    element displacements
-
-            eq = [qx qy]        distributed loads, local directions 
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2022-09-30
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I, kX, kY = ep
     DEA = E*A
@@ -1704,35 +1644,32 @@ def beam2ws(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2ge(ex, ey, ep, QX, eq=None):
     """
-    Ke = beam2ge(ex, ey, ep, QX)
-    Ke, fe = beam2ge(ex, ey, ep, QX, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the element stiffness matrix for a two dimensional
-        beam element with respect to geometric nonlinearity.
-       
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D beam element with geometric nonlinearity.
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load [qY].
 
-            QX                      axial force in the beam
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qY]               distributed transverse load
-
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1798,51 +1735,40 @@ def beam2ge(ex, ey, ep, QX, eq=None):
 
 def beam2gs(ex, ey, ep, ed, QX, eq=None, nep=None):
     """
-    es, QX = beam2gs(ex, ey, ep, ed, QX)
-    es, QX = beam2gs(ex, ey, ep, ed, QX, eq)
-    es, QX, edi, eci = beam2gs(ex, ey, ep, ed, QX, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-       Calculate section forces in a two dimensional nonlinear
-       beam element (beam2ge).
+    Calculate section forces in a 2D nonlinear beam element (beam2ge).
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load [qY].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1, ... ,u6]      element displacement vector
-
-            QX                      axial force
-
-            eq = [qy]               distributed transverse load
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            QX                  axial force
-
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-09-01
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1946,35 +1872,32 @@ def beam2gs(ex, ey, ep, ed, QX, eq=None, nep=None):
 
 def beam2gxe(ex, ey, ep, QX, eq=None):
     """
-    Ke = beam2gxe(ex, ey, ep, QX)
-    Ke, fe = beam2gxe(ex, ey, ep, QX, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the element stiffness matrix for a two dimensional
-        beam element with respect to geometric nonlinearity with exact solution.
-       
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D beam element with geometric nonlinearity (exact solution).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load.
 
-            QX                      axial force in the beam
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq                      distributed transverse load
-
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-06-21
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -2051,51 +1974,41 @@ def beam2gxe(ex, ey, ep, QX, eq=None):
 
 def beam2gxs(ex, ey, ep, ed, QX, eq=None, nep=None):
     """
-    es, QX = beam2gxs(ex, ey, ep, ed, QX)
-    es, QX = beam2gxs(ex, ey, ep, ed, QX, eq)
-    es, QX, edi, eci = beam2gxs(ex, ey, ep, ed, QX, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-       Calculate section forces in a two dimensional nonlinear
-       beam element (beam2gxe).
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Calculate section forces in a 2D nonlinear beam element (beam2gxe).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ed = [u1, ... ,u6]      element displacement vector
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            QX                      axial force
-
-            eq = [qy]               distributed transverse load
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            QX                  axial force
-
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
-    LAST MODIFIED: O Dahlblom   2021-09-17
+    History
+    -------
+    LAST MODIFIED: O Dahlblom   2021-06-21
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -2233,35 +2146,31 @@ def beam2gxs(ex, ey, ep, ed, QX, eq=None, nep=None):
 
 def beam2te(ex, ey, ep, eq=None):
     """
-    Ke = beam2te(ex, ey, ep)
-    Ke, fe = beam2te(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a two dimensional Timoshenko 
-    beam element. 
+    Compute the stiffness matrix (and optionally load vector) for a 2D Timoshenko beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, Gm, A, I, ks], where E is Young's modulus, Gm is shear modulus, 
+        A is cross-sectional area, I is moment of inertia, and ks is shear correction factor.
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY].
 
-            ep = [E Gm A I ks]    element properties;
-                                 E: Young's modulus
-                                 G: shear modulus
-                                 A: Cross section area
-                                 I: moment of inertia
-                                 ks: shear correction factor                                 
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]    distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-11-05
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gm, A, I, ks = ep
     DEA = E*A
@@ -2319,51 +2228,40 @@ def beam2te(ex, ey, ep, eq=None):
 
 def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2ts(ex, ey, ep, ed)
-    es = beam2ts(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2s(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-    Compute section forces in two dimensional Timoshenko beam 
-    element (beam2te). 
+    Compute section forces in a 2D Timoshenko beam element (beam2te).
 
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]         element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, G, A, I, ks], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, I is moment of inertia, and ks is shear correction factor.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads in local directions [qx, qy].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E G A I ks]    element properties,
-                                 E:  Young's modulus
-                                 G:  shear modulus
-                                 A:  cross section area
-                                 I:  moment of inertia
-                                 ks: shear correction factor
+    Returns
+    -------
+    es : ndarray
+        Section forces in local directions at evaluation points, shape (nep, 3).
+        Each row contains [N, V, M] (normal force, shear force, moment).
+    edi : ndarray, optional
+        Element displacements in local directions at evaluation points, shape (nep, 3), if nep is given.
+        Each row contains [u, v, theta]. Note: For Timoshenko beam element, the rotation of the 
+        cross section is not equal to dv/dx.
+    eci : ndarray, optional
+        Local x-coordinates of the evaluation points, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u6]     element displacements
-
-            eq = [qx qy]         distributed loads, local directions 
-
-            nep                  number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1      section forces, local directions, in 
-                   N2 V2 M2      n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1 teta1  element displacements, local directions,
-                    u2 v2 teta2  in n points along the beam, dim(es)= n x 2
-                    ...........]    
-                    (Note! For Timoshenko beam element the rotation of the cross 
-                     section is not equal to dv/dx) 
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-11-05
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gm, A, I, ks = ep
     DEA = E*A
@@ -2460,36 +2358,32 @@ def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2de(ex, ey, ep):
     """
-    Ke, Me = beam2de(ex, ey, ep)
-    Ke, Me, Ce = beam2de(ex, ey, ep)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix Ke, the mass matrix Me
-    and the damping matrix Ce for a 2D elastic Bernoulli
-    beam element.
+    Calculate the stiffness matrix Ke, mass matrix Me, and optionally damping matrix Ce for a 2D elastic Bernoulli beam element.
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, m, (a, b)], where E is Young's modulus, A is cross-sectional area,
+        I is moment of inertia, m is mass per unit length, and a, b are optional damping coefficients
+        where Ce = a*Me + b*Ke.
 
-            ep = [E,A,I,m,(a,b)]    element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
-                                    m:  mass per unit length
-                                    a,b:  damping coefficients,
-                                          Ce=aMe+bKe
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    Me : ndarray
+        Element mass matrix, shape (6, 6).
+    Ce : ndarray, optional
+        Element damping matrix, shape (6, 6), if damping coefficients are provided.
 
-    OUTPUT: Ke                      element stiffness matrix (6 x 6)
-            Me                      element mass martix
-            Ce                      element damping matrix, optional
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: K Persson    1995-08-23
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     b = np.array([
         [ex[1]-ex[0]],
@@ -2550,40 +2444,35 @@ def beam2de(ex, ey, ep):
 
 def beam2ds(ex, ey, ep, ed, ev, ea):
     """
-    es = beam2ds(ex, ey, ep, ed, ev, ea)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the element forces for a number of identical 
-    (nie) 2D Bernoulli beam elements in dynamic analysis. 
+    Calculate element forces for multiple identical 2D Bernoulli beam elements in dynamic analysis.
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, m, (a, b)], where E is Young's modulus, A is cross-sectional area,
+        I is moment of inertia, m is mass per unit length, and a, b are optional damping coefficients
+        where Ce = a*Me + b*Ke.
+    ed : array_like
+        Element displacement matrix.
+    ev : array_like
+        Element velocity matrix.
+    ea : array_like
+        Element acceleration matrix.
 
-            ep = [E,A,I,m,(a,b)]    element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
-                                    m:  mass per unit length
-                                    a,b:  damping coefficients,
-                                          Ce=aMe+bKe
-            
-            ed :  element displacement matrix 
-            
-            ev :  element velocity matrix 
-            
-            ea :  element acceleration matrix 
+    Returns
+    -------
+    es : ndarray
+        Element forces in local directions, shape (nie, 6).
+        Each row contains [-N1, -V1, -M1, N2, V2, M2].
 
-    OUTPUT: es : element forces in local directions,
-               = [-N1 -V1 -M1 N2 V2 M2;
-                  .......        ......] ; dim(es)= nie x 6
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: K Persson    1995-08-23
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     b = np.array([
         [ex[1]-ex[0]],
@@ -2648,40 +2537,36 @@ def beam2ds(ex, ey, ep, ed, ev, ea):
 
 def beam3e(ex, ey, ez, eo, ep, eq=None):
     """
-    Ke = beam3e(ex, ey, ez, eo, ep)
-    Ke, fe = beam3e(ex, ey, ez, eo, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix for a 3D elastic Bernoulli
-    beam element.
+    Calculate the stiffness matrix (and optionally load vector) for a 3D elastic Bernoulli beam element.
 
-    INPUT:  ex = [x1 x2]    
-            ey = [y1 y2] 
-            ez = [z1 z2]            element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    eo : array_like
+        Orientation of local z-axis [xz, yz, zz].
+    ep : array_like
+        Element properties [E, G, A, Iy, Iz, Kv], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, Iy is moment of inertia about local y-axis, 
+        Iz is moment of inertia about local z-axis, and Kv is Saint-Venant's torsion constant.
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY, qZ, qW].
 
-            eo = [xz yz zz]         orientation of local z-axis  
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (12, 12).
+    fe : ndarray, optional
+        Element load vector, shape (12, 1), if eq is not None.
 
-            ep = [E G A Iy Iz Kv]   element properties
-                                    E: Young's modulus
-                                    G: Shear modulus
-                                    A: Cross section area
-                                    Iy: Moment of inertia, local y-axis
-                                    Iz: Moment of inertia, local z-axis
-                                    Kv: Saint-Venant's torsion constant
-
-            eq = [qX qY qZ qW]      distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [12 x 12]
-
-            fe : element load vector [12 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gs, A, Iy, Iz, Kv = ep
     DEA = E*A 
@@ -2779,56 +2664,44 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
 
 def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     """
-    es = beam3s(ex, ey, ez, eo, ep, ed)
-    es = beam3s(ex, ey, ez, eo, ep, ed, eq)
-    es, edi, eci = beam3s(ex, ey, ez, eo, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the variation of the section forces and displacements
-    along a three-dimensional beam element.
+    Calculate the variation of section forces and displacements along a 3D beam element.
 
-    INPUT:  ex = [x1 x2]    
-            ey = [y1 y2] 
-            ez = [z1 z2]            element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    eo : array_like
+        Orientation of local z-axis [xz, yz, zz].
+    ep : array_like
+        Element properties [E, G, A, Iy, Iz, Kv], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, Iy is moment of inertia about local y-axis, 
+        Iz is moment of inertia about local z-axis, and Kv is Saint-Venant's torsion constant.
+    ed : array_like
+        Element displacement vector [u1, ..., u12].
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY, qZ, qW].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            eo = [xz yz zz]         orientation of local z-axis  
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 6).
+        Each row contains [N, Vy, Vz, T, My, Mz] (normal force, shear forces, torque, moments).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 4), if nep is given.
+        Each row contains [u, v, w, phi] (displacements and rotation).
+    eci : ndarray, optional
+        Local x-coordinates of the evaluation points, shape (nep, 1), if nep is given.
 
-            ep = [E G A Iy Iz Kv]   element properties
-                                    E: Young's modulus
-                                    G: Shear modulus
-                                    A: Cross section area
-                                    Iy: Moment of inertia, local y-axis
-                                    Iz: Moment of inertia, local z-axis
-                                    Kv: Saint-Venant's torsion constant
-
-            ed = [u1 ... u12]       element displacements
-
-            eq = [qX qY qZ qW]      distributed loads, local directions
-            
-            nep                     number of evaluation points ( default=2 )
-
-    OUTPUT: es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
-                  [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
-                  [..,...,...,..,...,...],
-                  [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
-
-            edi = [[u1,v1,w1,fi1],          displacements in n points along
-                   [u2,v2,w2,fi2],          the local x-axis
-                   [..,..,..,...],
-                   [un,vn,wn,fin]]
-
-            eci = [[x1],                    local x-coordinates of the evaluation
-                   [x2],                    points
-                   [..],
-                   [xn]]
-
-    -------------------------------------------------------------
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-23 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gs, A, Iy, Iz, Kv = ep
     DEA = E*A 
@@ -4348,25 +4221,29 @@ def plante(ex, ey, ep, D, eq=None):
 
 def plants(ex, ey, ep, D, ed):
     """
-    Calculate element normal and shear stress for a
-    triangular plane stress or plane strain element.
-    
-    INPUT:  ex = [x1 x2 x3]         element coordinates
-           ey = [y1 y2 y3]
-    
-           ep = [ptype t ]         ptype: analysis type
-                                   t: thickness
-    
-           D                       constitutive matrix
-    
-           ed =[u1 u2 ...u6        element displacement vector
-                ......     ]       one row for each element
-    
-    OUTPUT: es = [ sigx sigy [sigz] tauxy   element stress matrix
-                 ......                 ]  one row for each element
-    
-           et = [ epsx epsy [epsz] gamxy   element strain matrix
-                 ......                 ]  one row for each element
+    Calculate element normal and shear stress for a triangular plane stress or plane strain element.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u6], one row for each element.
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each element.
+        Each row contains [sigx, sigy, [sigz], tauxy].
+    et : ndarray
+        Element strain matrix, one row for each element.
+        Each row contains [epsx, epsy, [epsz], gamxy].
     """
 
     ptype = ep[0]
@@ -4773,25 +4650,29 @@ def planqe(ex, ey, ep, D, eq=None):
 
 def planqs(ex, ey, ep, D, ed, eq=None):
     """
-    Calculate element normal and shear stress for a quadrilateral 
-    plane stress or plane strain element.
-    
-    Parameters:
-            ex = [x1 x2 x3 x4]      element coordinates
-            ey = [y1 y2 y3 y4]
-    
-            ep = [ptype, t]         ptype: analysis type
-                                    t:  thickness
-                                   
-            D                       constitutive matrix
-    
-            ed = [u1 u2 ..u8]       element displacement vector
-    
-            eq = [[bx]               bx: body force in x direction
-                  [by]]              by: body force in y direction
-    
-    OUTPUT: es = [ sigx sigy (sigz) tauxy]    element stress array
-            et = [ epsx epsy (epsz) gamxy]    element strain array
+    Calculate element normal and shear stress for a quadrilateral plane stress or plane strain element.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u8].
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
+
+    Returns
+    -------
+    es : ndarray
+        Element stress array [sigx, sigy, (sigz), tauxy].
+    et : ndarray
+        Element strain array [epsx, epsy, (epsz), gamxy].
     """
 
     # Convert inputs to arrays for consistency
@@ -5052,8 +4933,8 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1 + B.T * Dm * B * detJ * np.asscalar(wp[i]) * t
-            fe1 = fe1+N2.T*q*detJ*np.asscalar(wp[i])*t
+            Ke1 = Ke1 + B.T * Dm * B * detJ * wp[i].item() * t
+            fe1 = fe1+N2.T*q*detJ*wp[i].item()*t
         return Ke1, fe1
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
@@ -5061,35 +4942,34 @@ def plani4e(ex, ey, ep, D, eq=None):
 
 def soli8e(ex, ey, ez, ep, D, eqp=None):
     """
-    Ke=soli8e(ex,ey,ez,ep,D)
-    [Ke,fe]=soli8e(ex,ey,ez,ep,D,eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix for a 8 node (brick)
-    isoparametric element.
+    Calculate the stiffness matrix (and optionally load vector) for an 8-node (brick) isoparametric element.
 
-    INPUT:   ex = [x1 x2 x3 ... x8]
-            ey = [y1 y2 y3 ... y8]  element coordinates
-            ez = [z1 z2 z3 ... z8]
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is the integration rule.
+    D : array_like
+        Constitutive matrix.
+    eqp : array_like, optional
+        Body force vector [bx, by, bz], where bx, by, bz are body forces in x, y, z directions.
 
-            ep = [ir]               ir integration rule
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix.
+    fe : ndarray, optional
+        Equivalent nodal forces, if eqp is not None.
 
-            D                       constitutive matrix
-
-            eq = [bx; by; bz]       bx: body force in x direction
-                                    by: body force in y direction
-                                    bz: body force in z direction
-
-    OUTPUT: Ke : element stiffness matrix
-            fe : equivalent nodal forces 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: M Ristinmaa   1995-10-25
                    J Lindemann   2022-01-24 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -5251,40 +5131,36 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
 
 def soli8s(ex, ey, ez, ep, D, ed):
     """
-     [es,et]=soli8s(ex,ey,ez,ep,D,ed)
-    -------------------------------------------------------------
-     PURPOSE
-      Calculate element normal and shear stress for a
-      8 node (brick) isoparametric element.
-    
-     INPUT:  ex = [x1 x2 x3 ... x8]
-             ey = [y1 y2 y3 ... y8]  element coordinates
-             ez = [z1 z2 z3 ... z8]
-    
-             ep = [Ir]               Ir: integration rule
-    
-             D                       constitutive matrix
-    
-             ed = [u1 u2 ..u24]      element displacement vector
-      
-     OUTPUT: es = [ sigx sigy sigz sigxy sigyz sigxz ;  
-                      ......       ...               ] 
-             element stress matrix, one row for each 
-             integration point
+    Calculate element normal and shear stress for an 8-node (brick) isoparametric element.
 
-             es = [ eps epsy epsz epsxy epsyz epsxz ;  
-                      ......       ...               ] 
-             element strain matrix, one row for each 
-             integration point
-    -------------------------------------------------------------
-    
-     LAST MODIFIED: M Ristinmaa   1995-10-25
-                    J Lindemann   2022-02-23 (Python version)
-                    
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [Ir], where Ir is the integration rule.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u24].
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each integration point.
+        Each row contains [sigx, sigy, sigz, sigxy, sigyz, sigxz].
+    et : ndarray
+        Element strain matrix, one row for each integration point.
+        Each row contains [epsx, epsy, epsz, epsxy, epsyz, epsxz].
+
+    History
+    -------
+    LAST MODIFIED: M Ristinmaa   1995-10-25
+                   J Lindemann   2022-02-23 (Python version)
     """
 
     ir = ep[0]
@@ -5446,26 +5322,29 @@ def soli8s(ex, ey, ez, ep, D, ed):
     return et, es, eci
 
 
-def assem(edof, K, Ke, f=None, fe=None):
+def assem(edof: ArrayLike, K: Union[NDArray[np.floating], csr_matrix, csc_matrix, lil_matrix], Ke: ArrayLike, f: Optional[ArrayLike] = None, fe: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Assemble element matrices Ke ( and fe ) into the global
-    stiffness matrix K ( and the global force vector f )
-    according to the topology matrix edof.
-    
-    Parameters:
-    
-        edof        dof topology array
-        K           the global stiffness matrix
-        Ke          element stiffness matrix
-        f           the global force vector
-        fe          element force vector
-        
-    Output parameters:
-    
-        K           the new global stiffness matrix
-        f           the new global force vector
-        fe          element force vector
-    
+    Assemble element matrices Ke (and fe) into the global stiffness matrix K (and global force vector f).
+
+    Parameters
+    ----------
+    edof : array_like
+        DOF topology array.
+    K : array_like
+        The global stiffness matrix.
+    Ke : array_like
+        Element stiffness matrix.
+    f : array_like, optional
+        The global force vector.
+    fe : array_like, optional
+        Element force vector.
+
+    Returns
+    -------
+    K : ndarray
+        The updated global stiffness matrix.
+    f : ndarray, optional
+        The updated global force vector, if f and fe are provided.
     """
 
     import scipy.sparse as sp
@@ -5657,21 +5536,25 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     return (a_m, Q)
 
 
-def eigen(K,M,b=None):
+def eigen(K: ArrayLike, M: ArrayLike, b: Optional[ArrayLike] = None) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
     """
-    Solve the generalized eigenvalue problem
-    |K-LM|X = 0, considering boundary conditions
+    Solve the generalized eigenvalue problem |K-LM|X = 0, considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (ndof, ndof).
+    M : array_like
+        Global mass matrix, shape (ndof, ndof).
+    b : array_like, optional
+        Boundary condition vector, shape (nbc, 1).
 
-        K           global stiffness matrix, dim(K) = ndof x ndof
-        M           global mass matrix, dim(M) = ndof x ndof
-        b           boundary condition vector, dim(b) = nbc x 1
-
-    Returns:
-
-        L           eigenvalue vector, dim(L) = (ndof-nbc) x 1
-        X           eigenvectors, dim(X) = ndof x (ndof-nbc)
+    Returns
+    -------
+    L : ndarray
+        Eigenvalue vector, shape (ndof-nbc, 1).
+    X : ndarray
+        Eigenvectors, shape (ndof, ndof-nbc).
     """
     nd, _ = K.shape
     if b is not None:
@@ -5706,19 +5589,21 @@ def eigen(K,M,b=None):
 
 def gfunc(G,dt):
     """
-    Form vector with function values at equally spaced
-    points by linear interpolation
+    Form vector with function values at equally spaced points by linear interpolation.
 
-    Parameters:
+    Parameters
+    ----------
+    G : array_like
+        Time-function pairs [t_i, g_i], where t_i is time i and g_i is g(t_i), shape (np, 2).
+    dt : float
+        Time step.
 
-        G = [t_i, g_i]      t_i: time i, g_i: g(t_i)
-                            dim(G) = np x 2, np = number of points
-        dt                  time step
-
-    Returns:
-
-        t           1-D vector with equally spaced time points
-        g           1-D vector with corresponding function values
+    Returns
+    -------
+    t : ndarray
+        1-D vector with equally spaced time points.
+    g : ndarray
+        1-D vector with corresponding function values.
     """
     ti = np.arange(G[0,0],G[-1,0]+dt,dt)
     g1 = np.interp(ti,G[:,0],G[:,1])
@@ -6200,10 +6085,38 @@ def statcon(K, f, cd):
     return K1, f1
 
 def c_mul(a, b):
-    return eval(hex((np.long(a) * b) & 0xFFFFFFFF)[:-1])
+    """
+    Multiply two integers with 32-bit overflow handling.
+
+    Parameters
+    ----------
+    a : int
+        First integer.
+    b : int
+        Second integer.
+
+    Returns
+    -------
+    int
+        Product of a and b with 32-bit overflow handling.
+    """
+    return eval(hex((int(a) * b) & 0xFFFFFFFF)[:-1])
 
 
-def dofHash(dof):
+def dof_hash(dof):
+    """
+    Compute a hash value for a degree of freedom array.
+
+    Parameters
+    ----------
+    dof : array_like
+        Degree of freedom array.
+
+    Returns
+    -------
+    int
+        Hash value for the DOF array.
+    """
     if len(dof) == 1:
         return dof[0]
     value = 0x345678
@@ -6214,10 +6127,23 @@ def dofHash(dof):
         value = -2
     return value
 
+dofHash = dof_hash
 
-def create_dofs(nCoords, nDof):
+def create_dofs(nCoords: int, nDof: int) -> NDArray[np.integer]:
     """
-    Create dof array [nCoords x nDof]
+    Create degree of freedom (DOF) array.
+
+    Parameters
+    ----------
+    nCoords : int
+        Number of coordinates (nodes).
+    nDof : int
+        Number of degrees of freedom per coordinate.
+
+    Returns
+    -------
+    ndarray
+        DOF array, shape (nCoords, nDof), with sequential DOF numbering starting from 1.
     """
     return np.arange(nCoords*nDof).reshape(nCoords, nDof)+1
 
@@ -6432,25 +6358,30 @@ def stress2nodal(eseff, edof):
 
 def beam2crd_old(ex, ey, ed, mag):
     """
-    -------------------------------------------------------------
-        PURPOSE
-            Calculate the element continous displacements for a 
-            number of identical 2D Bernoulli beam elements. 
-      
-        INPUT:  ex,ey,
-                ed,
-                mag 
-    
-        OUTPUT: excd,eycd 
-    -------------------------------------------------------------
+    Calculate the element continuous displacements for multiple identical 2D Bernoulli beam elements.
 
-     LAST MODIFIED: P-E AUSTRELL 1993-10-15
-                    J Lindemann 2021-12-30 (Python)
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates.
+    ey : array_like
+        Element node y-coordinates.
+    ed : array_like
+        Element displacement matrix.
+    mag : float
+        Magnification factor.
 
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Returns
+    -------
+    excd : ndarray
+        Continuous x-coordinates.
+    eycd : ndarray
+        Continuous y-coordinates.
+
+    History
+    -------
+    LAST MODIFIED: P-E AUSTRELL 1993-10-15
+                   J Lindemann 2021-12-30 (Python)
     """
     nie, ned = ed.shape
 
@@ -6460,7 +6391,7 @@ def beam2crd_old(ex, ey, ed, mag):
     for i in range(nie):
 
         b = np.array([ex[i, 1]-ex[i, 0], ey[i, 1]-ey[i, 0]])
-        L = np.asscalar(np.sqrt(b@np.transpose(b)))
+        L = np.sqrt(b@np.transpose(b)).item()
         n = b/L
 
         G = np.array([
@@ -6522,23 +6453,29 @@ def beam2crd_old(ex, ey, ed, mag):
 
 def beam2crd(ex=None, ey=None, ed=None, mag=None):
     """
-    -------------------------------------------------------------
-        PURPOSE
-         Calculate the element continous displacements for a
-         number of identical 2D Bernoulli beam elements.
-    
-        INPUT:  ex,ey,
-                ed,
-                mag
-    
-        OUTPUT: excd,eycd
-    -------------------------------------------------------------
+    Calculate the element continuous displacements for multiple identical 2D Bernoulli beam elements.
 
+    Parameters
+    ----------
+    ex : array_like, optional
+        Element node x-coordinates.
+    ey : array_like, optional
+        Element node y-coordinates.
+    ed : array_like, optional
+        Element displacement matrix.
+    mag : float, optional
+        Magnification factor.
+
+    Returns
+    -------
+    excd : ndarray
+        Continuous x-coordinates.
+    eycd : ndarray
+        Continuous y-coordinates.
+
+    History
+    -------
     LAST MODIFIED: P-E AUSTRELL 1993-10-15
-    Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
     """
 
     nie, ned = ed.shape
