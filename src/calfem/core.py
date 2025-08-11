@@ -2857,25 +2857,26 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
 def flw2te(ex, ey, ep, D, eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
-    
-    Parameters:
-    
-        ex = [x1 x2 x3]
-        ey = [y1 y2 y3]     element coordinates
-    
-        ep = [t]            element thickness    
 
-        D = [kxx kxy;
-             kyx kyy]       constitutive matrix
-    
-             eq             heat supply per unit volume
-             
-    Returns:
-    
-        Ke                  element 'stiffness' matrix (3 x 3)
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [t], where t is the element thickness.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        fe                  element load vector (3 x 1)
-    
+    Returns
+    -------
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (3, 3).
+    fe : ndarray
+        Element load vector, shape (3, 1).
     """
     t = ep[0]
     if eq is None:
@@ -2902,26 +2903,24 @@ def flw2te(ex, ey, ep, D, eq=None):
 def flw2ts(ex, ey, D, ed):
     """
     Compute flows or corresponding quantities in the triangular field element.
-    
-    Parameters:
-    
-        ex = [x1 x2 x3]
-        ey = [y1 y2 y3]         element coordinates
-                                 
-             D = [kxx kxy
-                  kyx kyy]      constitutive matrix
-    
-             ed =[u1 u2 u3]     u1,u2,u3: nodal values
-                  .. .. ..;
-                  
-    Returns:
-    
-        es=[ qx qy ] 
-             ... ..]                element flows
-    
-        et=[ gx gy ]
-             ... ..]                element gradients
-    
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, u2, u3], one row per element.
+
+    Returns
+    -------
+    es : ndarray
+        Element flows, shape (n_elem, 2) or (2,) for single element.
+    et : ndarray
+        Element gradients, shape (n_elem, 2) or (2,) for single element.
     """
 
     if len(ex.shape) > 1:
@@ -2978,26 +2977,35 @@ def flw2ts(ex, ey, D, ed):
     
 def flw2qe(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity) matrix for a triangular field element.
-    
-    Parameters:
-    
-        ex = [x1, x2, x3, x4]
-        ey = [y1, y2, y3, y4]   element coordinates
-    
-        ep = [t]                element thickness    
+    Compute element stiffness (conductivity) matrix for a quadrilateral field element.
+    This function calculates the element stiffness matrix and optionally the load vector
+    for a 4-node quadrilateral element used in 2D heat flow analysis. The quadrilateral
+    is divided into 4 triangular sub-elements using the centroid as a common node.
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]        constitutive matrix
-    
-        eq                      heat supply per unit volume
-             
-    Returns:
-    
-        Ke                      element 'stiffness' matrix (4 x 4)
+    Parameters
+    ----------
+    ex : array_like
+        Element x-coordinates [x1, x2, x3, x4] for the 4 corner nodes.
+    ey : array_like
+        Element y-coordinates [y1, y2, y3, y4] for the 4 corner nodes.
+    ep : array_like
+        Element properties [t] where t is the element thickness.
+    D : array_like
+        Constitutive matrix (2x2) for heat conductivity:
+        [[kxx, kxy],
+         [kyx, kyy]]
+        where kxx, kyy are conductivities in x and y directions,
+        and kxy, kyx are cross-conductivities.
+    eq : float, optional
+        Heat supply per unit volume. If None, only stiffness matrix is computed.
+        Default is None.
 
-        fe                      element load vector (4 x 1)
-    
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix (4x4) for the quadrilateral element.
+    fe : ndarray, optional
+        Element load vector (4x1). Only returned when eq is provided.
     """
     xc = sum(ex)/4.
     yc = sum(ey)/4.
@@ -3036,30 +3044,29 @@ def flw2qe(ex, ey, ep, D, eq=None):
 
 def flw2qs(ex, ey, ep, D, ed, eq=None):
     """
-    Compute flows or corresponding quantities in the
-    quadrilateral field element.
+    Compute flows or corresponding quantities in the quadrilateral field element.
     
-    Parameters:
-    
-        ex = [x1, x2, x3, x4]
-        ey = [y1, y2, y3, y4]   element coordinates
+    Parameters
+    ----------
 
-        ep = [t]                element thickness    
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t], where t is element thickness.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [[u1, u2, u3, u4], [.., .., .., ..]], where u1,u2,u3,u4 are nodal values.
+    
+    Returns
+    -------
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]        constitutive matrix
-    
-        ed = [[u1, u2, u3, u4],
-              [.., .., .., ..]]    u1,u2,u3,u4: nodal values
-    
-    Returns:
-    
-        es = [[qx, qy],
-              [.., ..]]            element flows
-
-        et = [[gx, gy],
-              [.., ..]]            element gradients
-    
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[gx, gy], [.., ..]].
     """
     K = np.zeros((5, 5))
     f = np.zeros((5, 1))
@@ -3128,25 +3135,27 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
 
 def flw2i4e(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 4 node isoparametric field element
+    Compute element stiffness (conductivity) matrix for 4 node isoparametric field element.
 
-    Parameters:
-        
-        ex = [x1 x2 x3 x4]  element coordinates
-        ey = [y1 y2 y3 y4]
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        ep = [t ir]         thickness and integration rule
-
-        D  = [[kxx kxy],
-              [kyx kyy]]    constitutive matrix
-
-        eq                  heat supply per unit volume
-
-    Returns:
-        Ke                  element 'stiffness' matrix (4 x 4)
-        fe                  element load vector (4 x 1)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
     """
     t = ep[0]
     ir = ep[1]
@@ -3268,32 +3277,31 @@ def flw2i4e(ex, ey, ep, D, eq=None):
 
 def flw2i4s(ex, ey, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    4 node isoparametric element.
+    Compute flows or corresponding quantities in the 4 node isoparametric element.
+
+    Parameters
+    ----------
     
-    Parameters:
-        
-        ex = [x1 x2 x3 x4]         element coordinates
-        ey = [y1 y2 y3 y4]
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, u2, u3, u4].
 
-        ep = [t ir]                thickness and integration rule
+    Returns
+    -------
 
-        D  = [[kxx,kxy],
-              [kyx,kyy]]           constitutive matrix
-
-        ed = [u1, u2, u3, u4]      u1,u2,u3,u4: nodal values
-
-    Returns:
-        es = [[qx, qy],
-              [.., ..]]             element flows
-
-        et = [[qx, qy],
-              [... ..]]             element gradients
-
-        eci=[[ix1, iy1],            Gauss point location vector
-             [...  ...],            nint: number of integration points
-             [ix(nint), iy(nint)]
-
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[qx, qy], [..., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1], [..., ...], [ix(nint), iy(nint)]].
     """
     t = ep[0]
     ir = ep[1]
@@ -3414,26 +3422,29 @@ def flw2i4s(ex, ey, ep, D, ed):
 
 def flw2i8e(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 8 node isoparametric field element.
-    
-    Parameters:
-    
-        ex = [x1,...,x8]      element coordinates
-        ey = [y1,...,y8]
-        
-        ep = [t, ir]            thickness and integration rule
+    Compute element stiffness (conductivity) matrix for 8 node isoparametric field element.
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]        constitutive matrix
+    Parameters
+    ----------
 
-        eq                      heat supply per unit volume
+    ex : array_like
+        Element coordinates [x1, ..., x8].
+    ey : array_like
+        Element coordinates [y1, ..., y8].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-    Returns:
-    
-        Ke                      element 'stiffness' matrix (8 x 8)
-        fe                      element load vector (8 x 1)
+    Returns
+    -------
 
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (8, 8).
+    fe : ndarray, optional
+        Element load vector, shape (8, 1), if eq is not None.
     """
     t = ep[0]
     ir = ep[1]
@@ -3594,32 +3605,31 @@ def flw2i8e(ex, ey, ep, D, eq=None):
 
 def flw2i8s(ex, ey, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    8 node isoparametric element.
+    Compute flows or corresponding quantities in the 8 node isoparametric element.
     
-    Parameters:
-        
-        ex = [x1,x2,x3....,x8]     element coordinates
-        ey = [y1,y2,y3....,y8]
+    Parameters
+    ----------
 
-        ep = [t,ir]                thickness and integration rule
+    ex : array_like
+        Element coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element coordinates [y1, y2, y3, ..., y8].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, ..., u8].
 
-        D  = [[kxx,kxy],
-              [kyx,kyy]]           constitutive matrix
+    Returns
+    -------
 
-        ed = [u1,....,u8]          u1,....,u8: nodal values
-
-    Returns:
-        es = [[qx,qy],
-              [..,..]]             element flows
-
-        et = [[qx,qy],
-              [..,..]]             element gradients
-
-        eci=[[ix1,iy1],            Gauss point location vector
-             [...,...],            nint: number of integration points
-             [ix(nint),iy(nint)]]
-
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[qx, qy], [.., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1], [..., ...], [ix(nint), iy(nint)]].
     """
     t = ep[0]
     ir = ep[1]
@@ -3777,28 +3787,31 @@ def flw2i8s(ex, ey, ep, D, ed):
 
 def flw3i8e(ex, ey, ez, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 8 node isoparametric field element.
+    Compute element stiffness (conductivity) matrix for 8 node isoparametric field element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3,...,x8]
-        ey = [y1,y2,y3,...,y8]      element coordinates
-        ez = [z1,z2,z3,...,z8]
+    Parameters
+    ----------
 
-        ep = [ir]                   Ir: Integration rule
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy, kxz], [kyx, kyy, kyz], [kzx, kzy, kzz]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        D = [[kxx,kxy,kxz],
-             [kyx,kyy,kyz],
-             [kzx,kzy,kzz]]         constitutive matrix
+    Returns
+    -------
 
-        eq                          heat supply per unit volume
-
-    Output:
-
-        Ke                          element 'stiffness' matrix (8 x 8)
-        fe                          element load vector (8 x 1)
-
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (8, 8).
+    fe : ndarray, optional
+        Element load vector, shape (8, 1), if eq is not None.
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -3938,36 +3951,31 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
 
 def flw3i8s(ex, ey, ez, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    8 node (3-dim) isoparametric field element.
+    Compute flows or corresponding quantities in the 8 node (3-dim) isoparametric field element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3,...,x8]
-        ey = [y1,y2,y3,...,y8]              element coordinates
-        ez = [z1,z2,z3,...,z8]
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy, kxz], [kyx, kyy, kyz], [kzx, kzy, kzz]].
+    ed : array_like
+        Element nodal values [[u1, ..., u8], [.., ..., ..]].
 
-        ep = [ir]                           Ir: Integration rule
-
-        D = [[kxx,kxy,kxz],
-             [kyx,kyy,kyz],
-             [kzx,kzy,kzz]]                 constitutive matrix
-
-        ed = [[u1,....,u8],                 element nodal values
-              [..,....,..]]
-
-    Output:
-
-        es = [[qx,qy,qz],
-              [..,..,..]]                   element flows(s)
-
-        et = [[qx,qy,qz],                   element gradients(s)
-              [..,..,..]]
-
-        eci = [[ix1,ix1,iz1],               location vector
-               [...,...,...],               nint: number of integration points
-               [ix(nint),iy(nint),iz(nint)]]
-
+    Returns
+    -------
+    es : ndarray
+        Element flows [[qx, qy, qz], [.., .., ..]].
+    et : ndarray
+        Element gradients [[qx, qy, qz], [.., .., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1, iz1], [..., ..., ...], [ix(nint), iy(nint), iz(nint)]].
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -4115,24 +4123,25 @@ def plante(ex, ey, ep, D, eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3]         element coordinates
-        ey = [y1,y2,y3]
-     
-        ep = [ptype,t]          ptype: analysis type
-                                t: thickness
-     
-        D                       constitutive matrix
-    
-        eq = [[bx],               bx: body force x-dir
-              [by]]               by: body force y-dir
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3].
+    ey : array_like
+        Element coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
               
-    Returns:
-    
-        Ke                      element stiffness matrix (6 x 6)
-        fe                      equivalent nodal forces (6 x 1) (if eq is given)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (6, 1), if eq is given.
     """
 
     ptype, t = ep
@@ -4390,24 +4399,23 @@ def plants(ex, ey, ep, D, ed):
     
 def plantf(ex, ey, ep, es):
     """
-    Compute internal element force vector in a triangular element
-    in plane stress or plane strain. 
+    Compute internal element force vector in a triangular element in plane stress or plane strain.
 
-    Parameters:
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    es : array_like
+        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
 
-        ex = [x1,x2,x3]                 node coordinates
-        ey = [y1,y2,y3]
-
-        ep = [ptype,t]                  ptype: analysis type
-                                        t: thickness
-
-        es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
-              [  ......              ]] one row for each element
-
-    OUTPUT:
-
-        fe = [[f1],[f2],...,[f8]]       internal force vector
-
+    Returns
+    -------
+    fe : ndarray
+        Internal force vector [[f1], [f2], ..., [f8]].
     """
 
     ptype, t = ep
@@ -4490,24 +4498,28 @@ def plantf(ex, ey, ep, es):
 def platre(ex, ey, ep, D, eq=None):
     """
     Calculate the stiffness matrix for a rectangular plate element.
+
     NOTE! Element sides must be parallel to the coordinate axis.
-    
-    Parameters:
 
-        ex = [x1,x2,x3,x4]          element coordinates
-        ey = [y1,y2,y3,y4]
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t], where t is thickness.
+    D : array_like
+        Constitutive matrix for plane stress.
+    eq : array_like, optional
+        Load per unit area [qz].
 
-        ep = [t]                    thicknes
-
-        D                           constitutive matrix for
-                                    plane stress         
-
-        eq = [qz]                   load/unit area
-    Returns:
-
-        Ke                          element stiffness matrix (12 x 12)
-        fe                          equivalent nodal forces (12 x 1)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (12, 12).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (12, 1), if eq is not None.
     """
     Lx = (ex[2]-ex[0]).astype(float)
     Ly = (ey[2]-ey[0]).astype(float)
@@ -4580,23 +4592,27 @@ def platre(ex, ey, ep, D, eq=None):
 
 def planqe(ex, ey, ep, D, eq=None):
     """
-    Calculate the stiffness matrix for a quadrilateral
-    plane stress or plane strain element.
+    Calculate the stiffness matrix for a quadrilateral plane stress or plane strain element.
 
-    Parameters:
-        ex=[x1 x2 x3 x4]    element coordinates
-        ey=[y1 y2 y3 y4]
-                                
-        ep = [ptype, t]     ptype: analysis type
-                            t: element thickness 
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is element thickness.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
 
-        D                   constitutive matrix
-
-        eq = [bx;           bx: body force in x direction
-              by]           by: body force in y direction
-
-    OUTPUT: Ke :  element stiffness matrix (8 x 8)
-            fe : equivalent nodal forces (row array)
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (8, 8).
+    fe : ndarray, optional
+        Equivalent nodal forces, if eq is provided.
     """
     K = np.zeros((10, 10))
     f = np.zeros((10, 1))
@@ -4756,26 +4772,27 @@ def planqs(ex, ey, ep, D, ed, eq=None):
 
 def plani4e(ex, ey, ep, D, eq=None):
     """
-    Calculate the stiffness matrix for a 4 node isoparametric
-    element in plane strain or plane stress.
+    Calculate the stiffness matrix for a 4 node isoparametric element in plane strain or plane stress.
     
-    Parameters:
-        ex = [x1 ...   x4]  element coordinates. Row array
-        ey = [y1 ...   y4]
-                                
-        ep =[ptype, t, ir]  ptype: analysis type
-                            t : thickness
-                            ir: integration rule
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t, ir], where ptype is analysis type, t is thickness, and ir is integration rule.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
     
-        D                   constitutive matrix
-    
-        eq = [bx; by]       bx: body force in x direction
-                            by: body force in y direction
-                                Any array with 2 elements acceptable
-    
-    Returns:
-        Ke : element stiffness matrix (8 x 8)
-        fe : equivalent nodal forces (8 x 1)
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (8, 8).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (8, 1), if eq is provided.
     """
     ptype = ep[0]
     t = ep[1]
@@ -5423,21 +5440,24 @@ def solveq(K, f, bcPrescr=None, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.
     
-    Parameters:
-    
-        K           global stiffness matrix, dim(K)= nd x nd
-        f           global load vector, dim(f)= nd x 1
-    
-        bcPrescr    1-dim integer array containing prescribed dofs.
-        bcVal       1-dim float array containing prescribed values.
-                    If not given all prescribed dofs are assumed 0.
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    bcPrescr : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like, optional
+        1-dim float array containing prescribed values.
+        If not given all prescribed dofs are assumed 0.
         
-    Returns:
-    
-        a           solution including boundary values
-        Q           reaction force vector
-                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
-    
+    Returns
+    -------
+    a : ndarray
+        Solution including boundary values, shape (nd, 1).
+    Q : ndarray
+        Reaction force vector, shape (nd, 1).
     """
 
     nDofs = K.shape[0]
@@ -5472,21 +5492,24 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.
     
-    Parameters:
-    
-        K           global stiffness matrix, dim(K)= nd x nd
-        f           global load vector, dim(f)= nd x 1
-    
-        bcPrescr    1-dim integer array containing prescribed dofs.
-        bcVal       1-dim float array containing prescribed values.
-                    If not given all prescribed dofs are assumed 0.
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    bcPrescr : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like, optional
+        1-dim float array containing prescribed values.
+        If not given all prescribed dofs are assumed 0.
         
-    Returns:
-    
-        a           solution including boundary values
-        Q           reaction force vector
-                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
-    
+    Returns
+    -------
+    a : ndarray
+        Solution including boundary values, shape (nd, 1).
+    Q : ndarray
+        Reaction force vector, shape (nd, 1).
     """
 
     nDofs = K.shape[0]
@@ -5612,49 +5635,61 @@ def gfunc(G,dt):
 
 def step1(K,C,f,a0,bc,ip,times,dofs):
     """
-    Algorithm for dynamic solution of first-order
-    FE equations considering boundary conditions.
+    Algorithm for dynamic solution of first-order FE equations considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Conductivity matrix, shape (ndof, ndof).
+    C : array_like
+        Capacity matrix, shape (ndof, ndof).
+    f : array_like
+        Load vector, shape (ndof, nstep + 1).
+        If shape (ndof, 1), the values are kept constant during time integration.
+    a0 : array_like
+        Initial vector a(0), shape (ndof, 1).
+    bc : array_like
+        Boundary condition matrix, shape (nbc, nstep + 2).
+        where nbc = number of prescribed degrees of freedom (either constant or time-dependent).
+        The first column contains the numbers of the prescribed degrees of freedom
+        and the subsequent columns contain the time history.
+        If shape (nbc, 2), the values from the second column are kept constant
+        during time integration.
+    ip : array_like
+        Array [dt, tottime, alpha], where
+        dt is the size of the time increment,
+        tottime is the total time,
+        alpha is time integration constant.
+        Frequently used values of alpha are:
+        alpha=0: forward difference; forward Euler,
+        alpha=1/2: trapezoidal rule; Crank-Nicholson
+        alpha=1: backward difference; backward Euler
+    times : array_like
+        Array [t(i) ...] of times at which output should be written to a and da.
+    dofs : array_like
+        Array [dof(i) ...] of degree of freedom numbers for which history output
+        should be written to ahist and dahist.
 
-        K           conductivity matrix, dim(K) = ndof x ndof
-        C           capacity matrix, dim(C) = ndof x ndof
-        f           load vector, dim(f) = ndof x (nstep + 1),
-                    If dim(f) = ndof x 1, the values are kept constant
-                    during time integration
-        a0          initial vector a(0), dim(a0) = ndof x 1
-        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
-                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
-                    The first column contains the numbers of the prescribed degrees of freedom
-                    and the subsequent columns contain the time history.
-                    If dim(bc) = nbc x 2, the values from the second column are kept constant
-                    during time integration
-        ip          array [dt, tottime, alpha], where
-                    dt is the size of the time increment,
-                    tottime is the total time,
-                    alpha is time integration constant.
-                    Frequently used values of alpha are:
-                    alpha=0:            forward difference; forward Euler,
-                    alpha=1/2:          trapezoidal rule; Crank-Nicholson
-                    alpha=1:            backward difference; backward Euler
-        times       array [t(i) ...] of times at which output should be written to a and da
-        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
-                    should be written to ahist and dahist
-
-    Returns:
-
-        modelhist   dictionary containing solution history for the whole model at following keys:
-                    modelhist['a']          constains values of a at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['da']         constains values of da at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
-        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
-                    dofhist['a']        constains time history of a at the dofs specified in 'dofs'
-                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
-                    dofhist['da']       constains time history of daat the dofs specified in 'dofs'
-                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
+    Returns
+    -------
+    modelhist : dict
+        Dictionary containing solution history for the whole model with keys:
+        
+        - 'a' : ndarray
+            Values of a at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'da' : ndarray
+            Values of da at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+    dofhist : dict
+        Dictionary containing solution history for the degrees of freedom selected in 'dofs' with keys:
+        
+        - 'a' : ndarray
+            Time history of a at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'da' : ndarray
+            Time history of da at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
     """
     ndof, _ = K.shape
     dt, tottime, alpha = ip
@@ -5791,57 +5826,72 @@ def step1(K,C,f,a0,bc,ip,times,dofs):
 
 def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
     """
-    Algorithm for dynamic solution of second-order
-    FE equations considering boundary conditions.
+    Algorithm for dynamic solution of second-order FE equations considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (ndof, ndof).
+    C : array_like
+        Global damping matrix, shape (ndof, ndof).
+        If there is no damping in the system, simply set C=[].
+    M : array_like
+        Global mass matrix, shape (ndof, ndof).
+    f : array_like
+        Global load vector, shape (ndof, nstep + 1).
+        If shape (ndof, 1), the values are kept constant during time integration.
+    a0 : array_like
+        Initial displacement vector a(0), shape (ndof, 1).
+    da0 : array_like
+        Initial velocity vector v(0), shape (ndof, 1).
+    bc : array_like
+        Boundary condition matrix, shape (nbc, nstep + 2).
+        where nbc = number of prescribed degrees of freedom (either constant or time-dependent).
+        The first column contains the numbers of the prescribed degrees of freedom
+        and the subsequent columns contain the time history.
+        If shape (nbc, 2), the values from the second column are kept constant
+        during time integration.
+    ip : array_like
+        Array [dt, tottime, alpha, delta], where
+        dt is the size of the time increment,
+        tottime is the total time,
+        alpha and delta are time integration constants for the Newmark family of methods.
+        Frequently used values of alpha and delta are:
+        alpha=1/4, delta=1/2: average acceleration (trapezoidal) rule,
+        alpha=1/6, delta=1/2: linear acceleration,
+        alpha=0, delta=1/2: central difference.
+    times : array_like
+        Array [t(i) ...] of times at which output should be written to a, da and d2a.
+    dofs : array_like
+        Array [dof(i) ...] of degree of freedom numbers for which history output
+        should be written to ahist, dahist and d2ahist.
 
-        K           global stiffness matrix, dim(K) = ndof x ndof
-        C           global damping matrix, dim(C) = ndof x ndof
-                    If there is no damping in the system, simply set C=[]
-        M           global mass matrix, dim(M) = ndof x ndof
-        f           global load vector, dim(f) = ndof x (nstep + 1),
-                    If dim(f) = ndof x 1, the values are kept constant
-                    during time integration
-        a0          initial displacement vector a(0), dim(a0) = ndof x 1
-        da0         initial velocity vector v(0), dim(da0) = ndof x 1
-        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
-                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
-                    The first column contains the numbers of the prescribed degrees of freedom
-                    and the subsequent columns contain the time history.
-                    If dim(bc) = nbc x 2, the values from the second column are kept constant
-                    during time integration
-        ip          array [dt, tottime, alpha, delta], where
-                    dt is the size of the time increment,
-                    tottime is the total time,
-                    alpha and delta are time integration constants for the Newmark family of methods.
-                    Frequently used values of alpha and delta are:
-                    alpha=1/4, delta=1/2:       average acceleration (trapezoidal) rule,
-                    alpha=1/6, delta=1/2:       linear acceleration
-                    alpha=0,   delta=1/2:       central difference
-        times       array [t(i) ...] of times at which output should be written to a, da and d2a
-        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
-                    should be written to ahist, dahist and d2ahist
-
-    Returns:
-
-        modelhist   dictionary containing solution history for the whole model at following keys:
-                    modelhist['a']          constains displacement values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['da']         constains velocity values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['d2a']        constains acceleration values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['d2a']) = ndof x (nstep + 1) or ndof x ntimes
-        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
-                    dofhist['a']        constains displacement time history at the dofs specified in 'dofs'
-                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
-                    dofhist['da']       constains velocity time history at the dofs specified in 'dofs'
-                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
-                    dofhist['d2a']      constains acceleration time history at the dofs specified in 'dofs'
-                                            dim(dofhist['d2ahist']) = ndof x (nstep + 1)
+    Returns
+    -------
+    modelhist : dict
+        Dictionary containing solution history for the whole model with keys:
+        
+        - 'a' : ndarray
+            Displacement values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'da' : ndarray
+            Velocity values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'd2a' : ndarray
+            Acceleration values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+    dofhist : dict
+        Dictionary containing solution history for the degrees of freedom selected in 'dofs' with keys:
+        
+        - 'a' : ndarray
+            Displacement time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'da' : ndarray
+            Velocity time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'd2a' : ndarray
+            Acceleration time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
     """
     ndof, _ = K.shape
     if not np.array(C).any():
@@ -5997,18 +6047,19 @@ def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
 
 def extract_eldisp(edof, a):
     """
-    Extract element displacements from the global displacement
-    vector according to the topology matrix edof.
+    Extract element displacements from the global displacement vector according to the topology matrix edof.
     
-    Parameters:
+    Parameters
+    ----------
+    a : array_like
+        The global displacement vector.
+    edof : array_like
+        DOF topology array.
     
-        a           the global displacement vector
-        edof        dof topology array
-    
-    Returns:
-    
-        ed:     element displacement array
-    
+    Returns
+    -------
+    ed : ndarray
+        Element displacement array.
     """
 
     ed = None
@@ -6039,18 +6090,21 @@ def statcon(K, f, cd):
     """
     Condensation of static FE-equations according to the vector cd.
 
-    Parameters:
-    
-        K                       global stiffness matrix, dim(K) = nd x nd
-        f                       global load vector, dim(f)= nd x 1
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    cd : array_like
+        Vector containing dof's to be eliminated, shape (nc, 1), where nc is number of condensed dof's.
 
-        cd                      vector containing dof's to be eliminated
-                                dim(cd)= nc x 1, nc: number of condensed dof's
-    Returns:
-    
-        K1                      condensed stiffness matrix,
-                                dim(K1)= (nd-nc) x (nd-nc)
-        f1                      condensed load vector, dim(f1)= (nd-nc) x 1
+    Returns
+    -------
+    K1 : ndarray
+        Condensed stiffness matrix, shape (nd-nc, nd-nc).
+    f1 : ndarray
+        Condensed load vector, shape (nd-nc, 1).
     """
     nd = K.shape[0]
     
@@ -6153,20 +6207,29 @@ createdofs = create_dofs
 
 def coordxtr(edof, coords, dofs, nen=-1):
     """
-    Create element coordinate matrices ex, ey, ez from edof
-    coord and dofs matrices.
-    
-    Parameters:
-    
-        edof            [nel x (nen * nnd)], nnd = number of node dofs
-        coords          [ncoords x ndims],   ndims = node dimensions
-        dofs            [ncoords x nnd]
-        
-    Returns:
-    
-        ex              if ndims = 1
-        ex, ey          if ndims = 2
-        ex, ey, ez      if ndims = 3
+    Create element coordinate matrices ex, ey, ez from edof coord and dofs matrices.
+
+    Parameters
+    ----------
+    edof : array_like
+        Element topology array, shape (nel, nen * nnd), where nel is number of elements,
+        nen is number of element nodes, and nnd is number of node DOFs.
+    coords : array_like
+        Node coordinates array, shape (ncoords, ndims), where ncoords is number of coordinates
+        and ndims is node dimensions.
+    dofs : array_like
+        DOF array, shape (ncoords, nnd), where nnd is number of node DOFs.
+    nen : int, optional
+        Number of element nodes. If -1, calculated from edof and dofs.
+
+    Returns
+    -------
+    ex : ndarray
+        Element x-coordinates, returned if ndims = 1.
+    ex, ey : tuple of ndarray
+        Element x and y coordinates, returned if ndims = 2.
+    ex, ey, ez : tuple of ndarray
+        Element x, y and z coordinates, returned if ndims = 3.
     """
 
     # Create dictionary with dof indices
@@ -6237,23 +6300,25 @@ coord_extract = coordxtr
 
 def hooke(ptype, E, v):
     """
-    Calculate the material matrix for a linear
-    elastic and isotropic material.
-    
-    Parameters:
-    
-        ptype=  1:  plane stress
-                2:  plane strain
-                3:  axisymmetry
-                4:  three dimensional
-    
-        E           Young's modulus
-        v           Poissons const.
-        
-    Returns:
-    
-        D           material matrix
-    
+    Calculate the material matrix for a linear elastic and isotropic material.
+
+    Parameters
+    ----------
+    ptype : int
+        Analysis type:
+        1 : plane stress
+        2 : plane strain
+        3 : axisymmetry
+        4 : three dimensional
+    E : float
+        Young's modulus.
+    v : float
+        Poisson's ratio.
+
+    Returns
+    -------
+    D : ndarray
+        Material matrix.
     """
 
     if ptype == 1:
@@ -6294,23 +6359,22 @@ def hooke(ptype, E, v):
 def effmises(es, ptype):
     """
     Calculate effective von mises stresses.
-    
-    Parameters:
-        
-        es
-    
-        ptype=  1:  plane stress
-                2:  plane strain
-                3:  axisymmetry
-                4:  three dimensional
-    
-       es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
-              [  ......              ]] one row for each element
-              
-    Returns:
-    
-        eseff  = [eseff_0 .. eseff_nel-1]
-    
+
+    Parameters
+    ----------
+    es : array_like
+        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
+    ptype : int
+        Analysis type:
+        1 : plane stress
+        2 : plane strain
+        3 : axisymmetry
+        4 : three dimensional
+
+    Returns
+    -------
+    eseff : ndarray
+        Effective stress array [eseff_0, ..., eseff_nel-1].
     """
 
     nel = np.size(es, 0)
