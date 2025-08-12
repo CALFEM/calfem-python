@@ -1,3 +1,12 @@
+# -*- coding: iso-8859-15 -*-
+"""
+Compatibility layer for NumPy matrix operations
+
+This module provides a compatibility layer to replace the deprecated np.matrix
+type in NumPy 2.0 and later versions with a custom MatrixCompat class.
+"""
+
+
 import numpy as np
 from numpy.linalg import inv
 import sys
@@ -7,6 +16,7 @@ class MatrixCompat:
     Compatibility layer to replace np.matrix in calfem-python for NumPy 2.0 support.
     
     This class mimics the behavior of np.matrix, particularly:
+    
     - Matrix multiplication with * operator
     - .I property for matrix inverse
     - .T property for matrix transpose
@@ -15,10 +25,12 @@ class MatrixCompat:
     
     def __init__(self, input_array):
         """
-        Initialize a MatrixCompat object
+        Initialize a MatrixCompat object.
         
-        Parameters:
-            input_array: Can be a MatrixCompat instance, numpy array, list, or other compatible type
+        Parameters
+        ----------
+        input_array : MatrixCompat, numpy.ndarray, list, or compatible type
+            Input data to create the matrix from.
         """
         if isinstance(input_array, MatrixCompat):
             self.array = input_array.array.copy()

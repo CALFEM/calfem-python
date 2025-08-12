@@ -8,6 +8,8 @@ Contains all the functions implementing visualisation routines.
 
 import visvis as vv
 
+print("This module is deprecated. Use vis_mpl instead.")
+
 from visvis.wibjects.colorWibjects import Colorbar
 from visvis import Colormapable
 from visvis.wobjects.textures import minmax

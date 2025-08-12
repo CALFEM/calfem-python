@@ -203,7 +203,59 @@ label = text
 
 
 def ce2vf(coords, edof, dofs_per_node, el_type):
-    """Duplicate code. Extracts verts, faces and verticesPerFace from input."""
+    """
+    Convert coordinates and element topology to vertices and faces for visualization.
+    Extracts vertices, faces and vertices per face from input data for use in 
+    visualization routines. Handles both 2D and 3D coordinate systems and various
+    element types including triangular, quadrilateral, tetrahedral and hexahedral
+    elements.
+
+    Parameters
+    ----------
+    coords : ndarray
+        Node coordinates array of shape (n_nodes, 2) for 2D or (n_nodes, 3) for 3D.
+        Contains the spatial coordinates of all nodes in the mesh.
+    edof : ndarray
+        Element degrees of freedom array of shape (n_elements, dofs_per_element).
+        Contains the connectivity information for each element.
+    dofs_per_node : int
+        Number of degrees of freedom per node. Used to extract node numbers
+        from the edof array.
+    el_type : int
+        Element type identifier:
+        - 2: Triangular elements
+        - 3: Quadrilateral elements  
+        - 4: Tetrahedral elements
+        - 5: Hexahedral elements
+        - 16: 8-node quadrilateral elements
+
+    Returns
+    -------
+    verts : ndarray
+        Vertex coordinates array of shape (n_nodes, 3). For 2D input, z-coordinates
+        are padded with zeros.
+    faces : ndarray
+        Face connectivity array of shape (n_faces, vertices_per_face) containing
+        node indices that define each face. For 3D elements, this decomposes
+        volume elements into their constituent faces.
+    vertices_per_face : int
+        Number of vertices per face (3 for triangular faces, 4 for quadrilateral faces).
+    is_3d : bool
+        Flag indicating whether the problem is 3D (True) or 2D (False).
+
+    Raises
+    ------
+    ValueError
+        If coords array doesn't have 2 or 3 columns, or if el_type is not supported.
+
+    Notes
+    -----
+    For 3D volume elements (tetrahedra and hexahedra), the function decomposes
+    each element into its constituent faces using predefined connectivity matrices.
+    The node ordering follows the Gmsh manual conventions.
+    For 8-node quadrilateral elements (el_type=16), only the first 4 corner nodes
+    are used to define the face.
+    """
 
     if np.shape(coords)[1] == 2:
         is_3d = False
@@ -265,27 +317,29 @@ def draw_mesh(
     """
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
-    Args:
-        coords:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
-        edof:
-            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
-        dofs_per_nodes:
-            Integer. Dofs per node.
-        el_type:
-            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-        axes:
-            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
-        axes_adjust:
-            Boolean. True if the view should be changed to show the whole model. Default True.
-        title:
-            String. Changes title of the figure. Default "Mesh".
-        color:
-            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
-        face_color:
-            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
-        filled:
-            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    
+    Parameters
+    ----------
+    coords : ndarray
+        An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+    edof : ndarray
+        An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+    dofs_per_nodes : int
+        Integer. Dofs per node.
+    el_type : int
+        Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+    axes : matplotlib.axes.Axes, optional
+        Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+    axes_adjust : bool, optional
+        Boolean. True if the view should be changed to show the whole model. Default True.
+    title : str, optional
+        String. Changes title of the figure. Default "Mesh".
+    color : tuple or str, optional
+        3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+    face_color : tuple or str, optional
+        3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
+    filled : bool, optional
+        Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
     """
 
     verts, faces, vertices_per_face, is_3d = ce2vf(coords, edof, dofs_per_node, el_type)
@@ -341,40 +395,30 @@ def draw_elements(
     """
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
-    Args:
-        coords:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
-        edof:
-            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
-        dofs_per_nodes:
-            Integer. Dofs per node.
-        el_type:
-            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-        axes:
-            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
-        axes_adjust:
-            Boolean. True if the view should be changed to show the whole model. Default True.
-        title:
-            String. Changes title of the figure. Default "Mesh".
-        color:
-            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
-        face_color:
-            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
-        filled:
-            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    
+    Parameters
+    ----------
+    ex : ndarray
+        Element x-coordinates array.
+    ey : ndarray
+        Element y-coordinates array.
+    title : str, optional
+        Changes title of the figure. Default "".
+    color : tuple or str, optional
+        Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+    face_color : tuple or str, optional
+        Color of the faces. Defaults to (0.8,0.8,0.8). Parameter filled must be True or faces will not be drawn at all.
+    node_color : tuple or str, optional
+        Color of the nodes. Defaults to black (0,0,0).
+    line_style : str, optional
+        Line style for drawing. Default "solid".
+    filled : bool, optional
+        Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    closed : bool, optional
+        Whether elements should be drawn as closed polygons. Default True.
+    show_nodes : bool, optional
+        Whether to show nodes as markers. Default False.
     """
-
-    # ex = [
-    #        [x1_1, x2_1, xn_1],
-    #        ...
-    #        [x1_m, x2_m, xn_m]
-    #      ]
-
-    # ex = [
-    #        [y1_1, y2_1, yn_1],
-    #        ...
-    #        [y1_m, y2_m, yn_m]
-    #      ]
 
     if ex.ndim != 1:
         nnodes = ex.shape[1]
@@ -432,40 +476,24 @@ def draw_node_circles(
     """
     Draws wire mesh of model in 2D or 3D. Returns the Mesh object that represents
     the mesh.
-    Args:
-        coords:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
-        edof:
-            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
-        dofs_per_nodes:
-            Integer. Dofs per node.
-        el_type:
-            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-        axes:
-            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
-        axes_adjust:
-            Boolean. True if the view should be changed to show the whole model. Default True.
-        title:
-            String. Changes title of the figure. Default "Mesh".
-        color:
-            3-tuple or char. Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
-        face_color:
-            3-tuple or char. Color of the faces. Defaults to white (1,1,1). Parameter filled must be True or faces will not be drawn at all.
-        filled:
-            Boolean. Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    
+    Parameters
+    ----------
+    ex : ndarray
+        Element x-coordinates array.
+    ey : ndarray
+        Element y-coordinates array.
+    title : str, optional
+        Changes title of the figure. Default "".
+    color : tuple or str, optional
+        Color of the wire. Defaults to black (0,0,0). Can also be given as a character in 'rgbycmkw'.
+    face_color : tuple or str, optional
+        Color of the faces. Defaults to (0.8,0.8,0.8). Parameter filled must be True or faces will not be drawn at all.
+    filled : bool, optional
+        Faces will be drawn if True. Otherwise only the wire is drawn. Default False.
+    marker_type : str, optional
+        Marker type for drawing. Default "o".
     """
-
-    # ex = [
-    #        [x1_1, x2_1, xn_1],
-    #        ...
-    #        [x1_m, x2_m, xn_m]
-    #      ]
-
-    # ex = [
-    #        [y1_1, y2_1, yn_1],
-    #        ...
-    #        [y1_m, y2_m, yn_m]
-    #      ]
 
     nel = ex.shape[0]
     nnodes = ex.shape[1]
@@ -512,36 +540,32 @@ def draw_element_values(
     """
     Draws scalar element values in 2D or 3D.
 
-    Args:
-        values:
-            An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
-
-        coords:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
-
-        edof:
-            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
-
-        dofs_per_node:
-            Integer. Dofs per node.
-
-        el_type:
-            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-
-        displacements:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z displacements of node i.
-
-        draw_elements:
-            Boolean. True if mesh wire should be drawn. Default True.
-
-        draw_undisplaced_mesh:
-            Boolean. True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
-
-        magnfac:
-            Float. Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
-
-        title:
-            String. Changes title of the figure. Default "Element Values".
+    Parameters
+    ----------
+    values : array_like
+        An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
+    coords : array_like
+        An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+    edof : array_like
+        An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+    dofs_per_node : int
+        Dofs per node.
+    el_type : int
+        Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+    displacements : array_like, optional
+        An N-by-2 or N-by-3 array. Row i contains the x,y,z displacements of node i.
+    draw_elements : bool, optional
+        True if mesh wire should be drawn. Default True.
+    draw_undisplaced_mesh : bool, optional
+        True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
+    magnfac : float, optional
+        Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
+    title : str, optional
+        Changes title of the figure. Default "Element Values".
+    color : tuple or str, optional
+        Color of the wire.
+    node_color : tuple or str, optional
+        Color of the nodes.
     """
 
     if draw_undisplaced_mesh:
@@ -578,9 +602,6 @@ def draw_element_values(
     else:
         pc = quatplot(y, z, faces, values, ax=ax, edgecolor=None)
 
-    # pc = quatplot(y,z, np.asarray(edof-1), values, ax=ax,
-    #         edgecolor="crimson", cmap="rainbow")
-
     set_mappable(pc)
 
     if title != None:
@@ -604,27 +625,28 @@ def draw_displacements(
     Draws scalar element values in 2D or 3D. Returns the world object
     elementsWobject that represents the mesh.
 
-    Args:
-        ev:
-            An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
-        coords:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
-        edof:
-            An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
-        dofs_per_node:
-            Integer. Dofs per node.
-        el_type:
-            Integer. Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-        displacements:
-            An N-by-2 or N-by-3 array. Row i contains the x,y,z  displacements of node i.
-        axes:
-            Matlotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
-        draw_undisplaced_mesh:
-            Boolean. True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
-        magnfac:
-            Float. Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
-        title:
-            String. Changes title of the figure. Default "Element Values".
+    Parameters
+    ----------
+    ev : array_like
+        An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
+    coords : array_like
+        An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+    edof : array_like
+        An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
+    dofs_per_node : int
+        Dofs per node.
+    el_type : int
+        Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
+    displacements : array_like
+        An N-by-2 or N-by-3 array. Row i contains the x,y,z  displacements of node i.
+    axes : matplotlib.axes.Axes
+        Matlotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
+    draw_undisplaced_mesh : bool
+        True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
+    magnfac : float
+        Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
+    title : str
+        Changes title of the figure. Default "Element Values".
     """
 
     if draw_undisplaced_mesh:
@@ -683,7 +705,36 @@ def draw_displacements(
 
 
 def create_ordered_polys(geom, N=10):
-    """Creates ordered polygons from the geometry definition"""
+    """
+    Creates ordered polygons from the geometry definition.
+    This function processes geometry surfaces by converting their constituent curves
+    into ordered polygon representations. Each curve is discretized into N points
+    based on its type (Spline, BSpline, Circle, or Ellipse), and the resulting
+    polygons are ordered such that consecutive curves share endpoints.
+
+    Parameters
+    ----------
+    geom : object
+        Geometry object containing surfaces and curves definitions. Must have
+        'surfaces' and 'curves' attributes, and a 'get_point_coords' method.
+    N : int, optional
+        Number of points to use for curve discretization (default is 10).
+        Note: This parameter is overridden to 10 within the function.
+    
+    Returns
+    -------
+    list of numpy.ndarray
+        List of ordered polygons, where each polygon is a numpy array of shape
+        (n_points, 3) representing the coordinates of points forming the polygon
+        boundary. Each polygon corresponds to a surface in the geometry.
+    
+    Notes
+    -----
+    - The function assumes curves can be connected end-to-end to form closed polygons
+    - Curves are automatically flipped if needed to maintain proper ordering
+    - Only processes the outer boundary of surfaces (holes are ignored)
+    - Supported curve types: Spline, BSpline, Circle, Ellipse
+    """
 
     N = 10
 
@@ -732,6 +783,37 @@ def create_ordered_polys(geom, N=10):
 
 
 def draw_ordered_polys(o_polys):
+    """
+    Draw ordered polygons on the current matplotlib axes.
+
+    This function takes a collection of ordered polygons and renders them as patches
+    on the current matplotlib axes. Each polygon is drawn with an orange face color
+    and a line width of 1.
+
+    Parameters
+    ----------
+    o_polys : array-like
+        A collection of polygons where each polygon is represented as a numpy array
+        with shape (n_vertices, 2) or (n_vertices, 3+). Only the first two columns
+        (x, y coordinates) are used for drawing.
+
+    Notes
+    -----
+    - The function uses the current matplotlib axes (plt.gca())
+    - All polygons are drawn with orange face color and line width of 1
+    - Only the first two columns of each polygon array are used for coordinates
+    - The function requires matplotlib.pyplot, matplotlib.path, and matplotlib.patches
+      to be imported as plt, mpp, and patches respectively
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> # Create a simple triangle
+    >>> triangle = np.array([[0, 0], [1, 0], [0.5, 1], [0, 0]])
+    >>> draw_ordered_polys([triangle])
+    >>> plt.show()
+    """
     for poly in o_polys:
         ax = plt.gca()
         path = mpp.Path(poly[:, 0:2])
@@ -740,6 +822,28 @@ def draw_ordered_polys(o_polys):
 
 
 def point_in_geometry(o_polys, point):
+    """
+    Check if a point is inside any of the given polygons.
+
+    Parameters
+    ----------
+    o_polys : list
+        List of polygon arrays, where each polygon is represented as a numpy array
+        with coordinates in the first two columns (x, y coordinates).
+    point : array-like
+        A point represented as [x, y] coordinates to test for containment.
+
+    Returns
+    -------
+    bool
+        True if the point is inside any of the polygons, False otherwise.
+
+    Notes
+    -----
+    This function uses matplotlib's Path.contains_points() method to perform
+    the point-in-polygon test. The function returns True as soon as the point
+    is found to be inside any polygon (short-circuit evaluation).
+    """
     for poly in o_polys:
         path = mpp.Path(poly[:, 0:2])
         inside = path.contains_points([point])
@@ -751,8 +855,42 @@ def point_in_geometry(o_polys, point):
 
 
 def topo_to_tri(edof):
-    """Converts 2d element topology to triangle topology to be used
-    with the matplotlib functions tricontour and tripcolor."""
+    """
+    Convert element topology to triangular elements for visualization.
+    This function converts different element topologies (triangular, quadrilateral, 
+    and 8-node elements) into triangular elements suitable for mesh visualization 
+    and plotting.
+
+    Parameters
+    ----------
+    edof : numpy.ndarray
+        Element topology array where each row represents an element and columns 
+        represent the node indices. Supported shapes:
+        - (n, 3): Triangular elements (returned as-is)
+        - (n, 4): Quadrilateral elements (split into 2 triangles each)
+        - (n, 8): 8-node elements (split into 6 triangles each)
+
+    Returns
+    -------
+    numpy.ndarray
+        Triangular element topology array with shape (m, 3) where m depends 
+        on the input topology:
+        - Triangular input: m = n (no change)
+        - Quadrilateral input: m = 2*n
+        - 8-node input: m = 6*n
+
+    Raises
+    ------
+    Error
+        If the element topology is not supported (i.e., edof.shape[1] is not 3, 4, or 8).
+
+    Notes
+    -----
+    - For quadrilateral elements, the splitting pattern creates two triangles 
+      using nodes [0,1,2] and [2,3,0]
+    - For 8-node elements, the splitting creates 6 triangles to represent 
+      the element faces for 3D visualization
+    """
 
     if edof.shape[1] == 3:
         return edof
@@ -800,8 +938,46 @@ def draw_nodal_values_contourf(
     el_type=None,
     draw_elements=False,
 ):
-    """Draws element nodal values as filled contours. Element topologies
-    supported are triangles, 4-node quads and 8-node quads."""
+    """
+    Draw filled contour plot of nodal values on a finite element mesh.
+    This function creates a filled contour plot (tricontourf) to visualize scalar values
+    at the nodes of a finite element mesh. The contours are interpolated over triangular
+    elements derived from the mesh topology.
+    Parameters
+    ----------
+    values : array_like
+        Nodal values to be plotted as contours. Should have one value per node.
+    coords : array_like
+        Node coordinates array with shape (n_nodes, 2) where each row contains
+        [x, y] coordinates of a node.
+    edof : array_like
+        Element topology array defining the connectivity between elements and
+        degrees of freedom/nodes.
+    levels : int, optional
+        Number of contour levels to draw. Default is 12.
+    title : str, optional
+        Title for the plot. If None, no title is set. Default is None.
+    dofs_per_node : int, optional
+        Number of degrees of freedom per node. Required if draw_elements is True.
+        Default is None.
+    el_type : str, optional
+        Element type identifier. Required if draw_elements is True. Default is None.
+    draw_elements : bool, optional
+        Whether to overlay the mesh elements on the contour plot. If True,
+        dofs_per_node and el_type must be specified. Default is False.
+    Notes
+    -----
+    - The function uses matplotlib's tricontourf for creating filled contours
+    - Element topology is converted to triangular connectivity using topo_to_tri
+    - The plot aspect ratio is set to 'equal' for proper geometric representation
+    - If draw_elements is True but required parameters are missing, an info message is displayed
+    Examples
+    --------
+    >>> coords = np.array([[0, 0], [1, 0], [0.5, 1]])
+    >>> edof = np.array([[1, 2, 3]])
+    >>> values = np.array([1.0, 2.0, 1.5])
+    >>> draw_nodal_values_contourf(values, coords, edof, levels=10, title="Temperature")
+    """
 
     edof_tri = topo_to_tri(edof)
 
@@ -831,10 +1007,38 @@ def draw_nodal_values_contour(
     dofs_per_node=None,
     el_type=None,
     draw_elements=False,
-):
-    """Draws element nodal values as filled contours. Element topologies
-    supported are triangles, 4-node quads and 8-node quads."""
+):      
+    """
+    Draw contour plot of nodal values on a triangulated mesh.
 
+    Parameters
+    ----------
+    values : array_like
+        Nodal values to be plotted as contours.
+    coords : array_like
+        Coordinates of nodes in the mesh, shape (n_nodes, 2).
+    edof : array_like
+        Element degrees of freedom connectivity matrix.
+    levels : int, optional
+        Number of contour levels to draw, default is 12.
+    title : str, optional
+        Title for the plot, default is None.
+    dofs_per_node : int, optional
+        Number of degrees of freedom per node, required if draw_elements is True.
+    el_type : str, optional
+        Element type, required if draw_elements is True.
+    draw_elements : bool, optional
+        Whether to draw the mesh elements on top of contours, default is False.
+
+    Notes
+    -----
+    The function creates a triangulated contour plot using matplotlib's tricontour.
+    If draw_elements is True, both dofs_per_node and el_type must be specified
+    to draw the mesh overlay.
+
+    The plot uses equal aspect ratio and displays contours of the provided
+    nodal values interpolated over the triangulated mesh.
+    """
     edof_tri = topo_to_tri(edof)
 
     ax = plt.gca()
@@ -862,9 +1066,46 @@ def draw_nodal_values_shaded(
     dofs_per_node=None,
     el_type=None,
     draw_elements=False,
-):
-    """Draws element nodal values as shaded triangles. Element topologies
-    supported are triangles, 4-node quads and 8-node quads."""
+):        
+    """
+    Draw shaded contour plot of nodal values using triangular interpolation.
+    This function creates a shaded contour plot where nodal values are interpolated
+    across triangular elements using Gouraud shading. The visualization shows smooth
+    color gradients representing the variation of values across the mesh.
+    Parameters
+    ----------
+    values : array-like
+        Nodal values to be plotted. Should have one value per node.
+    coords : array-like
+        Node coordinates as a 2D array with shape (n_nodes, 2) where each row
+        contains [x, y] coordinates.
+    edof : array-like
+        Element degrees of freedom connectivity matrix. Each row defines the
+        nodes that belong to an element.
+    title : str, optional
+        Title for the plot. If None, no title is displayed.
+    dofs_per_node : int, optional
+        Number of degrees of freedom per node. Required if draw_elements is True.
+    el_type : str, optional
+        Element type identifier. Required if draw_elements is True.
+    draw_elements : bool, default False
+        If True, overlays the mesh elements on the contour plot. Requires
+        dofs_per_node and el_type to be specified.
+    Notes
+    -----
+    - The function uses matplotlib's tripcolor with Gouraud shading for smooth
+      interpolation between nodal values
+    - Element topology is converted to triangular format using topo_to_tri()
+    - If draw_elements is True but dofs_per_node or el_type are not provided,
+      an informational message is displayed and the mesh is not drawn
+    - The plot aspect ratio is automatically set to equal for proper visualization
+    Examples
+    --------
+    >>> coords = np.array([[0, 0], [1, 0], [1, 1], [0, 1]])
+    >>> edof = np.array([[1, 2, 3], [1, 3, 4]])
+    >>> values = np.array([0.0, 1.0, 1.5, 0.5])
+    >>> draw_nodal_values_shaded(values, coords, edof, title="Temperature Distribution")
+    """
 
     edof_tri = topo_to_tri(edof)
 
@@ -901,26 +1142,30 @@ def draw_geometry(
     axes=None,
 ):
     """
-    Draws the geometry (points and curves) in geoData
-    Args:
-        geoData:
-            GeoData object. Geodata contains geometric information of the model.
-        axes:
-            Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
-        axes_adjust:
-            Boolean. If True the view will be changed to show the whole model. Default True.
-        draw_points:
-            Boolean. If True points will be drawn.
-        label_points:
-            Boolean. If True Points will be labeled. The format is: ID[marker]. If a point has marker==0 only the ID is written.
-        label_curves:
-            Boolean. If True Curves will be labeled. The format is: ID(elementsOnCurve)[marker].
-        font_size:
-            Integer. Size of the text in the text labels. Default 11.
-        N:
-            Integer. The number of discrete points per curve segment. Default 20. Increase for smoother curves. Decrease for better performance.
-        rel_margin:
-            Extra spacing between geometry and axis
+    Draws the geometry (points and curves) in geoData.
+
+    Parameters
+    ----------
+    geometry : object
+        GeoData object. Geodata contains geometric information of the model.
+    draw_points : bool, optional
+        If True points will be drawn. Default True.
+    label_points : bool, optional
+        If True Points will be labeled. The format is: ID[marker]. If a point has marker==0 only the ID is written. Default True.
+    label_curves : bool, optional
+        If True Curves will be labeled. The format is: ID(elementsOnCurve)[marker]. Default True.
+    title : str, optional
+        Title for the plot. Default None.
+    font_size : int, optional
+        Size of the text in the text labels. Default 11.
+    N : int, optional
+        The number of discrete points per curve segment. Default 20. Increase for smoother curves. Decrease for better performance.
+    rel_margin : float, optional
+        Extra spacing between geometry and axis. Default 0.05.
+    draw_axis : bool, optional
+        Whether to draw the axis frame. Default False.
+    axes : matplotlib.axes.Axes, optional
+        Matplotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist. Default None.
     """
 
     if axes is None:
@@ -1188,35 +1433,30 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
 
 def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
     """
-    eldraw2(ex,ey,plotpar,elnum)
-    eldraw2(ex,ey,plotpar)
-    eldraw2(ex,ey)
+    Draw the undeformed 2D mesh for a number of elements of the same type.
 
-     PURPOSE
-       Draw the undeformed 2D mesh for a number of elements of
-       the same type. Supported elements are:
+    Supported elements are:
+    1) -> bar element              2) -> beam el.
+    3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
+    5) -> 8-node isopar. element
 
-       1) -> bar element              2) -> beam el.
-       3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
-       5) -> 8-node isopar. elemen
+    Parameters
+    ----------
+    ex, ey : array_like
+        Element node coordinates arrays where nen is number of element nodes
+        and nel is number of elements.
+    plotpar : list, optional
+        Plot parameters [linetype, linecolor, nodemark]. Default [1, 2, 1].
+        
+        - linetype: 1=solid, 2=dashed, 3=dotted
+        - linecolor: 1=black, 2=blue, 3=magenta, 4=red  
+        - nodemark: 0=no mark, 1=circle, 2=star
+    elnum : array_like, optional
+        Element numbers, typically edof(:,1) - the first column in the topology matrix.
 
-     INPUT
-        ex,ey:.......... nen:   number of element nodes
-                         nel:   number of elements
-        plotpar=[ linetype, linecolor, nodemark]
-
-                 linetype=1 -> solid    linecolor=1 -> black
-                          2 -> dashed             2 -> blue
-                          3 -> dotted             3 -> magenta
-                                                  4 -> red
-
-                 nodemark=1 -> circle
-                          2 -> star
-                          0 -> no mark
-
-        elnum=edof(:,1) ; i.e. the first column in the topology matrix
-
-        Rem. Default is solid white lines with circles at nodes.
+    Notes
+    -----
+    Default is solid white lines with circles at nodes.
     """
 
     if ex.shape == ey.shape:
@@ -1277,36 +1517,35 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
 
 def scalfact2(ex, ey, ed, rat=0.2):
     """
-    [sfac]=scalfact2(ex,ey,ed,rat)
-    [sfac]=scalfact2(ex,ey,ed)
-    -------------------------------------------------------------
-    PURPOSE
     Determine scale factor for drawing computational results, such as
     displacements, section forces or flux.
 
-    INPUT
-        ex,ey:  element node coordinates
-
-        ed:     element displacement matrix or section force matrix
-
-        rat: relation between illustrated quantity and element size.
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates.
+    ey : array_like
+        Element node y-coordinates.
+    ed : array_like
+        Element displacement matrix or section force matrix.
+    rat : float, optional
+        Relation between illustrated quantity and element size.
         If not specified, 0.2 is used.
 
-    -------------------------------------------------------------
+    Returns
+    -------
+    float
+        Scale factor for drawing.
 
+    Notes
+    -----
     LAST MODIFIED: O Dahlblom  2004-09-15
                    J Lindemann 2021-12-29 (Python)
 
     Copyright (c)  Division of Structural Mechanics and
                    Division of Solid Mechanics.
                    Lund University
-    -------------------------------------------------------------
     """
-
-    #  if ~((nargin==3)|(nargin==4))
-    #     disp('??? Wrong number of input arguments!')
-    #     return
-    #  end
 
     if ex.shape == ey.shape:
         if ex.ndim != 1:
@@ -1350,31 +1589,33 @@ def eliso2_mpl(ex, ey, ed):
 
 def pltstyle(plotpar):
     """
-    -------------------------------------------------------------
-     PURPOSE
-       Define define linetype,linecolor and markertype character codes.
+    Define linetype, linecolor and markertype character codes.
 
-     INPUT
-        plotpar=[ linetype, linecolor, nodemark ]
+    Parameters
+    ----------
+    plotpar : list
+        Plot parameters [linetype, linecolor, nodemark]
+        
+        - linetype : int
+            1 -> solid, 2 -> dashed, 3 -> dotted
+        - linecolor : int  
+            1 -> black, 2 -> blue, 3 -> magenta, 4 -> red
+        - nodemark : int
+            1 -> circle, 2 -> star, 0 -> no mark
 
-                 linetype=1 -> solid    linecolor=1 -> black
-                          2 -> dashed             2 -> blue
-                          3 -> dotted             3 -> magenta
-                                                  4 -> red
+    Returns
+    -------
+    s1 : str
+        Linetype and color for mesh lines
+    s2 : str
+        Type and color for node markers
 
-                 nodemark=1 -> circle
-                          2 -> star
-                          0 -> no mark
-     OUTPUT
-         s1: linetype and color for mesh lines
-         s2: type and color for node markers
-    -------------------------------------------------------------
-
-     LAST MODIFIED: Ola Dahlblom 2004-09-15
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Notes
+    -----
+    LAST MODIFIED: Ola Dahlblom 2004-09-15
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
     """
     if type(plotpar) != list:
         raise TypeError("plotpar should be a list.")
@@ -1420,31 +1661,37 @@ def pltstyle(plotpar):
 
 def pltstyle2(plotpar):
     """
-    -------------------------------------------------------------
-     PURPOSE
-       Define define linetype,linecolor and markertype character codes.
+    Define linetype, linecolor and markertype character codes.
 
-     INPUT
-        plotpar=[ linetype, linecolor, nodemark ]
+    Parameters
+    ----------
+    plotpar : list
+        Plot parameters [linetype, linecolor, nodemark]
+        
+        - linetype : int
+            1 -> solid, 2 -> dashed, 3 -> dotted
+        - linecolor : int  
+            1 -> black, 2 -> blue, 3 -> magenta, 4 -> red
+        - nodemark : int
+            1 -> circle, 2 -> star, 0 -> no mark
 
-                 linetype=1 -> solid    linecolor=1 -> black
-                          2 -> dashed             2 -> blue
-                          3 -> dotted             3 -> magenta
-                                                  4 -> red
+    Returns
+    -------
+    line_color : tuple
+        RGB color tuple for mesh lines
+    line_style : str or tuple
+        Line style for mesh lines
+    node_color : tuple
+        RGB color tuple for node markers
+    node_type : str
+        Marker type for nodes
 
-                 nodemark=1 -> circle
-                          2 -> star
-                          0 -> no mark
-     OUTPUT
-         s1: linetype and color for mesh lines
-         s2: type and color for node markers
-    -------------------------------------------------------------
-
-     LAST MODIFIED: Ola Dahlblom 2004-09-15
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Notes
+    -----
+    LAST MODIFIED: Ola Dahlblom 2004-09-15
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
     """
 
     cfc.check_list_array(plotpar, "plotpar needs to be a list or an array of 3 values.")
@@ -1497,45 +1744,50 @@ def pltstyle2(plotpar):
 
 def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
     """
-    eldisp2(ex,ey,ed,plotpar,sfac)
-    [sfac]=eldisp2(ex,ey,ed,plotpar)
-    [sfac]=eldisp2(ex,ey,ed)
-    -------------------------------------------------------------
-     PURPOSE
-       Draw the deformed 2D mesh for a number of elements of
-       the same type. Supported elements are:
+    Draw the deformed 2D mesh for a number of elements of the same type.
+    
+    Supported elements are:
+    - 1: bar element
+    - 2: beam element  
+    - 3: triangular 3 node element
+    - 4: quadrilateral 4 node element
+    - 5: 8-node isoparametric element
 
-               1) -> bar element              2) -> beam el.
-               3) -> triangular 3 node el.    4) -> quadrilateral 4 node el.
-               5) -> 8-node isopar. element
-      INPUT
-        ex,ey:.......... nen:   number of element nodes
-                         nel:   number of elements
-        ed:     element displacement matrix
+    Parameters
+    ----------
+    ex : array_like
+        Element x-coordinates array where nen is number of element nodes
+        and nel is number of elements.
+    ey : array_like
+        Element y-coordinates array where nen is number of element nodes
+        and nel is number of elements.
+    ed : array_like
+        Element displacement matrix.
+    plotpar : list, optional
+        Plot parameters [linetype, linecolor, nodemark]. Default [2, 1, 1].
+        
+        - linetype: 1=solid, 2=dashed, 3=dotted
+        - linecolor: 1=black, 2=blue, 3=magenta, 4=red
+        - nodemark: 1=circle, 2=star, 0=no mark
+    sfac : float, optional
+        Scale factor for displacements. If None, auto magnification is used.
 
-        plotpar=[  linetype, linecolor, nodemark]
+    Returns
+    -------
+    float or None
+        Scale factor for displacements when sfac is None.
 
-                 linetype=1 -> solid    linecolor=1 -> black
-                          2 -> dashed             2 -> blue
-                          3 -> dotted             3 -> magenta
-                                                  4 -> red
-                 nodemark=1 -> circle
-                          2 -> star
-                          0 -> no mark
+    Notes
+    -----
+    Default if sfac and plotpar is left out is auto magnification
+    and dashed black lines with circles at nodes -> plotpar=[2 1 1]
 
-        sfac:  scale factor for displacements
+    LAST MODIFIED: O Dahlblom 2004-10-01
+                   J Lindemann 2021-12-30 (Python)
 
-        Rem. Default if sfac and plotpar is left out is auto magnification
-             and dashed black lines with circles at nodes -> plotpar=[2 1 1]
-    -------------------------------------------------------------
-
-     LAST MODIFIED: O Dahlblom 2004-10-01
-                    J Lindemann 2021-12-30 (Python)
-
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
     """
 
     if ex.shape == ey.shape:
@@ -1739,45 +1991,42 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
 
 def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
     """
-        dispbeam2(ex,ey,edi,plotpar,sfac)
-        [sfac]=dispbeam2(ex,ey,edi)
-        [sfac]=dispbeam2(ex,ey,edi,plotpar)
-    ------------------------------------------------------------------------
-        PURPOSE
-        Draw the displacement diagram for a two dimensional beam element.
+    Draw the displacement diagram for a two dimensional beam element.
 
-        INPUT:   ex = [ x1 x2 ]
-                ey = [ y1 y2 ]	element node coordinates.
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ey : array_like
+        Element node coordinates [y1, y2].
+    edi : array_like
+        Matrix containing the displacements in Nbr evaluation points along the beam.
+        Shape: [[u1, v1], [u2, v2], ...].
+    plotpar : list, optional
+        Plot parameters [linetype, linecolour, nodemark]. Default [2, 1, 1].
+        
+        - linetype: 1=solid, 2=dashed, 3=dotted
+        - linecolour: 1=black, 2=blue, 3=magenta, 4=red
+        - nodemark: 0=no mark, 1=circle, 2=star, 3=point
+    sfac : float, optional
+        Scale factor for displacements. If None, auto magnification is used.
 
-                edi = [ u1 v1;
-                       u2 v2;
-                                 .....] 	matrix containing the displacements
-                                              in Nbr evaluation points along the beam.
+    Returns
+    -------
+    float or None
+        Scale factor for displacements when sfac is None.
 
-                plotpar=[linetype, linecolour, nodemark]
+    Notes
+    -----
+    Default if sfac and plotpar is left out is auto magnification
+    and dashed black lines with circles at nodes -> plotpar=[1 1 1]
 
-                         linetype=1 -> solid   linecolour=1 -> black
-                                  2 -> dashed             2 -> blue
-                                  3 -> dotted             3 -> magenta
-                                                         4 -> red
-                         nodemark=0 -> no mark
-                                  1 -> circle
-                                  2 -> star
-                                  3 -> point
+    LAST MODIFIED: O Dahlblom  2015-11-18
+                   O Dahlblom  2023-01-31 (Python)
 
-                         sfac = [scalar] scale factor for displacements.
-
-                Rem. Default if sfac and plotpar is left out is auto magnification
-               and dashed black lines with circles at nodes -> plotpar=[1 1 1]
-    ------------------------------------------------------------------------
-
-        LAST MODIFIED: O Dahlblom  2015-11-18
-                       O Dahlblom  2023-01-31 (Python)
-
-        Copyright (c)  Division of Structural Mechanics and
-                       Division of Solid Mechanics.
-                       Lund University
-    ------------------------------------------------------------------------
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
     """
     if ex.shape != ey.shape:
         raise ValueError("Check size of ex, ey dimensions.")
@@ -1827,45 +2076,41 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
 
 def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
     """
-    secforce2(ex,ey,es,plotpar,sfac)
-    secforce2(ex,ey,es,plotpar,sfac,eci)
-    [sfac]=secforce2(ex,ey,es)
-    [sfac]=secforce2(ex,ey,es,plotpar)
-    --------------------------------------------------------------------------
-    PURPOSE:
     Draw section force diagram for a two dimensional bar or beam element.
 
-    INPUT:  ex = [ x1 x2 ]
-                ey = [ y1 y2 ]	element node coordinates.
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ey : array_like
+        Element node coordinates [y1, y2].
+    es : array_like
+        Vector containing the section force in Nbr evaluation points along the element.
+        Shape: [S1, S2, ...].
+    plotpar : list, optional
+        Plot parameters [linecolour, elementcolour]. Default [2, 1].
+        
+        - linecolour: 1=black, 2=blue, 3=magenta, 4=red
+        - elementcolour: 1=black, 2=blue, 3=magenta, 4=red
+    sfac : float, optional
+        Scale factor for section force diagrams. If None, auto scaling is used.
+    eci : array_like, optional
+        Local x-coordinates of the evaluation points (Nbr). If not given, 
+        the evaluation points are assumed to be uniformly distributed.
 
-                es = [ S1;
-                   S2;
-                        ... ] 	vector containing the section force
-                                        in Nbr evaluation points along the element.
+    Returns
+    -------
+    float or None
+        Scale factor for section forces when sfac is None.
 
-            plotpar=[linecolour, elementcolour]
-
-                linecolour=1 -> black      elementcolour=1 -> black
-                           2 -> blue                     2 -> blue
-                           3 -> magenta                  3 -> magenta
-                           4 -> red                       4 -> red
-
-                sfac = [scalar]	scale factor for section force diagrams.
-
-            eci = [  x1;
-                     x2;
-                   ... ]  local x-coordinates of the evaluation points (Nbr).
-                          If not given, the evaluation points are assumed to be uniformly
-                          distributed
-    --------------------------------------------------------------------------
-
+    Notes
+    -----
     LAST MODIFIED: O Dahlblom  2019-12-16
                    O Dahlblom  2023-01-31 (Python)
 
     Copyright (c)  Division of Structural Mechanics and
                    Division of Solid Mechanics.
                    Lund University
-    --------------------------------------------------------------------------
     """
     if ex.shape != ey.shape:
         raise ValueError("Check size of ex, ey dimensions.")
@@ -1955,33 +2200,32 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
 
 def scalgraph2(sfac, magnitude, plotpar=2):
     """
-    scalgraph2(sfac, magnitude, plotpar)
-    scalgraph2(sfac, magnitude)
-    -------------------------------------------------------------
-    PURPOSE
-    Draw a graphic scale
+    Draw a graphic scale.
 
-    INPUT:  sfac = [scalar]	scale factor.
+    Parameters
+    ----------
+    sfac : float
+        Scale factor.
+    magnitude : array_like
+        The graphic scale has a length equivalent to Ref and starts at 
+        coordinates (x,y). Can be:
+        - [Ref] : scale reference, starts at (0, -0.5)
+        - [Ref, x, y] : scale reference with starting coordinates
+    plotpar : int, optional
+        Line color. Default is 2.
+        - 1 : black
+        - 2 : blue  
+        - 3 : magenta
+        - 4 : red
 
-            magnitude = [Ref x y]	The graphic scale has a length equivalent
-                to Ref and starts at coordinates (x,y).
-                If no coordinates are given the starting
-            point will be (0,-0.5).
+    Notes
+    -----
+    LAST MODIFIED: O Dahlblom  2015-12-02
+                   O Dahlblom  2023-01-23 (Python)
 
-            plotpar=[linecolor]
-                linecolor=1 -> black
-                2 -> blue
-                3 -> magenta
-                4 -> red
-    -------------------------------------------------------------
-
-     LAST MODIFIED: O Dahlblom  2015-12-02
-                    O Dahlblom  2023-01-23 (Python)
-
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Copyright (c)  Division of Structural Mechanics and
+                   Division of Solid Mechanics.
+                   Lund University
     """
     cols = len(magnitude)
     if cols != 1 and cols != 3:

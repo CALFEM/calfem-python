@@ -1,5 +1,8 @@
 #!/bin/env python
 # -*- coding: iso-8859-15 -*-
+"""
+This is a utility module for the CALFEM Python library. It contains various utility functions that is used throughout the library. It includes functions for reading and writing files, applying boundary conditions, displaying messages, and exporting data in different formats.
+"""
 
 import os
 import sys
@@ -258,21 +261,28 @@ def apply_bc(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     Apply boundary condition to bcPresc and bcVal matrices. For 2D problems
     with 2 dofs per node.
     
-    Parameters:
-    
-        boundaryDofs        Dictionary with boundary dofs.
-        bcPresc             1-dim integer array containing prescribed dofs.
-        bcVal               1-dim float array containing prescribed values.
-        marker              Boundary marker to assign boundary condition.
-        value               Value to assign boundary condition.
-                            If not given 0.0 is assigned.
-        dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y
+    Parameters
+    ----------
+    boundaryDofs : dict
+        Dictionary with boundary dofs.
+    bcPresc : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like
+        1-dim float array containing prescribed values.
+    marker : int
+        Boundary marker to assign boundary condition.
+    value : float, optional
+        Value to assign boundary condition.
+        If not given 0.0 is assigned.
+    dimension : int, optional
+        dimension to apply bc. 0 - all, 1 - x, 2 - y
 
-    Returns:
-
-        bcPresc             Updated 1-dim integer array containing prescribed dofs.
-        bcVal               Updated 1-dim float array containing prescribed values.
-                            
+    Returns
+    -------
+    bcPresc : array_like
+        Updated 1-dim integer array containing prescribed dofs.
+    bcVal : array_like
+        Updated 1-dim float array containing prescribed values.
     """
 
     if marker in boundaryDofs:
@@ -301,22 +311,29 @@ def apply_bc_3d(boundaryDofs, bcPrescr, bcVal, marker, value=0.0, dimension=0):
     Apply boundary condition to bcPresc and bcVal matrices. For 3D problems
     with 3 dofs per node.
     
-    Parameters:
-    
-        boundaryDofs        Dictionary with boundary dofs.
-        bcPresc             1-dim integer array containing prescribed dofs.
-        bcVal               1-dim float array containing prescribed values.
-        marker              Boundary marker to assign boundary condition.
-        value               Value to assign boundary condition.
-                            If not given 0.0 is assigned.
-        dimension           dimension to apply bc. 0 - all, 1 - x, 2 - y,
-                            3 - z
+    Parameters
+    ----------
+    boundaryDofs : dict
+        Dictionary with boundary dofs.
+    bcPrescr : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like
+        1-dim float array containing prescribed values.
+    marker : int
+        Boundary marker to assign boundary condition.
+    value : float, optional
+        Value to assign boundary condition.
+        If not given 0.0 is assigned.
+    dimension : int, optional
+        dimension to apply bc. 0 - all, 1 - x, 2 - y,
+        3 - z
 
-    Returns:
-
-        bcPresc             Updated 1-dim integer array containing prescribed dofs.
-        bcVal               Updated 1-dim float array containing prescribed values.
-                            
+    Returns
+    -------
+    bcPrescr : array_like
+        Updated 1-dim integer array containing prescribed dofs.
+    bcVal : array_like
+        Updated 1-dim float array containing prescribed values.
     """
 
     if marker in boundaryDofs:
@@ -341,6 +358,49 @@ applybc3D = apply_bc_3d
 
 
 def apply_bc_node(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
+    """
+    Apply boundary conditions to a specific node.
+    This function adds boundary condition prescriptions and values for a given node
+    to existing boundary condition arrays.
+
+    Parameters
+    ----------
+    nodeIdx : int
+        Index of the node to apply boundary conditions to.
+    dofs : array_like
+        Degrees of freedom array. Can be 1D (for single DOF per node) or 2D 
+        (for multiple DOFs per node).
+    bcPrescr : array_like
+        Existing array of prescribed boundary condition DOF indices.
+    bcVal : array_like
+        Existing array of prescribed boundary condition values.
+    value : float, optional
+        Value to prescribe for the boundary condition. Default is 0.0.
+    dimension : int, optional
+        Dimension/direction to apply BC. If 0, applies to all DOFs of the node.
+        If 1, 2, or 3, applies to specific dimension (1-indexed). Default is 0.
+    
+    Returns
+    -------
+    tuple of numpy.ndarray
+        A tuple containing:
+        - Updated prescribed DOF indices array (bcPrescr concatenated with new DOFs)
+        - Updated prescribed values array (bcVal concatenated with new values)
+
+    Notes
+    -----
+    When dimension=0, boundary conditions are applied to all degrees of freedom
+    for the specified node. When dimension is 1, 2, or 3, the boundary condition
+    is applied only to that specific dimension (using 1-based indexing).
+
+    Examples
+    --------
+    >>> # Apply BC to all DOFs of node 5 with value 0.0
+    >>> bc_dofs, bc_vals = apply_bc_node(5, dofs, [], [], 0.0, 0)
+    >>> 
+    >>> # Apply BC to x-direction (dimension 1) of node 10 with value 5.0
+    >>> bc_dofs, bc_vals = apply_bc_node(10, dofs, bc_dofs, bc_vals, 5.0, 1)
+    """
 
     if (dimension == 0):
         bcAdd = np.asarray(dofs[nodeIdx])
@@ -356,6 +416,38 @@ def apply_bc_node(nodeIdx, dofs, bcPrescr, bcVal, value=0.0, dimension=0):
 applybcnode = apply_bc_node
 
 def apply_force_node(nodeIdx, dofs, f, value=0.0, dimension=0):
+    """
+    Apply a force to a specific node in the finite element model.
+    This function adds a force value to the global force vector at the degrees of freedom
+    corresponding to a specified node. The force can be applied to all DOFs of the node
+    or to a specific dimension.
+    Parameters
+    ----------
+    nodeIdx : int
+        Index of the node where the force is to be applied.
+    dofs : array_like
+        Degrees of freedom array that maps nodes to their DOF indices in the global system.
+        Can be 1D (for single DOF per node) or 2D (for multiple DOFs per node).
+    f : array_like
+        Global force vector where the force will be added.
+    value : float, optional
+        Magnitude of the force to be applied. Default is 0.0.
+    dimension : int, optional
+        Specific dimension/DOF to apply the force to. If 0, applies to all DOFs of the node.
+        If 1 or higher, applies to the specified dimension (1-indexed). Default is 0.
+    Notes
+    -----
+    - When dimension=0, the force is applied to all DOFs of the node (assumes 1D dofs array)
+    - When dimension>=1, the force is applied to the specific dimension of the node
+      (assumes 2D dofs array with shape [node, dimension])
+    - The dimension parameter uses 1-based indexing (dimension=1 corresponds to first DOF)
+    Examples
+    --------
+    >>> # Apply force to all DOFs of node 5
+    >>> apply_force_node(5, dofs, f, value=100.0, dimension=0)
+    >>> # Apply force to x-direction (dimension 1) of node 3
+    >>> apply_force_node(3, dofs, f, value=50.0, dimension=1)
+    """
 
     if (dimension == 0):
         f[dofs[nodeIdx]] += value
@@ -462,20 +554,37 @@ applyTractionLinearElement = apply_traction_linear_element
 
 def apply_force_3d(boundaryDofs, f, marker, value=0.0, dimension=0):
     """
-    Apply boundary force to f matrix. The value is
-    added to all boundaryDofs defined by marker. Applicable
-    to 3D problems with 3 dofs per node.
-    
-    Parameters:
-    
-        boundaryDofs        Dictionary with boundary dofs.
-        f                   force matrix.
-        marker              Boundary marker to assign boundary condition.
-        value               Value to assign boundary condition.
-                            If not given 0.0 is assigned.
-        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y, 
-                            3 - z
-                            
+    Apply boundary force to f matrix for 3D problems.
+    The value is added to all boundaryDofs defined by marker. Applicable
+    to 3D problems with 3 degrees of freedom per node.
+    Parameters
+    ----------
+    boundaryDofs : dict
+        Dictionary with boundary degrees of freedom.
+    f : numpy.ndarray
+        Force matrix to be modified.
+    marker : int or str
+        Boundary marker to identify which boundary condition to apply.
+    value : float, optional
+        Value to add to the force matrix at specified boundary DOFs.
+        Default is 0.0.
+    dimension : int, optional
+        Dimension to apply force:
+        * 0 - all dimensions (default)
+        * 1 - x-direction only
+        * 2 - y-direction only  
+        * 3 - z-direction only
+    Notes
+    -----
+    If the specified marker does not exist in boundaryDofs, an error message
+    is printed. If an invalid dimension is specified (not 0, 1, 2, or 3),
+    an error message is printed.
+    Examples
+    --------
+    >>> boundaryDofs = {1: [1, 2, 3, 4, 5, 6]}
+    >>> f = np.zeros(6)
+    >>> apply_force_3d(boundaryDofs, f, 1, value=100.0, dimension=1)
+    # Applies force of 100.0 in x-direction to DOFs 1, 4
     """
 
     if marker in boundaryDofs:
@@ -497,14 +606,19 @@ def apply_force_total(boundaryDofs, f, marker, value=0.0, dimension=0):
     distributed over all boundaryDofs defined by marker. Applicable
     to 2D problems with 2 dofs per node.
     
-    Parameters:
-    
-        boundaryDofs        Dictionary with boundary dofs.
-        f                   force matrix.
-        marker              Boundary marker to assign boundary condition.
-        value               Total force value to assign boundary condition.
-                            If not given 0.0 is assigned.
-        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y
+    Parameters
+    ----------
+    boundaryDofs : dict
+        Dictionary with boundary dofs.
+    f : array_like
+        Force matrix.
+    marker : int
+        Boundary marker to assign boundary condition.
+    value : float, optional
+        Total force value to assign boundary condition.
+        If not given 0.0 is assigned.
+    dimension : int, optional
+        Dimension to apply force. 0 - all, 1 - x, 2 - y
                             
     """
 
@@ -532,15 +646,20 @@ def apply_force_total_3d(boundaryDofs, f, marker, value=0.0, dimension=0):
     distributed over all boundaryDofs defined by marker. Applicable
     to 3D problems with 3 dofs per node.
     
-    Parameters:
-    
-        boundaryDofs        Dictionary with boundary dofs.
-        f                   force matrix.
-        marker              Boundary marker to assign boundary condition.
-        value               Total force value to assign boundary condition.
-                            If not given 0.0 is assigned.
-        dimension           dimension to apply force. 0 - all, 1 - x, 2 - y,
-                            3 - z
+    Parameters
+    ----------
+    boundaryDofs : dict
+        Dictionary with boundary dofs.
+    f : array_like
+        Force matrix.
+    marker : int
+        Boundary marker to assign boundary condition.
+    value : float, optional
+        Total force value to assign boundary condition.
+        If not given 0.0 is assigned.
+    dimension : int, optional
+        Dimension to apply force. 0 - all, 1 - x, 2 - y,
+        3 - z
                             
     """
 
@@ -566,15 +685,22 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
     """
     Export mesh and results for a 2D stress problem.
     
-    Parameters:
-    
-        filename            Filename of vtk-file
-        coords              Element coordinates (np.array)
-        topo                Element topology (not dof topology). mesh.topo. (np.array)
-        a                   Element displacements 2-dof (np.array)
-        el_scalar           Scalar values for each element (list)
-        el_vec1             Vector value for each element (list)
-        el_vec2             Vector value for each element (list)
+    Parameters
+    ----------
+    filename : str
+        Filename of vtk-file
+    coords : numpy.ndarray
+        Element coordinates
+    topo : numpy.ndarray
+        Element topology (not dof topology). mesh.topo.
+    a : numpy.ndarray, optional
+        Element displacements 2-dof
+    el_scalar : list, optional
+        Scalar values for each element
+    el_vec1 : list, optional
+        Vector value for each element
+    el_vec2 : list, optional
+        Vector value for each element
     """
 
     points = np.zeros([coords.shape[0], 3], dtype=np.float64)
@@ -646,16 +772,23 @@ def scalfact2(ex, ey, ed, rat=0.2):
     """
     Determine scale factor for drawing computational results, such as 
     displacements, section forces or flux.
-    
-    Parameters:
-    
-        ex, ey      element node coordinates
-                       
-        ed          element displacement matrix or section force matrix
-    
-        rat         relation between illustrated quantity and element size. 
-                    If not specified, 0.2 is used.
-        
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x coordinates
+    ey : array_like  
+        Element node y coordinates
+    ed : array_like
+        Element displacement matrix or section force matrix
+    rat : float, optional
+        Relation between illustrated quantity and element size. 
+        Default is 0.2.
+
+    Returns
+    -------
+    float
+        Scale factor for drawing computational results
     """
     # nen:   number of element nodes
     # nel:   number of elements
@@ -685,10 +818,6 @@ def scalfact2(ex, ey, ed, rat=0.2):
     k = rat
     return k*dlmax/edmax
 
-
-'''
-Handle reading and writing of geometry and generated mesh from the program
-'''
 
 def load_geometry(name):
     """Loads a geometry from a file."""
@@ -821,10 +950,21 @@ def calc_beam_displ_limits(a, coords, edof, dofs):
     """
     Calculate max and min displacements for beams.
 
-    :param array a global displacement array with 6 dofs / node.
-    :param array node coordinates
-    :param array edof beam topology
-    :param array dofs node dofs
+    Parameters
+    ----------
+    a : array_like
+        Global displacement array with 6 dofs / node.
+    coords : array_like
+        Node coordinates.
+    edof : array_like
+        Beam topology.
+    dofs : array_like
+        Node dofs.
+
+    Returns
+    -------
+    tuple
+        Tuple containing (min_displ, max_displ).
     """
 
     if edof.shape[0]>0:
@@ -861,12 +1001,23 @@ def calc_beam_displ_limits(a, coords, edof, dofs):
     
 def calc_bar_displ_limits(a, coords, edof, dofs):
     """
-    Calc max and min global displacements for bars.
+    Calculate max and min global displacements for bars.
 
-    :param array a global displacement array with 3 dofs / node.
-    :param array node coordinates
-    :param array edof beam topology
-    :param array dofs node dofs
+    Parameters
+    ----------
+    a : array_like
+        Global displacement array with 3 dofs / node.
+    coords : array_like
+        Node coordinates.
+    edof : array_like
+        Bar topology.
+    dofs : array_like
+        Node dofs.
+
+    Returns
+    -------
+    tuple
+        Tuple containing (min_displ, max_displ).
     """
 
     if edof.shape[0]>0:
@@ -906,15 +1057,29 @@ def convert_to_node_topo(edof, ex, ey, ez, n_dofs_per_node=3, ignore_first=True)
     Routine to convert dof based topology and element coordinates to node based
     topology required for visualisation with VTK and other visualisation frameworks
 
-    :param array edof: element topology [nel x (n_dofs_per_node)|(n_dofs_per_node+1)*n_nodes ]
-    :param array ex: element x coordinates [nel x n_nodes]
-    :param array ey: element y coordinates [nel x n_nodes]
-    :param array ez: element z coordinates [nel x n_nodes]
-    :param array n_dofs_per_node: number of dofs per node. (default = 3)
-    :param boolean ignore_first: ignore first column of edof. (default = True)
-    :return array coords: Array of node coordinates. [n_nodes x 3]
-    :return array topo: Node topology. [nel x n_nodes]
-    :return array node_dofs: Dofs for each node. [n_nodes x n_dofs_per_node]
+    Parameters
+    ----------
+    edof : array_like
+        Element topology [nel x (n_dofs_per_node)|(n_dofs_per_node+1)*n_nodes ]
+    ex : array_like
+        Element x coordinates [nel x n_nodes]
+    ey : array_like
+        Element y coordinates [nel x n_nodes]
+    ez : array_like
+        Element z coordinates [nel x n_nodes]
+    n_dofs_per_node : int, optional
+        Number of dofs per node. Default is 3.
+    ignore_first : bool, optional
+        Ignore first column of edof. Default is True.
+        
+    Returns
+    -------
+    coords : numpy.ndarray
+        Array of node coordinates. [n_nodes x 3]
+    topo : numpy.ndarray
+        Node topology. [nel x n_nodes]
+    node_dofs : numpy.ndarray
+        Dofs for each node. [n_nodes x n_dofs_per_node]
     """
 
     node_hash_coords = {}
