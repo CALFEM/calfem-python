@@ -2,43 +2,46 @@
 """
 CALFEM Core module
 
-Contains all the functions implementing CALFEM standard functionality
+Contains all the functions implementing CALFEM standard functionality.
+
+Copyright (c) Division of Structural Mechanics and
+Division of Solid Mechanics, Lund University.
 """
 
+from __future__ import annotations
+from typing import Optional, Tuple, Union
+
 from scipy.sparse.linalg import dsolve
+from scipy.sparse import csc_matrix, csr_matrix, linalg, lil_matrix
 from scipy.linalg import eig, lu
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
+
+from calfem.matrix_compat import MatrixCompat
 
 import logging as cflog
 import sys
-import traceback
-
-__prev_exception_hook = sys.excepthook
-
-
-def exception_logging(exctype, value, tb):
-    """
-    Log exception by using the root logger.
-
-    Parameters
-    ----------
-    exctype : type
-    value : NameError
-    tb : traceback
-    """
-    write_val = {'exception_type': str(exctype),
-                 'message': str(traceback.format_tb(tb, 10))}
-    print('Error: %s \n  in "%s", line %d' %
-          (value, tb.tb_frame.f_code.co_filename, tb.tb_lineno))
-
-
-def enable_friendly_errors():
-    __prev_exception_hook = sys.excepthook
-    sys.excepthook = exception_logging
-
 
 def disable_friendly_errors():
+    """
+    Disable friendly error logging and restore the previous exception hook.
+    """
     sys.excepthook = __prev_exception_hook
+
+def enable_friendly_errors():
+    """
+    Enable friendly error logging by setting a custom exception hook.
+    """
+    def __friendly_exception_hook(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        cflog.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+        sys.exit(1)
+
+    global __prev_exception_hook
+    __prev_exception_hook = sys.excepthook
+    sys.excepthook = __friendly_exception_hook
 
 
 easy_on = enable_friendly_errors
@@ -46,55 +49,96 @@ easy_off = disable_friendly_errors
 
 
 def check_list_array(v, error_string):
+    """
+    Check if the input is a list or numpy array, raise TypeError if not.
 
+    Parameters
+    ----------
+    v : object
+        Object to check.
+    error_string : str
+        Error message to display if check fails.
+    """
     fname = sys._getframe(1).f_code.co_name
-
     if (type(v) != list) and (type(v) != np.ndarray):
         raise TypeError("%s (%s)" % (error_string, fname))
 
 
 def check_length(v, length, error_string):
+    """
+    Check if the input has the specified length, raise ValueError if not.
+
+    Parameters
+    ----------
+    v : object
+        Object to check (must support len()).
+    """
 
     fname = sys._getframe(1).f_code.co_name
 
     if len(v) != length:
         raise ValueError("%s (%s)" % (error_string, fname))
 
+def user_warning(msg: str) -> None:
+    """
+    Print a user warning message.
 
-def user_warning(msg):
+    Parameters
+    ----------
 
+    msg : str
+        Warning message to display.
+    """
     fname = sys._getframe(1).f_code.co_name
-
     print("Warning: %s (%s)" % (msg, fname))
 
+def error(msg: str) -> None:
+    """
+    Log an error message.
 
-def error(msg):
-    """Write ``msg`` to error log."""
+    Parameters
+    ----------
+
+    msg : str
+        Error message to log.
+    """
     cflog.error(" calfem.core: "+msg)
 
-
-def info(msg):
-    """Write ``msg`` to info log."""
-    cflog.info(" calfem.core: "+msg)
-
-def spring1e(ep):
+def info(msg: str) -> None:
     """
-    Ke = spring1e(ep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute element stiffness matrix for spring element.
- 
-    INPUT:  ep = [k]      spring stiffness or analog quantity
- 
-    OUTPUT: Ke :          spring stiffness matrix, [2 x 2]
-    -------------------------------------------------------------
+    Log an informational message.
 
+    Parameters
+    ----------
+    msg : str
+        Informational message to log.
+    """
+    cflog.info(" calfem.core: "+msg)        
+    
+def spring1e(ep: ArrayLike) -> NDArray[np.floating]:
+    """
+    Compute the element stiffness matrix for a spring element.
+
+    Parameters
+    ----------
+    ep : array_like
+        Spring stiffness or analog quantity [k].
+
+    Returns
+    -------
+    Ke : ndarray
+        Spring stiffness matrix, shape (2, 2).
+
+    Examples
+    --------
+    >>> spring1e(100)
+    array([[ 100, -100],
+           [-100,  100]])
+
+    History
+    -------
     LAST MODIFIED: P-E Austrell 1994-11-02
                    O Dahlblom   2022-11-15 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------
     """
     k = ep  
 
@@ -106,26 +150,31 @@ def spring1e(ep):
     return Ke
 
 
-def spring1s(ep, ed):
+def spring1s(ep: ArrayLike, ed: ArrayLike) -> float:
     """
-    es = spring1s(ep, ed)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute element force in spring element (spring1e).
-    
-    INPUT:  ep = [k]      spring stiffness or analog quantity
-    
-            ed = [u1 u2]  element displacement vector
- 
-    OUTPUT: es  = [N]     element force
-    -------------------------------------------------------------
+    Compute the element force in a spring element.
 
-    LAST MODIFIED: P-E AUSTRELL 1994-11-02
-                   O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------
+    Parameters
+    ----------
+    ep : array_like
+        Spring stiffness or analog quantity [k].
+    ed : array_like
+        Element displacement vector [u1, u2].
+
+    Returns
+    -------
+    es : float
+        Element force.
+
+    Examples
+    --------
+    >>> spring1s(100, [0.1, 0.2])
+    10.0
+
+    History
+    -------
+    LAST MODIFIED: P-E Austrell 1994-11-02
+                   O Dahlblom   2022-11-14 (Python version)
     """
     k = ep
 
@@ -135,33 +184,36 @@ def spring1s(ep, ed):
     return es
 
 
-def bar1e(ex, ep, eq=None):
+def bar1e(ex: ArrayLike, ep: ArrayLike, eq: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Ke = bar1e (ex, ep)
-    Ke, fe = bar1e(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a onedimensional bar element.
+    Compute the stiffness matrix (and optionally load vector) for a 1D bar element.
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
-                             ka: axial spring stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (2, 2).
+    fe : ndarray, optional
+        Element load vector, shape (2, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [2 x 2]
-            fe : element load vector [2 x 1] (if eq!=None)
-    -------------------------------------------------------------
+    Examples
+    --------
+    >>> bar1e([0, 2], [210e9, 0.01])
+    array([[ 1.05e+09, -1.05e+09],
+           [-1.05e+09,  1.05e+09]])
 
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-22
                    O Dahlblom   2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -189,44 +241,40 @@ def bar1e(ex, ep, eq=None):
 
 def bar1s(ex, ep, ed, eq=None, nep=None):
     """
-    es = bar1s(ex, ep, ed)
-    es = bar1s(ex, ep, ed, eq)
-    es, edi, eci = bar1s(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional bar element
+    Compute section forces in a 1D bar element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, u2].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]      element properties,
-                            E:  Young's modulus
-                            A:  cross section area
- 
-            ed = [u1 u2]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]       distributed load
+    Examples
+    --------
+    >>> bar1s([0, 2], [210e9, 0.01], [0.0, 0.001])
+    array([[1.05e+06],
+           [1.05e+06]])
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-02-25
                    O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -276,32 +324,28 @@ def bar1s(ex, ep, ed, eq=None, nep=None):
 
 def bar1we(ex, ep, eq=None):
     """
-    Ke = bar1we (ex, ep)
-    Ke, fe = bar1we(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a onedimensional bar element with
-    axial springs.
+    Compute the stiffness matrix (and optionally load vector) for a 1D bar element with axial springs.
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A, kX], where E is Young's modulus, A is cross-sectional area, and kX is axial spring stiffness.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A kX]    element properties;
-                             E: Young's modulus
-                             A: cross section area
-                             kX: axial spring stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (2, 2).
+    fe : ndarray, optional
+        Element load vector, shape (2, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [2 x 2]
-            fe : element load vector [2 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-10-19 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, kX = ep
     DEA = E*A;
@@ -336,45 +380,34 @@ def bar1we(ex, ep, eq=None):
 
 def bar1ws(ex, ep, ed, eq=None, nep=None):
     """
-    es = bar1ws(ex, ep, ed)
-    es = bar1ws(ex, ep, ed, eq)
-    es, edi, eci = bar1ws(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional bar element
+    Compute section forces in a 1D bar element with axial springs.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, A, kX], where E is Young's modulus, A is cross-sectional area, and kX is axial spring stiffness.
+    ed : array_like
+        Element displacement vector [u1, u2].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A kX]   element properties,
-                            E:  Young's modulus
-                            A:  cross section area
-                            kX: axial spring stiffness
-                            
-            ed = [u1 u2]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]       distributed load
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-02-25
                    O Dahlblom  2022-11-14 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, kX = ep
     DEA = E*A
@@ -424,32 +457,30 @@ def bar1ws(ex, ep, ed, eq=None, nep=None):
 
 def bar2e(ex, ey, ep, eq=None):
     """
-    Ke = bar2e(ex, ey, ep)
-    Ke, fe = bar2e(ex, ey, ep, eq)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute the element stiffness matrix for two dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D bar element.
 
-            ey = [y1 y2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [4 x 4]
-            fe : element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-20
                    O Dahlblom   2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -489,46 +520,36 @@ def bar2e(ex, ey, ep, eq=None):
 
 def bar2s(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = bar2s(ex, ey, ep, ed)
-    es = bar2s(ex, ey, ep, ed, eq)
-    es, edi, eci = bar2s(ex, ey, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in two dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
+    Compute normal force in a 2D bar element.
 
-            ey = [y1 y2]        element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qX]           distributed load
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2015-12-04
                    O Dahlblom  2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -588,31 +609,28 @@ def bar2s(ex, ey, ep, ed, eq=None, nep=None):
 
 def bar2ge(ex, ey, ep, QX):
     """
-    Ke = bar2ge(ex, ey, ep, QX)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute element stiffness matrix for two dimensional geometric
-    nonlinear bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Compute the element stiffness matrix for a 2D bar element with additional axial force QX.
 
-            ey = [y1 y2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    QX : float
+        Additional axial force.
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (4, 4).
 
-            QX:              axial force in the bar
-            
-    OUTPUT: Ke : bar stiffness matrix [4 x 4]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -658,45 +676,36 @@ def bar2ge(ex, ey, ep, QX):
 
 def bar2gs(ex, ey, ep, ed, nep=None):
     """
-    es, QX, edi, eci = bar2s(ex, ey, ep, ed)
-    es, QX, edi, eci = bar2s(ex, ey, ep, ed, nep)
-   -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in two dimensional bar element (bar2ge).
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
+    Compute normal force and axial force in a 2D bar element (bar2ge).
 
-            ey = [y1 y2]        element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            QX:          axial force
-
-             edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2015-10-20
                    O Dahlblom  2022-11-16 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -756,32 +765,32 @@ def bar2gs(ex, ey, ep, ed, nep=None):
 
 def bar3e(ex, ey, ez, ep, eq=None):
     """
-    Ke = bar2e(ex, ey, ez, ep)
-    Ke, fe = bar2e(ex, ey, ez, ep, eq)
-    ----------------------------------------------------------------------
-    PURPOSE
-    Compute the element stiffness matrix for three dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]     element node coordinates
-            ey = [y1 y2]     
-            ez = [z1 z2]     
+    Compute the element stiffness matrix (and optionally load vector) for a 3D bar element.
 
-            ep = [E A]       element properties;
-                             E: Young's modulus
-                             A: cross section area
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    eq : array_like, optional
+        Distributed load [qX].
 
-            eq = [qX]        distributed load 
-            
-    OUTPUT: Ke : bar stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
+    Returns
+    -------
+    Ke : ndarray
+        Bar stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA=E*A
@@ -824,46 +833,38 @@ def bar3e(ex, ey, ez, ep, eq=None):
 
 def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
     """
-    es = bar3s(ex, ey, ez, ep, ed)
-    es = bar3s(ex, ey, ez, ep, ed, eq)
-    es, edi, eci = bar3s(ex, ey, ez, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute normal force in three dimensional bar element.
-    
-    INPUT:  ex = [x1 x2]        element node coordinates
-            ey = [y1 y2]       
-            ez = [z1 z2]
+    Compute normal force in a 3D bar element.
 
-            ep = [E A]          element properties,
-                                E:  Young's modulus
-                                A:  cross section area
- 
-            ed = [u1 ... u4]    element displacement vector 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    ep : array_like
+        Element properties [E, A], where E is Young's modulus and A is cross-sectional area.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed load [qX].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            eq = [qX]           distributed load
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 1).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [N1 ;  section forces, local directions, in 
-                  N2 ;  nep points along the beam, dim(es)= nep x 1
-                  ...]  
-           
-            edi = [u1 ;    element displacements, local directions,
-                   u2 ;    in n points along the bar, dim(edi)= nep x 1
-                   ...]
-
-            eci = [x1;     evaluation points on the local x-axis, 
-                   x2;     (x1=0 and xn=L) 
-                   ...] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-11-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A = ep
     DEA = E*A
@@ -927,30 +928,28 @@ def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
 
 def beam1e(ex, ep, eq=None):
     """
-    Ke = beam1e(ex, ep)
-    Ke, fe = beam1e(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a one dimensional beam element.
+    Compute the stiffness matrix (and optionally load vector) for a 1D beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I], where E is Young's modulus and I is moment of inertia.
+    eq : array_like, optional
+        Distributed load [qY].
 
-            ep = [E I]      element properties;
-                            E: Young's modulus
-                            I: moment of inertia
+    Returns
+    -------
+    Ke : ndarray
+        Beam stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qY]       distributed load 
-            
-    OUTPUT: Ke : beam stiffness matrix [4 x 4]
-            fe : element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2019-01-09
                    O Dahlblom   2022-10-25 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I = ep
     DEI = E*I
@@ -980,44 +979,34 @@ def beam1e(ex, ep, eq=None):
 
 def beam1s(ex, ep, ed, eq=None, nep=None):
     """
-    es = beam1s(ex, ep, ed)
-    es = beam1s(ex, ep, ed, eq)
-    es, ed, ec = beam1s(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional beam element (beam1e).
+    Compute section forces in a 1D beam element (beam1e).
 
-    INPUT  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I], where E is Young's modulus and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed loads [qy], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-           ep = [E I]       element properties,
-                            E:  Young's modulus
-                            I:  moment of inertia
- 
-            ed = [u1 ... u4] element displacements 
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 2).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qy]     distributed loads, local directions 
-
-            nep : number of evaluation points ( default=2 )
-
-    OUTPUT: es = [V1 M1 ;  section forces, local directions, in 
-                  V2 M2 ;  nep points along the beam, dim(es)= nep x 2
-                  ......]  
-           
-            edi = [v1 ;    element displacements, local directions,
-                   v2 ;    in nep points along the beam, dim(edi)= nep x 1
-                  ....]
-
-            eci = [x1;     evaluation points on the local x-axis 
-                   x2;      
-                   ..] 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-10-25 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
  
     E, I = ep
@@ -1076,32 +1065,28 @@ def beam1s(ex, ep, ed, eq=None, nep=None):
 
 def beam1we(ex, ep, eq=None):
     """
-    Ke = beam1we(ex, ep)
-    Ke, fe = beam1we(ex, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a one dimensional beam element 
-    on elastic foundation.
+    Compute the stiffness matrix (and optionally load vector) for a 1D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I, kY], where E is Young's modulus, I is moment of inertia, and kY is transversal foundation stiffness.
+    eq : array_like, optional
+        Distributed load [qY].
 
-            ep = [E I kY]   element properties;
-                            E: Young's modulus
-                            I: moment of inertia
-                            kY: transversal found. stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Beam stiffness matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
 
-            eq = [qY]       distributed load 
-
-    OUTPUT: Ke: beam stiffness matrix [4 x 4]
-            fe: element load vector [4 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2016-02-17
                    O Dahlblom   2022-10-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I, kY =ep
     DEI = E*I;
@@ -1139,47 +1124,34 @@ def beam1we(ex, ep, eq=None):
 
 def beam1ws(ex, ep, ed, eq=None, nep=None):
     """
-    es = beam1ws(ex, ep, ed)
-    es = beam1ws(ex, ep, ed, eq)
-    es, ed, ec = beam1ws(ex, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute section forces in one dimensional beam element 
-    on elastic foundation (beam1we). 
+    Compute section forces in a 1D beam element on elastic foundation (beam1we).
 
-    INPUT:  ex = [x1 x2]     element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node coordinates [x1, x2].
+    ep : array_like
+        Element properties [E, I, kY], where E is Young's modulus, I is moment of inertia, and kY is transversal foundation stiffness.
+    ed : array_like
+        Element displacement vector [u1, ..., u4].
+    eq : array_like, optional
+        Distributed loads [qy], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E I kY]    element properties,
-                             E:  Young's modulus
-                             I:  moment of inertia
-                             kY: transversal foundation stiffness
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 2).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 1), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u4] element displacements
- 
-            eq = [qy]        distributed loads, local directions 
-
-            nep              number of evaluation points ( default=2 )          
-    
-    OUTPUT: es = [V1 M1 ;  section forces, local directions, in 
-                  V2 M2 ;  nep points along the beam, dim(es)= n x 2
-                  ......]  
-            
-            edi = [v1 ;    element displacements, local directions,
-                   v2 ;    in nep points along the beam, dim(edi)= n x 1
-                   ...]    
-
-            eci = [x1 ;    evaluation points on the local x-axis 
-                   x2 ;      
-                   ...] 
-
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom  2021-09-01
                    O Dahlblom  2022-10-18 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, I, kY = ep
     DEI = E*I
@@ -1247,35 +1219,33 @@ def beam1ws(ex, ep, ed, eq=None, nep=None):
         return es, edi, eci
  
 
-def beam2e(ex, ey, ep, eq=None):
+def beam2e(ex: ArrayLike, ey: ArrayLike, ep: ArrayLike, eq: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Ke = beam2e(ex, ey, ep)
-    Ke, fe = beam2e(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a two dimensional beam element.
+    Compute the stiffness matrix (and optionally load vector) for a 2D beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
 
-            ep = [E A I]    element properties;
-                            E: Young's modulus
-                            A: Cross section area
-                            I: moment of inertia
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]    distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-08-17
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
-   """
+    """
     E, A, I = ep
     DEA = E*A
     DEI = E*I
@@ -1326,45 +1296,36 @@ def beam2e(ex, ey, ep, eq=None):
 
 def beam2s(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2s(ex, ey, ep, ed)
-    es = beam2s(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2s(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-    Compute section forces in two dimensional beam element (beam2e).
-    
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]        element node coordinates
+    Compute section forces in a 2D beam element (beam2e).
 
-            ep = [E A I]        element properties,
-                                E:  Young's modulus
-                                A:  cross section area
-                                I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ed = [u1 ... u6]    element displacements
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            eq = [qx qy]        distributed loads, local directions 
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-
-    LAST MODIFIED: O Dahlblom   2021-09-08
+    History
+    -------
+    LAST MODIFIED: O Dahlblom   2015-08-17
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1459,35 +1420,30 @@ def beam2s(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2we(ex, ey, ep, eq=None):
     """
-    Ke = beam2we(ex, ey, ep)
-    Ke, fe = beam2we(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the stiffness matrix for a two dimensional beam element
-        on elastic foundation.
+    Compute the stiffness matrix (and optionally load vector) for a 2D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]          element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, kX, kY], where E is Young's modulus, A is cross-sectional area, I is moment of inertia, kX is axial foundation stiffness, and kY is transversal foundation stiffness.
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
 
-            ep = [E,A,I,kX,kY]    element properties;
-                                  E: Young's modulus
-                                  A: Cross section area
-                                  I: moment of inertia
-                                  kX: axial foundation stiffness
-                                  kY: transversal foundation stiffness
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]          distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-08-07
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I, kX, kY = ep
     DEA = E*A
@@ -1550,49 +1506,36 @@ def beam2we(ex, ey, ep, eq=None):
 
 def beam2ws(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2ws(ex, ey, ep, ed)
-    es = beam2ws(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2ws(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-        Compute section forces in a two dimensional beam element
-        on elastic foundation.
+    Compute section forces in a 2D beam element on elastic foundation.
 
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]          element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, kX, kY], where E is Young's modulus, A is cross-sectional area, I is moment of inertia, kX is axial foundation stiffness, and kY is transversal foundation stiffness.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads [qX, qY], local directions.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E,A,I,kX,kY]    element properties,
-                                  E:  Young's modulus
-                                  A:  cross section area
-                                  I:  moment of inertia
-                                  kX: axial foundation stiffness
-                                  kY: transversal foundation stiffness
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u6]    element displacements
-
-            eq = [qx qy]        distributed loads, local directions 
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2022-09-30
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I, kX, kY = ep
     DEA = E*A
@@ -1701,35 +1644,32 @@ def beam2ws(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2ge(ex, ey, ep, QX, eq=None):
     """
-    Ke = beam2ge(ex, ey, ep, QX)
-    Ke, fe = beam2ge(ex, ey, ep, QX, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the element stiffness matrix for a two dimensional
-        beam element with respect to geometric nonlinearity.
-       
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D beam element with geometric nonlinearity.
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load [qY].
 
-            QX                      axial force in the beam
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qY]               distributed transverse load
-
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-12-17
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1795,51 +1735,40 @@ def beam2ge(ex, ey, ep, QX, eq=None):
 
 def beam2gs(ex, ey, ep, ed, QX, eq=None, nep=None):
     """
-    es, QX = beam2gs(ex, ey, ep, ed, QX)
-    es, QX = beam2gs(ex, ey, ep, ed, QX, eq)
-    es, QX, edi, eci = beam2gs(ex, ey, ep, ed, QX, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-       Calculate section forces in a two dimensional nonlinear
-       beam element (beam2ge).
+    Calculate section forces in a 2D nonlinear beam element (beam2ge).
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load [qY].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            ed = [u1, ... ,u6]      element displacement vector
-
-            QX                      axial force
-
-            eq = [qy]               distributed transverse load
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            QX                  axial force
-
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-09-01
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -1943,35 +1872,32 @@ def beam2gs(ex, ey, ep, ed, QX, eq=None, nep=None):
 
 def beam2gxe(ex, ey, ep, QX, eq=None):
     """
-    Ke = beam2gxe(ex, ey, ep, QX)
-    Ke, fe = beam2gxe(ex, ey, ep, QX, eq)
-    -------------------------------------------------------------
-    PURPOSE
-        Compute the element stiffness matrix for a two dimensional
-        beam element with respect to geometric nonlinearity with exact solution.
-       
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Compute the element stiffness matrix (and optionally load vector) for a 2D beam element with geometric nonlinearity (exact solution).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load.
 
-            QX                      axial force in the beam
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq                      distributed transverse load
-
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-06-21
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -2048,51 +1974,41 @@ def beam2gxe(ex, ey, ep, QX, eq=None):
 
 def beam2gxs(ex, ey, ep, ed, QX, eq=None, nep=None):
     """
-    es, QX = beam2gxs(ex, ey, ep, ed, QX)
-    es, QX = beam2gxs(ex, ey, ep, ed, QX, eq)
-    es, QX, edi, eci = beam2gxs(ex, ey, ep, ed, QX, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-       Calculate section forces in a two dimensional nonlinear
-       beam element (beam2gxe).
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Calculate section forces in a 2D nonlinear beam element (beam2gxe).
 
-            ep = [E, A, I]          element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I], where E is Young's modulus, A is cross-sectional area, and I is moment of inertia.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    QX : float
+        Axial force in the beam.
+    eq : array_like, optional
+        Distributed transverse load.
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ed = [u1, ... ,u6]      element displacement vector
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 3).
+    QX : float
+        Axial force.
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 2), if nep is given.
+    eci : ndarray, optional
+        Evaluation points on the local x-axis, shape (nep, 1), if nep is given.
 
-            QX                      axial force
-
-            eq = [qy]               distributed transverse load
-
-            nep                 number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1     section forces, local directions, in 
-                   N2 V2 M2     n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            QX                  axial force
-
-            edi = [ u1 v1       element displacements, local directions,
-                    u2 v2       in n points along the beam, dim(es)= n x 2
-                    .....]    
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
-    LAST MODIFIED: O Dahlblom   2021-09-17
+    History
+    -------
+    LAST MODIFIED: O Dahlblom   2021-06-21
                    O Dahlblom   2022-12-06 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, A, I = ep
     DEA = E*A
@@ -2230,35 +2146,31 @@ def beam2gxs(ex, ey, ep, ed, QX, eq=None, nep=None):
 
 def beam2te(ex, ey, ep, eq=None):
     """
-    Ke = beam2te(ex, ey, ep)
-    Ke, fe = beam2te(ex, ey, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Compute the stiffness matrix for a two dimensional Timoshenko 
-    beam element. 
+    Compute the stiffness matrix (and optionally load vector) for a 2D Timoshenko beam element.
 
-    INPUT:  ex = [x1 x2]    element node coordinates
-            ey = [y1 y2] 
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, Gm, A, I, ks], where E is Young's modulus, Gm is shear modulus, 
+        A is cross-sectional area, I is moment of inertia, and ks is shear correction factor.
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY].
 
-            ep = [E Gm A I ks]    element properties;
-                                 E: Young's modulus
-                                 G: shear modulus
-                                 A: Cross section area
-                                 I: moment of inertia
-                                 ks: shear correction factor                                 
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Element load vector, shape (6, 1), if eq is not None.
 
-            eq = [qX qY]    distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [6 x 6]
-            fe : element load vector [6 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-11-05
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gm, A, I, ks = ep
     DEA = E*A
@@ -2316,51 +2228,40 @@ def beam2te(ex, ey, ep, eq=None):
 
 def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
     """
-    es = beam2ts(ex, ey, ep, ed)
-    es = beam2ts(ex, ey, ep, ed, eq)
-    es, edi, eci = beam2s(ex, ey, ep, ed, eq, nep)
----------------------------------------------------------------------
-    PURPOSE
-    Compute section forces in two dimensional Timoshenko beam 
-    element (beam2te). 
+    Compute section forces in a 2D Timoshenko beam element (beam2te).
 
-    INPUT:  ex = [x1 x2]
-            ey = [y1 y2]         element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, G, A, I, ks], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, I is moment of inertia, and ks is shear correction factor.
+    ed : array_like
+        Element displacement vector [u1, ..., u6].
+    eq : array_like, optional
+        Distributed loads in local directions [qx, qy].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            ep = [E G A I ks]    element properties,
-                                 E:  Young's modulus
-                                 G:  shear modulus
-                                 A:  cross section area
-                                 I:  moment of inertia
-                                 ks: shear correction factor
+    Returns
+    -------
+    es : ndarray
+        Section forces in local directions at evaluation points, shape (nep, 3).
+        Each row contains [N, V, M] (normal force, shear force, moment).
+    edi : ndarray, optional
+        Element displacements in local directions at evaluation points, shape (nep, 3), if nep is given.
+        Each row contains [u, v, theta]. Note: For Timoshenko beam element, the rotation of the 
+        cross section is not equal to dv/dx.
+    eci : ndarray, optional
+        Local x-coordinates of the evaluation points, shape (nep, 1), if nep is given.
 
-            ed = [u1 ... u6]     element displacements
-
-            eq = [qx qy]         distributed loads, local directions 
-
-            nep                  number of evaluation points ( default=2 )
-        
-    OUTPUT: es = [ N1 V1 M1      section forces, local directions, in 
-                   N2 V2 M2      n points along the beam, dim(es)= n x 3
-                   ........]  
-           
-            edi = [ u1 v1 teta1  element displacements, local directions,
-                    u2 v2 teta2  in n points along the beam, dim(es)= n x 2
-                    ...........]    
-                    (Note! For Timoshenko beam element the rotation of the cross 
-                     section is not equal to dv/dx) 
-
-            eci = [ x1          local x-coordinates of the evaluation 
-                    x2          points, (x1=0 and xn=L)
-                    ...]
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2021-11-05
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gm, A, I, ks = ep
     DEA = E*A
@@ -2457,36 +2358,32 @@ def beam2ts(ex, ey, ep, ed, eq=None, nep=None):
 
 def beam2de(ex, ey, ep):
     """
-    Ke, Me = beam2de(ex, ey, ep)
-    Ke, Me, Ce = beam2de(ex, ey, ep)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix Ke, the mass matrix Me
-    and the damping matrix Ce for a 2D elastic Bernoulli
-    beam element.
+    Calculate the stiffness matrix Ke, mass matrix Me, and optionally damping matrix Ce for a 2D elastic Bernoulli beam element.
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, m, (a, b)], where E is Young's modulus, A is cross-sectional area,
+        I is moment of inertia, m is mass per unit length, and a, b are optional damping coefficients
+        where Ce = a*Me + b*Ke.
 
-            ep = [E,A,I,m,(a,b)]    element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
-                                    m:  mass per unit length
-                                    a,b:  damping coefficients,
-                                          Ce=aMe+bKe
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    Me : ndarray
+        Element mass matrix, shape (6, 6).
+    Ce : ndarray, optional
+        Element damping matrix, shape (6, 6), if damping coefficients are provided.
 
-    OUTPUT: Ke                      element stiffness matrix (6 x 6)
-            Me                      element mass martix
-            Ce                      element damping matrix, optional
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: K Persson    1995-08-23
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     b = np.array([
         [ex[1]-ex[0]],
@@ -2547,40 +2444,35 @@ def beam2de(ex, ey, ep):
 
 def beam2ds(ex, ey, ep, ed, ev, ea):
     """
-    es = beam2ds(ex, ey, ep, ed, ev, ea)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the element forces for a number of identical 
-    (nie) 2D Bernoulli beam elements in dynamic analysis. 
+    Calculate element forces for multiple identical 2D Bernoulli beam elements in dynamic analysis.
 
-    INPUT:  ex = [x1, x2]
-            ey = [y1, y2]           element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ep : array_like
+        Element properties [E, A, I, m, (a, b)], where E is Young's modulus, A is cross-sectional area,
+        I is moment of inertia, m is mass per unit length, and a, b are optional damping coefficients
+        where Ce = a*Me + b*Ke.
+    ed : array_like
+        Element displacement matrix.
+    ev : array_like
+        Element velocity matrix.
+    ea : array_like
+        Element acceleration matrix.
 
-            ep = [E,A,I,m,(a,b)]    element properties;
-                                    E:  Young's modulus
-                                    A:  cross section area
-                                    I:  moment of inertia
-                                    m:  mass per unit length
-                                    a,b:  damping coefficients,
-                                          Ce=aMe+bKe
-            
-            ed :  element displacement matrix 
-            
-            ev :  element velocity matrix 
-            
-            ea :  element acceleration matrix 
+    Returns
+    -------
+    es : ndarray
+        Element forces in local directions, shape (nie, 6).
+        Each row contains [-N1, -V1, -M1, N2, V2, M2].
 
-    OUTPUT: es : element forces in local directions,
-               = [-N1 -V1 -M1 N2 V2 M2;
-                  .......        ......] ; dim(es)= nie x 6
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: K Persson    1995-08-23
                    O Dahlblom   2022-12-08 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     b = np.array([
         [ex[1]-ex[0]],
@@ -2645,40 +2537,36 @@ def beam2ds(ex, ey, ep, ed, ev, ea):
 
 def beam3e(ex, ey, ez, eo, ep, eq=None):
     """
-    Ke = beam3e(ex, ey, ez, eo, ep)
-    Ke, fe = beam3e(ex, ey, ez, eo, ep, eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix for a 3D elastic Bernoulli
-    beam element.
+    Calculate the stiffness matrix (and optionally load vector) for a 3D elastic Bernoulli beam element.
 
-    INPUT:  ex = [x1 x2]    
-            ey = [y1 y2] 
-            ez = [z1 z2]            element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    eo : array_like
+        Orientation of local z-axis [xz, yz, zz].
+    ep : array_like
+        Element properties [E, G, A, Iy, Iz, Kv], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, Iy is moment of inertia about local y-axis, 
+        Iz is moment of inertia about local z-axis, and Kv is Saint-Venant's torsion constant.
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY, qZ, qW].
 
-            eo = [xz yz zz]         orientation of local z-axis  
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (12, 12).
+    fe : ndarray, optional
+        Element load vector, shape (12, 1), if eq is not None.
 
-            ep = [E G A Iy Iz Kv]   element properties
-                                    E: Young's modulus
-                                    G: Shear modulus
-                                    A: Cross section area
-                                    Iy: Moment of inertia, local y-axis
-                                    Iz: Moment of inertia, local z-axis
-                                    Kv: Saint-Venant's torsion constant
-
-            eq = [qX qY qZ qW]      distributed loads, local directions
-            
-    OUTPUT: Ke : element stiffness matrix [12 x 12]
-
-            fe : element load vector [12 x 1] (if eq!=None)
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-21 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gs, A, Iy, Iz, Kv = ep
     DEA = E*A 
@@ -2776,56 +2664,44 @@ def beam3e(ex, ey, ez, eo, ep, eq=None):
 
 def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     """
-    es = beam3s(ex, ey, ez, eo, ep, ed)
-    es = beam3s(ex, ey, ez, eo, ep, ed, eq)
-    es, edi, eci = beam3s(ex, ey, ez, eo, ep, ed, eq, nep)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the variation of the section forces and displacements
-    along a three-dimensional beam element.
+    Calculate the variation of section forces and displacements along a 3D beam element.
 
-    INPUT:  ex = [x1 x2]    
-            ey = [y1 y2] 
-            ez = [z1 z2]            element node coordinates
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2].
+    ey : array_like
+        Element node y-coordinates [y1, y2].
+    ez : array_like
+        Element node z-coordinates [z1, z2].
+    eo : array_like
+        Orientation of local z-axis [xz, yz, zz].
+    ep : array_like
+        Element properties [E, G, A, Iy, Iz, Kv], where E is Young's modulus, G is shear modulus,
+        A is cross-sectional area, Iy is moment of inertia about local y-axis, 
+        Iz is moment of inertia about local z-axis, and Kv is Saint-Venant's torsion constant.
+    ed : array_like
+        Element displacement vector [u1, ..., u12].
+    eq : array_like, optional
+        Distributed loads in local directions [qX, qY, qZ, qW].
+    nep : int, optional
+        Number of evaluation points (default is 2).
 
-            eo = [xz yz zz]         orientation of local z-axis  
+    Returns
+    -------
+    es : ndarray
+        Section forces at evaluation points, shape (nep, 6).
+        Each row contains [N, Vy, Vz, T, My, Mz] (normal force, shear forces, torque, moments).
+    edi : ndarray, optional
+        Element displacements at evaluation points, shape (nep, 4), if nep is given.
+        Each row contains [u, v, w, phi] (displacements and rotation).
+    eci : ndarray, optional
+        Local x-coordinates of the evaluation points, shape (nep, 1), if nep is given.
 
-            ep = [E G A Iy Iz Kv]   element properties
-                                    E: Young's modulus
-                                    G: Shear modulus
-                                    A: Cross section area
-                                    Iy: Moment of inertia, local y-axis
-                                    Iz: Moment of inertia, local z-axis
-                                    Kv: Saint-Venant's torsion constant
-
-            ed = [u1 ... u12]       element displacements
-
-            eq = [qX qY qZ qW]      distributed loads, local directions
-            
-            nep                     number of evaluation points ( default=2 )
-
-    OUTPUT: es = [[N1,Vy1,Vz1,T1,My1,Mz1],  section forces in n points along
-                  [N2,Vy2,Vz2,T2,My2,Mz2],  the local x-axis
-                  [..,...,...,..,...,...],
-                  [Nn,Vyn,Vzn,Tn,Myn,Mzn]]
-
-            edi = [[u1,v1,w1,fi1],          displacements in n points along
-                   [u2,v2,w2,fi2],          the local x-axis
-                   [..,..,..,...],
-                   [un,vn,wn,fin]]
-
-            eci = [[x1],                    local x-coordinates of the evaluation
-                   [x2],                    points
-                   [..],
-                   [xn]]
-
-    -------------------------------------------------------------
+    History
+    -------
     LAST MODIFIED: O Dahlblom   2015-10-19
                    O Dahlblom   2022-11-23 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     E, Gs, A, Iy, Iz, Kv = ep
     DEA = E*A 
@@ -2981,25 +2857,26 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
 def flw2te(ex, ey, ep, D, eq=None):
     """
     Compute element stiffness (conductivity) matrix for a triangular field element.
-    
-    Parameters:
-    
-        ex = [x1 x2 x3]
-        ey = [y1 y2 y3]     element coordinates
-    
-        ep = [t]            element thickness    
 
-        D = [kxx kxy;
-             kyx kyy]       constitutive matrix
-    
-             eq             heat supply per unit volume
-             
-    Returns:
-    
-        Ke                  element 'stiffness' matrix (3 x 3)
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [t], where t is the element thickness.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        fe                  element load vector (3 x 1)
-    
+    Returns
+    -------
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (3, 3).
+    fe : ndarray
+        Element load vector, shape (3, 1).
     """
     t = ep[0]
     if eq is None:
@@ -3026,26 +2903,24 @@ def flw2te(ex, ey, ep, D, eq=None):
 def flw2ts(ex, ey, D, ed):
     """
     Compute flows or corresponding quantities in the triangular field element.
-    
-    Parameters:
-    
-        ex = [x1 x2 x3]
-        ey = [y1 y2 y3]         element coordinates
-                                 
-             D = [kxx kxy
-                  kyx kyy]      constitutive matrix
-    
-             ed =[u1 u2 u3]     u1,u2,u3: nodal values
-                  .. .. ..;
-                  
-    Returns:
-    
-        es=[ qx qy ] 
-             ... ..]                element flows
-    
-        et=[ gx gy ]
-             ... ..]                element gradients
-    
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, u2, u3], one row per element.
+
+    Returns
+    -------
+    es : ndarray
+        Element flows, shape (n_elem, 2) or (2,) for single element.
+    et : ndarray
+        Element gradients, shape (n_elem, 2) or (2,) for single element.
     """
 
     if len(ex.shape) > 1:
@@ -3053,58 +2928,84 @@ def flw2ts(ex, ey, D, ed):
         qt = np.zeros([ex.shape[0], 2])
         row = 0
         for exr, eyr, edr in zip(ex, ey, ed):
-            exm = np.asmatrix(exr)
-            eym = np.asmatrix(eyr)
-            edm = np.asmatrix(edr)
-            C = np.asmatrix(np.hstack([np.ones((3, 1)), exm.T, eym.T]))
-            B = np.matrix([
+            exm = np.asarray(exr).reshape(-1)  # Ensure 1D array
+            eym = np.asarray(eyr).reshape(-1)  # Ensure 1D array
+            edm = np.asarray(edr).reshape(-1)  # Ensure 1D array
+            
+            # Create C matrix with consistent dimensions
+            ones_col = np.ones((3, 1))
+            # Reshape column vectors properly
+            ex_col = exm.reshape(-1, 1)
+            ey_col = eym.reshape(-1, 1)
+            
+            # Stack horizontally with consistent 2D shapes
+            C = np.hstack([ones_col, ex_col, ey_col])
+            
+            B = np.array([
                 [0., 1., 0.],
                 [0., 0., 1.]
-            ])*C.I
+            ]) @ np.linalg.inv(C)
 
-            qs[row, :] = (-D*B*edm.T).T
-            qt[row, :] = (B*edm.T).T
+            qs[row, :] = (-D @ B @ edm.T).T
+            qt[row, :] = (B @ edm.T).T
             row += 1
 
         return qs, qt
     else:
-        exm = np.asmatrix(ex)
-        eym = np.asmatrix(ey)
-        edm = np.asmatrix(ed)
-        C = np.asmatrix(np.hstack([np.ones((3, 1)), exm.T, eym.T]))
-        B = np.matrix([
+        exm = np.asarray(ex).reshape(-1)  # Ensure 1D array
+        eym = np.asarray(ey).reshape(-1)  # Ensure 1D array
+        edm = np.asarray(ed).reshape(-1)  # Ensure 1D array
+        
+        # Create C matrix with consistent dimensions
+        ones_col = np.ones((3, 1))
+        # Reshape column vectors properly
+        ex_col = exm.reshape(-1, 1)
+        ey_col = eym.reshape(-1, 1)
+        
+        # Stack horizontally with consistent 2D shapes
+        C = np.hstack([ones_col, ex_col, ey_col])
+        
+        B = np.array([
             [0., 1., 0.],
             [0., 0., 1.]
-        ])*C.I
+        ]) @ np.linalg.inv(C)
 
-        qs = -D*B*edm.T
-        qt = B*edm.T
+        qs = -D @ B @ edm.T
+        qt = B @ edm.T
 
         return qs.T, qt.T
-
-
+    
 def flw2qe(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity) matrix for a triangular field element.
-    
-    Parameters:
-    
-        ex = [x1, x2, x3, x4]
-        ey = [y1, y2, y3, y4]   element coordinates
-    
-        ep = [t]                element thickness    
+    Compute element stiffness (conductivity) matrix for a quadrilateral field element.
+    This function calculates the element stiffness matrix and optionally the load vector
+    for a 4-node quadrilateral element used in 2D heat flow analysis. The quadrilateral
+    is divided into 4 triangular sub-elements using the centroid as a common node.
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]        constitutive matrix
-    
-        eq                      heat supply per unit volume
-             
-    Returns:
-    
-        Ke                      element 'stiffness' matrix (4 x 4)
+    Parameters
+    ----------
+    ex : array_like
+        Element x-coordinates [x1, x2, x3, x4] for the 4 corner nodes.
+    ey : array_like
+        Element y-coordinates [y1, y2, y3, y4] for the 4 corner nodes.
+    ep : array_like
+        Element properties [t] where t is the element thickness.
+    D : array_like
+        Constitutive matrix (2x2) for heat conductivity:
+        [[kxx, kxy],
+         [kyx, kyy]]
+        where kxx, kyy are conductivities in x and y directions,
+        and kxy, kyx are cross-conductivities.
+    eq : float, optional
+        Heat supply per unit volume. If None, only stiffness matrix is computed.
+        Default is None.
 
-        fe                      element load vector (4 x 1)
-    
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix (4x4) for the quadrilateral element.
+    fe : ndarray, optional
+        Element load vector (4x1). Only returned when eq is provided.
     """
     xc = sum(ex)/4.
     yc = sum(ey)/4.
@@ -3143,32 +3044,29 @@ def flw2qe(ex, ey, ep, D, eq=None):
 
 def flw2qs(ex, ey, ep, D, ed, eq=None):
     """
-    Compute flows or corresponding quantities in the
-    quadrilateral field element.
+    Compute flows or corresponding quantities in the quadrilateral field element.
     
-    Parameters:
-    
-        ex = [x1, x2, x3, x4]
-        ey = [y1, y2, y3, y4]      element coordinates
-    
-        ep = [t]                   element thickness    
+    Parameters
+    ----------
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]           constitutive matrix
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t], where t is element thickness.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [[u1, u2, u3, u4], [.., .., .., ..]], where u1,u2,u3,u4 are nodal values.
+    
+    Returns
+    -------
 
-        ed = [[u1, u2, u3, u4],
-              [.., .., .., ..]]    u1,u2,u3,u4: nodal values
-    
-        eq                         heat supply per unit volume
-             
-    Returns:
-    
-        es = [[qx, qy],
-              [.., ..]]            element flows
-
-        et = [[gx, gy],
-              [.., ..]]            element gradients
-    
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[gx, gy], [.., ..]].
     """
     K = np.zeros((5, 5))
     f = np.zeros((5, 1))
@@ -3235,28 +3133,29 @@ def flw2qs(ex, ey, ep, D, ed, eq=None):
 
     return es, et
 
-
 def flw2i4e(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 4 node isoparametric field element
+    Compute element stiffness (conductivity) matrix for 4 node isoparametric field element.
 
-    Parameters:
-        
-        ex = [x1 x2 x3 x4]  element coordinates
-        ey = [y1 y2 y3 y4]
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        ep = [t ir]         thickness and integration rule
-
-        D  = [[kxx kxy],
-              [kyx kyy]]    constitutive matrix
-
-        eq                  heat supply per unit volume
-
-    Returns:
-        Ke                  element 'stiffness' matrix (4 x 4)
-        fe                  element load vector (4 x 1)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (4, 4).
+    fe : ndarray, optional
+        Element load vector, shape (4, 1), if eq is not None.
     """
     t = ep[0]
     ir = ep[1]
@@ -3270,18 +3169,18 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.matrix([g1, g1])
-        w = np.matrix([w1, w1])
+        gp = np.array([[g1, g1]])  # Make this explicitly 2D
+        w = np.array([[w1, w1]])   # Make this explicitly 2D
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3292,7 +3191,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3303,7 +3202,7 @@ def flw2i4e(ex, ey, ep, D, eq=None):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3316,18 +3215,31 @@ def flw2i4e(ex, ey, ep, D, eq=None):
         ])
     else:
         info("Used number of integration points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
+        return
+    
+    # Make sure w is a 2D array
+    w = np.asarray(w)
+    if w.ndim == 1:
+        w = w.reshape(-1, 1)
+        
+    # Compute the weight products - handle both matrix and array cases safely
+    if w.shape[1] >= 2:
+        wp = w[:, 0] * w[:, 1]
+    else:
+        # Handle the case where w might only have one column
+        wp = w[:, 0]
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     r2 = ngp*2
 
+    # Calculate shape functions and derivatives
     N = np.multiply((1-xsi), (1-eta))/4.
-    N = np.append(N, np.multiply((1+xsi), (1-eta))/4., axis=1)
-    N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
-    N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
+    N = np.column_stack((N, np.multiply((1+xsi), (1-eta))/4.))
+    N = np.column_stack((N, np.multiply((1+xsi), (1+eta))/4.))
+    N = np.column_stack((N, np.multiply((1-xsi), (1+eta))/4.))
 
-    dNr = np.matrix(np.zeros((r2, 4)))
+    dNr = np.zeros((r2, 4))
     dNr[0:r2:2, 0] = -(1-eta)/4.
     dNr[0:r2:2, 1] = (1-eta)/4.
     dNr[0:r2:2, 2] = (1+eta)/4.
@@ -3337,9 +3249,15 @@ def flw2i4e(ex, ey, ep, D, eq=None):
     dNr[1:r2+1:2, 2] = (1+xsi)/4.
     dNr[1:r2+1:2, 3] = (1-xsi)/4.
 
-    Ke1 = np.matrix(np.zeros((4, 4)))
-    fe1 = np.matrix(np.zeros((4, 1)))
-    JT = dNr*np.matrix([ex, ey]).T
+    Ke1 = np.zeros((4, 4))
+    fe1 = np.zeros((4, 1))
+    
+    # Convert ex and ey to arrays and combine for JT calculation
+    ex_array = np.asarray(ex).reshape(-1, 1)
+    ey_array = np.asarray(ey).reshape(-1, 1)
+    coords = np.hstack([ex_array, ey_array])
+    
+    JT = dNr @ coords
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
@@ -3347,44 +3265,43 @@ def flw2i4e(ex, ey, ep, D, eq=None):
         if detJ < 10*np.finfo(float).eps:
             info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
-        fe1 = fe1+N[i, :].T*detJ*wp[i]
+        B = JTinv @ dNr[indx-1, :]
+
+        Ke1 = Ke1 + B.T @ D @ B * detJ * wp[i]
+        fe1 = fe1 + N[i, :].reshape(-1, 1) * detJ * wp[i]
 
     if eq is None:
-        return Ke1*t
+        return Ke1 * t
     else:
-        return Ke1*t, fe1*t*eq
-
+        return Ke1 * t, fe1 * t * q
 
 def flw2i4s(ex, ey, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    4 node isoparametric element.
+    Compute flows or corresponding quantities in the 4 node isoparametric element.
+
+    Parameters
+    ----------
     
-    Parameters:
-        
-        ex = [x1 x2 x3 x4]         element coordinates
-        ey = [y1 y2 y3 y4]
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, u2, u3, u4].
 
-        ep = [t ir]                thickness and integration rule
+    Returns
+    -------
 
-        D  = [[kxx kxy],
-              [kyx kyy]]           constitutive matrix
-
-        ed = [u1, u2, u3, u4]      u1,u2,u3,u4: nodal values
-
-    Returns:
-        es = [[qx, qy],
-              [.., ..]]             element flows
-
-        et = [[qx, qy],
-              [... ..]]             element gradients
-
-        eci=[[ix1, iy1],            Gauss point location vector
-             [...  ...],            nint: number of integration points
-             [ix(nint), iy(nint)]
-
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[qx, qy], [..., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1], [..., ...], [ix(nint), iy(nint)]].
     """
     t = ep[0]
     ir = ep[1]
@@ -3393,18 +3310,18 @@ def flw2i4s(ex, ey, ep, D, ed):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.matrix([g1, g1])
-        w = np.matrix([w1, w1])
+        gp = np.array([[g1, g1]])  # Make this explicitly 2D
+        w = np.array([[w1, w1]])   # Make this explicitly 2D
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3415,7 +3332,7 @@ def flw2i4s(ex, ey, ep, D, ed):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3426,7 +3343,7 @@ def flw2i4s(ex, ey, ep, D, ed):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3439,18 +3356,24 @@ def flw2i4s(ex, ey, ep, D, ed):
         ])
     else:
         info("Used number of integration points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
+    
+    # Make sure w is a 2D array
+    w = np.asarray(w)
+    if w.ndim == 1:
+        w = w.reshape(-1, 1)
+        
+    # We don't need wp for this function, so no need to compute it
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     r2 = ngp*2
 
     N = np.multiply((1-xsi), (1-eta))/4.
-    N = np.append(N, np.multiply((1+xsi), (1-eta))/4., axis=1)
-    N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
-    N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
+    N = np.column_stack((N, np.multiply((1+xsi), (1-eta))/4.))
+    N = np.column_stack((N, np.multiply((1+xsi), (1+eta))/4.))
+    N = np.column_stack((N, np.multiply((1-xsi), (1+eta))/4.))
 
-    dNr = np.matrix(np.zeros((r2, 4)))
+    dNr = np.zeros((r2, 4))
     dNr[0:r2:2, 0] = -(1-eta)/4.
     dNr[0:r2:2, 1] = (1-eta)/4.
     dNr[0:r2:2, 2] = (1+eta)/4.
@@ -3460,52 +3383,72 @@ def flw2i4s(ex, ey, ep, D, ed):
     dNr[1:r2+1:2, 2] = (1+xsi)/4.
     dNr[1:r2+1:2, 3] = (1-xsi)/4.
 
-    eci = N*np.matrix([ex, ey]).T
-    if ed.ndim == 1:
+    # Calculate Gauss point locations (for output)
+    # Use numpy arrays instead of matrix multiplication
+    ex_array = np.asarray(ex).reshape(-1, 1)
+    ey_array = np.asarray(ey).reshape(-1, 1)
+    coords = np.hstack([ex_array, ey_array])
+    
+    eci = N @ coords
+    
+    # Ensure ed is properly shaped for calculations
+    if np.ndim(ed) == 1:
         ed = np.array([ed])
 
-    red, ced = np.shape(ed)
-    JT = dNr*np.matrix([ex, ey]).T
+    # Get the number of rows in ed
+    red = ed.shape[0]
+    
+    JT = dNr @ coords
 
-    es = np.matrix(np.zeros((ngp*red, 2)))
-    et = np.matrix(np.zeros((ngp*red, 2)))
+    es = np.zeros((ngp*red, 2))
+    et = np.zeros((ngp*red, 2))
+    
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
         detJ = np.linalg.det(JT[indx-1, :])
         if detJ < 10*np.finfo(float).eps:
-            info("Jacobi determinatn == 0")
+            info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        p1 = -D*B*ed.T
-        p2 = B*ed.T
-        es[i:ngp*red:ngp, :] = p1.T
-        et[i:ngp*red:ngp, :] = p2.T
+        B = JTinv @ dNr[indx-1, :]
+
+        # Process each row of ed
+        for j in range(red):
+            # Ensure ed row is a column vector for matrix multiplications
+            ed_row = np.asarray(ed[j]).reshape(-1, 1)  # (8,1)
+            # Compute flow (es) and gradient (et)
+            p1 = -D @ B @ ed_row    # (2,1)
+            p2 = B @ ed_row         # (2,1)
+            # Flatten to shape (2,) before assigning to row slices
+            es[i + j*ngp, :] = p1.flatten()
+            et[i + j*ngp, :] = p2.flatten()
 
     return es, et, eci
 
-
 def flw2i8e(ex, ey, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 8 node isoparametric field element.
-    
-    Parameters:
-    
-        ex = [x1, ..., x8]      element coordinates
-        ey = [y1, ..., y8]
-        
-        ep = [t, ir]            thickness and integration rule
+    Compute element stiffness (conductivity) matrix for 8 node isoparametric field element.
 
-        D = [[kxx, kxy],
-             [kyx, kyy]]        constitutive matrix
+    Parameters
+    ----------
 
-        eq                      heat supply per unit volume
+    ex : array_like
+        Element coordinates [x1, ..., x8].
+    ey : array_like
+        Element coordinates [y1, ..., y8].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-    Returns:
-    
-        Ke                      element 'stiffness' matrix (8 x 8)
-        fe                      element load vector (8 x 1)
+    Returns
+    -------
 
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (8, 8).
+    fe : ndarray, optional
+        Element load vector, shape (8, 1), if eq is not None.
     """
     t = ep[0]
     ir = ep[1]
@@ -3519,18 +3462,18 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.matrix([g1, g1])
-        w = np.matrix([w1, w1])
+        gp = np.array([[g1, g1]])  # Make this explicitly 2D
+        w = np.array([[w1, w1]])   # Make this explicitly 2D
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3541,7 +3484,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3552,7 +3495,7 @@ def flw2i8e(ex, ey, ep, D, eq=None):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3565,29 +3508,55 @@ def flw2i8e(ex, ey, ep, D, eq=None):
         ])
     else:
         info("Used number of integration points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
+        return
+    
+    # Make sure w is a 2D array
+    w = np.asarray(w)
+    if w.ndim == 1:
+        w = w.reshape(-1, 1)
+        
+    # Compute the weight products - handle both matrix and array cases safely
+    if w.shape[1] >= 2:
+        wp = w[:, 0] * w[:, 1]
+    else:
+        # Handle the case where w might only have one column
+        wp = w[:, 0]
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     r2 = ngp*2
 
     N = np.multiply(np.multiply(-(1-xsi), (1-eta)), (1+xsi+eta))/4.
-    N = np.append(N, np.multiply(
-        np.multiply(-(1+xsi), (1-eta)), (1-xsi+eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        np.multiply(-(1+xsi), (1+eta)), (1-xsi-eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        np.multiply(-(1-xsi), (1+eta)), (1+xsi-eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        (1-np.multiply(xsi, xsi)), (1-eta))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1+xsi), (1-np.multiply(eta, eta)))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1-np.multiply(xsi, xsi)), (1+eta))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1-xsi), (1-np.multiply(eta, eta)))/2., axis=1)
+    N = np.column_stack((
+        N, 
+        np.multiply(np.multiply(-(1+xsi), (1-eta)), (1-xsi+eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply(np.multiply(-(1+xsi), (1+eta)), (1-xsi-eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply(np.multiply(-(1-xsi), (1+eta)), (1+xsi-eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-np.multiply(xsi, xsi)), (1-eta))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1+xsi), (1-np.multiply(eta, eta)))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-np.multiply(xsi, xsi)), (1+eta))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-xsi), (1-np.multiply(eta, eta)))/2.
+    ))
 
-    dNr = np.matrix(np.zeros((r2, 8)))
+    dNr = np.zeros((r2, 8))
     dNr[0:r2:2, 0] = -(-np.multiply((1-eta), (1+xsi+eta)) +
                        np.multiply((1-xsi), (1-eta)))/4.
     dNr[0:r2:2, 1] = -(np.multiply((1-eta), (1-xsi+eta)) -
@@ -3613,9 +3582,15 @@ def flw2i8e(ex, ey, ep, D, eq=None):
     dNr[1:r2+1:2, 6] = (1-np.multiply(xsi, xsi))/2.
     dNr[1:r2+1:2, 7] = -np.multiply(eta, (1-xsi))
 
-    Ke1 = np.matrix(np.zeros((8, 8)))
-    fe1 = np.matrix(np.zeros((8, 1)))
-    JT = dNr*np.matrix([ex, ey]).T
+    Ke1 = np.zeros((8, 8))
+    fe1 = np.zeros((8, 1))
+    
+    # Convert ex and ey to arrays and combine for JT calculation
+    ex_array = np.asarray(ex).reshape(-1, 1)
+    ey_array = np.asarray(ey).reshape(-1, 1)
+    coords = np.hstack([ex_array, ey_array])
+    
+    JT = dNr @ coords
 
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
@@ -3623,44 +3598,42 @@ def flw2i8e(ex, ey, ep, D, eq=None):
         if detJ < 10*np.finfo(float).eps:
             info("Jacobideterminanten lika med noll!")
         JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
-        fe1 = fe1+N[i, :].T*detJ*wp[i]
+        B = JTinv @ dNr[indx-1, :]
+        Ke1 = Ke1 + B.T @ D @ B * detJ * wp[i]
+        fe1 = fe1 + N[i, :].reshape(-1, 1) * detJ * wp[i]
 
     if eq != None:
         return Ke1*t, fe1*t*q
     else:
         return Ke1*t
 
-
 def flw2i8s(ex, ey, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    8 node isoparametric element.
+    Compute flows or corresponding quantities in the 8 node isoparametric element.
     
-    Parameters:
-        
-        ex = [x1,x2,x3....,x8]     element coordinates
-        ey = [y1,y2,y3....,y8]
+    Parameters
+    ----------
 
-        ep = [t,ir]                thickness and integration rule
+    ex : array_like
+        Element coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element coordinates [y1, y2, y3, ..., y8].
+    ep : array_like
+        Element properties [t, ir], where t is thickness and ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy], [kyx, kyy]].
+    ed : array_like
+        Element nodal values [u1, ..., u8].
 
-        D  = [[kxx,kxy],
-              [kyx,kyy]]           constitutive matrix
+    Returns
+    -------
 
-        ed = [u1,....,u8]          u1,....,u8: nodal values
-
-    Returns:
-        es = [[qx,qy],
-              [..,..]]             element flows
-
-        et = [[qx,qy],
-              [..,..]]             element gradients
-
-        eci=[[ix1,iy1],            Gauss point location vector
-             [...,...],            nint: number of integration points
-             [ix(nint),iy(nint)]]
-
+    es : ndarray
+        Element flows [[qx, qy], [.., ..]].
+    et : ndarray
+        Element gradients [[qx, qy], [.., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1], [..., ...], [ix(nint), iy(nint)]].
     """
     t = ep[0]
     ir = ep[1]
@@ -3669,18 +3642,18 @@ def flw2i8s(ex, ey, ep, D, ed):
     if ir == 1:
         g1 = 0.0
         w1 = 2.0
-        gp = np.matrix([g1, g1])
-        w = np.matrix([w1, w1])
+        gp = np.array([[g1, g1]])  # Make this explicitly 2D
+        w = np.array([[w1, w1]])   # Make this explicitly 2D
     elif ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [g1, -g1],
             [-g1, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w1, w1],
             [w1, w1],
@@ -3691,7 +3664,7 @@ def flw2i8s(ex, ey, ep, D, ed):
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix([
+        gp = np.array([
             [-g1, -g1],
             [-g2, -g1],
             [g1, -g1],
@@ -3702,7 +3675,7 @@ def flw2i8s(ex, ey, ep, D, ed):
             [g2, g1],
             [g1, g1]
         ])
-        w = np.matrix([
+        w = np.array([
             [w1, w1],
             [w2, w1],
             [w1, w1],
@@ -3715,29 +3688,45 @@ def flw2i8s(ex, ey, ep, D, ed):
         ])
     else:
         info("Used number of integration points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
+        return
+    
+    # We don't need wp for this function, so no need to compute it
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     r2 = ngp*2
 
     N = np.multiply(np.multiply(-(1-xsi), (1-eta)), (1+xsi+eta))/4.
-    N = np.append(N, np.multiply(
-        np.multiply(-(1+xsi), (1-eta)), (1-xsi+eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        np.multiply(-(1+xsi), (1+eta)), (1-xsi-eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        np.multiply(-(1-xsi), (1+eta)), (1+xsi-eta))/4., axis=1)
-    N = np.append(N, np.multiply(
-        (1-np.multiply(xsi, xsi)), (1-eta))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1+xsi), (1-np.multiply(eta, eta)))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1-np.multiply(xsi, xsi)), (1+eta))/2., axis=1)
-    N = np.append(N, np.multiply(
-        (1-xsi), (1-np.multiply(eta, eta)))/2., axis=1)
+    N = np.column_stack((
+        N, 
+        np.multiply(np.multiply(-(1+xsi), (1-eta)), (1-xsi+eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply(np.multiply(-(1+xsi), (1+eta)), (1-xsi-eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply(np.multiply(-(1-xsi), (1+eta)), (1+xsi-eta))/4.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-np.multiply(xsi, xsi)), (1-eta))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1+xsi), (1-np.multiply(eta, eta)))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-np.multiply(xsi, xsi)), (1+eta))/2.
+    ))
+    N = np.column_stack((
+        N,
+        np.multiply((1-xsi), (1-np.multiply(eta, eta)))/2.
+    ))
 
-    dNr = np.matrix(np.zeros((r2, 8)))
+    dNr = np.zeros((r2, 8))
     dNr[0:r2:2, 0] = -(-np.multiply((1-eta), (1+xsi+eta)) +
                        np.multiply((1-xsi), (1-eta)))/4.
     dNr[0:r2:2, 1] = -(np.multiply((1-eta), (1-xsi+eta)) -
@@ -3763,54 +3752,78 @@ def flw2i8s(ex, ey, ep, D, ed):
     dNr[1:r2+1:2, 6] = (1-np.multiply(xsi, xsi))/2.
     dNr[1:r2+1:2, 7] = -np.multiply(eta, (1-xsi))
 
-    eci = N*np.matrix([ex, ey]).T
-    if ed.ndim == 1:
+    # Calculate Gauss point locations (for output)
+    # Use numpy arrays instead of matrix multiplication
+    ex_array = np.asarray(ex).reshape(-1, 1)
+    ey_array = np.asarray(ey).reshape(-1, 1)
+    coords = np.hstack([ex_array, ey_array])
+    
+    eci = N @ coords
+    
+    # Ensure ed is properly shaped for calculations
+    if np.ndim(ed) == 1:
         ed = np.array([ed])
-    red, ced = np.shape(ed)
-    JT = dNr*np.matrix([ex, ey]).T
 
-    es = np.matrix(np.zeros((ngp*red, 2)))
-    et = np.matrix(np.zeros((ngp*red, 2)))
+    # Get the number of rows in ed
+    red = ed.shape[0]
+    
+    JT = dNr @ coords
 
+    es = np.zeros((ngp*red, 2))
+    et = np.zeros((ngp*red, 2))
+    
     for i in range(ngp):
         indx = np.array([2*(i+1)-1, 2*(i+1)])
         detJ = np.linalg.det(JT[indx-1, :])
         if detJ < 10*np.finfo(float).eps:
             info("Jacobi determinant == 0")
         JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        p1 = -D*B*ed.T
-        p2 = B*ed.T
-        es[i:ngp*red:ngp, :] = p1.T
-        et[i:ngp*red:ngp, :] = p2.T
+        B = JTinv @ dNr[indx-1, :]
+
+        # Process each row of ed
+        for j in range(red):
+            # Ensure row vector is column shaped (n,1)
+            ed_row = np.asarray(ed[j]).reshape(-1, 1)
+            # Flow vector (negative conductivity * grad)
+            p1 = -D @ B @ ed_row   # shape (2,1) or MatrixCompat
+            # Gradient vector
+            p2 = B @ ed_row        # shape (2,1) or MatrixCompat
+            # Convert to numpy 1D arrays (handles MatrixCompat or ndarray)
+            p1_arr = np.asarray(p1, dtype=float).flatten()
+            p2_arr = np.asarray(p2, dtype=float).flatten()
+            # Assign first two components (expected size 2)
+            es[i + j*ngp, :] = p1_arr[:2]
+            et[i + j*ngp, :] = p2_arr[:2]
 
     return es, et, eci
 
-
 def flw3i8e(ex, ey, ez, ep, D, eq=None):
     """
-    Compute element stiffness (conductivity)
-    matrix for 8 node isoparametric field element.
+    Compute element stiffness (conductivity) matrix for 8 node isoparametric field element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3,...,x8]
-        ey = [y1,y2,y3,...,y8]      element coordinates
-        ez = [z1,z2,z3,...,z8]
+    Parameters
+    ----------
 
-        ep = [ir]                   Ir: Integration rule
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy, kxz], [kyx, kyy, kyz], [kzx, kzy, kzz]].
+    eq : float, optional
+        Heat supply per unit volume.
 
-        D = [[kxx,kxy,kxz],
-             [kyx,kyy,kyz],
-             [kzx,kzy,kzz]]         constitutive matrix
+    Returns
+    -------
 
-        eq                          heat supply per unit volume
-
-    Output:
-
-        Ke                          element 'stiffness' matrix (8 x 8)
-        fe                          element load vector (8 x 1)
-
+    Ke : ndarray
+        Element 'stiffness' matrix, shape (8, 8).
+    fe : ndarray, optional
+        Element load vector, shape (8, 1), if eq is not None.
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -3823,7 +3836,7 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
     if ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-1, -1, -1],
             [1, -1, -1],
             [1, 1, -1],
@@ -3833,143 +3846,148 @@ def flw3i8e(ex, ey, ez, ep, D, eq=None):
             [1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.matrix(np.ones((8, 3)))*w1
+        w = np.ones((8, 3))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix(np.zeros((27, 3)))
-        w = np.matrix(np.zeros((27, 3)))
+        gp = np.zeros((27, 3))
+        w = np.zeros((27, 3))
         I1 = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
         I2 = np.array([0, -1, 0, 0, 1, 0, 0, 1, 0])
-        gp[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
-        I1 = abs(I1)
-        I2 = abs(I2)
-        w[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
-        I1 = np.array([-1, -1, -1, 0, 0, 0, 1, 1, 1])
-        I2 = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0])
-        gp[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
-        I1 = abs(I1)
-        I2 = abs(I2)
-        w[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
-        I1 = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1])
-        I2 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
-        I3 = abs(I1)
-        gp[:, 2] = np.matrix([I1, I2, I3]).reshape(27, 1)*g1
-        gp[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
-        w[:, 2] = np.matrix([I3, I2, I3]).reshape(27, 1)*w1
-        w[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
+        gp[:, 0] = np.repeat(I1, 3).reshape(27, 1).flatten()
+        I2_tiled = np.tile(I2, 3).reshape(27, 1)
+        gp[:, 0] = gp[:, 0]*g1 + I2_tiled.flatten()*g2
+        I1 = np.abs(I1)
+        I2 = np.abs(I2)
+        w[:, 0] = np.repeat(I1, 3).reshape(27, 1).flatten()*w1
+        w[:, 0] = w[:, 0] + np.tile(I2, 3).reshape(27, 1).flatten()*w2
+        I1 = np.repeat([-1, -1, -1, 0, 0, 0, 1, 1, 1], 3)
+        I2 = np.repeat([0, 0, 0, 1, 1, 1, 0, 0, 0], 3)
+        gp[:, 1] = I1*g1
+        gp[:, 1] = gp[:, 1] + I2*g2
+        I1 = np.abs(I1)
+        I2 = np.abs(I2)
+        w[:, 1] = I1*w1
+        w[:, 1] = w[:, 1] + I2*w2
+        I1 = np.tile([-1, -1, -1, -1, -1, -1, -1, -1, -1], 3)
+        I2 = np.tile([0, 0, 0, 0, 0, 0, 0, 0, 0], 3)
+        I3 = np.abs(I1)
+        gp[:, 2] = I1*g1
+        gp[:, 2] = gp[:, 2] + I2*g2
+        w[:, 2] = I3*w1
+        w[:, 2] = w[:, 2] + I2*w2
     else:
         info("Used number of integration points not implemented")
         return
 
-    wp = np.multiply(np.multiply(w[:, 0], w[:, 1]), w[:, 2])
+    wp = w[:, 0]*w[:, 1]*w[:, 2]
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     zet = gp[:, 2]
     r2 = ngp*3
 
-    N = np.multiply(np.multiply((1-xsi), (1-eta)), (1-zet))/8.
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1-eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1+eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1+eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1-eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1-eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1+eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1+eta)), (1+zet))/8., axis=1)
+    N = np.zeros((ngp, 8))
+    dNr = np.zeros((r2, 8))
 
-    dNr = np.matrix(np.zeros((r2, 8)))
-    dNr[0:r2:3, 0] = np.multiply(-(1-eta), (1-zet))
-    dNr[0:r2:3, 1] = np.multiply((1-eta), (1-zet))
-    dNr[0:r2:3, 2] = np.multiply((1+eta), (1-zet))
-    dNr[0:r2:3, 3] = np.multiply(-(1+eta), (1-zet))
-    dNr[0:r2:3, 4] = np.multiply(-(1-eta), (1+zet))
-    dNr[0:r2:3, 5] = np.multiply((1-eta), (1+zet))
-    dNr[0:r2:3, 6] = np.multiply((1+eta), (1+zet))
-    dNr[0:r2:3, 7] = np.multiply(-(1+eta), (1+zet))
-    dNr[1:r2+1:3, 0] = np.multiply(-(1-xsi), (1-zet))
-    dNr[1:r2+1:3, 1] = np.multiply(-(1+xsi), (1-zet))
-    dNr[1:r2+1:3, 2] = np.multiply((1+xsi), (1-zet))
-    dNr[1:r2+1:3, 3] = np.multiply((1-xsi), (1-zet))
-    dNr[1:r2+1:3, 4] = np.multiply(-(1-xsi), (1+zet))
-    dNr[1:r2+1:3, 5] = np.multiply(-(1+xsi), (1+zet))
-    dNr[1:r2+1:3, 6] = np.multiply((1+xsi), (1+zet))
-    dNr[1:r2+1:3, 7] = np.multiply((1-xsi), (1+zet))
-    dNr[2:r2+2:3, 0] = np.multiply(-(1-xsi), (1-eta))
-    dNr[2:r2+2:3, 1] = np.multiply(-(1+xsi), (1-eta))
-    dNr[2:r2+2:3, 2] = np.multiply(-(1+xsi), (1+eta))
-    dNr[2:r2+2:3, 3] = np.multiply(-(1-xsi), (1+eta))
-    dNr[2:r2+2:3, 4] = np.multiply((1-xsi), (1-eta))
-    dNr[2:r2+2:3, 5] = np.multiply((1+xsi), (1-eta))
-    dNr[2:r2+2:3, 6] = np.multiply((1+xsi), (1+eta))
-    dNr[2:r2+2:3, 7] = np.multiply((1-xsi), (1+eta))
-    dNr = dNr/8.
+    N[:, 0] = (1-xsi)*(1-eta)*(1-zet)/8
+    N[:, 1] = (1+xsi)*(1-eta)*(1-zet)/8
+    N[:, 2] = (1+xsi)*(1+eta)*(1-zet)/8
+    N[:, 3] = (1-xsi)*(1+eta)*(1-zet)/8
+    N[:, 4] = (1-xsi)*(1-eta)*(1+zet)/8
+    N[:, 5] = (1+xsi)*(1-eta)*(1+zet)/8
+    N[:, 6] = (1+xsi)*(1+eta)*(1+zet)/8
+    N[:, 7] = (1-xsi)*(1+eta)*(1+zet)/8
 
-    Ke1 = np.matrix(np.zeros((8, 8)))
-    fe1 = np.matrix(np.zeros((8, 1)))
-    JT = dNr*np.matrix([ex, ey, ez]).T
+    dNr[0:r2+1:3, 0] = -(1-eta)*(1-zet)
+    dNr[0:r2+1:3, 1] = (1-eta)*(1-zet)
+    dNr[0:r2+1:3, 2] = (1+eta)*(1-zet)
+    dNr[0:r2+1:3, 3] = -(1+eta)*(1-zet)
+    dNr[0:r2+1:3, 4] = -(1-eta)*(1+zet)
+    dNr[0:r2+1:3, 5] = (1-eta)*(1+zet)
+    dNr[0:r2+1:3, 6] = (1+eta)*(1+zet)
+    dNr[0:r2+1:3, 7] = -(1+eta)*(1+zet)
+    dNr[1:r2+2:3, 0] = -(1-xsi)*(1-zet)
+    dNr[1:r2+2:3, 1] = -(1+xsi)*(1-zet)
+    dNr[1:r2+2:3, 2] = (1+xsi)*(1-zet)
+    dNr[1:r2+2:3, 3] = (1-xsi)*(1-zet)
+    dNr[1:r2+2:3, 4] = -(1-xsi)*(1+zet)
+    dNr[1:r2+2:3, 5] = -(1+xsi)*(1+zet)
+    dNr[1:r2+2:3, 6] = (1+xsi)*(1+zet)
+    dNr[1:r2+2:3, 7] = (1-xsi)*(1+zet)
+    dNr[2:r2+3:3, 0] = -(1-xsi)*(1-eta)
+    dNr[2:r2+3:3, 1] = -(1+xsi)*(1-eta)
+    dNr[2:r2+3:3, 2] = -(1+xsi)*(1+eta)
+    dNr[2:r2+3:3, 3] = -(1-xsi)*(1+eta)
+    dNr[2:r2+3:3, 4] = (1-xsi)*(1-eta)
+    dNr[2:r2+3:3, 5] = (1+xsi)*(1-eta)
+    dNr[2:r2+3:3, 6] = (1+xsi)*(1+eta)
+    dNr[2:r2+3:3, 7] = (1-xsi)*(1+eta)
+
+    dNr = dNr/8.0
+
+    Ke = np.zeros((8, 8))
+    fe = np.zeros((8, 1))
+
+    ex = np.asarray(ex).reshape((8, 1))
+    ey = np.asarray(ey).reshape((8, 1))
+    ez = np.asarray(ez).reshape((8, 1))
+    coords = np.hstack((ex, ey, ez))
+
+    JT = dNr @ coords
+
+    eps = np.finfo(float).eps
 
     for i in range(ngp):
-        indx = np.array([3*(i+1)-2, 3*(i+1)-1, 3*(i+1)])
-        detJ = np.linalg.det(JT[indx-1, :])
-        if detJ < 10*np.finfo(float).eps:
-            info("Jacobi determinant == 0")
-        JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        Ke1 = Ke1+B.T*D*B*detJ*wp[i].item()
-        fe1 = fe1+N[i, :].T*detJ*wp[i]
+        indx = [i*3, i*3+1, i*3+2]
+        detJ = np.linalg.det(JT[indx, :])
+        if detJ < 10*eps:
+            info("Jacobi determinant equal or less than zero!")
+        JTinv = np.linalg.inv(JT[indx, :])
+        dNx = JTinv @ dNr[indx, :]
 
-    if eq != None:
-        return Ke1, fe1*q
+        B = np.zeros((3, 8))
+        B[0, :] = dNx[0, :]
+        B[1, :] = dNx[1, :]
+        B[2, :] = dNx[2, :]
+
+        Ke = Ke + B.T @ D @ B * detJ * wp[i]
+        fe = fe + (N[i, :].reshape(-1, 1) * detJ * wp[i]).reshape(-1, 1)
+
+    if eq is not None:
+        return Ke, fe*q
     else:
-        return Ke1
-
+        return Ke
 
 def flw3i8s(ex, ey, ez, ep, D, ed):
     """
-    Compute flows or corresponding quantities in the
-    8 node (3-dim) isoparametric field element.
+    Compute flows or corresponding quantities in the 8 node (3-dim) isoparametric field element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3,...,x8]
-        ey = [y1,y2,y3,...,y8]              element coordinates
-        ez = [z1,z2,z3,...,z8]
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is integration rule.
+    D : array_like
+        Constitutive matrix [[kxx, kxy, kxz], [kyx, kyy, kyz], [kzx, kzy, kzz]].
+    ed : array_like
+        Element nodal values [[u1, ..., u8], [.., ..., ..]].
 
-        ep = [ir]                           Ir: Integration rule
-
-        D = [[kxx,kxy,kxz],
-             [kyx,kyy,kyz],
-             [kzx,kzy,kzz]]                 constitutive matrix
-
-        ed = [[u1,....,u8],                 element nodal values
-              [..,....,..]]
-
-    Output:
-
-        es = [[qx,qy,qz],
-              [..,..,..]]                   element flows(s)
-
-        et = [[qx,qy,qz],                   element gradients(s)
-              [..,..,..]]
-
-        eci = [[ix1,ix1,iz1],               location vector
-               [...,...,...],               nint: number of integration points
-               [ix(nint),iy(nint),iz(nint)]]
-
+    Returns
+    -------
+    es : ndarray
+        Element flows [[qx, qy, qz], [.., .., ..]].
+    et : ndarray
+        Element gradients [[qx, qy, qz], [.., .., ..]].
+    eci : ndarray
+        Gauss point location vector [[ix1, iy1, iz1], [..., ..., ...], [ix(nint), iy(nint), iz(nint)]].
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -3977,7 +3995,7 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
     if ir == 2:
         g1 = 0.577350269189626
         w1 = 1
-        gp = np.matrix([
+        gp = np.array([
             [-1, -1, -1],
             [1, -1, -1],
             [1, 1, -1],
@@ -3987,136 +4005,155 @@ def flw3i8s(ex, ey, ez, ep, D, ed):
             [1, 1, 1],
             [-1, 1, 1]
         ])*g1
-        w = np.matrix(np.ones((8, 3)))*w1
+        w = np.ones((8, 3))*w1
     elif ir == 3:
         g1 = 0.774596669241483
         g2 = 0.
         w1 = 0.555555555555555
         w2 = 0.888888888888888
-        gp = np.matrix(np.zeros((27, 3)))
-        w = np.matrix(np.zeros((27, 3)))
+        gp = np.zeros((27, 3))
+        w = np.zeros((27, 3))
         I1 = np.array([-1, 0, 1, -1, 0, 1, -1, 0, 1])
         I2 = np.array([0, -1, 0, 0, 1, 0, 0, 1, 0])
-        gp[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 0]
-        I1 = abs(I1)
-        I2 = abs(I2)
-        w[:, 0] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 0] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 0]
-        I1 = np.array([-1, -1, -1, 0, 0, 0, 1, 1, 1])
-        I2 = np.array([0, 0, 0, 1, 1, 1, 0, 0, 0])
-        gp[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*g1
-        gp[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*g2+gp[:, 1]
-        I1 = abs(I1)
-        I2 = abs(I2)
-        w[:, 1] = np.matrix([I1, I1, I1]).reshape(27, 1)*w1
-        w[:, 1] = np.matrix([I2, I2, I2]).reshape(27, 1)*w2+w[:, 1]
-        I1 = np.array([-1, -1, -1, -1, -1, -1, -1, -1, -1])
-        I2 = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0])
-        I3 = abs(I1)
-        gp[:, 2] = np.matrix([I1, I2, I3]).reshape(27, 1)*g1
-        gp[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*g2+gp[:, 2]
-        w[:, 2] = np.matrix([I3, I2, I3]).reshape(27, 1)*w1
-        w[:, 2] = np.matrix([I2, I3, I2]).reshape(27, 1)*w2+w[:, 2]
+        gp[:, 0] = np.repeat(I1, 3).reshape(27, 1).flatten()
+        I2_tiled = np.tile(I2, 3).reshape(27, 1)
+        gp[:, 0] = gp[:, 0]*g1 + I2_tiled.flatten()*g2
+        I1 = np.abs(I1)
+        I2 = np.abs(I2)
+        w[:, 0] = np.repeat(I1, 3).reshape(27, 1).flatten()*w1
+        w[:, 0] = w[:, 0] + np.tile(I2, 3).reshape(27, 1).flatten()*w2
+        I1 = np.repeat([-1, -1, -1, 0, 0, 0, 1, 1, 1], 3)
+        I2 = np.repeat([0, 0, 0, 1, 1, 1, 0, 0, 0], 3)
+        gp[:, 1] = I1*g1
+        gp[:, 1] = gp[:, 1] + I2*g2
+        I1 = np.abs(I1)
+        I2 = np.abs(I2)
+        w[:, 1] = I1*w1
+        w[:, 1] = w[:, 1] + I2*w2
+        I1 = np.tile([-1, -1, -1, -1, -1, -1, -1, -1, -1], 3)
+        I2 = np.tile([0, 0, 0, 0, 0, 0, 0, 0, 0], 3)
+        I3 = np.abs(I1)
+        gp[:, 2] = I1*g1
+        gp[:, 2] = gp[:, 2] + I2*g2
+        w[:, 2] = I3*w1
+        w[:, 2] = w[:, 2] + I2*w2
     else:
         info("Used number of integration points not implemented")
         return
 
-    wp = np.multiply(np.multiply(w[:, 0], w[:, 1]), w[:, 2])
+    wp = w[:, 0]*w[:, 1]*w[:, 2]
 
     xsi = gp[:, 0]
     eta = gp[:, 1]
     zet = gp[:, 2]
     r2 = ngp*3
 
-    N = np.multiply(np.multiply((1-xsi), (1-eta)), (1-zet))/8.
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1-eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1+eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1+eta)), (1-zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1-eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1-eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1+xsi), (1+eta)), (1+zet))/8., axis=1)
-    N = np.append(N, np.multiply(np.multiply(
-        (1-xsi), (1+eta)), (1+zet))/8., axis=1)
+    N = np.zeros((ngp, 8))
+    dNr = np.zeros((r2, 8))
 
-    dNr = np.matrix(np.zeros((r2, 8)))
-    dNr[0:r2:3, 0] = np.multiply(-(1-eta), (1-zet))
-    dNr[0:r2:3, 1] = np.multiply((1-eta), (1-zet))
-    dNr[0:r2:3, 2] = np.multiply((1+eta), (1-zet))
-    dNr[0:r2:3, 3] = np.multiply(-(1+eta), (1-zet))
-    dNr[0:r2:3, 4] = np.multiply(-(1-eta), (1+zet))
-    dNr[0:r2:3, 5] = np.multiply((1-eta), (1+zet))
-    dNr[0:r2:3, 6] = np.multiply((1+eta), (1+zet))
-    dNr[0:r2:3, 7] = np.multiply(-(1+eta), (1+zet))
-    dNr[1:r2+1:3, 0] = np.multiply(-(1-xsi), (1-zet))
-    dNr[1:r2+1:3, 1] = np.multiply(-(1+xsi), (1-zet))
-    dNr[1:r2+1:3, 2] = np.multiply((1+xsi), (1-zet))
-    dNr[1:r2+1:3, 3] = np.multiply((1-xsi), (1-zet))
-    dNr[1:r2+1:3, 4] = np.multiply(-(1-xsi), (1+zet))
-    dNr[1:r2+1:3, 5] = np.multiply(-(1+xsi), (1+zet))
-    dNr[1:r2+1:3, 6] = np.multiply((1+xsi), (1+zet))
-    dNr[1:r2+1:3, 7] = np.multiply((1-xsi), (1+zet))
-    dNr[2:r2+2:3, 0] = np.multiply(-(1-xsi), (1-eta))
-    dNr[2:r2+2:3, 1] = np.multiply(-(1+xsi), (1-eta))
-    dNr[2:r2+2:3, 2] = np.multiply(-(1+xsi), (1+eta))
-    dNr[2:r2+2:3, 3] = np.multiply(-(1-xsi), (1+eta))
-    dNr[2:r2+2:3, 4] = np.multiply((1-xsi), (1-eta))
-    dNr[2:r2+2:3, 5] = np.multiply((1+xsi), (1-eta))
-    dNr[2:r2+2:3, 6] = np.multiply((1+xsi), (1+eta))
-    dNr[2:r2+2:3, 7] = np.multiply((1-xsi), (1+eta))
-    dNr = dNr/8.
+    N[:, 0] = (1-xsi)*(1-eta)*(1-zet)/8
+    N[:, 1] = (1+xsi)*(1-eta)*(1-zet)/8
+    N[:, 2] = (1+xsi)*(1+eta)*(1-zet)/8
+    N[:, 3] = (1-xsi)*(1+eta)*(1-zet)/8
+    N[:, 4] = (1-xsi)*(1-eta)*(1+zet)/8
+    N[:, 5] = (1+xsi)*(1-eta)*(1+zet)/8
+    N[:, 6] = (1+xsi)*(1+eta)*(1+zet)/8
+    N[:, 7] = (1-xsi)*(1+eta)*(1+zet)/8
 
-    eci = N*np.matrix([ex, ey, ez]).T
-    if ed.ndim == 1:
+    dNr[0:r2+1:3, 0] = -(1-eta)*(1-zet)
+    dNr[0:r2+1:3, 1] = (1-eta)*(1-zet)
+    dNr[0:r2+1:3, 2] = (1+eta)*(1-zet)
+    dNr[0:r2+1:3, 3] = -(1+eta)*(1-zet)
+    dNr[0:r2+1:3, 4] = -(1-eta)*(1+zet)
+    dNr[0:r2+1:3, 5] = (1-eta)*(1+zet)
+    dNr[0:r2+1:3, 6] = (1+eta)*(1+zet)
+    dNr[0:r2+1:3, 7] = -(1+eta)*(1+zet)
+    dNr[1:r2+2:3, 0] = -(1-xsi)*(1-zet)
+    dNr[1:r2+2:3, 1] = -(1+xsi)*(1-zet)
+    dNr[1:r2+2:3, 2] = (1+xsi)*(1-zet)
+    dNr[1:r2+2:3, 3] = (1-xsi)*(1-zet)
+    dNr[1:r2+2:3, 4] = -(1-xsi)*(1+zet)
+    dNr[1:r2+2:3, 5] = -(1+xsi)*(1+zet)
+    dNr[1:r2+2:3, 6] = (1+xsi)*(1+zet)
+    dNr[1:r2+2:3, 7] = (1-xsi)*(1+zet)
+    dNr[2:r2+3:3, 0] = -(1-xsi)*(1-eta)
+    dNr[2:r2+3:3, 1] = -(1+xsi)*(1-eta)
+    dNr[2:r2+3:3, 2] = -(1+xsi)*(1+eta)
+    dNr[2:r2+3:3, 3] = -(1-xsi)*(1+eta)
+    dNr[2:r2+3:3, 4] = (1-xsi)*(1-eta)
+    dNr[2:r2+3:3, 5] = (1+xsi)*(1-eta)
+    dNr[2:r2+3:3, 6] = (1+xsi)*(1+eta)
+    dNr[2:r2+3:3, 7] = (1-xsi)*(1+eta)
+
+    dNr = dNr/8.0
+
+    # Calculate Gauss point locations (for output)
+    ex = np.asarray(ex).reshape((8, 1))
+    ey = np.asarray(ey).reshape((8, 1))
+    ez = np.asarray(ez).reshape((8, 1))
+    coords = np.hstack((ex, ey, ez))
+    
+    eci = N @ coords
+    
+    # Ensure ed is properly shaped for calculations
+    if np.ndim(ed) == 1:
         ed = np.array([ed])
-        red, ced = np.shape(ed)
-    JT = dNr*np.matrix([ex, ey, ez]).T
 
-    es = np.matrix(np.zeros((ngp*red, 3)))
-    et = np.matrix(np.zeros((ngp*red, 3)))
+    # Get the number of rows in ed
+    red = ed.shape[0]
+    
+    JT = dNr @ coords
+
+    es = np.zeros((ngp*red, 3))
+    et = np.zeros((ngp*red, 3))
+    
+    eps = np.finfo(float).eps
+    
     for i in range(ngp):
-        indx = np.array([3*(i+1)-2, 3*(i+1)-1, 3*(i+1)])
-        detJ = np.linalg.det(JT[indx-1, :])
-        if detJ < 10*np.finfo(float).eps:
-            info("Jacobideterminanten lika med noll!")
-        JTinv = np.linalg.inv(JT[indx-1, :])
-        B = JTinv*dNr[indx-1, :]
-        p1 = -D*B*ed.T
-        p2 = B*ed.T
-        es[i:ngp*red:ngp, :] = p1.T
-        et[i:ngp*red:ngp, :] = p2.T
+        indx = [i*3, i*3+1, i*3+2]
+        detJ = np.linalg.det(JT[indx, :])
+        if detJ < 10*eps:
+            info("Jacobi determinant equal or less than zero!")
+        JTinv = np.linalg.inv(JT[indx, :])
+        dNx = JTinv @ dNr[indx, :]
+
+        B = np.zeros((3, 8))
+        B[0, :] = dNx[0, :]
+        B[1, :] = dNx[1, :]
+        B[2, :] = dNx[2, :]
+
+        # Process each row of ed
+        for j in range(red):
+            p1 = -D @ B @ ed[j].T
+            p2 = B @ ed[j].T
+            es[i + j*ngp, :] = p1.T
+            et[i + j*ngp, :] = p2.T
 
     return es, et, eci
-
 
 def plante(ex, ey, ep, D, eq=None):
     """
     Calculate the stiffness matrix for a triangular plane stress or plane strain element.
     
-    Parameters:
-    
-        ex = [x1,x2,x3]         element coordinates
-        ey = [y1,y2,y3]
-     
-        ep = [ptype,t]          ptype: analysis type
-                                t: thickness
-     
-        D                       constitutive matrix
-    
-        eq = [[bx],               bx: body force x-dir
-              [by]]               by: body force y-dir
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3].
+    ey : array_like
+        Element coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
               
-    Returns:
-    
-        Ke                      element stiffness matrix (6 x 6)
-        fe                      equivalent nodal forces (6 x 1) (if eq is given)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (6, 6).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (6, 1), if eq is given.
     """
 
     ptype, t = ep
@@ -4128,7 +4165,13 @@ def plante(ex, ey, ep, D, eq=None):
         bx = eq[0]
         by = eq[1]
 
-    C = np.matrix([
+    # Ensure arrays have correct dimensions for operations
+    ex_array = np.asarray(ex).reshape(-1, 1)
+    ey_array = np.asarray(ey).reshape(-1, 1)
+    ones_col = np.ones((3, 1))
+    
+    # Construct C matrix with proper dimensions
+    C = np.array([
         [1, ex[0], ey[0], 0,     0,     0],
         [0,     0,     0, 1, ex[0], ey[0]],
         [1, ex[1], ey[1], 0,     0,     0],
@@ -4137,20 +4180,18 @@ def plante(ex, ey, ep, D, eq=None):
         [0,     0,     0, 1, ex[2], ey[2]]
     ])
 
-    A = 0.5*np.linalg.det(np.matrix([
-        [1, ex[0], ey[0]],
-        [1, ex[1], ey[1]],
-        [1, ex[2], ey[2]]
-    ]))
+    # Calculate area using a properly shaped array
+    A_matrix = np.hstack([ones_col, ex_array, ey_array])
+    A = 0.5 * np.linalg.det(A_matrix)
 
     # --------- plane stress --------------------------------------
 
     if ptype == 1:
-        B = np.matrix([
+        B = np.array([
             [0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1],
             [0, 0, 1, 0, 1, 0]
-        ])*np.linalg.inv(C)
+        ]) @ np.linalg.inv(C)
 
         colD = D.shape[1]
 
@@ -4160,8 +4201,8 @@ def plante(ex, ey, ep, D, eq=None):
         else:
             Dm = D
 
-        Ke = B.T*Dm*B*A*t
-        fe = A/3*np.matrix([bx, by, bx, by, bx, by]).T*t
+        Ke = B.T @ Dm @ B * A * t
+        fe = A/3 * np.array([bx, by, bx, by, bx, by]).reshape(-1, 1) * t
 
         if eq is None:
             return Ke
@@ -4171,11 +4212,11 @@ def plante(ex, ey, ep, D, eq=None):
     #--------- plane strain --------------------------------------
 
     elif ptype == 2:
-        B = np.matrix([
+        B = np.array([
             [0, 1, 0, 0, 0, 0, ],
             [0, 0, 0, 0, 0, 1, ],
             [0, 0, 1, 0, 1, 0, ]
-        ])*np.linalg.inv(C)
+        ]) @ np.linalg.inv(C)
 
         colD = D.shape[1]
 
@@ -4184,8 +4225,8 @@ def plante(ex, ey, ep, D, eq=None):
         else:
             Dm = D
 
-        Ke = B.T*Dm*B*A*t
-        fe = A/3*np.matrix([bx, by, bx, by, bx, by]).T*t
+        Ke = B.T @ Dm @ B * A * t
+        fe = A/3 * np.array([bx, by, bx, by, bx, by]).reshape(-1, 1) * t
 
         if eq is None:
             return Ke
@@ -4199,31 +4240,39 @@ def plante(ex, ey, ep, D, eq=None):
         else:
             return None, None
 
-
 def plants(ex, ey, ep, D, ed):
     """
-    Calculate element normal and shear stress for a
-    triangular plane stress or plane strain element.
-    
-    INPUT:  ex = [x1 x2 x3]         element coordinates
-           ey = [y1 y2 y3]
-    
-           ep = [ptype t ]         ptype: analysis type
-                                   t: thickness
-    
-           D                       constitutive matrix
-    
-           ed =[u1 u2 ...u6        element displacement vector
-                ......     ]       one row for each element
-    
-    OUTPUT: es = [ sigx sigy [sigz] tauxy   element stress matrix
-                 ......                 ]  one row for each element
-    
-           et = [ epsx epsy [epsz] gamxy   element strain matrix
-                 ......                 ]  one row for each element
+    Calculate element normal and shear stress for a triangular plane stress or plane strain element.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u6], one row for each element.
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each element.
+        Each row contains [sigx, sigy, [sigz], tauxy].
+    et : ndarray
+        Element strain matrix, one row for each element.
+        Each row contains [epsx, epsy, [epsz], gamxy].
     """
 
     ptype = ep[0]
+
+    # Ensure all inputs are proper arrays
+    ex = np.asarray(ex)
+    ey = np.asarray(ey)
+    ed = np.asarray(ed)
 
     if np.ndim(ex) == 1:
         ex = np.array([ex])
@@ -4260,31 +4309,41 @@ def plants(ex, ey, ep, D, ed):
         ie = 0
 
         for i in range(rowed):
-            C = np.matrix(
-                [[1, ex[ie, 0], ey[ie, 0], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 0], ey[ie, 0]],
-                 [1, ex[ie, 1], ey[ie, 1], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 1], ey[ie, 1]],
-                 [1, ex[ie, 2], ey[ie, 2], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 2], ey[ie, 2]]]
-            )
-
-            B = np.matrix([
+            # Create C matrix for element
+            ex1 = ex[ie, :].flatten()
+            ey1 = ey[ie, :].flatten()
+            
+            # Construct the C matrix properly
+            C = np.array([
+                [1, ex1[0], ey1[0], 0, 0, 0],
+                [0, 0, 0, 1, ex1[0], ey1[0]],
+                [1, ex1[1], ey1[1], 0, 0, 0],
+                [0, 0, 0, 1, ex1[1], ey1[1]],
+                [1, ex1[2], ey1[2], 0, 0, 0],
+                [0, 0, 0, 1, ex1[2], ey1[2]]
+            ])
+            
+            # Create the element B matrix
+            B = np.array([
                 [0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 1],
-                [0, 0, 1, 0, 1, 0]])*np.linalg.inv(C)
+                [0, 0, 1, 0, 1, 0]]) @ np.linalg.inv(C)
 
-            ee = B*np.asmatrix(ed[ie, :]).T
+            # Make sure element displacements are the right shape
+            element_disp = ed[ie, :].flatten()
+            
+            # Calculate strains
+            ee = B @ element_disp.reshape(-1, 1)
 
             if colD > 3:
                 ss = np.zeros([colD, 1])
-                ss[[0, 1, 3]] = Dm*ee
-                ee = Cm*ss
+                ss[[0, 1, 3]] = Dm @ ee
+                ee = Cm @ ss
             else:
-                ss = Dm*ee
+                ss = Dm @ ee
 
-            et[ie, :] = ee.T
-            es[ie, :] = ss.T
+            et[ie, :] = ee.T.flatten()
+            es[ie, :] = ss.T.flatten()
 
             ie = ie + incie
 
@@ -4308,29 +4367,39 @@ def plants(ex, ey, ep, D, ed):
         ee = np.zeros([colD, 1])
 
         for i in range(rowed):
-            C = np.matrix(
-                [[1, ex[ie, 0], ey[ie, 0], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 0], ey[ie, 0]],
-                 [1, ex[ie, 1], ey[ie, 1], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 1], ey[ie, 1]],
-                 [1, ex[ie, 2], ey[ie, 2], 0, 0, 0],
-                 [0, 0, 0, 1, ex[ie, 2], ey[ie, 2]]]
-            )
+            # Create C matrix for element
+            ex1 = ex[ie, :].flatten()
+            ey1 = ey[ie, :].flatten()
+            
+            # Construct the C matrix properly
+            C = np.array([
+                [1, ex1[0], ey1[0], 0, 0, 0],
+                [0, 0, 0, 1, ex1[0], ey1[0]],
+                [1, ex1[1], ey1[1], 0, 0, 0],
+                [0, 0, 0, 1, ex1[1], ey1[1]],
+                [1, ex1[2], ey1[2], 0, 0, 0],
+                [0, 0, 0, 1, ex1[2], ey1[2]]
+            ])
 
-            B = np.matrix([
+            # Create the element B matrix
+            B = np.array([
                 [0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 1],
-                [0, 0, 1, 0, 1, 0]])*np.linalg.inv(C)
+                [0, 0, 1, 0, 1, 0]]) @ np.linalg.inv(C)
 
-            e = B*np.asmatrix(ed[ie, :]).T
+            # Make sure element displacements are the right shape
+            element_disp = ed[ie, :].flatten()
+            
+            # Calculate strains
+            e = B @ element_disp.reshape(-1, 1)
 
             if colD > 3:
                 ee[[0, 1, 3]] = e
             else:
                 ee = e
 
-            et[ie, :] = ee.T
-            es[ie, :] = (D*ee).T
+            et[ie, :] = ee.T.flatten()
+            es[ie, :] = (D @ ee).T.flatten()
 
             ie = ie + incie
 
@@ -4339,28 +4408,26 @@ def plants(ex, ey, ep, D, ed):
     else:
         print("Error ! Check first argument, ptype=1 or 2 allowed")
         return None
-
-
+    
 def plantf(ex, ey, ep, es):
     """
-    Compute internal element force vector in a triangular element
-    in plane stress or plane strain. 
+    Compute internal element force vector in a triangular element in plane stress or plane strain.
 
-    Parameters:
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    es : array_like
+        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
 
-        ex = [x1,x2,x3]                 node coordinates
-        ey = [y1,y2,y3]
-
-        ep = [ptype,t]                  ptype: analysis type
-                                        t: thickness
-
-        es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
-              [  ......              ]] one row for each element
-
-    OUTPUT:
-
-        fe = [[f1],[f2],...,[f8]]       internal force vector
-
+    Returns
+    -------
+    fe : ndarray
+        Internal force vector [[f1], [f2], ..., [f8]].
     """
 
     ptype, t = ep
@@ -4443,24 +4510,28 @@ def plantf(ex, ey, ep, es):
 def platre(ex, ey, ep, D, eq=None):
     """
     Calculate the stiffness matrix for a rectangular plate element.
+
     NOTE! Element sides must be parallel to the coordinate axis.
-    
-    Parameters:
 
-        ex = [x1,x2,x3,x4]          element coordinates
-        ey = [y1,y2,y3,y4]
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [t], where t is thickness.
+    D : array_like
+        Constitutive matrix for plane stress.
+    eq : array_like, optional
+        Load per unit area [qz].
 
-        ep = [t]                    thicknes
-
-        D                           constitutive matrix for
-                                    plane stress         
-
-        eq = [qz]                   load/unit area
-    Returns:
-
-        Ke                          element stiffness matrix (12 x 12)
-        fe                          equivalent nodal forces (12 x 1)
-
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (12, 12).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (12, 1), if eq is not None.
     """
     Lx = (ex[2]-ex[0]).astype(float)
     Ly = (ey[2]-ey[0]).astype(float)
@@ -4533,23 +4604,27 @@ def platre(ex, ey, ep, D, eq=None):
 
 def planqe(ex, ey, ep, D, eq=None):
     """
-    Calculate the stiffness matrix for a quadrilateral
-    plane stress or plane strain element.
+    Calculate the stiffness matrix for a quadrilateral plane stress or plane strain element.
 
-    Parameters:
-        ex=[x1 x2 x3 x4]    element coordinates
-        ey=[y1 y2 y3 y4]
-                                
-        ep = [ptype, t]     ptype: analysis type
-                            t: element thickness 
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is element thickness.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
 
-        D                   constitutive matrix
-
-        eq = [bx;           bx: body force in x direction
-              by]           by: body force in y direction
-
-    OUTPUT: Ke :  element stiffness matrix (8 x 8)
-            fe : equivalent nodal forces (row array)
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (8, 8).
+    fe : ndarray, optional
+        Equivalent nodal forces, if eq is provided.
     """
     K = np.zeros((10, 10))
     f = np.zeros((10, 1))
@@ -4559,18 +4634,41 @@ def planqe(ex, ey, ep, D, eq=None):
 
     b1 = eq if eq is not None else np.array([[0], [0]])
 
-    ke1, fe1 = plante(np.array([ex[0], ex[1], xm]),
-                      np.array([ey[0], ey[1], ym]), ep, D, b1)
+    # Make sure b1 is properly shaped for plante
+    b1 = np.asarray(b1).flatten()
+
+    # Create element coordinates for triangular subelements
+    ex1 = np.array([ex[0], ex[1], xm])
+    ey1 = np.array([ey[0], ey[1], ym])
+    ex2 = np.array([ex[1], ex[2], xm])
+    ey2 = np.array([ey[1], ey[2], ym])
+    ex3 = np.array([ex[2], ex[3], xm])
+    ey3 = np.array([ey[2], ey[3], ym])
+    ex4 = np.array([ex[3], ex[0], xm])
+    ey4 = np.array([ey[3], ey[0], ym])
+
+    # Create element matrices for each subelement
+    ke1, fe1 = plante(ex1, ey1, ep, D, b1)
+    # Convert fe1 to column vector if needed
+    fe1 = np.asarray(fe1).reshape(-1, 1)
     K, f = assem(np.array([1, 2, 3, 4, 9, 10]), K, ke1, f, fe1)
-    ke1, fe1 = plante(np.array([ex[1], ex[2], xm]),
-                      np.array([ey[1], ey[2], ym]), ep, D, b1)
+
+    ke1, fe1 = plante(ex2, ey2, ep, D, b1)
+    # Convert fe1 to column vector if needed
+    fe1 = np.asarray(fe1).reshape(-1, 1)
     K, f = assem(np.array([3, 4, 5, 6, 9, 10]), K, ke1, f, fe1)
-    ke1, fe1 = plante(np.array([ex[2], ex[3], xm]),
-                      np.array([ey[2], ey[3], ym]), ep, D, b1)
+
+    ke1, fe1 = plante(ex3, ey3, ep, D, b1)
+    # Convert fe1 to column vector if needed
+    fe1 = np.asarray(fe1).reshape(-1, 1)
     K, f = assem(np.array([5, 6, 7, 8, 9, 10]), K, ke1, f, fe1)
-    ke1, fe1 = plante(np.array([ex[3], ex[0], xm]),
-                      np.array([ey[3], ey[0], ym]), ep, D, b1)
+
+    ke1, fe1 = plante(ex4, ey4, ep, D, b1)
+    # Convert fe1 to column vector if needed
+    fe1 = np.asarray(fe1).reshape(-1, 1)
     K, f = assem(np.array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
+
+    # Static condensation
     Ke, fe = statcon(K, f, np.array([[9], [10]]))
 
     if eq is None:
@@ -4578,33 +4676,41 @@ def planqe(ex, ey, ep, D, eq=None):
     else:
         return Ke, fe
 
-
 def planqs(ex, ey, ep, D, ed, eq=None):
     """
-    Calculate element normal and shear stress for a quadrilateral 
-    plane stress or plane strain element.
-    
-    Parameters:
-            ex = [x1 x2 x3 x4]      element coordinates
-            ey = [y1 y2 y3 y4]
-    
-            ep = [ptype, t]         ptype: analysis type
-                                    t:  thickness
-                                   
-            D                       constitutive matrix
-    
-            ed = [u1 u2 ..u8]       element displacement vector
-    
-            eq = [[bx]               bx: body force in x direction
-                  [by]]              by: body force in y direction
-    
-    OUTPUT: es = [ sigx sigy (sigz) tauxy]    element stress array
-            et = [ epsx epsy (epsz) gamxy]    element strain array
+    Calculate element normal and shear stress for a quadrilateral plane stress or plane strain element.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t], where ptype is analysis type and t is thickness.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u8].
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
+
+    Returns
+    -------
+    es : ndarray
+        Element stress array [sigx, sigy, (sigz), tauxy].
+    et : ndarray
+        Element strain array [epsx, epsy, (epsz), gamxy].
     """
 
-    if ex.shape != (4,) or ey.shape != (4,) or ed.shape != (8,):
+    # Convert inputs to arrays for consistency
+    ex = np.asarray(ex).flatten()
+    ey = np.asarray(ey).flatten()
+    ed = np.asarray(ed).flatten()
+
+    if len(ex) != 4 or len(ey) != 4 or len(ed) != 8:
         raise ValueError(
-            'Error ! PLANQS: only one element at the time (ex, ey, ed must be a row arrays)')
+            'Error ! PLANQS: only one element at the time (ex, ey, ed must be arrays with 4, 4, and 8 elements)')
 
     K = np.zeros((10, 10))
     f = np.zeros((10, 1))
@@ -4632,62 +4738,73 @@ def planqs(ex, ey, ep, D, ed, eq=None):
     ke1, fe1 = plante(ex4, ey4, ep, D, b1)
     K, f = assem(np.array([7, 8, 1, 2, 9, 10]), K, ke1, f, fe1)
 
-    A1 = 0.5 * \
-        np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.matrix(ex1).T, np.matrix(ey1).T]))
-    A2 = 0.5 * \
-        np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.matrix(ex2).T, np.matrix(ey2).T]))
-    A3 = 0.5 * \
-        np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.matrix(ex3).T, np.matrix(ey3).T]))
-    A4 = 0.5 * \
-        np.linalg.det(
-            np.hstack([np.ones((3, 1)), np.matrix(ex4).T, np.matrix(ey4).T]))
+    A1 = 0.5 * np.linalg.det(np.vstack([
+        np.ones(3),
+        ex1,
+        ey1
+    ]).T)
+    
+    A2 = 0.5 * np.linalg.det(np.vstack([
+        np.ones(3),
+        ex2,
+        ey2
+    ]).T)
+    
+    A3 = 0.5 * np.linalg.det(np.vstack([
+        np.ones(3),
+        ex3,
+        ey3
+    ]).T)
+    
+    A4 = 0.5 * np.linalg.det(np.vstack([
+        np.ones(3),
+        ex4,
+        ey4
+    ]).T)
+    
     Atot = A1+A2+A3+A4
 
     a, _ = solveq(K, f, np.array(range(1, 9)), ed)
 
-#    ni = ed.shape[0]
-#    a = np.matrix(empty((10,ni)))
-#    for i in range(ni):
-#        a[:,i] = solveq(K, f, np.array(range(1,9)), ed[i,:])[0]
-#        #a = np.hstack([a, solveq(K, f, np.hstack([matrix(range(1,9)).T, ed[i,:].T]) ) ])
+    # Create proper element displacement arrays for each triangular sub-element
+    ed1 = np.array([a[0,0], a[1,0], a[2,0], a[3,0], a[8,0], a[9,0]])
+    ed2 = np.array([a[2,0], a[3,0], a[4,0], a[5,0], a[8,0], a[9,0]])
+    ed3 = np.array([a[4,0], a[5,0], a[6,0], a[7,0], a[8,0], a[9,0]])
+    ed4 = np.array([a[6,0], a[7,0], a[0,0], a[1,0], a[8,0], a[9,0]])
 
-    s1, t1 = plants(ex1, ey1, ep, D, np.hstack([a[[0, 1, 2, 3, 8, 9], :].T]))
-    s2, t2 = plants(ex2, ey2, ep, D, np.hstack([a[[2, 3, 4, 5, 8, 9], :].T]))
-    s3, t3 = plants(ex3, ey3, ep, D, np.hstack([a[[4, 5, 6, 7, 8, 9], :].T]))
-    s4, t4 = plants(ex4, ey4, ep, D, np.hstack([a[[6, 7, 0, 1, 8, 9], :].T]))
+    s1, t1 = plants(ex1, ey1, ep, D, ed1)
+    s2, t2 = plants(ex2, ey2, ep, D, ed2)
+    s3, t3 = plants(ex3, ey3, ep, D, ed3)
+    s4, t4 = plants(ex4, ey4, ep, D, ed4)
 
     es = (s1*A1+s2*A2+s3*A3+s4*A4)/Atot
     et = (t1*A1+t2*A2+t3*A3+t4*A4)/Atot
 
-    # [0] because these are 1-by-3 arrays and we want row arrays out.
     return es[0], et[0]
-
 
 def plani4e(ex, ey, ep, D, eq=None):
     """
-    Calculate the stiffness matrix for a 4 node isoparametric
-    element in plane strain or plane stress.
+    Calculate the stiffness matrix for a 4 node isoparametric element in plane strain or plane stress.
     
-    Parameters:
-        ex = [x1 ...   x4]  element coordinates. Row array
-        ey = [y1 ...   y4]
-                                
-        ep =[ptype, t, ir]  ptype: analysis type
-                            t : thickness
-                            ir: integration rule
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t, ir], where ptype is analysis type, t is thickness, and ir is integration rule.
+    D : array_like
+        Constitutive matrix.
+    eq : array_like, optional
+        Body force vector [bx, by], where bx, by are body forces in x, y directions.
     
-        D                   constitutive matrix
-    
-        eq = [bx; by]       bx: body force in x direction
-                            by: body force in y direction
-                                Any array with 2 elements acceptable
-    
-    Returns:
-        Ke : element stiffness matrix (8 x 8)
-        fe : equivalent nodal forces (8 x 1)
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix, shape (8, 8).
+    fe : ndarray, optional
+        Equivalent nodal forces, shape (8, 1), if eq is provided.
     """
     ptype = ep[0]
     t = ep[1]
@@ -4845,8 +4962,8 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1 + B.T * Dm * B * detJ * np.asscalar(wp[i]) * t
-            fe1 = fe1+N2.T*q*detJ*np.asscalar(wp[i])*t
+            Ke1 = Ke1 + B.T * Dm * B * detJ * wp[i].item() * t
+            fe1 = fe1+N2.T*q*detJ*wp[i].item()*t
         return Ke1, fe1
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
@@ -4854,35 +4971,34 @@ def plani4e(ex, ey, ep, D, eq=None):
 
 def soli8e(ex, ey, ez, ep, D, eqp=None):
     """
-    Ke=soli8e(ex,ey,ez,ep,D)
-    [Ke,fe]=soli8e(ex,ey,ez,ep,D,eq)
-    -------------------------------------------------------------
-    PURPOSE
-    Calculate the stiffness matrix for a 8 node (brick)
-    isoparametric element.
+    Calculate the stiffness matrix (and optionally load vector) for an 8-node (brick) isoparametric element.
 
-    INPUT:   ex = [x1 x2 x3 ... x8]
-            ey = [y1 y2 y3 ... y8]  element coordinates
-            ez = [z1 z2 z3 ... z8]
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [ir], where ir is the integration rule.
+    D : array_like
+        Constitutive matrix.
+    eqp : array_like, optional
+        Body force vector [bx, by, bz], where bx, by, bz are body forces in x, y, z directions.
 
-            ep = [ir]               ir integration rule
+    Returns
+    -------
+    Ke : ndarray
+        Element stiffness matrix.
+    fe : ndarray, optional
+        Equivalent nodal forces, if eqp is not None.
 
-            D                       constitutive matrix
-
-            eq = [bx; by; bz]       bx: body force in x direction
-                                    by: body force in y direction
-                                    bz: body force in z direction
-
-    OUTPUT: Ke : element stiffness matrix
-            fe : equivalent nodal forces 
-    -------------------------------------------------------------
-
+    History
+    -------
     LAST MODIFIED: M Ristinmaa   1995-10-25
                    J Lindemann   2022-01-24 (Python version)
-    Copyright (c)  Division of Structural Mechanics and
-                   Division of Solid Mechanics.
-                   Lund University
-    -------------------------------------------------------------    
     """
     ir = ep[0]
     ngp = ir*ir*ir
@@ -5044,40 +5160,36 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
 
 def soli8s(ex, ey, ez, ep, D, ed):
     """
-     [es,et]=soli8s(ex,ey,ez,ep,D,ed)
-    -------------------------------------------------------------
-     PURPOSE
-      Calculate element normal and shear stress for a
-      8 node (brick) isoparametric element.
-    
-     INPUT:  ex = [x1 x2 x3 ... x8]
-             ey = [y1 y2 y3 ... y8]  element coordinates
-             ez = [z1 z2 z3 ... z8]
-    
-             ep = [Ir]               Ir: integration rule
-    
-             D                       constitutive matrix
-    
-             ed = [u1 u2 ..u24]      element displacement vector
-      
-     OUTPUT: es = [ sigx sigy sigz sigxy sigyz sigxz ;  
-                      ......       ...               ] 
-             element stress matrix, one row for each 
-             integration point
+    Calculate element normal and shear stress for an 8-node (brick) isoparametric element.
 
-             es = [ eps epsy epsz epsxy epsyz epsxz ;  
-                      ......       ...               ] 
-             element strain matrix, one row for each 
-             integration point
-    -------------------------------------------------------------
-    
-     LAST MODIFIED: M Ristinmaa   1995-10-25
-                    J Lindemann   2022-02-23 (Python version)
-                    
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates [x1, x2, x3, ..., x8].
+    ey : array_like
+        Element node y-coordinates [y1, y2, y3, ..., y8].
+    ez : array_like
+        Element node z-coordinates [z1, z2, z3, ..., z8].
+    ep : array_like
+        Element properties [Ir], where Ir is the integration rule.
+    D : array_like
+        Constitutive matrix.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u24].
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each integration point.
+        Each row contains [sigx, sigy, sigz, sigxy, sigyz, sigxz].
+    et : ndarray
+        Element strain matrix, one row for each integration point.
+        Each row contains [epsx, epsy, epsz, epsxy, epsyz, epsxz].
+
+    History
+    -------
+    LAST MODIFIED: M Ristinmaa   1995-10-25
+                   J Lindemann   2022-02-23 (Python version)
     """
 
     ir = ep[0]
@@ -5239,65 +5351,125 @@ def soli8s(ex, ey, ez, ep, D, ed):
     return et, es, eci
 
 
-def assem(edof, K, Ke, f=None, fe=None):
+def assem(edof: ArrayLike, K: Union[NDArray[np.floating], csr_matrix, csc_matrix, lil_matrix], Ke: ArrayLike, f: Optional[ArrayLike] = None, fe: Optional[ArrayLike] = None) -> Union[NDArray[np.floating], Tuple[NDArray[np.floating], NDArray[np.floating]]]:
     """
-    Assemble element matrices Ke ( and fe ) into the global
-    stiffness matrix K ( and the global force vector f )
-    according to the topology matrix edof.
-    
-    Parameters:
-    
-        edof        dof topology array
-        K           the global stiffness matrix
-        Ke          element stiffness matrix
-        f           the global force vector
-        fe          element force vector
-        
-    Output parameters:
-    
-        K           the new global stiffness matrix
-        f           the new global force vector
-        fe          element force vector
-    
+    Assemble element matrices Ke (and fe) into the global stiffness matrix K (and global force vector f).
+
+    Parameters
+    ----------
+    edof : array_like
+        DOF topology array.
+    K : array_like
+        The global stiffness matrix.
+    Ke : array_like
+        Element stiffness matrix.
+    f : array_like, optional
+        The global force vector.
+    fe : array_like, optional
+        Element force vector.
+
+    Returns
+    -------
+    K : ndarray
+        The updated global stiffness matrix.
+    f : ndarray, optional
+        The updated global force vector, if f and fe are provided.
     """
 
-    if edof.ndim == 1:
-        idx = edof-1
-        K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
-        if (not f is None) and (not fe is None):
-            f[np.ix_(idx)] = f[np.ix_(idx)] + fe
-    else:
-        for row in edof:
-            idx = row-1
-            K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+    import scipy.sparse as sp
+    import numpy as np
+    
+    # Handle sparse matrices case
+    if isinstance(K, sp.lil_matrix) or isinstance(K, sp.csr_matrix) or isinstance(K, sp.csc_matrix):
+        if edof.ndim == 1:
+            idx = edof-1
+            # Convert to COO format for efficient modification
+            if not isinstance(K, sp.lil_matrix):
+                K = K.tolil()
+                
+            # Manually update each element
+            for i in range(len(idx)):
+                for j in range(len(idx)):
+                    K[idx[i], idx[j]] += Ke[i, j]
+            
             if (not f is None) and (not fe is None):
-                f[np.ix_(idx)] = f[np.ix_(idx)] + fe
+                fe_array = np.asarray(fe)
+                if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                    fe_shaped = fe_array.reshape(-1, 1)
+                else:
+                    fe_shaped = fe_array
+                f[idx] += fe_shaped.flatten()
+        else:
+            for row in edof:
+                idx = row-1
+                # Convert to LIL format for efficient modification
+                if not isinstance(K, sp.lil_matrix):
+                    K = K.tolil()
+                    
+                # Manually update each element    
+                for i in range(len(idx)):
+                    for j in range(len(idx)):
+                        K[idx[i], idx[j]] += Ke[i, j]
+                
+                if (not f is None) and (not fe is None):
+                    fe_array = np.asarray(fe)
+                    if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                        fe_shaped = fe_array.reshape(-1, 1)
+                    else:
+                        fe_shaped = fe_array
+                    f[idx] += fe_shaped.flatten()
+    else:
+        # Original code for dense matrices
+        if edof.ndim == 1:
+            idx = edof-1
+            K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+            
+            if (not f is None) and (not fe is None):
+                fe_array = np.asarray(fe)
+                if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                    fe_shaped = fe_array.reshape(-1, 1)
+                else:
+                    fe_shaped = fe_array
+                f[np.ix_(idx)] = f[np.ix_(idx)] + fe_shaped
+        else:
+            for row in edof:
+                idx = row-1
+                K[np.ix_(idx, idx)] = K[np.ix_(idx, idx)] + Ke
+                if (not f is None) and (not fe is None):
+                    fe_array = np.asarray(fe)
+                    if fe_array.ndim == 2 and fe_array.shape[1] > 1:
+                        fe_shaped = fe_array.reshape(-1, 1)
+                    else:
+                        fe_shaped = fe_array
+                    f[np.ix_(idx)] = f[np.ix_(idx)] + fe_shaped
 
     if f is None:
         return K
     else:
         return K, f
-
-
+    
 def solveq(K, f, bcPrescr=None, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.
     
-    Parameters:
-    
-        K           global stiffness matrix, dim(K)= nd x nd
-        f           global load vector, dim(f)= nd x 1
-    
-        bcPrescr    1-dim integer array containing prescribed dofs.
-        bcVal       1-dim float array containing prescribed values.
-                    If not given all prescribed dofs are assumed 0.
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    bcPrescr : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like, optional
+        1-dim float array containing prescribed values.
+        If not given all prescribed dofs are assumed 0.
         
-    Returns:
-    
-        a           solution including boundary values
-        Q           reaction force vector
-                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
-    
+    Returns
+    -------
+    a : ndarray
+        Solution including boundary values, shape (nd, 1).
+    Q : ndarray
+        Reaction force vector, shape (nd, 1).
     """
 
     if bcPrescr is None:
@@ -5332,21 +5504,24 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.
     
-    Parameters:
-    
-        K           global stiffness matrix, dim(K)= nd x nd
-        f           global load vector, dim(f)= nd x 1
-    
-        bcPrescr    1-dim integer array containing prescribed dofs.
-        bcVal       1-dim float array containing prescribed values.
-                    If not given all prescribed dofs are assumed 0.
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    bcPrescr : array_like
+        1-dim integer array containing prescribed dofs.
+    bcVal : array_like, optional
+        1-dim float array containing prescribed values.
+        If not given all prescribed dofs are assumed 0.
         
-    Returns:
-    
-        a           solution including boundary values
-        Q           reaction force vector
-                    dim(a)=dim(Q)= nd x 1, nd : number of dof's
-    
+    Returns
+    -------
+    a : ndarray
+        Solution including boundary values, shape (nd, 1).
+    Q : ndarray
+        Reaction force vector, shape (nd, 1).
     """
 
     nDofs = K.shape[0]
@@ -5396,21 +5571,25 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     return (a_m, Q)
 
 
-def eigen(K,M,b=None):
+def eigen(K: ArrayLike, M: ArrayLike, b: Optional[ArrayLike] = None) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
     """
-    Solve the generalized eigenvalue problem
-    |K-LM|X = 0, considering boundary conditions
+    Solve the generalized eigenvalue problem |K-LM|X = 0, considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (ndof, ndof).
+    M : array_like
+        Global mass matrix, shape (ndof, ndof).
+    b : array_like, optional
+        Boundary condition vector, shape (nbc, 1).
 
-        K           global stiffness matrix, dim(K) = ndof x ndof
-        M           global mass matrix, dim(M) = ndof x ndof
-        b           boundary condition vector, dim(b) = nbc x 1
-
-    Returns:
-
-        L           eigenvalue vector, dim(L) = (ndof-nbc) x 1
-        X           eigenvectors, dim(X) = ndof x (ndof-nbc)
+    Returns
+    -------
+    L : ndarray
+        Eigenvalue vector, shape (ndof-nbc, 1).
+    X : ndarray
+        Eigenvectors, shape (ndof, ndof-nbc).
     """
     nd, _ = K.shape
     if b is not None:
@@ -5445,19 +5624,21 @@ def eigen(K,M,b=None):
 
 def gfunc(G,dt):
     """
-    Form vector with function values at equally spaced
-    points by linear interpolation
+    Form vector with function values at equally spaced points by linear interpolation.
 
-    Parameters:
+    Parameters
+    ----------
+    G : array_like
+        Time-function pairs [t_i, g_i], where t_i is time i and g_i is g(t_i), shape (np, 2).
+    dt : float
+        Time step.
 
-        G = [t_i, g_i]      t_i: time i, g_i: g(t_i)
-                            dim(G) = np x 2, np = number of points
-        dt                  time step
-
-    Returns:
-
-        t           1-D vector with equally spaced time points
-        g           1-D vector with corresponding function values
+    Returns
+    -------
+    t : ndarray
+        1-D vector with equally spaced time points.
+    g : ndarray
+        1-D vector with corresponding function values.
     """
     ti = np.arange(G[0,0],G[-1,0]+dt,dt)
     g1 = np.interp(ti,G[:,0],G[:,1])
@@ -5466,49 +5647,61 @@ def gfunc(G,dt):
 
 def step1(K,C,f,a0,bc,ip,times,dofs):
     """
-    Algorithm for dynamic solution of first-order
-    FE equations considering boundary conditions.
+    Algorithm for dynamic solution of first-order FE equations considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Conductivity matrix, shape (ndof, ndof).
+    C : array_like
+        Capacity matrix, shape (ndof, ndof).
+    f : array_like
+        Load vector, shape (ndof, nstep + 1).
+        If shape (ndof, 1), the values are kept constant during time integration.
+    a0 : array_like
+        Initial vector a(0), shape (ndof, 1).
+    bc : array_like
+        Boundary condition matrix, shape (nbc, nstep + 2).
+        where nbc = number of prescribed degrees of freedom (either constant or time-dependent).
+        The first column contains the numbers of the prescribed degrees of freedom
+        and the subsequent columns contain the time history.
+        If shape (nbc, 2), the values from the second column are kept constant
+        during time integration.
+    ip : array_like
+        Array [dt, tottime, alpha], where
+        dt is the size of the time increment,
+        tottime is the total time,
+        alpha is time integration constant.
+        Frequently used values of alpha are:
+        alpha=0: forward difference; forward Euler,
+        alpha=1/2: trapezoidal rule; Crank-Nicholson
+        alpha=1: backward difference; backward Euler
+    times : array_like
+        Array [t(i) ...] of times at which output should be written to a and da.
+    dofs : array_like
+        Array [dof(i) ...] of degree of freedom numbers for which history output
+        should be written to ahist and dahist.
 
-        K           conductivity matrix, dim(K) = ndof x ndof
-        C           capacity matrix, dim(C) = ndof x ndof
-        f           load vector, dim(f) = ndof x (nstep + 1),
-                    If dim(f) = ndof x 1, the values are kept constant
-                    during time integration
-        a0          initial vector a(0), dim(a0) = ndof x 1
-        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
-                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
-                    The first column contains the numbers of the prescribed degrees of freedom
-                    and the subsequent columns contain the time history.
-                    If dim(bc) = nbc x 2, the values from the second column are kept constant
-                    during time integration
-        ip          array [dt, tottime, alpha], where
-                    dt is the size of the time increment,
-                    tottime is the total time,
-                    alpha is time integration constant.
-                    Frequently used values of alpha are:
-                    alpha=0:            forward difference; forward Euler,
-                    alpha=1/2:          trapezoidal rule; Crank-Nicholson
-                    alpha=1:            backward difference; backward Euler
-        times       array [t(i) ...] of times at which output should be written to a and da
-        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
-                    should be written to ahist and dahist
-
-    Returns:
-
-        modelhist   dictionary containing solution history for the whole model at following keys:
-                    modelhist['a']          constains values of a at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['da']         constains values of da at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
-        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
-                    dofhist['a']        constains time history of a at the dofs specified in 'dofs'
-                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
-                    dofhist['da']       constains time history of daat the dofs specified in 'dofs'
-                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
+    Returns
+    -------
+    modelhist : dict
+        Dictionary containing solution history for the whole model with keys:
+        
+        - 'a' : ndarray
+            Values of a at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'da' : ndarray
+            Values of da at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+    dofhist : dict
+        Dictionary containing solution history for the degrees of freedom selected in 'dofs' with keys:
+        
+        - 'a' : ndarray
+            Time history of a at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'da' : ndarray
+            Time history of da at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
     """
     ndof, _ = K.shape
     dt, tottime, alpha = ip
@@ -5645,57 +5838,72 @@ def step1(K,C,f,a0,bc,ip,times,dofs):
 
 def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
     """
-    Algorithm for dynamic solution of second-order
-    FE equations considering boundary conditions.
+    Algorithm for dynamic solution of second-order FE equations considering boundary conditions.
 
-    Parameters:
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (ndof, ndof).
+    C : array_like
+        Global damping matrix, shape (ndof, ndof).
+        If there is no damping in the system, simply set C=[].
+    M : array_like
+        Global mass matrix, shape (ndof, ndof).
+    f : array_like
+        Global load vector, shape (ndof, nstep + 1).
+        If shape (ndof, 1), the values are kept constant during time integration.
+    a0 : array_like
+        Initial displacement vector a(0), shape (ndof, 1).
+    da0 : array_like
+        Initial velocity vector v(0), shape (ndof, 1).
+    bc : array_like
+        Boundary condition matrix, shape (nbc, nstep + 2).
+        where nbc = number of prescribed degrees of freedom (either constant or time-dependent).
+        The first column contains the numbers of the prescribed degrees of freedom
+        and the subsequent columns contain the time history.
+        If shape (nbc, 2), the values from the second column are kept constant
+        during time integration.
+    ip : array_like
+        Array [dt, tottime, alpha, delta], where
+        dt is the size of the time increment,
+        tottime is the total time,
+        alpha and delta are time integration constants for the Newmark family of methods.
+        Frequently used values of alpha and delta are:
+        alpha=1/4, delta=1/2: average acceleration (trapezoidal) rule,
+        alpha=1/6, delta=1/2: linear acceleration,
+        alpha=0, delta=1/2: central difference.
+    times : array_like
+        Array [t(i) ...] of times at which output should be written to a, da and d2a.
+    dofs : array_like
+        Array [dof(i) ...] of degree of freedom numbers for which history output
+        should be written to ahist, dahist and d2ahist.
 
-        K           global stiffness matrix, dim(K) = ndof x ndof
-        C           global damping matrix, dim(C) = ndof x ndof
-                    If there is no damping in the system, simply set C=[]
-        M           global mass matrix, dim(M) = ndof x ndof
-        f           global load vector, dim(f) = ndof x (nstep + 1),
-                    If dim(f) = ndof x 1, the values are kept constant
-                    during time integration
-        a0          initial displacement vector a(0), dim(a0) = ndof x 1
-        da0         initial velocity vector v(0), dim(da0) = ndof x 1
-        bc          boundary condition matrix, dim(bc) = nbc x (nstep + 2)
-                    where nbc = number of prescribed degrees of freedom (either constant or time-dependent)
-                    The first column contains the numbers of the prescribed degrees of freedom
-                    and the subsequent columns contain the time history.
-                    If dim(bc) = nbc x 2, the values from the second column are kept constant
-                    during time integration
-        ip          array [dt, tottime, alpha, delta], where
-                    dt is the size of the time increment,
-                    tottime is the total time,
-                    alpha and delta are time integration constants for the Newmark family of methods.
-                    Frequently used values of alpha and delta are:
-                    alpha=1/4, delta=1/2:       average acceleration (trapezoidal) rule,
-                    alpha=1/6, delta=1/2:       linear acceleration
-                    alpha=0,   delta=1/2:       central difference
-        times       array [t(i) ...] of times at which output should be written to a, da and d2a
-        dofs        array [dof(i) ...] of degree of freedom numbers for which history output
-                    should be written to ahist, dahist and d2ahist
-
-    Returns:
-
-        modelhist   dictionary containing solution history for the whole model at following keys:
-                    modelhist['a']          constains displacement values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['a']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['da']         constains velocity values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['da']) = ndof x (nstep + 1) or ndof x ntimes
-                    modelhist['d2a']        constains acceleration values at all timesteps,
-                                            alternatively at times specified in 'times'
-                                            dim(modelhist['d2a']) = ndof x (nstep + 1) or ndof x ntimes
-        dofhist     dictionary containing solution history for the degrees of freedom selected in 'dofs':
-                    dofhist['a']        constains displacement time history at the dofs specified in 'dofs'
-                                            dim(dofhist['ahist']) = ndof x (nstep + 1)
-                    dofhist['da']       constains velocity time history at the dofs specified in 'dofs'
-                                            dim(dofhist['dahist']) = ndof x (nstep + 1)
-                    dofhist['d2a']      constains acceleration time history at the dofs specified in 'dofs'
-                                            dim(dofhist['d2ahist']) = ndof x (nstep + 1)
+    Returns
+    -------
+    modelhist : dict
+        Dictionary containing solution history for the whole model with keys:
+        
+        - 'a' : ndarray
+            Displacement values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'da' : ndarray
+            Velocity values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+        - 'd2a' : ndarray
+            Acceleration values at all timesteps, alternatively at times specified in 'times',
+            shape (ndof, nstep + 1) or (ndof, ntimes).
+    dofhist : dict
+        Dictionary containing solution history for the degrees of freedom selected in 'dofs' with keys:
+        
+        - 'a' : ndarray
+            Displacement time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'da' : ndarray
+            Velocity time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
+        - 'd2a' : ndarray
+            Acceleration time history at the dofs specified in 'dofs',
+            shape (ndof, nstep + 1).
     """
     ndof, _ = K.shape
     if not np.array(C).any():
@@ -5851,18 +6059,19 @@ def step2(K,C,M,f,a0,da0,bc,ip,times,dofs):
 
 def extract_eldisp(edof, a):
     """
-    Extract element displacements from the global displacement
-    vector according to the topology matrix edof.
+    Extract element displacements from the global displacement vector according to the topology matrix edof.
     
-    Parameters:
+    Parameters
+    ----------
+    a : array_like
+        The global displacement vector.
+    edof : array_like
+        DOF topology array.
     
-        a           the global displacement vector
-        edof        dof topology array
-    
-    Returns:
-    
-        ed:     element displacement array
-    
+    Returns
+    -------
+    ed : ndarray
+        Element displacement array.
     """
 
     ed = None
@@ -5893,44 +6102,87 @@ def statcon(K, f, cd):
     """
     Condensation of static FE-equations according to the vector cd.
 
-    Parameters:
-    
-        K                       global stiffness matrix, dim(K) = nd x nd
-        f                       global load vector, dim(f)= nd x 1
+    Parameters
+    ----------
+    K : array_like
+        Global stiffness matrix, shape (nd, nd).
+    f : array_like
+        Global load vector, shape (nd, 1).
+    cd : array_like
+        Vector containing dof's to be eliminated, shape (nc, 1), where nc is number of condensed dof's.
 
-        cd                      vector containing dof's to be eliminated
-                                dim(cd)= nc x 1, nc: number of condensed dof's
-    Returns:
-    
-        K1                      condensed stiffness matrix,
-                                dim(K1)= (nd-nc) x (nd-nc)
-        f1                      condensed load vector, dim(f1)= (nd-nc) x 1
+    Returns
+    -------
+    K1 : ndarray
+        Condensed stiffness matrix, shape (nd-nc, nd-nc).
+    f1 : ndarray
+        Condensed load vector, shape (nd-nc, 1).
     """
-    nd, nd = np.shape(K)
-    cd = (cd-1).flatten()
+    nd = K.shape[0]
+    
+    # Ensure cd is properly shaped (flatten to 1D array)
+    cd = np.asarray(cd).flatten()
+    # Adjust for 0-based indexing
+    cd = (cd-1).astype(int)
 
-    aindx = np.arange(nd)
-    aindx = np.delete(aindx, cd, 0)
+    # Create indices for free (a) and constrained (b) dofs
+    aindx = np.setdiff1d(np.arange(nd), cd)
     bindx = cd
 
-    Kaa = np.matrix(K[np.ix_(aindx, aindx)])
-    Kab = np.matrix(K[np.ix_(aindx, bindx)])
-    Kbb = np.matrix(K[np.ix_(bindx, bindx)])
+    # Extract submatrices
+    Kaa = K[np.ix_(aindx, aindx)]
+    Kab = K[np.ix_(aindx, bindx)]
+    Kbb = K[np.ix_(bindx, bindx)]
 
-    fa = np.matrix(f[aindx])
-    fb = np.matrix(f[bindx])
+    # Extract portions of force vector
+    f = np.asarray(f)
+    if f.ndim > 1 and f.shape[1] > 1:
+        # Handle matrix-like f
+        f = f.reshape(-1, 1)
+    
+    fa = f[aindx]
+    fb = f[bindx]
 
-    K1 = Kaa-Kab*Kbb.I*Kab.T
-    f1 = fa-Kab*Kbb.I*fb
+    # Calculate the condensed matrices
+    Kbb_inv = np.linalg.inv(Kbb)
+    K1 = Kaa - Kab @ Kbb_inv @ Kab.T
+    f1 = fa - Kab @ Kbb_inv @ fb
 
     return K1, f1
 
-
 def c_mul(a, b):
-    return eval(hex((np.long(a) * b) & 0xFFFFFFFF)[:-1])
+    """
+    Multiply two integers with 32-bit overflow handling.
+
+    Parameters
+    ----------
+    a : int
+        First integer.
+    b : int
+        Second integer.
+
+    Returns
+    -------
+    int
+        Product of a and b with 32-bit overflow handling.
+    """
+    return eval(hex((int(a) * b) & 0xFFFFFFFF)[:-1])
 
 
-def dofHash(dof):
+def dof_hash(dof):
+    """
+    Compute a hash value for a degree of freedom array.
+
+    Parameters
+    ----------
+    dof : array_like
+        Degree of freedom array.
+
+    Returns
+    -------
+    int
+        Hash value for the DOF array.
+    """
     if len(dof) == 1:
         return dof[0]
     value = 0x345678
@@ -5941,10 +6193,23 @@ def dofHash(dof):
         value = -2
     return value
 
+dofHash = dof_hash
 
-def create_dofs(nCoords, nDof):
+def create_dofs(nCoords: int, nDof: int) -> NDArray[np.integer]:
     """
-    Create dof array [nCoords x nDof]
+    Create degree of freedom (DOF) array.
+
+    Parameters
+    ----------
+    nCoords : int
+        Number of coordinates (nodes).
+    nDof : int
+        Number of degrees of freedom per coordinate.
+
+    Returns
+    -------
+    ndarray
+        DOF array, shape (nCoords, nDof), with sequential DOF numbering starting from 1.
     """
     return np.arange(nCoords*nDof).reshape(nCoords, nDof)+1
 
@@ -5952,22 +6217,31 @@ def create_dofs(nCoords, nDof):
 createdofs = create_dofs
 
 
-def coordxtr(edof, coords, dofs, nen=-1):
+def coord_extract(edof, coords, dofs, nen=-1):
     """
-    Create element coordinate matrices ex, ey, ez from edof
-    coord and dofs matrices.
-    
-    Parameters:
-    
-        edof            [nel x (nen * nnd)], nnd = number of node dofs
-        coords          [ncoords x ndims],   ndims = node dimensions
-        dofs            [ncoords x nnd]
-        
-    Returns:
-    
-        ex              if ndims = 1
-        ex, ey          if ndims = 2
-        ex, ey, ez      if ndims = 3
+    Create element coordinate matrices ex, ey, ez from edof coord and dofs matrices.
+
+    Parameters
+    ----------
+    edof : array_like
+        Element topology array, shape (nel, nen * nnd), where nel is number of elements,
+        nen is number of element nodes, and nnd is number of node DOFs.
+    coords : array_like
+        Node coordinates array, shape (ncoords, ndims), where ncoords is number of coordinates
+        and ndims is node dimensions.
+    dofs : array_like
+        DOF array, shape (ncoords, nnd), where nnd is number of node DOFs.
+    nen : int, optional
+        Number of element nodes. If -1, calculated from edof and dofs.
+
+    Returns
+    -------
+    ex : ndarray
+        Element x-coordinates, returned if ndims = 1.
+    ex, ey : tuple of ndarray
+        Element x and y coordinates, returned if ndims = 2.
+    ex, ey, ez : tuple of ndarray
+        Element x, y and z coordinates, returned if ndims = 3.
     """
 
     # Create dictionary with dof indices
@@ -6033,28 +6307,30 @@ def coordxtr(edof, coords, dofs, nen=-1):
         return ex, ey, ez
 
 
-coord_extract = coordxtr
+coordxtr = coord_extract
 
 
 def hooke(ptype, E, v):
     """
-    Calculate the material matrix for a linear
-    elastic and isotropic material.
-    
-    Parameters:
-    
-        ptype=  1:  plane stress
-                2:  plane strain
-                3:  axisymmetry
-                4:  three dimensional
-    
-        E           Young's modulus
-        v           Poissons const.
-        
-    Returns:
-    
-        D           material matrix
-    
+    Calculate the material matrix for a linear elastic and isotropic material.
+
+    Parameters
+    ----------
+    ptype : int
+        Analysis type:
+        1 : plane stress
+        2 : plane strain
+        3 : axisymmetry
+        4 : three dimensional
+    E : float
+        Young's modulus.
+    v : float
+        Poisson's ratio.
+
+    Returns
+    -------
+    D : ndarray
+        Material matrix.
     """
 
     if ptype == 1:
@@ -6095,23 +6371,22 @@ def hooke(ptype, E, v):
 def effmises(es, ptype):
     """
     Calculate effective von mises stresses.
-    
-    Parameters:
-        
-        es
-    
-        ptype=  1:  plane stress
-                2:  plane strain
-                3:  axisymmetry
-                4:  three dimensional
-    
-       es = [[sigx,sigy,[sigz],tauxy]  element stress matrix
-              [  ......              ]] one row for each element
-              
-    Returns:
-    
-        eseff  = [eseff_0 .. eseff_nel-1]
-    
+
+    Parameters
+    ----------
+    es : array_like
+        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
+    ptype : int
+        Analysis type:
+        1 : plane stress
+        2 : plane strain
+        3 : axisymmetry
+        4 : three dimensional
+
+    Returns
+    -------
+    eseff : ndarray
+        Effective stress array [eseff_0, ..., eseff_nel-1].
     """
 
     nel = np.size(es, 0)
@@ -6159,25 +6434,30 @@ def stress2nodal(eseff, edof):
 
 def beam2crd_old(ex, ey, ed, mag):
     """
-    -------------------------------------------------------------
-        PURPOSE
-            Calculate the element continous displacements for a 
-            number of identical 2D Bernoulli beam elements. 
-      
-        INPUT:  ex,ey,
-                ed,
-                mag 
-    
-        OUTPUT: excd,eycd 
-    -------------------------------------------------------------
+    Calculate the element continuous displacements for multiple identical 2D Bernoulli beam elements.
 
-     LAST MODIFIED: P-E AUSTRELL 1993-10-15
-                    J Lindemann 2021-12-30 (Python)
+    Parameters
+    ----------
+    ex : array_like
+        Element node x-coordinates.
+    ey : array_like
+        Element node y-coordinates.
+    ed : array_like
+        Element displacement matrix.
+    mag : float
+        Magnification factor.
 
-     Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
+    Returns
+    -------
+    excd : ndarray
+        Continuous x-coordinates.
+    eycd : ndarray
+        Continuous y-coordinates.
+
+    History
+    -------
+    LAST MODIFIED: P-E AUSTRELL 1993-10-15
+                   J Lindemann 2021-12-30 (Python)
     """
     nie, ned = ed.shape
 
@@ -6187,7 +6467,7 @@ def beam2crd_old(ex, ey, ed, mag):
     for i in range(nie):
 
         b = np.array([ex[i, 1]-ex[i, 0], ey[i, 1]-ey[i, 0]])
-        L = np.asscalar(np.sqrt(b@np.transpose(b)))
+        L = np.sqrt(b@np.transpose(b)).item()
         n = b/L
 
         G = np.array([
@@ -6249,23 +6529,29 @@ def beam2crd_old(ex, ey, ed, mag):
 
 def beam2crd(ex=None, ey=None, ed=None, mag=None):
     """
-    -------------------------------------------------------------
-        PURPOSE
-         Calculate the element continous displacements for a
-         number of identical 2D Bernoulli beam elements.
-    
-        INPUT:  ex,ey,
-                ed,
-                mag
-    
-        OUTPUT: excd,eycd
-    -------------------------------------------------------------
+    Calculate the element continuous displacements for multiple identical 2D Bernoulli beam elements.
 
+    Parameters
+    ----------
+    ex : array_like, optional
+        Element node x-coordinates.
+    ey : array_like, optional
+        Element node y-coordinates.
+    ed : array_like, optional
+        Element displacement matrix.
+    mag : float, optional
+        Magnification factor.
+
+    Returns
+    -------
+    excd : ndarray
+        Continuous x-coordinates.
+    eycd : ndarray
+        Continuous y-coordinates.
+
+    History
+    -------
     LAST MODIFIED: P-E AUSTRELL 1993-10-15
-    Copyright (c)  Division of Structural Mechanics and
-                    Division of Solid Mechanics.
-                    Lund University
-    -------------------------------------------------------------
     """
 
     nie, ned = ed.shape

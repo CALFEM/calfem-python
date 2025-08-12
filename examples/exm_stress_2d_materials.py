@@ -174,7 +174,7 @@ for i in range(edof.shape[0]):
 
         von_mises.append(
             math.sqrt(
-                pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2], 2)
+                pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2],  2)
             )
         )
 

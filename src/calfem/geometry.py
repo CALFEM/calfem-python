@@ -5,14 +5,16 @@ CALFEM Geometry module
 Contains functions and classes for describing geometry.
 """
 
+from re import S
+import struct
 import numpy as np
 
 
 class Geometry:
-    '''
+    """
     Instances of GeoData can hold geometric data and be passed to 
     GmshMesher in pycalfem_Mesh to mesh the geometry.
-    '''
+    """
 
     def __init__(self):
         self.points = {}  # dict of [[x, y, z], elSize, marker]
@@ -122,7 +124,7 @@ class Geometry:
                 theSet.update(hole)
         return theSet
 
-    def addPoints(self, points, markers=None, ids=None, elSizes=None):
+    def points(self, points, markers=None, ids=None, elSizes=None):
         '''
         Add points from a numpy-array
         '''
@@ -135,28 +137,29 @@ class Geometry:
             for row in points:
                 self.addPoint(row.tolist())
 
-    def addPoint(self, coord, ID=None, marker=0, el_size=1):
-        '''
+    def point(self, coord, ID=None, marker=0, el_size=1):
+        """
         Adds a point.
 
-        Parameters:
-        coord     - [x, y] or [x, y, z].
-                    List, not array.
-
-        ID        - Positive integer ID of this point. If left unspecified the
-                    point will be assigned the smallest unused point-ID.
-                    It is recommended to specify all point-IDs or none.
-
-        marker    - Marker applied to this point. Default 0.
-                    It is not a good idea to apply non-zero markers to points
-                    that are control points on B-splines or center points on 
-                    circles/ellipses, since this can lead to "loose" nodes
-                    that are not part of any elements.
-
-        elSize    - The size of elements at this point. Default 1. Use to make
-                    a mesh denser or sparser here. Only affects unstructured
-                    meshes
-        '''
+        Parameters
+        ----------
+        coord : list
+            [x, y] or [x, y, z]. List, not array.
+        ID : int, optional
+            Positive integer ID of this point. If left unspecified the
+            point will be assigned the smallest unused point-ID.
+            It is recommended to specify all point-IDs or none.
+        marker : int, optional
+            Marker applied to this point. Default 0.
+            It is not a good idea to apply non-zero markers to points
+            that are control points on B-splines or center points on 
+            circles/ellipses, since this can lead to "loose" nodes
+            that are not part of any elements.
+        el_size : float, optional
+            The size of elements at this point. Default 1. Use to make
+            a mesh denser or sparser here. Only affects unstructured
+            meshes.
+        """
         if len(coord) == 3:  # A 3D point is inserted.
             self.is3D = True
         else:  # The point is in 2D (we assume)
@@ -191,7 +194,7 @@ class Geometry:
 
         return min_x, max_x, min_y, max_y
 
-    def addSplines(self, points):
+    def splines(self, points):
         '''
         Add splines from numpy array
         '''
@@ -205,192 +208,196 @@ class Geometry:
                 splineDef = row.tolist()
                 self.addSpline(splineDef[:-1], marker=splineDef[2])
 
-    def addSpline(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
-        '''
+    def spline(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
+        """
         Adds a Spline curve
 
-        points    - List of indices of control points that make a Spline
-                    [p1, p2, ... , pn]
+        Parameters
+        ----------
+        points : list
+            List of indices of control points that make a Spline
+            [p1, p2, ... , pn]
+        ID : int, optional
+            Positive integer ID of this curve. If left unspecified the
+            curve will be assigned the smallest unused curve-ID.
+            It is recommended to specify all curve-IDs or none.
+        marker : int, optional
+            Marker applied to this curve. Default 0.
+        el_on_curve : int, optional
+            Elements on curve. 
+            The number of element edges that will be distributed
+            along this curve. Only works for structured meshes.
+        el_distrib_type : str, optional
+            Either "bump" or "progression". 
+            Determines how the density of elements vary along the curve
+            for structured meshes. Only works for structured meshes.
+            el_on_curve and el_distrib_val must be be defined if this param
+            is used.
+        el_distrib_val : float, optional
+            Determines how severe the element distribution is.
+            Only works for structured meshes. el_on_curve and 
+            el_distrib_type must be be defined if this param is used.
 
-        ID        - Positive integer ID of this curve. If left unspecified the
-                    curve will be assigned the smallest unused curve-ID.
-                    It is recommended to specify all curve-IDs or none.
+            bump:
+            Smaller value means elements are bunched up at the edges
+            of the curve, larger means bunched in the middle.
 
-        marker    - Integer. Marker applied to this curve. Default 0.
-
-        elOnCurv  - Positive integer. Elements on curve. 
-                    The number of element edges that will be distributed
-                    along this curve. Only works for structured meshes. 
-
-        el_distrib_type -
-                    String. Either "bump" or "progression". 
-                    Determines how the density of elements vary along the curve
-                    for structured meshes. Only works for structured meshes.
-                    elOnCurv and el_distrib_val must be be defined if this param
-                    is used.
-
-        el_distrib_val -
-                    Float. Determines how severe the element distribution is.
-                    Only works for structured meshes. elOnCurv and 
-                    el_distrib_type must be be defined if this param is used.
-
-                        bump:
-                    Smaller value means elements are bunched up at the edges
-                    of the curve, larger means bunched in the middle.
-
-                        progression:
-                    The edge of each element along this curve (from starting
-                    point to end) will be larger than the preceding one by 
-                    this factor.
-                    el_distrib_val = 2 meaning for example that each line element 
-                    in the series will be twice as long as the preceding one.
-                    el_distrib_val < 1 makes each element smaller than the 
-                    preceeding one.
-        '''
+            progression:
+            The edge of each element along this curve (from starting
+            point to end) will be larger than the preceding one by 
+            this factor.
+            el_distrib_val = 2 meaning for example that each line element 
+            in the series will be twice as long as the preceding one.
+            el_distrib_val < 1 makes each element smaller than the 
+            preceeding one.
+        """
         self._addCurve("Spline", points, ID, marker, el_on_curve,
                        el_distrib_type, el_distrib_val)
 
-    def addBSpline(self, points, ID=None, marker=0, el_on_curve=None,  el_distrib_type=None, el_distrib_val=None):
-        '''
+    def bspline(self, points, ID=None, marker=0, el_on_curve=None,  el_distrib_type=None, el_distrib_val=None):
+        """
         Adds a B-Spline curve
 
-        points    - List of indices of control points that make a B-spline
-                    [p1, p2, ... , pn]
+        Parameters
+        ----------
+        points : list
+            List of indices of control points that make a B-spline
+            [p1, p2, ... , pn]
+        ID : int, optional
+            Positive integer ID of this curve. If left unspecified the
+            curve will be assigned the smallest unused curve-ID.
+            It is recommended to specify all curve-IDs or none.
+        marker : int, optional
+            Marker applied to this curve. Default 0.
+        el_on_curve : int, optional
+            Elements on curve. 
+            The number of element edges that will be distributed
+            along this curve. Only works for structured meshes.
+        el_distrib_type : str, optional
+            Either "bump" or "progression". 
+            Determines how the density of elements vary along the curve
+            for structured meshes. Only works for structured meshes.
+            el_on_curve and el_distrib_val must be be defined if this param
+            is used.
+        el_distrib_val : float, optional
+            Determines how severe the element distribution is.
+            Only works for structured meshes. el_on_curve and 
+            el_distrib_type must be be defined if this param is used.
 
-        ID        - Positive integer ID of this curve. If left unspecified the
-                    curve will be assigned the smallest unused curve-ID.
-                    It is recommended to specify all curve-IDs or none.
+            bump:
+            Smaller value means elements are bunched up at the edges
+            of the curve, larger means bunched in the middle.
 
-        marker    - Integer. Marker applied to this curve. Default 0.
-
-        elOnCurv  - Positive integer. Elements on curve. 
-                    The number of element edges that will be distributed
-                    along this curve. Only works for structured meshes. 
-
-        el_distrib_type -
-                    String. Either "bump" or "progression". 
-                    Determines how the density of elements vary along the curve
-                    for structured meshes. Only works for structured meshes.
-                    elOnCurv and el_distrib_val must be be defined if this param
-                    is used.
-
-        el_distrib_val -
-                    Float. Determines how severe the element distribution is.
-                    Only works for structured meshes. elOnCurv and 
-                    el_distrib_type must be be defined if this param is used.
-
-                        bump:
-                    Smaller value means elements are bunched up at the edges
-                    of the curve, larger means bunched in the middle.
-
-                        progression:
-                    The edge of each element along this curve (from starting
-                    point to end) will be larger than the preceding one by 
-                    this factor.
-                    el_distrib_val = 2 meaning for example that each line element 
-                    in the series will be twice as long as the preceding one.
-                    el_distrib_val < 1 makes each element smaller than the 
-                    preceeding one.
-        '''
+            progression:
+            The edge of each element along this curve (from starting
+            point to end) will be larger than the preceding one by 
+            this factor.
+            el_distrib_val = 2 meaning for example that each line element 
+            in the series will be twice as long as the preceding one.
+            el_distrib_val < 1 makes each element smaller than the 
+            preceeding one.
+        """
         self._addCurve("BSpline", points, ID, marker,
                        el_on_curve, el_distrib_type, el_distrib_val)
 
-    def addCircle(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
-        '''
+    def circle(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
+        """
         Adds a Circle arc curve.
 
-        points    - list of 3 indices of point that make a circle arc smaller
-                    than Pi.
-                    [startpoint, centerpoint, endpoint]
+        Parameters
+        ----------
+        points : list
+            List of 3 indices of point that make a circle arc smaller
+            than Pi.
+            [startpoint, centerpoint, endpoint]
+        ID : int, optional
+            Positive integer ID of this curve. If left unspecified the
+            curve will be assigned the smallest unused curve-ID.
+            It is recommended to specify all curve-IDs or none.
+        marker : int, optional
+            Marker applied to this curve. Default 0.
+        el_on_curve : int, optional
+            Elements on curve.
+            The number of element edges that will be distributed
+            along this curve. Only works for structured meshes.
+        el_distrib_type : str, optional
+            Either "bump" or "progression". 
+            Determines how the density of elements vary along the curve
+            for structured meshes. Only works for structured meshes.
+            el_on_curve and el_distrib_val must be be defined if this param
+            is used.
+        el_distrib_val : float, optional
+            Determines how severe the element distribution is.
+            Only works for structured meshes. el_on_curve and 
+            el_distrib_type must be be defined if this param is used.
 
-        ID        - Positive integer ID of this curve. If left unspecified the
-                    curve will be assigned the smallest unused curve-ID.
-                    It is recommended to specify all curve-IDs or none.
+            bump:
+            Smaller value means elements are bunched up at the edges
+            of the curve, larger means bunched in the middle.
 
-        marker    - Marker applied to this curve. Default 0.
-
-        elOnCurv  - Elements on curve.
-                    The number of element edges that will be distributed
-                    along this curve. Only works for structured meshes.
-
-        el_distrib_type -
-                    String. Either "bump" or "progression". 
-                    Determines how the density of elements vary along the curve
-                    for structured meshes. Only works for structured meshes.
-                    elOnCurv and el_distrib_val must be be defined if this param
-                    is used.
-
-        el_distrib_val -
-                    Float. Determines how severe the element distribution is.
-                    Only works for structured meshes. elOnCurv and 
-                    el_distrib_type must be be defined if this param is used.
-
-                        bump:
-                    Smaller value means elements are bunched up at the edges
-                    of the curve, larger means bunched in the middle.
-
-                        progression:
-                    The edge of each element along this curve (from starting
-                    point to end) will be larger than the preceding one by 
-                    this factor.
-                    el_distrib_val = 2 meaning for example that each line element 
-                    in the series will be twice as long as the preceding one.
-                    el_distrib_val < 1 makes each element smaller than the 
-                    preceeding one.
-        '''
+            progression:
+            The edge of each element along this curve (from starting
+            point to end) will be larger than the preceding one by 
+            this factor.
+            el_distrib_val = 2 meaning for example that each line element 
+            in the series will be twice as long as the preceding one.
+            el_distrib_val < 1 makes each element smaller than the 
+            preceeding one.
+        """
         if len(points) != 3:
             raise IndexError(
                 "Circle: points must be a list of 3 positive integers denoting point indices")
         self._addCurve("Circle", points, ID, marker, el_on_curve,
                        el_distrib_type, el_distrib_val)
 
-    def addEllipse(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
-        '''
+    def ellipse(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
+        """
         Adds a Ellipse arc curve.
 
-        points    - List of 4 indices of point that make a ellipse arc smaller
-                    than Pi.
-                    [startpoint, centerpoint, mAxisPoint, endpoint]
-                    Startpoint is the starting point of the arc.
-                    Centerpoint is the point at the center of the ellipse.
-                    MAxisPoint is any point on the major axis of the ellipse.
-                    Endpoint is the end point of the arc.
+        Parameters
+        ----------
+        points : list
+            List of 4 indices of point that make a ellipse arc smaller
+            than Pi.
+            [startpoint, centerpoint, mAxisPoint, endpoint]
+            Startpoint is the starting point of the arc.
+            Centerpoint is the point at the center of the ellipse.
+            MAxisPoint is any point on the major axis of the ellipse.
+            Endpoint is the end point of the arc.
+        ID : int, optional
+            Positive integer ID of this curve. If left unspecified the
+            curve will be assigned the smallest unused curve-ID.
+            It is recommended to specify all curve-IDs or none.
+        marker : int, optional
+            Marker applied to this curve. Default 0.
+        el_on_curve : int, optional
+            Elements on curve. 
+            The number of element edges that will be distributed
+            along this curve. Only works for structured meshes.
+        el_distrib_type : str, optional
+            Either "bump" or "progression". 
+            Determines how the density of elements vary along the curve
+            for structured meshes. Only works for structured meshes.
+            el_on_curve and el_distrib_val must be be defined if this param
+            is used.
+        el_distrib_val : float, optional
+            Determines how severe the element distribution is.
+            Only works for structured meshes. el_on_curve and 
+            el_distrib_type must be be defined if this param is used.
 
-        ID        - Positive integer ID of this curve. If left unspecified the
-                    curve will be assigned the smallest unused curve-ID.
-                    It is recommended to specify all curve-IDs or none.
+            bump:
+            Smaller value means elements are bunched up at the edges
+            of the curve, larger means bunched in the middle.
 
-        marker    - Integer. Marker applied to this curve. Default 0.
-
-        elOnCurv  - Positive integer. Elements on curve. 
-                    The number of element edges that will be distributed
-                    along this curve. Only works for structured meshes. 
-
-        el_distrib_type -
-                    String. Either "bump" or "progression". 
-                    Determines how the density of elements vary along the curve
-                    for structured meshes. Only works for structured meshes.
-                    elOnCurv and el_distrib_val must be be defined if this param
-                    is used.
-
-        el_distrib_val -
-                    Float. Determines how severe the element distribution is.
-                    Only works for structured meshes. elOnCurv and 
-                    el_distrib_type must be be defined if this param is used.
-
-                        bump:
-                    Smaller value means elements are bunched up at the edges
-                    of the curve, larger means bunched in the middle.
-
-                        progression:
-                    The edge of each element along this curve (from starting
-                    point to end) will be larger than the preceding one by 
-                    this factor.
-                    el_distrib_val = 2 meaning for example that each line element 
-                    in the series will be twice as long as the preceding one.
-                    el_distrib_val < 1 makes each element smaller than the 
-                    preceeding one.                      
-        '''
+            progression:
+            The edge of each element along this curve (from starting
+            point to end) will be larger than the preceding one by 
+            this factor.
+            el_distrib_val = 2 meaning for example that each line element 
+            in the series will be twice as long as the preceding one.
+            el_distrib_val < 1 makes each element smaller than the 
+            preceeding one.
+        """
         if len(points) != 4:
             raise IndexError(
                 "Ellipse: points must be a list of 4 positive integers denoting point indices")
@@ -417,60 +424,69 @@ class Geometry:
         self.curves[ID] = [name, points, marker,
                            el_on_curve, el_distrib_type, el_distrib_val]
 
-    def addSurface(self, outer_loop, holes=[], ID=None, marker=0):
-        '''
+    def surface(self, outer_loop, holes=[], ID=None, marker=0):
+        """
         Adds a plane surface (flat).
-        Parameters:
-        outer_loop - List of curve IDs that make up the outer boundary of
-                    the surface. The curves must lie in the same plane.
 
-        holes     - List of lists of curve IDs that make up the inner
-                    boundaries of the surface. The curves must lie in the
-                    same plane. 
-
-        ID        - Positive integer ID of this surface. If left unspecified
-                    the surface will be assigned the smallest unused surface-ID.
-                    It is recommended to specify all surface-IDs or none.
-
-        marker    - Integer. Marker applied to this surface. Default 0.
-        '''
+        Parameters
+        ----------
+        outer_loop : list
+            List of curve IDs that make up the outer boundary of
+            the surface. The curves must lie in the same plane.
+        holes : list, optional
+            List of lists of curve IDs that make up the inner
+            boundaries of the surface. The curves must lie in the
+            same plane. Default [].
+        ID : int, optional
+            Positive integer ID of this surface. If left unspecified
+            the surface will be assigned the smallest unused surface-ID.
+            It is recommended to specify all surface-IDs or none.
+        marker : int, optional
+            Marker applied to this surface. Default 0.
+        """
         # TODO: Possibly check if outer_loop is an actual loop and if the holes are correct.
         self._addSurf("Plane Surface", outer_loop, holes,
                       ID, marker, is_structured=False)
 
-    def addRuledSurface(self, outer_loop, ID=None, marker=0):
-        '''
+    def ruled_surface(self, outer_loop, ID=None, marker=0):
+        """
         Adds a Ruled Surface (bent surface).
-        Parameters:
-        outer_loop - List of 3 or 4 curve IDs that make up the boundary of
-                    the surface.
 
-        ID        - Positive integer ID of this surface. If left unspecified
-                    the surface will be assigned the smallest unused surface-ID.
-                    It is recommended to specify all surface-IDs or none.
-
-        marker    - Integer. Marker applied to this surface. Default 0.
-        '''
+        Parameters
+        ----------
+        outer_loop : list
+            List of 3 or 4 curve IDs that make up the boundary of
+            the surface.
+        ID : int, optional
+            Positive integer ID of this surface. If left unspecified
+            the surface will be assigned the smallest unused surface-ID.
+            It is recommended to specify all surface-IDs or none.
+        marker : int, optional
+            Marker applied to this surface. Default 0.
+        """
         if len(outer_loop) not in [3, 4]:
             raise IndexError(
                 "Ruled Surface: outer_loop must be a list of 3 or 4 positive integers denoting curve indices")
         self._addSurf("Surface", outer_loop, [],
                       ID, marker, is_structured=False)
 
-    def addStructuredSurface(self, outer_loop, ID=None, marker=0):
-        '''
+    def struct_surface(self, outer_loop, ID=None, marker=0):
+        """
         Adds a Structured Surface.
-        Parameters:
-        outer_loop - List of 4 curve IDs that make up the boundary of
-                    the surface. The curves must be structured, i.e. their
-                    parameter 'elOnCurv' must be defined.
 
-        ID        - Positive integer ID of this surface. If left unspecified
-                    the surface will be assigned the smallest unused surface-ID.
-                    It is recommended to specify all surface-IDs or none.
-
-        marker    - Integer. Marker applied to this surface. Default 0.
-        '''
+        Parameters
+        ----------
+        outer_loop : list
+            List of 4 curve IDs that make up the boundary of
+            the surface. The curves must be structured, i.e. their
+            parameter 'elOnCurv' must be defined.
+        ID : int, optional
+            Positive integer ID of this surface. If left unspecified
+            the surface will be assigned the smallest unused surface-ID.
+            It is recommended to specify all surface-IDs or none.
+        marker : int, optional
+            Marker applied to this surface. Default 0.
+        """
         self._checkIfProperStructuredQuadBoundary(outer_loop, ID)
         self._addSurf("Surface", outer_loop, [],
                       ID, marker, is_structured=True)
@@ -494,33 +510,43 @@ class Geometry:
         self.surfaces[ID] = [name, outer_loop,
                              holes, ID, marker, is_structured]
 
-    def addVolume(self, outer_surfaces, holes=[], ID=None, marker=0):
-        '''Adds a Volume
-        Parameters:
-        outer_surfaces - List of surface IDs that make up the outer boundary of
-                        the volume.
+    def volume(self, outer_surfaces, holes=[], ID=None, marker=0):
+        """
+        Adds a Volume
 
-        holes         - List of lists of surface IDs that make up the inner
-                        boundaries of the volume.
-
-        ID            - Positive integer ID of this volume. If left unspecified
-                        the volume will be assigned the smallest unused volume-ID.
-                        It is recommended to specify all volume-IDs or none.
-
-        marker        - Integer. Marker applied to this volume. Default 0.'''
+        Parameters
+        ----------
+        outer_surfaces : list
+            List of surface IDs that make up the outer boundary of
+            the volume.
+        holes : list, optional
+            List of lists of surface IDs that make up the inner
+            boundaries of the volume. Default [].
+        ID : int, optional
+            Positive integer ID of this volume. If left unspecified
+            the volume will be assigned the smallest unused volume-ID.
+            It is recommended to specify all volume-IDs or none.
+        marker : int, optional
+            Marker applied to this volume. Default 0.
+        """
         self._addVolume(outer_surfaces, holes, ID, marker, is_structured=False)
 
-    def addStructuredVolume(self, outer_surfaces, ID=None, marker=0):
-        '''Adds a Structured Volume
-        Parameters:
-        outer_surfaces - List of surface IDs that make up the outer boundary of
-                        the volume. The surfaces must be Structured Surfaces.
+    def struct_volume(self, outer_surfaces, ID=None, marker=0):
+        """
+        Adds a Structured Volume
 
-        ID            - Positive integer ID of this volume. If left unspecified
-                        the volume will be assigned the smallest unused volume-ID.
-                        It is recommended to specify all volume-IDs or none.
-
-        marker        - Integer. Marker applied to this volume. Default 0.'''
+        Parameters
+        ----------
+        outer_surfaces : list
+            List of surface IDs that make up the outer boundary of
+            the volume. The surfaces must be Structured Surfaces.
+        ID : int, optional
+            Positive integer ID of this volume. If left unspecified
+            the volume will be assigned the smallest unused volume-ID.
+            It is recommended to specify all volume-IDs or none.
+        marker : int, optional
+            Marker applied to this volume. Default 0.
+        """
         # TODO: Check input. (see if surfaces are structured)
         self._addVolume(outer_surfaces, [], ID, marker, is_structured=True)
 
@@ -619,25 +645,27 @@ class Geometry:
             if sortedkeys[i] != i:
                 return i
 
-    point = addPoint
-    spline = addSpline
-    line = addSpline
-    bspline = addBSpline
-    circle = addCircle
-    ellipse = addEllipse
-    surface = addSurface
-    surf = addSurface
-    ruledSurface = addRuledSurface
-    ruled_surface = addRuledSurface
-    ruled_surf = addRuledSurface
-    structuredSurface = addStructuredSurface
-    structured_surface = addStructuredSurface
-    struct_surf = addStructuredSurface
-    volume = addVolume
-    structuredVolume = addStructuredVolume
-    structured_volume = addStructuredVolume
+    addPoints = points
+    addPoint = point
+    addSpline = spline
+    line = spline
+    addBSpline = bspline
+    addCircle = circle
+    addEllipse = ellipse
+    addSurface = surface
+    addRuledSurface = ruled_surface
+    ruledSurface = ruled_surface
+    ruled_surf = ruled_surface
+    structuredSurface = struct_surface
+    structured_surface = struct_surface
+    addStructuredSurface = struct_surface
+    addVolume = volume
+    addStructuredVolume = struct_volume
+    structuredVolume = struct_volume
+    structured_volume = struct_volume
     get_point_coords = getPointCoords
     curve_marker = curveMarker
+    line_marker = curveMarker
 
 
 def geometry():

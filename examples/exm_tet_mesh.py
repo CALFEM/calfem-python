@@ -8,7 +8,7 @@ It also demonstrates how to do subplots and create two axes that are viewed from
 
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
+import calfem.vis_mpl as cfv
 
 # ---- Define geometry ------------------------------------------------------
 
@@ -72,8 +72,7 @@ cfv.draw_mesh(
     edof=edof,
     dofs_per_node=dofs_per_node,
     el_type=el_type,
-    filled=False,
-    axes=a2,
+    filled=False
 )
 
 # Enter main loop

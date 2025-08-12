@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'CALFEM for Python'
-copyright = '2016-2024, Jonas Lindemann'
+copyright = '2016-2025, Jonas Lindemann et al'
 author = 'Jonas Lindemann et al'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -93,10 +93,43 @@ def _insertBoundaryElement(boundaryElements, elementType, marker, nodes):
         {'elm-type': elementType, 'node-number-list': nodes})
 
 
-def createGmshMesh(geometry, el_type=2, el_size_factor=1, dofs_per_node=1,
-                   gmsh_exec_path=None, clcurv=False,
-                   min_size=None, max_size=None, meshing_algorithm=None,
-                   additional_options=''):
+def create_mesh(geometry, el_type=2, el_size_factor=1, dofs_per_node=1,gmsh_exec_path=None,    
+                clcurv=False, min_size=None, max_size=None, meshing_algorithm=None,             additional_options=''):
+    """
+    Create a mesh for the given geometry using GMSH.
+    This function serves as a convenient wrapper around the GmshMeshGenerator class
+    to generate finite element meshes from geometric definitions.
+    Parameters
+    ----------
+    geometry : object
+        The geometry object defining the domain to be meshed.
+    el_type : int, optional
+        Element type identifier. Default is 2.
+    el_size_factor : float, optional
+        Factor controlling the element size. Default is 1.
+    dofs_per_node : int, optional
+        Number of degrees of freedom per node. Default is 1.
+    gmsh_exec_path : str, optional
+        Path to the GMSH executable. If None, uses system default. Default is None.
+    clcurv : bool, optional
+        Enable/disable curved element generation. Default is False.
+    min_size : float, optional
+        Minimum element size constraint. Default is None.
+    max_size : float, optional
+        Maximum element size constraint. Default is None.
+    meshing_algorithm : int, optional
+        GMSH meshing algorithm identifier. Default is None.
+    additional_options : str, optional
+        Additional GMSH options as a string. Default is ''.
+    Returns
+    -------
+    mesh : object
+        The generated mesh object containing nodes, elements, and connectivity information.
+    Examples
+    --------
+    >>> mesh = create_mesh(geometry, el_type=3, el_size_factor=0.5)
+    >>> mesh = create_mesh(geometry, min_size=0.1, max_size=1.0)
+    """
 
     meshGen = GmshMeshGenerator(geometry, el_type, el_size_factor, dofs_per_node,
                                 gmsh_exec_path, clcurv, min_size, max_size, meshing_algorithm,
@@ -104,55 +137,64 @@ def createGmshMesh(geometry, el_type=2, el_size_factor=1, dofs_per_node=1,
 
     return meshGen.create()
 
-
-createMesh = createGmshMesh
-create_mesh = createGmshMesh
-mesh = createGmshMesh
+createGmshMesh = create_mesh
+createMesh = create_mesh
+mesh = create_mesh
 
 
 class GmshMeshGenerator:
-    '''
+    """
     Meshes geometry in GeoData objects or geo-files by calling the Gmsh executable.
     This is done when the function create() is called.
-    '''
+    """
 
     def __init__(self, geometry, el_type=2, el_size_factor=1, dofs_per_node=1,
                  gmsh_exec_path=None, clcurv=False,
                  min_size=None, max_size=None, meshing_algorithm=None,
                  additional_options='', mesh_dir='', return_boundary_elements=False):
-        '''        
-        Parameters:
+        """        
+        Parameters
+        ----------
+        geometry : GeoData or str
+            GeoData instance or string containing path to .geo-file
 
-            geometry        GeoData instance or string containing path to .geo-file
+        el_type : int
+            Element type and order. See gmsh manual for details.
 
-            el_type        Integer. Element type and order. 
-                           See gmsh manual for details.
+        el_size_factor : float
+            Factor by which the element sizes are multiplied.
 
-            el_size_factor  Float. Factor by which the element sizes are multiplied.
+        dofs_per_node : int
+            Number of degrees of freedom per node.
 
-            dofs_per_node    Number of degrees of freedom per node.
+        gmsh_exec_path : str, optional
+            File path to where the gmsh executable is located.
 
-            gmsh_exec_path   File path to where the gmsh executable is located.
+        clcurv : bool
+            Set to true to make elements smaller at high curvatures. 
+            (Experimental option according to the gmsh manual)
 
-            clcurv         Set to true to make elements smaller at high curvatures. 
-                           (Experimental option according to the gmsh manual)
+        min_size : float, optional
+            Minimum element size
 
-            min_size        Minimum element size
+        max_size : float, optional
+            Maximum element size
 
-            max_size        Maximum element size
+        meshing_algorithm : str, optional
+            Select mesh algorithm ('meshadapt', 'del2d',
+            'front2d',  'del3d', 'front3d', ...). 
+            See the gmsh manual for more info.
 
-            meshing_algorithm  String. Select mesh algorithm ('meshadapt', 'del2d',
-                              'front2d',  'del3d', 'front3d', ...). 
-                              See the gmsh manual for more info.
+        return_boundary_elements : bool
+            Flag for returning dictionary with boundary element
+            information. Useful for applying loads on boundary.
 
-            return_boundary_elements  Flag for returning dictionary with boundary element
-                                    information. Useful for applying loads on boundary.
-
-            additional_options  String containing additional command line args for gmsh.
-                               Use this if a gmsh option is not covered by the above 
-                               parameters (See section 3.3 in the gmsh manual for a 
-                               list of options)):
-           '''
+        additional_options : str
+            String containing additional command line args for gmsh.
+            Use this if a gmsh option is not covered by the above 
+            parameters (See section 3.3 in the gmsh manual for a 
+            list of options)):
+        """
         self.geometry = geometry
         self.el_type = el_type
         self.el_size_factor = el_size_factor
@@ -183,58 +225,72 @@ class GmshMeshGenerator:
         self.initialize_gmsh = True
 
     def create(self, is3D=False, dim=3):
-        '''
+        """
         Meshes a surface or volume defined by the geometry in geoData.
-        Parameters:
-        is3D - Optional parameter that only needs to be set if geometry
-               is loaded from a geo-file, i.e. if geoData is a path string.
-               Default False.
+        
+        Parameters
+        ----------
+        is3D : bool, optional
+            Optional parameter that only needs to be set if geometry
+            is loaded from a geo-file, i.e. if geoData is a path string.
+            Default False.
 
-        Returns:
+        Returns
+        -------
+        coords : ndarray
+            Node coordinates
+            
+            [[n0_x, n0_y, n0_z],
+            [   ...           ],
+            [nn_x, nn_y, nn_z]]
 
-            coords          Node coordinates
+        edof : ndarray
+            Element topology
+            
+            [[el0_dof1, ..., el0_dofn],
+            [          ...          ],
+            [eln_dof1, ..., eln_dofn]]
 
-                            [[n0_x, n0_y, n0_z],
-                            [   ...           ],
-                            [nn_x, nn_y, nn_z]]
+        dofs : ndarray
+            Node dofs
+            
+            [[n0_dof1, ..., n0_dofn],
+            [         ...         ],
+            [nn_dof1, ..., nn_dofn]]
 
-            edof            Element topology
+        bdofs : dict
+            Boundary dofs. Dictionary containing lists of dofs for
+            each boundary marker. Dictionary key = marker id.
 
-                            [[el0_dof1, ..., el0_dofn],
-                            [          ...          ],
-                            [eln_dof1, ..., eln_dofn]]
+        elementmarkers : list
+            List of integer markers. Row i contains the marker of
+            element i. Markers are similar to boundary markers and
+            can be used to identify in which region an element lies.
 
-            dofs            Node dofs
+        boundaryElements : dict, optional
+            Returned if self.return_boundary_elements is true.
+            Contains dictionary with boundary elements. The keys are markers
+            and the values are lists of elements for that marker.
 
-                            [[n0_dof1, ..., n0_dofn],
-                            [         ...         ],
-                            [nn_dof1, ..., nn_dofn]]
-
-            bdofs           Boundary dofs. Dictionary containing lists of dofs for
-                            each boundary marker. Dictionary key = marker id.
-
-            elementmarkers  List of integer markers. Row i contains the marker of
-                            element i. Markers are similar to boundary markers and
-                            can be used to identify in which region an element lies.
-
-            boundaryElements  (optional) returned if self.return_boundary_elements is true.
-                              Contains dictionary with boundary elements. The keys are markers
-                              and the values are lists of elements for that marker.
-
+        Notes
+        -----
         Running this function also creates object variables:
 
-            nodesOnCurve    Dictionary containing lists of node-indices. Key is a 
-                            curve-ID and the value is a list of indices of all nodes
-                            on that curve, including its end points.
+        nodesOnCurve : dict
+            Dictionary containing lists of node-indices. Key is a 
+            curve-ID and the value is a list of indices of all nodes
+            on that curve, including its end points.
 
-            nodesOnSurface  Dictionary containing lists of node-indices. Key is a
-                            surface-ID and the value is a list of indices of the nodes
-                            on that surface, including its boundary.
+        nodesOnSurface : dict
+            Dictionary containing lists of node-indices. Key is a
+            surface-ID and the value is a list of indices of the nodes
+            on that surface, including its boundary.
 
-            nodesOnVolume   Dictionary containing lists of node-indices. Key is a
-                            volume-ID and the value is a list of indices of the nodes
-                            in that volume, including its surface. 
-        '''
+        nodesOnVolume : dict
+            Dictionary containing lists of node-indices. Key is a
+            volume-ID and the value is a list of indices of the nodes
+            in that volume, including its surface. 
+        """
         # Nodes per element for different element types:
         # (taken from Chapter 9, page 89 of the gmsh manual)
         nodesPerElmDict = {1: 2,   2: 3,   3: 4,   4: 4,   5: 8,
