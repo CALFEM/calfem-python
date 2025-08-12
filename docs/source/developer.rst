@@ -1,5 +1,5 @@
 Developing CALFEM for Python
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+============================
 
 Creating an environment for development
 ---------------------------------------
