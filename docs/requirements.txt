@@ -4,7 +4,7 @@ matplotlib
 scipy
 tabulate
 qtpy
-pyqt
+pyqt5
 pyvtk
 ipython_genutils==0.1.0
 sphinx
