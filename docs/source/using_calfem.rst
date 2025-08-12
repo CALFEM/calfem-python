@@ -19,21 +19,16 @@ CALFEM Python modules
 ---------------------
 
 * **calfem.core**  
-
   * Element routines
   * System routines
 * **calfem.utils**  
-
   * I/O routines
   * Misc. routines
 * **calfem.geometry**  
-
   * Routines for defining problem geometry used for input in mesh generation
 * **calfem.mesh**  
-
   * Mesh generation routines  
 * **calfem.vis/calfem.vis_mpl**  
-
   * Routines for visualising geometry, meshes and results.
 
 Examples
@@ -41,9 +36,8 @@ Examples
 The example codes show what CALFEM can do for you. The examples are divided into two:    
 
 - Numerical examples
-
 - Mesh examples
 
-The next is tutorial on using Calfem for Python for numerical finite element, i.e., solving FEM equation to obtain nodal displacements given loading forces and 
+The next is tutorial on using CALFEM for Python for numerical finite element, i.e., solving FEM equation to obtain nodal displacements given loading forces and 
 stiffness matrix. The example can be found in `examples` directories both on 
 calfem-python root directory (for .py files) and docs directory (for .ipynb files).

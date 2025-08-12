@@ -1,5 +1,5 @@
 Example: Connected springs
--------------------------------------
+--------------------------
 
 This example is from the CALFEM manual (exs1.py).
 

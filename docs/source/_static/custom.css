@@ -1,0 +1,195 @@
+/* Custom CSS for CALFEM documentation */
+
+/* ===== FUNCTION SIGNATURES - INCREASE FONT SIZE ===== */
+.sig,
+dt.sig,
+dt.sig.sig-object,
+.py .sig {
+    font-size: 1.1em !important;  /* More modest increase */
+    font-weight: 500 !important;
+    line-height: 1.3 !important;
+    display: inline !important;  /* Ensure proper inline display */
+}
+
+/* Make function/method names more prominent but not too large */
+.sig-name,
+.py .sig-name.descname {
+    font-size: 1.15em !important;  /* Slightly larger but more reasonable */
+    font-weight: 600 !important;
+    color: var(--color-brand-primary) !important;
+}
+
+/* Keep parentheses and parameters in line */
+.sig-paren {
+    font-size: 1.1em !important;
+    font-weight: normal !important;
+}
+
+/* Parameter names in signatures */
+.sig-param {
+    font-size: 1.1em !important;
+    font-weight: normal !important;
+}
+
+.sig-param .n {
+    font-weight: 500 !important;
+}
+
+/* ===== DOCSTRING SECTION HEADERS - REDUCE FONT SIZE ===== */
+/* Target the actual h3 elements used for Parameters, Returns, etc. */
+.py .section h3 {
+    font-size: 0.5em !important;  /* Reduced from default ~1.2em */
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-foreground-muted) !important;
+    margin-top: 1.8em !important;
+    margin-bottom: 0.6em !important;
+    border-bottom: 1px solid var(--color-background-border) !important;
+    padding-bottom: 2px !important;
+}
+
+/* Also target any remaining .rubric elements */
+.rubric {
+    font-size: 0.8em !important;  /* Reduced from default ~1em */
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-foreground-muted) !important;
+    margin-top: 1.8em !important;
+    margin-bottom: 0.6em !important;
+    border-bottom: 1px solid var(--color-background-border) !important;
+    padding-bottom: 2px !important;
+}
+
+/* Field lists (Parameters, Returns, etc.) - cleaner styling */
+/* Target actual parameter names in definition lists */
+.py .section dl.simple dt {
+    font-size: 0.9em !important;  /* Parameter names */
+    font-weight: 600 !important;
+    color: var(--color-brand-primary) !important;
+    margin-right: 8px !important;
+    margin-bottom: 0.3em !important;
+}
+
+/* Parameter types (classifiers) */
+.py .section dl.simple dt .classifier {
+    font-size: 0.85em !important;
+    font-weight: normal !important;
+    color: var(--color-foreground-muted) !important;
+    font-style: italic !important;
+}
+
+/* Also target any remaining .field-name elements */
+.field-list .field-name {
+    font-size: 0.8em !important;  /* Smaller but not tiny */
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-foreground-muted) !important;
+    margin-right: 8px !important;
+}
+
+/* ===== VISUAL IMPROVEMENTS ===== */
+/* Parameter descriptions - keep readable */
+.field-list .field-body {
+    font-size: 0.95em !important;
+    line-height: 1.5 !important;
+    margin-left: 8px !important;
+}
+
+/* API documentation sections with subtle visual separation */
+.py.class > dt,
+.py.function > dt,
+.py.method > dt {
+    font-size: 1.1em !important;  /* More reasonable size */
+    border-left: 3px solid var(--color-brand-primary) !important;
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+    margin-bottom: 8px !important;
+    background: rgba(var(--color-brand-primary-rgb), 0.05) !important;  /* Very subtle background */
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    border-radius: 0 4px 4px 0 !important;
+}
+
+/* Code examples in docstrings */
+.docstring .highlight pre {
+    font-size: 0.9em !important;
+    line-height: 1.5 !important;
+    border-radius: 6px !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+/* Adjust sizes for smaller screens */
+@media (max-width: 768px) {
+    .sig,
+    .sig-name,
+    .py .sig {
+        font-size: 1.1em !important;
+    }
+    
+    .sig-name,
+    .py .sig-name.descname {
+        font-size: 1.2em !important;
+    }
+    
+    .py .section h3,
+    .rubric,
+    .field-list .field-name {
+        font-size: 0.8em !important;
+    }
+}
+
+/* ===== ADDITIONAL ENHANCEMENTS ===== */
+/* Improve spacing between API items */
+.py.class,
+.py.function,
+.py.method {
+    margin-bottom: 2em !important;
+}
+
+/* Better spacing for nested elements */
+.py .py {
+    margin-left: 1em !important;
+    border-left: 2px solid var(--color-background-border) !important;
+    padding-left: 1em !important;
+}
+
+/* Highlight current item in navigation */
+.toctree-l1.current > a {
+    font-weight: 600 !important;
+    color: var(--color-brand-primary) !important;
+}
+
+/* ===== REMOVE BULLETS FROM MAIN TOC ===== */
+/* Remove bullets/numbers from main table of contents only (top level) */
+.toctree-wrapper > ul {
+    list-style: none !important;
+    padding-left: 0 !important;
+}
+
+/* Keep indentation for nested items */
+.toctree-wrapper ul ul {
+    padding-left: 1.5em !important;
+}
+
+.toctree-wrapper li {
+    margin-bottom: 0.5em !important;
+}
+
+/* Also remove from numbered lists if using :numbered: option (top level only) */
+.toctree-wrapper > ol {
+    list-style: none !important;
+    padding-left: 0 !important;
+    counter-reset: none !important;
+}
+
+/* Keep indentation for nested numbered lists */
+.toctree-wrapper ol ol {
+    padding-left: 1.5em !important;
+}
+
+.toctree-wrapper > ol > li::before {
+    display: none !important;
+}
