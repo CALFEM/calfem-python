@@ -8,7 +8,7 @@ a complex Qt user interface.
 
 import sys
 
-from calfem.qt5 import *
+from qtpy import *
 
 import calfem.core as cfc
 import calfem.vis as cfv

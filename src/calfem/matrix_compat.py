@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.linalg import inv
+import sys
 
 class MatrixCompat:
     """
@@ -26,9 +27,13 @@ class MatrixCompat:
         else:
             self.array = np.array(input_array, dtype=float)
         
-        # Ensure that single-row or single-column arrays have 2D shape
+        # Ensure that 1D inputs mimic np.matrix behavior: create a 1 x n row matrix
+        # Original np.matrix(list) yields shape (1, n). Code elsewhere (e.g., np.matrix(vec).T)
+        # depends on this to obtain an (n,1) column after transpose. Previous implementation
+        # reshaped to (n,1), breaking expressions like np.matrix(q).T used to build column vectors
+        # and causing dimension mismatches (see apply_traction_linear_element). Restore semantics.
         if self.array.ndim == 1:
-            self.array = self.array.reshape(-1, 1)
+            self.array = self.array.reshape(1, -1)
     
     # Negation
     def __neg__(self):
@@ -283,10 +288,23 @@ class MatrixCompat:
         """
         return self.array.flatten()
 
-# Now we patch numpy to use our compatibility layer
-np_matrix_original = np.matrix
-np.matrix = MatrixCompat
-np.mat = MatrixCompat  # Alias for np.matrix
+# Now we patch numpy to use our compatibility layer, but only for NumPy >= 2.0
+# where np.matrix has been removed
+
+def _get_numpy_version():
+    """Get numpy version as tuple of integers"""
+    version_str = np.__version__.split('.')
+    return tuple(int(x) for x in version_str[:2])
+
+# Only patch if NumPy version is 2.0 or higher
+if _get_numpy_version() >= (2, 0):
+    # Store original if it exists (for potential restoration)
+    np_matrix_original = getattr(np, 'matrix', None)
+    np.matrix = MatrixCompat
+    np.mat = MatrixCompat  # Alias for np.matrix
+else:
+    # For NumPy < 2.0, keep the original matrix
+    np_matrix_original = np.matrix
 
 # Optional cleanup function to restore original np.matrix if needed
 def restore_numpy_matrix():

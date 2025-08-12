@@ -399,20 +399,27 @@ applyforce = apply_force
 
 def apply_traction_linear_element(boundaryElements, coords, dofs, F, marker, q):
     """
-    Apply traction on part of boundarty with marker.
+    Apply traction on part of boundary with marker.
+
     q is added to all boundaryDofs defined by marker. Applicable
     to 2D problems with 2 dofs per node. The function works with linear
     line elements. (elm-type 1 in GMSH).
 
-    Parameters:
-
-        boundaryElements    Dictionary with boundary elements, the key is a marker and the values are lists of elements.
-        coords              Coordinates matrix
-        dofs                Dofs matrix
-        F                   force matrix.
-        marker              Boundary marker to assign boundary condition.
-        q                   Value to assign boundary condition.
-                            shape = [qx qy] in global coordinates
+    Parameters
+    ----------
+    boundaryElements : dict
+        Dictionary with boundary elements, the key is a marker and the values are lists of elements.
+    coords : array_like
+        Coordinates matrix
+    dofs : array_like
+        Dofs matrix
+    F : array_like
+        force matrix.
+    marker : int
+        Boundary marker to assign boundary condition.
+    q : array_like
+        Value to assign boundary condition.
+        shape = [qx qy] in global coordinates
 
     """
     if marker not in boundaryElements:

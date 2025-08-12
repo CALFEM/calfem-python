@@ -3413,10 +3413,14 @@ def flw2i4s(ex, ey, ep, D, ed):
 
         # Process each row of ed
         for j in range(red):
-            p1 = -D @ B @ ed[j].T
-            p2 = B @ ed[j].T
-            es[i + j*ngp, :] = p1.T
-            et[i + j*ngp, :] = p2.T
+            # Ensure ed row is a column vector for matrix multiplications
+            ed_row = np.asarray(ed[j]).reshape(-1, 1)  # (8,1)
+            # Compute flow (es) and gradient (et)
+            p1 = -D @ B @ ed_row    # (2,1)
+            p2 = B @ ed_row         # (2,1)
+            # Flatten to shape (2,) before assigning to row slices
+            es[i + j*ngp, :] = p1.flatten()
+            et[i + j*ngp, :] = p2.flatten()
 
     return es, et, eci
 
@@ -3778,10 +3782,18 @@ def flw2i8s(ex, ey, ep, D, ed):
 
         # Process each row of ed
         for j in range(red):
-            p1 = -D @ B @ ed[j].T
-            p2 = B @ ed[j].T
-            es[i + j*ngp, :] = p1.T
-            et[i + j*ngp, :] = p2.T
+            # Ensure row vector is column shaped (n,1)
+            ed_row = np.asarray(ed[j]).reshape(-1, 1)
+            # Flow vector (negative conductivity * grad)
+            p1 = -D @ B @ ed_row   # shape (2,1) or MatrixCompat
+            # Gradient vector
+            p2 = B @ ed_row        # shape (2,1) or MatrixCompat
+            # Convert to numpy 1D arrays (handles MatrixCompat or ndarray)
+            p1_arr = np.asarray(p1, dtype=float).flatten()
+            p2_arr = np.asarray(p2, dtype=float).flatten()
+            # Assign first two components (expected size 2)
+            es[i + j*ngp, :] = p1_arr[:2]
+            et[i + j*ngp, :] = p2_arr[:2]
 
     return es, et, eci
 
@@ -6205,7 +6217,7 @@ def create_dofs(nCoords: int, nDof: int) -> NDArray[np.integer]:
 createdofs = create_dofs
 
 
-def coordxtr(edof, coords, dofs, nen=-1):
+def coord_extract(edof, coords, dofs, nen=-1):
     """
     Create element coordinate matrices ex, ey, ez from edof coord and dofs matrices.
 
@@ -6295,7 +6307,7 @@ def coordxtr(edof, coords, dofs, nen=-1):
         return ex, ey, ez
 
 
-coord_extract = coordxtr
+coordxtr = coord_extract
 
 
 def hooke(ptype, E, v):
