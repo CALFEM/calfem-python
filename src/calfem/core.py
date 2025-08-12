@@ -5472,14 +5472,14 @@ def solveq(K, f, bcPrescr=None, bcVal=None):
         Reaction force vector, shape (nd, 1).
     """
 
+    if bcPrescr is None:
+        return np.asmatrix(np.linalg.solve(K, f))
+
     nDofs = K.shape[0]
     nPdofs = bcPrescr.shape[0]
 
     if bcVal is None:
         bcVal = np.zeros([nPdofs], 'd')
-
-    if bcPrescr is None:
-        return np.asmatrix(np.linalg.solve(K, f))
 
     bc = np.ones(nDofs, 'bool')
     bcDofs = np.arange(nDofs)

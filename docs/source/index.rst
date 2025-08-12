@@ -31,7 +31,7 @@ Contents:
    examples/exs4
    examples/exs7
    calfem_mesh_guide
-   examples/exm13
+   examples/exm1
    examples/exm2
    examples/exm3
    examples/exm6

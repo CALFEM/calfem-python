@@ -348,7 +348,7 @@ class Geometry:
             raise IndexError(
                 "Circle: points must be a list of 3 positive integers denoting point indices")
         self._addCurve("Circle", points, ID, marker, el_on_curve,
-                       el_distrib_type, el_distrib_type)
+                       el_distrib_type, el_distrib_val)
 
     def ellipse(self, points, ID=None, marker=0, el_on_curve=None, el_distrib_type=None, el_distrib_val=None):
         """
