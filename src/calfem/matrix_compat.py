@@ -299,6 +299,15 @@ class MatrixCompat:
         Return a flattened copy of the array
         """
         return self.array.flatten()
+    
+def asmatrix(data):
+    """
+    Compatibility replacement for np.asmatrix.
+    Converts input to MatrixCompat if not already.
+    """
+    if isinstance(data, MatrixCompat):
+        return data
+    return MatrixCompat(data)
 
 # Now we patch numpy to use our compatibility layer, but only for NumPy >= 2.0
 # where np.matrix has been removed
@@ -314,9 +323,12 @@ if _get_numpy_version() >= (2, 0):
     np_matrix_original = getattr(np, 'matrix', None)
     np.matrix = MatrixCompat
     np.mat = MatrixCompat  # Alias for np.matrix
+    np_asmatrix_original = getattr(np, 'asmatrix', None)
+    np.asmatrix = asmatrix
 else:
     # For NumPy < 2.0, keep the original matrix
     np_matrix_original = np.matrix
+    np_asmatrix_original = np.asmatrix
 
 # Optional cleanup function to restore original np.matrix if needed
 def restore_numpy_matrix():
@@ -325,3 +337,4 @@ def restore_numpy_matrix():
     """
     np.matrix = np_matrix_original
     np.mat = np_matrix_original  # Restore alias as well
+    np.asmatrix = np_asmatrix_original
