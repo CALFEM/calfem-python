@@ -5473,7 +5473,7 @@ def solveq(K, f, bcPrescr=None, bcVal=None):
     """
 
     if bcPrescr is None:
-        return np.asmatrix(np.linalg.solve(K, f))
+        return np.array(np.linalg.solve(K, f))
 
     nDofs = K.shape[0]
     nPdofs = bcPrescr.shape[0]
@@ -5487,17 +5487,20 @@ def solveq(K, f, bcPrescr=None, bcVal=None):
     bc[np.ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
 
-    fsys = f[bcDofs]-K[np.ix_((bcDofs), (bcPrescr-1))] * \
-        np.asmatrix(bcVal).reshape(nPdofs, 1)
+    # Ensure bcVal is a column vector
+    bcVal_col = np.array(bcVal).reshape(-1, 1)
+
+    # Compute fsys with correct broadcasting
+    fsys = f[bcDofs] - K[np.ix_((bcDofs), (bcPrescr-1))] @ bcVal_col
     asys = np.linalg.solve(K[np.ix_((bcDofs), (bcDofs))], fsys)
 
     a = np.zeros([nDofs, 1])
-    a[np.ix_(bcPrescr-1)] = np.asmatrix(bcVal).reshape(nPdofs, 1)
-    a[np.ix_(bcDofs)] = asys
+    a[np.ix_(bcPrescr-1)] = bcVal_col
+    a[np.ix_(bcDofs)] = asys.reshape(-1, 1)
 
-    Q = K*np.asmatrix(a)-f
+    Q = K @ a - f
 
-    return (np.asmatrix(a), Q)
+    return (a, Q)
 
 
 def spsolveq(K, f, bcPrescr, bcVal=None):
@@ -5536,7 +5539,7 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     bc[np.ix_(bcPrescr-1)] = False
     bcDofs = bcDofs[bc]
 
-    bcVal_m = np.asmatrix(bcVal).reshape(nPdofs, 1)
+    bcVal_m = np.array(bcVal).reshape(-1, 1)
 
     info("Preparing system matrix...")
 
@@ -5550,7 +5553,7 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     #Kt = Kt1[:,bcPrescr]
     Kt = K[np.ix_((bcDofs), (bcPrescr-1))]
     info("step 3... fsys")
-    fsys = f[bcDofs]-Kt*bcVal_m
+    fsys = f[bcDofs] - Kt @ bcVal_m
     info("step 4... Ksys")
     Ksys1 = Kcsr[bcDofs]
     Ksys = Ksys1[:, bcDofs]
@@ -5563,12 +5566,12 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     info("Reconstructing full a...")
     a = np.zeros([nDofs, 1])
     a[np.ix_(bcPrescr-1)] = bcVal_m
-    a[np.ix_(bcDofs)] = np.asmatrix(asys).transpose()
+    # asys is 1D, ensure shape (n,1) for assignment
+    a[np.ix_(bcDofs)] = np.array(asys).reshape(-1, 1)
 
-    a_m = np.asmatrix(a)
-    Q = K*a_m-f
+    Q = K @ a - f
     info("done...")
-    return (a_m, Q)
+    return (a, Q)
 
 
 def eigen(K: ArrayLike, M: ArrayLike, b: Optional[ArrayLike] = None) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
