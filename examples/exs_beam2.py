@@ -34,6 +34,9 @@ K = np.array(np.zeros((12, 12)))
 f = np.array(np.zeros((12, 1)))
 f[3] = 2.0e3
 
+cfu.disp_h1("Load vector f")
+cfu.disp_array(f, ["f"])
+
 # ----- Element stiffness and element load matrices  -------------
 
 E = 200.0e9
@@ -42,8 +45,8 @@ A2 = 6.0e-3
 I1 = 1.6e-5
 I2 = 5.4e-5
 
-ep1 = np.array([E, A1, I1])
-ep3 = np.array([E, A2, I2])
+ep1 = [E, A1, I1]
+ep3 = [E, A2, I2]
 ex1 = np.array([0, 0])
 ex2 = np.array([6, 6])
 ex3 = np.array([0, 6])
@@ -66,8 +69,10 @@ K, f = cfc.assem(edof[2, :], K, Ke3, f, fe3)
 
 # ----- Solve the system of equations and compute reactions ------
 
-bc = np.array([1, 2, 3, 10, 11])
-a, r = cfc.solveq(K, f, bc)
+bc_dofs = np.array([1, 2, 3, 10, 11])
+bc_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+
+a, r = cfc.solveq(K, f, bc_dofs, bc_vals)
 
 cfu.disp_array(a, ["a"])
 cfu.disp_array(r, ["r"])
