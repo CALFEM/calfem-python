@@ -83,18 +83,19 @@ for elx, ely, eltopo in zip(ex, ey, edof):
     cfc.assem(eltopo, K, Ke)
 
 cfu.disp_h2("Stiffness matrix K:")
-cfu.disp_array(K)
+cfu.disp_array(K, tablefmt="plain")
 
 # ----- Solve the system of equations ----------------------------
 
-bc = np.array([1, 2, 3, 4])
-a, r = cfc.solveq(K, f, bc)
+bc_dofs = np.array([1, 2, 3, 4])
+bc_vals = np.array([0.0, 0.0, 0.0, 0.0])
+a, r = cfc.solveq(K, f, bc_dofs, bc_vals)
 
 cfu.disp_h2("Displacements a:")
-cfu.disp_array(a)
+cfu.disp_array(a, tablefmt='plain')
 
 cfu.disp_h2("Reaction forces r:")
-cfu.disp_array(r)
+cfu.disp_array(r, tablefmt='plain')
 
 # ----- Element forces -------------------------------------------
 

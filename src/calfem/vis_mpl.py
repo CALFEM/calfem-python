@@ -1727,7 +1727,11 @@ def pltstyle2(plotpar):
     else:
         raise ValueError("Invalid value for plotpar[1].")
 
-    if p3 == 1:
+
+    if p3 == 0:
+        node_color = ""
+        node_type = ""
+    elif p3 == 1:
         node_color = (0, 0, 0)
         node_type = "o"
     elif p3 == 2:
@@ -1818,6 +1822,8 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
         sfac = krel * dl_max / ed_max
 
     k = sfac
+
+    plt.axis("equal")
 
     line_color, line_style, node_color, node_style = pltstyle2(plotpar)
 
@@ -2067,6 +2073,7 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
     xc = np.array(A[:, 0])
     yc = np.array(A[:, 1])
 
+    plt.axis("equal")
     plt.plot(xc, yc, color=line_color, linewidth=1)
 
     A1 = np.array([A[0, 0], A[Nbr - 1, 0]]).reshape(1, 2)
@@ -2182,6 +2189,7 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
     xc = np.array(A[:, 0])
     yc = np.array(A[:, 1])
 
+    plt.axis("equal")
     plt.plot(xc, yc, color=line_color, linewidth=1)
 
     # Plot stripes in diagram

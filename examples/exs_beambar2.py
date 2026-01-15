@@ -47,11 +47,11 @@ A1 = 4.e-3
 I1 = 5.4e-5
 A2 = 1.e-3
 
-ep1 = np.array([E, A1, I1])
-ep4 = np.array([E, A2])
+ep1 = [E, A1, I1]
+ep4 = [E, A2]
 
-eq1 = np.array([0, 0])
-eq2 = np.array([0, -10e+3])
+eq1 = [0, 0]
+eq2 = [0, -10e+3]
 
 ex1 = np.array([0, 2])
 ex2 = np.array([2, 4])
@@ -80,8 +80,9 @@ K = cfc.assem(edof2[1, :], K, Ke5)
 
 # ----- Solve the system of equations and compute reactions ------
 
-bc = np.array([1, 2, 3, 13, 14])
-a, r = cfc.solveq(K, f, bc)
+bc_dofs = np.array([1, 2, 3, 13, 14])
+bc_vals = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+a, r = cfc.solveq(K, f, bc_dofs, bc_vals)
 
 cfu.disp_h2("Displacements a:")
 cfu.disp_array(a)
