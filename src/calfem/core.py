@@ -5468,7 +5468,7 @@ def solveq(K, f, bcPrescr=None, bcVal=None):
     -------
     a : ndarray
         Solution including boundary values, shape (nd, 1).
-    Q : ndarray
+    r : ndarray
         Reaction force vector, shape (nd, 1).
     """
 

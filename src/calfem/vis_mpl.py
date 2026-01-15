@@ -1452,7 +1452,7 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
         - linecolor: 1=black, 2=blue, 3=magenta, 4=red  
         - nodemark: 0=no mark, 1=circle, 2=star
     elnum : array_like, optional
-        Element numbers, typically edof(:,1) - the first column in the topology matrix.
+        Element numbers.
 
     Notes
     -----
