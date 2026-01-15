@@ -5448,6 +5448,52 @@ def assem(edof: ArrayLike, K: Union[NDArray[np.floating], csr_matrix, csc_matrix
     else:
         return K, f
     
+def red(A: ArrayLike, b: ArrayLike) -> NDArray[np.floating]:
+    """
+    Reduce the size of a square matrix by omitting rows and columns.
+    
+    Algorithm for reducing the size of a square matrix A by omitting 
+    rows and columns defined by the matrix b.
+    
+    Parameters
+    ----------
+    A : array_like
+        Unreduced square matrix, shape (nd, nd).
+    b : array_like
+        Boundary condition matrix containing DOF indices to remove,
+        shape (nbc, 1) or (nbc,), where nbc is the number of constraints.
+        
+    Returns
+    -------
+    B : ndarray
+        Reduced matrix with rows and columns removed.
+        
+    Examples
+    --------
+    >>> K = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    >>> bc = np.array([[2]])  # Remove row/column 2 (1-indexed)
+    >>> K_red = red(K, bc)
+    """
+    A_arr = np.asarray(A)
+    b_arr = np.asarray(b)
+    
+    nd = A_arr.shape[0]
+    fdof = np.arange(1, nd + 1)
+    
+    # Extract prescribed DOFs from first column
+    if b_arr.ndim == 1:
+        pdof = b_arr
+    else:
+        pdof = b_arr[:, 0]
+    
+    # Remove prescribed DOFs from free DOFs (convert to 0-indexed)
+    fdof = np.delete(fdof, pdof - 1)
+    
+    # Extract reduced matrix (convert back to 0-indexed for numpy)
+    B = A_arr[np.ix_(fdof - 1, fdof - 1)]
+    
+    return B
+    
 def solveq(K, f, bcPrescr=None, bcVal=None):
     """
     Solve static FE-equations considering boundary conditions.

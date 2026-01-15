@@ -6,6 +6,13 @@ This script generates a dictionary of example outputs.
 import os, sys, re, subprocess
 from pprint import pprint
 
+from pathlib import Path
+
+# Add src directory to system path to use local calfem package
+script_dir = Path(__file__).parent
+src_dir = script_dir / "src"
+sys.path.insert(0, str(src_dir))
+
 def extract_numeric_values(output_text):
     """Extract numeric values from output text using regex."""
     import re

@@ -111,7 +111,7 @@ for elx, ely, eld in zip(ex, ey, ed):
 cfu.disp_h2(f"Element flux vectors [kg/m^2/s]:")
 cfu.disp_array(es, headers=["qx", "qy"])
 
-cfu.disp_h2("Concentration field [×10⁻³ kg/m³]:")
+cfu.disp_h2("Concentration field [*10^-3 kg/m^3]:")
 cfu.disp("Pure water boundaries (DOFs 1-4,7,10): 0.000")
 cfu.disp(f"Internal concentrations:")
 
