@@ -45,6 +45,11 @@ eq2 = np.array([0])
 Ke1 = cfc.beam1e(ex1, ep)
 Ke2 = cfc.beam1e(ex2, ep)
 
+cfu.disp_h2("Ke1")
+cfu.disp_array(Ke1, tablefmt='plain')
+cfu.disp_h2("Ke2")
+cfu.disp_array(Ke2, tablefmt='plain')
+
 # ----- Assemble Ke into K ---------------------------------------
 
 cfc.assem(edof[0, :], K, Ke1)
@@ -52,8 +57,9 @@ cfc.assem(edof[1, :], K, Ke2)
 
 # ----- Solve the system of equations and compute reactions ------
 
-bc = np.array([1, 5])
-a, r = cfc.solveq(K, f, bc)
+bc_dofs = np.array([1, 5])
+bc_vals = np.array([0.0, 0.0]) 
+a, r = cfc.solveq(K, f, bc_dofs, bc_vals)
 
 cfu.disp_array(a, ["a"])
 cfu.disp_array(r, ["r"])

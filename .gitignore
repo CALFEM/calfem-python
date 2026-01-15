@@ -49,3 +49,4 @@ docs/source/examples/.ipynb_checkpoints/
 test_examples_output.log
 *.log
 test_examples.log
+/examples/.vscode

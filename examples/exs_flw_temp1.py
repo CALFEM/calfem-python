@@ -31,7 +31,7 @@ edof = np.array([
 
 K = np.array(np.zeros((6, 6)))
 f = np.array(np.zeros((6, 1)))
-f[3] = 10
+f[3] = 10.0
 
 # ----- Element stiffness and element load matrices  -------------
 
@@ -62,10 +62,10 @@ bcVal = np.array([-17, 20])
 a, r = cfc.solveq(K, f, bc, bcVal) 
 
 cfu.disp_h2("Temperatures a:")
-cfu.disp_array(a)
+cfu.disp_array(a, tablefmt="plain")
 
 cfu.disp_h2("Reaction flows r:")
-cfu.disp_array(r)
+cfu.disp_array(r, tablefmt="plain")
 
 # ----- Section forces -------------------------------------------
 

@@ -6,6 +6,13 @@ Make sure all examples run without errors.
 """
 
 import os, sys, re, subprocess
+from pathlib import Path
+
+# Add src directory to system path to use local calfem package
+script_dir = Path(__file__).parent
+src_dir = script_dir / "src"
+sys.path.insert(0, str(src_dir))
+
 import example_outputs as eo
 import numpy as np
 
@@ -83,4 +90,5 @@ def test_examples():
         print(f"PASSED.")
 
 if __name__ == "__main__":
+    
     test_examples()
