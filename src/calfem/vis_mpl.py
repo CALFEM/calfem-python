@@ -2056,7 +2056,7 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
     if sfac is None:
         sfac = (0.1 * L) / (np.max(abs(edi)))
 
-    eci = np.arange(0.0, L + L / (Nbr - 1), L / (Nbr - 1)).reshape(Nbr, 1)
+    eci = np.linspace(0.0, L, Nbr)
 
     edi1 = edi * sfac
     # From local x-coordinates to global coordinates of the beam element.
@@ -2138,7 +2138,7 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
         sfac = (0.2 * L) / max(abs(es))
 
     if eci is None:
-        eci = np.arange(0.0, L + L / (Nbr - 1), L / (Nbr - 1)).reshape(Nbr, 1)
+        eci = np.linspace(0.0, L, Nbr)
 
     p1 = plotpar[0]
     if p1 == 1:
