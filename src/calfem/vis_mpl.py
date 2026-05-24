@@ -21,12 +21,12 @@ from calfem.core import beam2crd
 import calfem.core as cfc
 
 try:
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qt5agg import (
+    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qtagg import (
         NavigationToolbar2QT as NavigationToolbar,
     )
 except:
-    print("Could not import Matplotlib backends. Probarbly due to missing Qt.")
+    print("Could not import Matplotlib backends. Probably due to missing Qt.")
 
 from numpy import sin, cos, pi
 from math import atan2

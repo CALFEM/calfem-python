@@ -58,6 +58,7 @@ def test_examples():
     # Set environment variable to avoid blocking of plots
 
     os.environ["CFV_NO_BLOCK"] = "YES"
+    os.environ["MPLBACKEND"] = "Agg"
 
     # Assume 0 return codes 
 
@@ -66,6 +67,7 @@ def test_examples():
 
         env = os.environ.copy()
         env["CFV_NO_BLOCK"] = "YES"
+        env["MPLBACKEND"] = "Agg"
         
         proc = subprocess.run(
             [sys.executable, f"examples/{example}"],

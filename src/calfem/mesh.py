@@ -148,6 +148,24 @@ class GmshMeshGenerator:
     This is done when the function create() is called.
     """
 
+    _GMSH_ALGORITHMS_2D = {
+        "meshadapt": 1,
+        "auto": 2,
+        "initial2d": 3,
+        "del2d": 5,
+        "front2d": 6,
+        "delquad": 8,
+        "quadqs": 11,
+    }
+
+    _GMSH_ALGORITHMS_3D = {
+        "del3d": 1,
+        "initial3d": 3,
+        "front3d": 4,
+        "mmg3d": 7,
+        "hxt": 10,
+    }    
+
     def __init__(self, geometry, el_type=2, el_size_factor=1, dofs_per_node=1,
                  gmsh_exec_path=None, clcurv=False,
                  min_size=None, max_size=None, meshing_algorithm=None,
@@ -429,8 +447,28 @@ class GmshMeshGenerator:
                 gmsh.option.setNumber("Mesh.ElementOrder", 2)
 
             if self.meshing_algorithm is not None:
-                gmsh.option.setString(self.meshing_algorithm)
+                algorithm = str(self.meshing_algorithm).lower()
 
+                if algorithm in self._GMSH_ALGORITHMS_3D:
+                    gmsh.option.setNumber(
+                        "Mesh.Algorithm3D",
+                        self._GMSH_ALGORITHMS_3D[algorithm],
+                    )
+                elif algorithm in self._GMSH_ALGORITHMS_2D:
+                    gmsh.option.setNumber(
+                        "Mesh.Algorithm",
+                        self._GMSH_ALGORITHMS_2D[algorithm],
+                    )
+                else:
+                    valid = sorted(
+                        list(self._GMSH_ALGORITHMS_2D.keys())
+                        + list(self._GMSH_ALGORITHMS_3D.keys())
+                    )
+                    raise ValueError(
+                        f"Unknown meshing_algorithm '{self.meshing_algorithm}'. "
+                        f"Valid values are: {', '.join(valid)}"
+                    )
+                
             gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
             gmsh.option.setNumber("Mesh.MeshSizeFactor", self.el_size_factor)
 

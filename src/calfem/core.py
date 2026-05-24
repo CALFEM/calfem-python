@@ -4432,7 +4432,14 @@ def plantf(ex, ey, ep, es):
 
     ptype, t = ep
 
-    colD = es.shape[1]
+    stress = np.asarray(es, dtype=float).reshape(-1)
+
+    if stress.size == 4:
+        stress = stress[[0, 1, 3]]
+    elif stress.size != 3:
+        raise ValueError("es must contain 3 or 4 stress components")
+
+    stress = stress.reshape(3, 1)
 
     #--------- plane stress --------------------------------------
 
@@ -4459,12 +4466,7 @@ def plantf(ex, ey, ep, es):
             [0, 0, 1, 0, 1, 0]
         ])*np.linalg.inv(C)
 
-        if colD > 3:
-            stress = np.asmatrix(es[np.ix_((0, 1, 3))])
-        else:
-            stress = np.asmatrix(es)
-
-        ef = (A*t*B.T*stress.T).T
+        ef = A*t*(B.T @ stress)
 
         return np.reshape(np.asarray(ef), 6)
 
@@ -4493,12 +4495,7 @@ def plantf(ex, ey, ep, es):
             [0, 0, 1, 0, 1, 0]
         ])*np.linalg.inv(C)
 
-        if colD > 3:
-            stress = np.asmatrix(es[np.ix_((0, 1, 3))])
-        else:
-            stress = np.asmatrix(es)
-
-        ef = (A*t*B.T*stress.T).T
+        ef = A*t*(B.T @ stress)
 
         return np.reshape(np.asarray(ef), (6,1))
 
