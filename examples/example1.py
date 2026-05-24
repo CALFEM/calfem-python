@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import calfem.geometry as cfg
 import calfem.mesh as cfm
 import calfem.vis_mpl as cfv
