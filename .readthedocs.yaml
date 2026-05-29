@@ -12,7 +12,7 @@ build:
       - python -m pip install -r docs/requirements.txt
     build:
       html:
-        - zensical build
+        - python -m zensical build
         - mkdir -p "$READTHEDOCS_OUTPUT/html/"
         # Zensical writes to the site_dir configured in zensical.toml.
         - cp -r site/. "$READTHEDOCS_OUTPUT/html/"
