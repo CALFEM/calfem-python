@@ -1,0 +1,75 @@
+[project]
+site_name = "CALFEM for Python"
+site_url = "https://calfem.github.io/calfem-python/"
+site_description = "Documentation for CALFEM for Python."
+site_author = "Jonas Lindemann et al"
+repo_url = "https://github.com/CALFEM/calfem-python"
+repo_name = "CALFEM/calfem-python"
+docs_dir = "docs/docs"
+site_dir = "site"
+copyright = "Copyright &copy; 2016-2026 Jonas Lindemann et al"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Installation" = "installation.md" },
+  { "Using CALFEM" = "using_calfem.md" },
+  { "CALFEM Manual" = "https://calfem-python-manual.readthedocs.io/en/latest/" },
+  { "Mesh Guide" = "mesh_guide.md" },
+  { "Developer Guide" = "developer.md" },
+  { "Mesh Examples" = [
+    { "Overview" = "mesh_examples.md" },
+    { "Simple Mesh Geometry" = "examples/exm1.md" },
+    { "Geometry Basics" = "examples/exm2.md" },
+    { "Splines and Arcs" = "examples/exm3.md" },
+    { "Mesh Generation" = "examples/exm6.md" },
+    { "Boundary Markers" = "examples/exm7.md" },
+    { "Advanced Meshing" = "examples/exm10.md" },
+    { "Plane Stress Mesh" = "examples/exm13.md" },
+  ] },
+  { "Function Reference" = "calfem_reference.md" },
+]
+
+plugins = [
+  "search",
+  { "mkdocstrings" = { handlers = { python = { paths = ["src"] } } } },
+]
+
+[project.theme]
+logo = "images/calfem.logo.png"
+language = "en"
+features = [
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "blue"
+accent = "blue"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "blue"
+accent = "blue"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.attr_list]
+[project.markdown_extensions.md_in_html]
+[project.markdown_extensions.toc]
+permalink = true
+[project.markdown_extensions.pymdownx.arithmatex]
+generic = true
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
+line_spans = "__span"
+pygments_lang_class = true
+[project.markdown_extensions.pymdownx.superfences]
