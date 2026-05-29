@@ -7,8 +7,8 @@
 
 *.bak
 
-docs/build
 docs/pycalfem
+site/
 
 venv-calfem
 
@@ -38,8 +38,6 @@ examples/.ipynb_checkpoints/*
 calfem/.ipynb_checkpoints/*
 exm6.vtk
 
-# new notebook examples
-docs/source/examples/.ipynb_checkpoints/
 .DS_Store
 *.lock
 *.log

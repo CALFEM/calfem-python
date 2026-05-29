@@ -1,12 +1,3 @@
-visvis
-numpy
-matplotlib
-scipy
-tabulate
-qtpy
-pyqt5
-pyvtk
-ipython_genutils==0.1.0
-sphinx
-nbsphinx
-furo
+zensical
+mkdocstrings-python
+pymdown-extensions
