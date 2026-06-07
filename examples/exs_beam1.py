@@ -36,11 +36,11 @@ f[2] = -10e3
 E = 210e9
 I = 2510e-8
 
-ep = np.array([E, I])
-ex1 = np.array([0, 3])
-ex2 = np.array([3, 9])
-eq1 = np.array([0])
-eq2 = np.array([0])
+ep = [E, I]
+ex1 = [0.0, 3.0]
+ex2 = [3.0, 9.0]
+eq1 = [0.0]
+eq2 = [0.0]
 
 Ke1 = cfc.beam1e(ex1, ep)
 Ke2 = cfc.beam1e(ex2, ep)

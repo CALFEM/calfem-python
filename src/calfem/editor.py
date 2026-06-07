@@ -9,13 +9,13 @@ Written by Karl Eriksson
 
 import os, sys
 
-from PyQt5.QtCore import Qt
+from qtpy.QtCore import Qt
 
-from PyQt5.QtGui import QPainter, QCloseEvent
+from qtpy.QtGui import QPainter, QCloseEvent
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QButtonGroup, QMessageBox
+from qtpy.QtWidgets import QApplication, QMainWindow, QGraphicsView, QButtonGroup, QMessageBox
 
-from PyQt5.uic import loadUi
+from qtpy.uic import loadUi
 
 import calfem.geometry as cfg
 import calfem.vis_mpl as cfv
@@ -29,7 +29,7 @@ class EditorWindow(QMainWindow):
     """MainWindow-klass som hanterar vårt huvudfönster"""
 
     def __init__(self):
-        super(QMainWindow, self).__init__()
+        super().__init__()
         self.app = app
 
         #root = os.path.dirname(os.path.realpath(__file__))

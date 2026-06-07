@@ -67,14 +67,14 @@ g.point([0.2, 0.8])  # 7
 
 # Add curves:
 
-g.spline([0, 1], marker=mark_fixed)  # 0
-g.spline([2, 1])  # 1
-g.spline([3, 2], marker=mark_load)  # 2
-g.spline([0, 3])  # 3
-g.spline([4, 5])  # 4
-g.spline([5, 6])  # 5
-g.spline([6, 7])  # 6
-g.spline([7, 4])  # 7
+g.line([0, 1], marker=mark_fixed)  # 0
+g.line([2, 1])  # 1
+g.line([3, 2], marker=mark_load)  # 2
+g.line([0, 3])  # 3
+g.line([4, 5])  # 4
+g.line([5, 6])  # 5
+g.line([6, 7])  # 6
+g.line([7, 4])  # 7
 
 # Add surfaces:
 
