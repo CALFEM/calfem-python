@@ -4807,6 +4807,7 @@ def plani4e(ex, ey, ep, D, eq=None):
     t = ep[1]
     ir = ep[2]
     ngp = ir*ir
+    D = np.matrix(D)
     if eq is None:
         q = np.zeros((2, 1))
     else:
@@ -4857,15 +4858,17 @@ def plani4e(ex, ey, ep, D, eq=None):
             [w1, w1]])
     else:
         info("Used number of integrat     ion points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
-    xsi = gp[:, 0]
-    eta = gp[:, 1]
+    wp = np.multiply(np.asarray(w[:, 0]).reshape(-1, 1), np.asarray(w[:, 1]).reshape(-1, 1))
+    xsi_col = np.asarray(gp[:, 0]).reshape(-1, 1)
+    eta_col = np.asarray(gp[:, 1]).reshape(-1, 1)
+    xsi = xsi_col.reshape(-1)
+    eta = eta_col.reshape(-1)
     r2 = ngp*2
     # Shape Functions
-    N = np.multiply((1-xsi), (1-eta))/4.
-    N = np.append(N, np.multiply((1+xsi), (1-eta))/4., axis=1)
-    N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
-    N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
+    N = np.multiply((1-xsi_col), (1-eta_col))/4.
+    N = np.append(N, np.multiply((1+xsi_col), (1-eta_col))/4., axis=1)
+    N = np.append(N, np.multiply((1+xsi_col), (1+eta_col))/4., axis=1)
+    N = np.append(N, np.multiply((1-xsi_col), (1+eta_col))/4., axis=1)
 
     dNr = np.matrix(np.zeros((r2, 4)))
     dNr[0:r2:2, 0] = -(1-eta)/4.
@@ -4898,7 +4901,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             if detJ < 10*np.finfo(float).eps:
                 info("Jacobi determinant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1, :])
-            dNx = JTinv*dNr[indx-1, :]
+            dNx = JTinv @ dNr[indx-1, :]
 #
             index_array_even = np.array([0, 2, 4, 6])
             index_array_odd = np.array([1, 3, 5, 7])
@@ -4917,8 +4920,12 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1+B.T*Dm*B*detJ*wp[i].item()*t
-            fe1 = fe1 + N2.T * q * detJ * wp[i].item() * t
+            detJ_val = float(np.asarray(detJ).reshape(-1)[0])
+            wp_val = float(np.asarray(wp).reshape(-1)[i])
+            t_val = float(np.asarray(t).reshape(-1)[0])
+            q_col = np.matrix(q).reshape(-1, 1)
+            Ke1 = Ke1 + B.T * Dm * B * detJ_val * wp_val * t_val
+            fe1 = fe1 + N2.T * q_col * detJ_val * wp_val * t_val
 
         return Ke1, fe1
 #--------- plane strain --------------------------------------
@@ -4938,7 +4945,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             if detJ < 10*np.finfo(float).eps:
                 info("Jacobideterminant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1, :])
-            dNx = JTinv*dNr[indx-1, :]
+            dNx = JTinv @ dNr[indx-1, :]
 #
             index_array_even = np.array([0, 2, 4, 6])
             index_array_odd = np.array([1, 3, 5, 7])
@@ -4959,8 +4966,12 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1 + B.T * Dm * B * detJ * wp[i].item() * t
-            fe1 = fe1+N2.T*q*detJ*wp[i].item()*t
+            detJ_val = float(np.asarray(detJ).reshape(-1)[0])
+            wp_val = float(np.asarray(wp).reshape(-1)[i])
+            t_val = float(np.asarray(t).reshape(-1)[0])
+            q_col = np.matrix(q).reshape(-1, 1)
+            Ke1 = Ke1 + B.T * Dm * B * detJ_val * wp_val * t_val
+            fe1 = fe1 + N2.T * q_col * detJ_val * wp_val * t_val
         return Ke1, fe1
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
@@ -5003,7 +5014,7 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
     if eqp is None:
         eq = np.zeros((3, 1))
     else:
-        eq = eqp
+        eq = np.reshape(eqp, (3, 1))
 
     if ir == 1:
         g1 = 0.0
@@ -5149,7 +5160,7 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
         Ke = Ke + (np.transpose(B)@D@B)*detJ*wp[i]
         fe = fe + (np.transpose(N2)@eq)*detJ*wp[i]
 
-    if eqp != None:
+    if eqp is not None:
         return Ke, fe
     else:
         return Ke
