@@ -903,7 +903,7 @@ def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
     
     C1a = C1 @ a1
 
-    X = np.linspace(0., L+L/(ne-1), ne).reshape(ne,1) 
+    X = np.linspace(0., L, ne).reshape(ne,1) 
     #X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
     zero = np.zeros(ne).reshape(ne,1)    
     one = np.ones(ne).reshape(ne,1)
@@ -2806,7 +2806,7 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     C4 = C1
     C4a = C4 @ a4
   
-    X = np.linspace(0., L+L/(ne-1), ne).reshape(ne,1) 
+    X = np.linspace(0., L, ne).reshape(ne,1)  
     #X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
     zero = np.zeros(ne).reshape(ne,1)    
     one = np.ones(ne).reshape(ne,1)
