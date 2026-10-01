@@ -14,19 +14,9 @@ nav = [
   { "Installation" = "installation.md" },
   { "Using CALFEM" = "using_calfem.md" },
   { "CALFEM Manual" = "https://calfem-python-manual.readthedocs.io/en/latest/" },
-  { "Mesh Guide" = "mesh_guide.md" },
-  { "Developer Guide" = "developer.md" },
-  { "Mesh Examples" = [
-    { "Overview" = "mesh_examples.md" },
-    { "Simple Mesh Geometry" = "examples/exm1.md" },
-    { "Geometry Basics" = "examples/exm2.md" },
-    { "Splines and Arcs" = "examples/exm3.md" },
-    { "Mesh Generation" = "examples/exm6.md" },
-    { "Boundary Markers" = "examples/exm7.md" },
-    { "Advanced Meshing" = "examples/exm10.md" },
-    { "Plane Stress Mesh" = "examples/exm13.md" },
-  ] },
   { "Function Reference" = "calfem_reference.md" },
+  { "Developer Guide" = "developer.md" },
+  { "Mesh Guide" = "mesh_guide.md" }
 ]
 
 plugins = [
