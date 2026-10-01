@@ -608,6 +608,153 @@ def draw_element_values(
         ax.set(title=title)
 
 
+def _flux_scale_factor(ex, ey, flux, krel=0.8):
+    """
+    Automatic arrow scale factor: the mean arrow length becomes krel times
+    the mean element size (diagonal of the element bounding box).
+    """
+    nel = ex.shape[0]
+    dx = np.max(ex, axis=1) - np.min(ex, axis=1)
+    dy = np.max(ey, axis=1) - np.min(ey, axis=1)
+    lm = np.sum(np.sqrt(dx**2 + dy**2)) / nel
+    qm = np.sum(np.sqrt(flux[:, 0]**2 + flux[:, 1]**2)) / nel
+
+    if qm == 0:
+        return 0.0
+    return lm * krel / qm
+
+
+def draw_element_flux(
+    flux,
+    coords,
+    edof,
+    dofs_per_node,
+    el_type,
+    scale=None,
+    color=(0, 0, 0),
+    color_by_magnitude=False,
+    cmap=None,
+    draw_elements=False,
+    element_color=(0.6, 0.6, 0.6),
+    arrow_width=0.003,
+    title=None,
+    ax=None,
+):
+    """
+    Draws element flux (flow) vectors as arrows at the element centroids
+    of a 2D mesh. Modern equivalent of elflux2.
+
+    Parameters
+    ----------
+    flux : array_like
+        An E-by-2 array. Row i contains the flux vector [qx, qy] of
+        element i, e.g. from flw2qs, flw2ts or flw2i4s.
+    coords : array_like
+        An N-by-2 array. Row i contains the x,y coordinates of node i.
+    edof : array_like
+        An E-by-L array. Element topology. (E is the number of elements
+        and L is the number of dofs per element)
+    dofs_per_node : int
+        Dofs per node.
+    el_type : int
+        Element Type. See Gmsh manual for details. 2 for triangles,
+        3 for quadrangles or 16 for 8-node quadrangles.
+    scale : float, optional
+        Scale factor = arrow length / flux magnitude. If omitted, an
+        automatic scale factor is calculated so that the mean arrow length
+        is 0.8 times the mean element size.
+    color : tuple or str, optional
+        Color of the arrows. Default black. Ignored if color_by_magnitude
+        is True.
+    color_by_magnitude : bool, optional
+        Color the arrows by the flux magnitude. The arrows are then set as
+        the current mappable, so colorbar() can be used. Default False.
+    cmap : str or matplotlib.colors.Colormap, optional
+        Colormap used when color_by_magnitude is True.
+    draw_elements : bool, optional
+        Draw the element mesh under the arrows. Default False.
+    element_color : tuple or str, optional
+        Color of the element mesh, if draw_elements is True.
+    arrow_width : float, optional
+        Arrow shaft width as a fraction of the plot width. Default 0.003.
+    title : str, optional
+        Changes title of the figure.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If omitted, the current axes are used.
+
+    Returns
+    -------
+    scale : float
+        Scale factor used for the arrows. Pass it to subsequent calls to
+        draw several flux fields with the same scale.
+    """
+
+    flux = np.asarray(flux, dtype=float)
+    coords = np.asarray(coords, dtype=float)
+    edof = np.asarray(edof)
+
+    if coords.shape[1] != 2:
+        raise ValueError("draw_element_flux only supports 2D meshes.")
+    if flux.ndim != 2 or flux.shape[1] < 2:
+        raise ValueError("flux must be an E-by-2 array of [qx, qy].")
+    if flux.shape[0] != edof.shape[0]:
+        raise ValueError(
+            "Check size of flux! There must be one row for each element."
+        )
+
+    verts, faces, vertices_per_face, is_3d = ce2vf(coords, edof, dofs_per_node, el_type)
+
+    ex = verts[faces, 0]
+    ey = verts[faces, 1]
+
+    if scale is None:
+        scale = _flux_scale_factor(ex, ey, flux)
+
+    if ax is None:
+        ax = plt.gca()
+    ax.set_aspect("equal")
+
+    if draw_elements:
+        polys = np.stack((ex, ey), axis=2)
+        pc = matplotlib.collections.PolyCollection(
+            polys, facecolor="none", edgecolor=element_color
+        )
+        ax.add_collection(pc)
+        ax.autoscale()
+
+    x0 = np.mean(ex, axis=1)
+    y0 = np.mean(ey, axis=1)
+    u = scale * flux[:, 0]
+    v = scale * flux[:, 1]
+
+    quiver_args = dict(
+        angles="xy",
+        scale_units="xy",
+        scale=1,
+        pivot="mid",
+        width=arrow_width,
+    )
+
+    if color_by_magnitude:
+        magnitude = np.sqrt(flux[:, 0]**2 + flux[:, 1]**2)
+        q = ax.quiver(x0, y0, u, v, magnitude, cmap=cmap, **quiver_args)
+        set_mappable(q)
+    else:
+        q = ax.quiver(x0, y0, u, v, color=color, **quiver_args)
+
+    # quiver does not update the data limits, include the arrow tips
+    ax.update_datalim(np.column_stack((
+        np.concatenate((x0 - u/2, x0 + u/2)),
+        np.concatenate((y0 - v/2, y0 + v/2)),
+    )))
+    ax.autoscale_view()
+
+    if title != None:
+        ax.set(title=title)
+
+    return scale
+
+
 def draw_displacements(
     a,
     coords,
@@ -2298,6 +2445,10 @@ def elflux2(ex, ey, es, plotcolor=None, sfac=None, ax=None):
     -------
     sfac : float
         Scale factor used for the arrows.
+
+    See Also
+    --------
+    draw_element_flux : Equivalent function using coords/edof input.
     """
 
     ex = np.asarray(ex, dtype=float)
@@ -2312,7 +2463,7 @@ def elflux2(ex, ey, es, plotcolor=None, sfac=None, ax=None):
             "There must be one row for each element."
         )
 
-    nel, nen = ex.shape
+    nen = ex.shape[1]
     if nen not in (3, 4):
         raise ValueError(
             "Sorry, this element is currently not supported! "
@@ -2330,21 +2481,8 @@ def elflux2(ex, ey, es, plotcolor=None, sfac=None, ax=None):
     # Calculate automatic scale factor
     # ---------------------------------------------------------
 
-    dxmax = np.max(ex, axis=1) - np.min(ex, axis=1)
-    dymax = np.max(ey, axis=1) - np.min(ey, axis=1)
-
-    lm = np.sum(np.sqrt(dxmax**2 + dymax**2)) / nel
-
-    q = np.sqrt(es[:, 0]**2 + es[:, 1]**2)
-    qm = np.sum(q) / nel
-
-    krel = 0.8
-
     if sfac is None:
-        if qm == 0:
-            sfac = 0.0
-        else:
-            sfac = lm * krel / qm
+        sfac = _flux_scale_factor(ex, ey, es)
 
     # ---------------------------------------------------------
     # Plot color
