@@ -2264,3 +2264,135 @@ def scalgraph2(sfac, magnitude, plotpar=2):
         [(x + L), (x + L)], [(y - L / 20), (y + L / 20)], color=line_color, linewidth=1
     )
     plt.text(x + L * 1.1, (y - L / 20), str(N))
+
+def elflux2(ex, ey, es, plotcolor=None, sfac=None, ax=None):
+    """
+    Display element flow arrows for 2D triangular or quadrilateral elements.
+
+    Parameters
+    ----------
+    ex, ey : array_like, shape (nel, nen)
+        Element nodal x- and y-coordinates.
+        nen must be 3 or 4.
+
+    es : array_like, shape (nel, 2)
+        Element flow vectors [qx, qy].
+
+    plotcolor : array_like, optional
+        [arrowcolor]
+
+        arrowcolor:
+            1 -> black
+            2 -> blue
+            3 -> magenta
+            4 -> red
+
+    sfac : float, optional
+        Scale factor = arrow length / element flow magnitude.
+        If omitted, an automatic scale factor is calculated.
+
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If omitted, the current axes are used.
+
+    Returns
+    -------
+    sfac : float
+        Scale factor used for the arrows.
+    """
+
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
+    es = np.asarray(es, dtype=float)
+
+    if ex.shape != ey.shape:
+        raise ValueError("Check size of coordinate input arguments!")
+    if es.shape[0] != ex.shape[0]:
+        raise ValueError(
+            "Check size of flow input argument! "
+            "There must be one row for each element."
+        )
+
+    nel, nen = ex.shape
+    if nen not in (3, 4):
+        raise ValueError(
+            "Sorry, this element is currently not supported! "
+            "Only 3- and 4-node elements are supported."
+        )
+
+    if es.shape[1] < 2:
+        raise ValueError(
+            "es must contain the x- and y-components of the flow."
+        )
+
+    if ax is None:
+        ax = plt.gca()
+    # ---------------------------------------------------------
+    # Calculate automatic scale factor
+    # ---------------------------------------------------------
+
+    dxmax = np.max(ex, axis=1) - np.min(ex, axis=1)
+    dymax = np.max(ey, axis=1) - np.min(ey, axis=1)
+
+    lm = np.sum(np.sqrt(dxmax**2 + dymax**2)) / nel
+
+    q = np.sqrt(es[:, 0]**2 + es[:, 1]**2)
+    qm = np.sum(q) / nel
+
+    krel = 0.8
+
+    if sfac is None:
+        if qm == 0:
+            sfac = 0.0
+        else:
+            sfac = lm * krel / qm
+
+    # ---------------------------------------------------------
+    # Plot color
+    # ---------------------------------------------------------
+
+    if plotcolor is None:
+        plotcolor = [1]
+
+    arrowcolor = int(plotcolor[0])
+
+    colors = {
+        1: "black",
+        2: "blue",
+        3: "magenta",
+        4: "red",
+    }
+
+    color = colors.get(arrowcolor, "black")
+
+    # ---------------------------------------------------------
+    # Element centroids
+    # ---------------------------------------------------------
+
+    x0 = np.mean(ex, axis=1)
+    y0 = np.mean(ey, axis=1)
+
+    # ---------------------------------------------------------
+    # Scale flow vectors
+    # ---------------------------------------------------------
+
+    u = sfac * es[:, 0]
+    v = sfac * es[:, 1]
+
+    # ---------------------------------------------------------
+    # Draw arrows
+    # ---------------------------------------------------------
+
+    ax.quiver(
+        x0,
+        y0,
+        u,
+        v,
+        angles="xy",
+        scale_units="xy",
+        scale=1,
+        color=color,
+        pivot="mid",
+        width=0.003,
+    )
+
+    return sfac

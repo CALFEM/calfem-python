@@ -4808,6 +4808,8 @@ def plani4e(ex, ey, ep, D, eq=None):
     ir = ep[2]
     ngp = ir*ir
     D = np.matrix(D)
+    ex = np.asarray(ex, dtype=float).reshape(-1)
+    ey = np.asarray(ey, dtype=float).reshape(-1)
     if eq is None:
         q = np.zeros((2, 1))
     else:
@@ -4857,7 +4859,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             [w2, w1],
             [w1, w1]])
     else:
-        info("Used number of integrat     ion points not implemented")
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
     wp = np.multiply(np.asarray(w[:, 0]).reshape(-1, 1), np.asarray(w[:, 1]).reshape(-1, 1))
     xsi_col = np.asarray(gp[:, 0]).reshape(-1, 1)
     eta_col = np.asarray(gp[:, 1]).reshape(-1, 1)
@@ -4977,6 +4979,116 @@ def plani4e(ex, ey, ep, D, eq=None):
         info("Error ! Check first argument, ptype=1 or 2 allowed")
 
 
+def plani4s(ex, ey, ep, D, ed):
+    """
+    Calculate element stresses and strains for a 4 node isoparametric
+    element in plane strain or plane stress.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t, ir], where ptype is analysis type
+        (1: plane stress, 2: plane strain), t is thickness, and ir is
+        integration rule.
+    D : array_like
+        Constitutive matrix, 3x3, or 4x4/6x6 to also obtain the
+        out-of-plane components.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u8].
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each integration point, in the
+        same order as in plani4e. Each row contains [sigx, sigy, tauxy] if
+        D is 3x3, otherwise [sigx, sigy, sigz, tauxy] (followed by zeros
+        for a 6x6 D).
+    et : ndarray
+        Element strain matrix, one row for each integration point.
+        Each row contains [epsx, epsy, gamxy] if D is 3x3, otherwise
+        [epsx, epsy, epsz, gamxy] (followed by zeros for a 6x6 D).
+    """
+    ptype = ep[0]
+    ir = ep[2]
+    D = np.asarray(D, dtype=float)
+    ex = np.asarray(ex, dtype=float).reshape(-1)
+    ey = np.asarray(ey, dtype=float).reshape(-1)
+    ed = np.asarray(ed, dtype=float).reshape(-1)
+
+    #--------- gauss points (same order as plani4e) ---------------
+    if ir == 1:
+        g = np.array([0.0])
+    elif ir == 2:
+        g = np.array([-0.577350269189626, 0.577350269189626])
+    elif ir == 3:
+        g = np.array([-0.774596669241483, 0.0, 0.774596669241483])
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
+
+    xsi = np.tile(g, ir)
+    eta = np.repeat(g, ir)
+    ngp = ir*ir
+
+    colD = D.shape[0]
+    plane = [0, 1, 3]
+    if ptype == 1:
+        if colD > 3:
+            Cm = np.linalg.inv(D)
+            Dm = np.linalg.inv(Cm[np.ix_(plane, plane)])
+        else:
+            Dm = D
+    elif ptype == 2:
+        Dm = D
+    else:
+        raise ValueError("Check first argument, ptype=1 or 2 allowed")
+
+    es = np.zeros((ngp, colD))
+    et = np.zeros((ngp, colD))
+
+    for i in range(ngp):
+        dNr = np.array([
+            [-(1-eta[i]), (1-eta[i]), (1+eta[i]), -(1+eta[i])],
+            [-(1-xsi[i]), -(1+xsi[i]), (1+xsi[i]), (1-xsi[i])]])/4.
+        JT = dNr @ np.column_stack((ex, ey))
+        detJ = np.linalg.det(JT)
+        if detJ < 10*np.finfo(float).eps:
+            info("Jacobi determinant equal or less than zero!")
+        dNx = np.linalg.solve(JT, dNr)
+
+        B = np.zeros((3, 8))
+        B[0, 0::2] = dNx[0, :]
+        B[1, 1::2] = dNx[1, :]
+        B[2, 0::2] = dNx[1, :]
+        B[2, 1::2] = dNx[0, :]
+
+        ee = B @ ed
+
+        if colD > 3:
+            if ptype == 1:
+                # Plane stress: in-plane stresses, out-of-plane strain from
+                # the compliance relation with sigz = 0.
+                ss = np.zeros(colD)
+                ss[plane] = Dm @ ee
+                ee = Cm @ ss
+            else:
+                # Plane strain: epsz = 0, sigz from the full D matrix.
+                e = np.zeros(colD)
+                e[plane] = ee
+                ee = e
+                ss = D @ ee
+        else:
+            ss = Dm @ ee
+
+        es[i, :] = ss
+        et[i, :] = ee
+
+    return es, et
+
+
 def soli8e(ex, ey, ez, ep, D, eqp=None):
     """
     Calculate the stiffness matrix (and optionally load vector) for an 8-node (brick) isoparametric element.
@@ -5032,8 +5144,8 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
         w[:, 1] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
         gp[:, 2] = np.array([-1, -1, -1, -1, 1, 1, 1, 1])*g1
         w[:, 2] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
-    else:
-        g1 = 0.774596669241483,
+    elif ir == 3:
+        g1 = 0.774596669241483
         g2 = 0.0
         w1 = 0.555555555555555
         w2 = 0.888888888888888
@@ -5074,6 +5186,8 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
 
         w[:, 2] = np.concatenate((I3, I2, I3), axis=1)*w1
         w[:, 2] = np.concatenate((I2, I3, I2), axis=1)*w2 + w[:, 2]
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
 
     wp = w[:, 0]*w[:, 1]*w[:, 2]
 
@@ -5187,21 +5301,26 @@ def soli8s(ex, ey, ez, ep, D, ed):
 
     Returns
     -------
-    es : ndarray
-        Element stress matrix, one row for each integration point.
-        Each row contains [sigx, sigy, sigz, sigxy, sigyz, sigxz].
     et : ndarray
         Element strain matrix, one row for each integration point.
-        Each row contains [epsx, epsy, epsz, epsxy, epsyz, epsxz].
+        Each row contains [epsx, epsy, epsz, gamxy, gamxz, gamyz].
+    es : ndarray
+        Element stress matrix, one row for each integration point.
+        Each row contains [sigx, sigy, sigz, sigxy, sigxz, sigyz].
+    eci : ndarray
+        Integration point coordinates, one row [x, y, z] for each
+        integration point.
+
+    Note
+    ----
+    The return order (et, es, eci) differs from the MATLAB version,
+    which returns [es, et, eci].
 
     History
     -------
     LAST MODIFIED: M Ristinmaa   1995-10-25
                    J Lindemann   2022-02-23 (Python version)
     """
-
-    ir = ep[0]
-    ngp = ir*ir*ir
 
     ir = ep[0]
     ngp = ir*ir*ir
@@ -5222,8 +5341,8 @@ def soli8s(ex, ey, ez, ep, D, ed):
         w[:, 1] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
         gp[:, 2] = np.array([-1, -1, -1, -1, 1, 1, 1, 1])*g1
         w[:, 2] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
-    else:
-        g1 = 0.774596669241483,
+    elif ir == 3:
+        g1 = 0.774596669241483
         g2 = 0.0
         w1 = 0.555555555555555
         w2 = 0.888888888888888
@@ -5264,6 +5383,8 @@ def soli8s(ex, ey, ez, ep, D, ed):
 
         w[:, 2] = np.concatenate((I3, I2, I3), axis=1)*w1
         w[:, 2] = np.concatenate((I2, I3, I2), axis=1)*w2 + w[:, 2]
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
 
     wp = w[:, 0]*w[:, 1]*w[:, 2]
 
@@ -5323,7 +5444,7 @@ def soli8s(ex, ey, ez, ep, D, ed):
     et = np.zeros((ngp, 6))
     es = np.zeros((ngp, 6))
 
-    ed = ed.reshape(1, 24)
+    ed = np.asarray(ed, dtype=float).reshape(1, 24)
 
     for i in range(ngp):
         indx = [i*3, i*3+1, i*3+2]
