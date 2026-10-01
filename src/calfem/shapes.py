@@ -2,7 +2,6 @@ import numpy as np
 import calfem.core as cfc
 import calfem.geometry as cfg
 import calfem.mesh as cfm
-import calfem.vis as cfv
 
 import logging as cflog
 

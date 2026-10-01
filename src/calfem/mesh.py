@@ -426,7 +426,10 @@ class GmshMeshGenerator:
             # Meshing using gmsh extension module
 
             if self.initialize_gmsh:
-                gmsh.initialize(sys.argv, interruptible=False)
+                # Only pass the program name, gmsh would otherwise try to
+                # open other command line arguments as files, e.g. the
+                # connection file of a Jupyter kernel.
+                gmsh.initialize(sys.argv[:1], interruptible=False)
 
             gmsh.option.setNumber("General.Verbosity", self.gmsh_verbosity)
 

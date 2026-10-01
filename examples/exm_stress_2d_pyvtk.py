@@ -189,7 +189,7 @@ for i in range(edof.shape[0]):
 
     # Calc and append effective stress to list.
 
-    von_mises.append(sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * es[2]))
+    von_mises.append(sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2], 2)))
 
     theta = np.arctan2(2 * es[2], es[0] - es[1]) * 0.5
     sigma1 = 0.5 * (es[0] + es[1]) + np.sqrt(

@@ -216,7 +216,7 @@ class PlaneStress2DProblem(object):
             # Calc and append effective stress to list.
 
             self.vonMises.append(
-                sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * es[2])
+                sqrt(pow(es[0], 2) - es[0] * es[1] + pow(es[1], 2) + 3 * pow(es[2], 2))
             )
 
             ## es: [sigx sigy tauxy]
