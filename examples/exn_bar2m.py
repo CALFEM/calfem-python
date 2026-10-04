@@ -77,7 +77,7 @@ for i in range(incr):
     for j in range(3):
         ep = np.array([E[j], A[j]])
         desj = cfc.bar2s(ex[j, :], ey[j, :], ep, ded[j, :])
-        des[j, 0] = desj[0]
+        des[j, 0] = desj[0, 0]
 
     es += des
 

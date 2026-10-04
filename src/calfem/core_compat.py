@@ -5,7 +5,7 @@ CALFEM Core module
 Contains all the functions implementing CALFEM standard functionality
 """
 
-from scipy.sparse.linalg import dsolve
+from scipy.sparse.linalg import spsolve
 from scipy.linalg import eig, lu
 import numpy as np
 
@@ -3922,7 +3922,7 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     info("done...")
 
     info("Solving system...")
-    asys = dsolve.spsolve(Ksys, fsys)
+    asys = spsolve(Ksys, fsys)
 
     info("Reconstructing full a...")
     a = np.zeros([nDofs, 1])

@@ -188,21 +188,21 @@ print("Max deflection = ", max_deflection)
 
 new_coords = nodes + node_displ*0.01*l/max_deflection
 
-ug_cell = UGrid([nodes, topo, celltypes])
-ug_cell.points(new_coords)
+ug_cell = UnstructuredGrid([nodes, topo, celltypes])
+ug_cell.vertices = new_coords
 ug_cell.celldata["cell_stress"] = sigv
 
-ug_point = UGrid([nodes, topo, celltypes])
-ug_point.points(new_coords)
+ug_point = UnstructuredGrid([nodes, topo, celltypes])
+ug_point.vertices = new_coords
 ug_point.pointdata["node_stress"] = node_scalars
 
 msh_cell = ug_cell.tomesh()
 msh_cell.cmap("jet", "cell_stress", on="cells")
-msh_cell.addScalarBar()
+msh_cell.add_scalarbar()
 
 msh_point = ug_point.tomesh()
 msh_point.cmap("jet", "node_stress", on="points")
-msh_point.addScalarBar()
+msh_point.add_scalarbar()
 
 plt = Plotter(shape=(1, 2))
 plt.show([msh_cell], at=0)

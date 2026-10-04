@@ -1,6 +1,6 @@
 [project]
 name = "calfem-python"
-version = "3.6.16"
+dynamic = ["version"]
 description = "CALFEM for Python"
 authors = [
     {name = "Jonas Lindemann", email = "jonas.lindemann@lunarc.lu.se"},
@@ -24,16 +24,18 @@ keywords = [
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.9",
-    "Topic :: Software Development :: Build Tools",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Education",
 ]
 
 [project.urls]
@@ -45,10 +47,17 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
+[tool.pdm.version]
+source = "file"
+path = "src/calfem/__init__.py"
+
 [project.optional-dependencies]
 visvis = [ "visvis" ]
 vedo = [ "vedo" ]
 pyvtk = [ "pyvtk" ]
+vtk = [ "vtk" ]
 qtpy = [ "qtpy" ]
+pyside6 = [ "qtpy", "PySide6" ]
+pyqt6 = [ "qtpy", "PyQt6" ]
 io = [ "meshio" ]
 plotly = [ "plotly" ]

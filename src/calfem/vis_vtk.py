@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-CALFEM Visualisation module (matplotlib)
+CALFEM Visualisation module (VTK)
 
 Contains all the functions implementing visualisation routines.
 """
 
-import vtk
+try:
+    import vtk
+except ImportError as e:
+    raise ImportError(
+        "calfem.vis_vtk requires vtk. Install it with: "
+        "pip install calfem-python[vtk]"
+    ) from e
 
 def draw_mesh(coords, edof, el_type):
 

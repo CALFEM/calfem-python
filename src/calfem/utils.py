@@ -18,7 +18,7 @@ have_pyvtk = True
 
 try:
     import pyvtk as vtk
-except: 
+except ImportError:
     have_pyvtk = False
 
 haveMatplotLib = True
@@ -702,6 +702,12 @@ def export_vtk_stress(filename, coords, topo, a=None, el_scalar=None, el_vec1=No
     el_vec2 : list, optional
         Vector value for each element
     """
+
+    if not have_pyvtk:
+        raise ImportError(
+            "export_vtk_stress requires pyvtk. Install it with: "
+            "pip install calfem-python[pyvtk]"
+        )
 
     points = np.zeros([coords.shape[0], 3], dtype=np.float64)
     points[:,0:2] = coords

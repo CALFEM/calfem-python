@@ -44,7 +44,7 @@ dof = np.array([
 ])
 
 edof_beams = np.array([
-    '''Left side'''
+    # Left side
     [1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12],
     [7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18],
     [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
@@ -54,7 +54,7 @@ edof_beams = np.array([
     [19, 20, 21, 22, 23, 24, 37, 38, 39, 40, 41, 42],
     [25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36],
     [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
-    '''Right side'''
+    # Right side
     [43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54],
     [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
     [55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66],
@@ -64,7 +64,7 @@ edof_beams = np.array([
     [61, 62, 63, 64, 65, 66, 79, 80, 81, 82, 83, 84],
     [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78],
     [73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84],
-    '''Bottom'''
+    # Bottom
     [1,  2,  3,  4,  5,  6,  43, 44, 45, 46, 47, 48],
     [7,  8,  9,  10, 11, 12, 49, 50, 51, 52, 53, 54],
     [13, 14, 15, 16, 17, 18, 55, 56, 57, 58, 59, 60],
@@ -217,12 +217,11 @@ Mz = es_beams[:,5]
 
 ed_bars = cfc.extractEldisp(edof_bars,a)
 
-es_bars = np.zeros((nel_bars,1))
+N_bars = np.zeros(nel_bars)
 
 for i in range(nel_bars):
-    es_bars[i,:] = cfc.bar3s(ex_bars[i],ey_bars[i],ez_bars[i],ep_bars,ed_bars[i])
-
-N_bars = es_bars
+    # bar3s returns the normal force at both element ends, shape (2,1)
+    N_bars[i] = cfc.bar3s(ex_bars[i],ey_bars[i],ez_bars[i],ep_bars,ed_bars[i])[0,0]
 
 normal_stresses_beams = np.zeros(nel_beams*nseg)
 
@@ -253,19 +252,6 @@ bcPrescr = np.transpose(bcPrescr)
 
 cfv.draw_mesh(edof_beams,coord,dof,5,nseg=nseg,alpha=0.2, eq_els=eq_els, eq=eq[eq_els])
 beams = cfv.draw_displaced_mesh(edof_beams,coord,dof,5,a,normal_stresses_beams/1000000,nseg=nseg,scalar_title='Max normal stress [MPa]')
-
-### IMPORTANT: Update to 12 dofs here, otherwise visualization breaks
-### In reality, 3D-bars only have 6 dofs
-### Alternative solution is to have separate dof-matrices (dof_beams & dof_bars)
-edof_bars = np.array([
-    [13, 14, 15, 16, 17, 18, 25, 26, 27, 28, 29, 30],#[13, 14, 15, 25, 26, 27],
-    [19, 20, 21, 22, 23, 24, 31, 32, 33, 34, 35, 36],#[19, 20, 21, 31, 32, 33],
-    [55, 56, 57, 58, 59, 60, 67, 68, 69, 70, 71, 72],#[55, 56, 57, 67, 68, 69],
-    [61, 62, 63, 64, 65, 66, 73, 74, 75, 76, 77, 78],#[55, 56, 57, 73, 74, 75],
-    [25, 26, 27, 28, 29, 30, 67, 68, 69, 70, 71, 72],#[25, 26, 27, 67, 68, 69],
-    [31, 32, 33, 34, 35, 36, 73, 74, 75, 76, 77, 78],#[31, 32, 33, 73, 74, 75],
-    [37, 38, 39, 40, 41, 42, 79, 80, 81, 82, 83, 84]#[37, 38, 39, 79, 80, 81]
-])
 
 cfv.draw_mesh(edof_bars,coord,dof,2,alpha=0.2)
 vmin, vmax = np.min(normal_stresses_beams), np.max(normal_stresses_beams)

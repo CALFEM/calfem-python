@@ -11,7 +11,7 @@ Division of Solid Mechanics, Lund University.
 from __future__ import annotations
 from typing import Optional, Tuple, Union
 
-from scipy.sparse.linalg import dsolve
+from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix, csr_matrix, linalg, lil_matrix
 from scipy.linalg import eig, lu
 import numpy as np
@@ -5736,7 +5736,7 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     info("done...")
 
     info("Solving system...")
-    asys = dsolve.spsolve(Ksys, fsys)
+    asys = spsolve(Ksys, fsys)
 
     info("Reconstructing full a...")
     a = np.zeros([nDofs, 1])
