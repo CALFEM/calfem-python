@@ -6,6 +6,8 @@
 
 ## Manuals
 
+Updated manual: [https://calfem-python-manual.readthedocs.io/en/latest/](https://calfem-python-manual.readthedocs.io/en/latest/)
+
 Original manual: [manual.pdf](https://github.com/CALFEM/calfem-python/tree/master/reports/manual.pdf)
 
 Manual for with improved mesh: [manual-mesh-module.pdf](https://github.com/CALFEM/calfem-python/tree/master/reports/manual-mesh-module.pdf)
