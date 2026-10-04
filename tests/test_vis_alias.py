@@ -26,8 +26,8 @@ import calfem.vis_mpl as cfv_mpl
 
 
 # Names of the old visvis module that only make sense with visvis
-VISVIS_ONLY = {"globalWindows", "visApp", "showAndWaitNative",
-               "waitDisplayNative", "eldraw2_old", "eliso2_old"}
+VISVIS_ONLY = {"visApp", "showAndWaitNative",
+               "waitDisplayNative"}
 
 
 @pytest.fixture(autouse=True)

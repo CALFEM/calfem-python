@@ -42,8 +42,6 @@ from math import atan2
 
 import logging as cflog
 
-globalWindows = []  # For supporting ElementView:s for eldraw ...
-
 global globalVisVisApp
 global visApp
 visApp = vv.use('qt5')  # use qt4
@@ -1092,125 +1090,6 @@ def eliso2_mpl(ex, ey, ed):
             gz.append(y)
 
     plt.tricontour(gx, gy, gz, 5)
-
-
-def eldraw2_old(ex, ey):
-    """
-    Draw elements in 2d.
-
-    Parameters:
-
-        ex, ey          Element coordinates
-        plotpar         (not implemented yet)
-
-    """
-    # if not haveWx:
-    #    print("wxPython not installed.")
-    #    return
-
-    # class ElDispApp(wx.App):
-    #    def OnInit(self):
-    #        wx.InitAllImageHandlers()
-    #        mainWindow = ElementView(None, -1, "")
-    #        mainWindow.ex = ex
-    #        mainWindow.ey = ey
-    #        mainWindow.showNodalValues = False
-    #        self.SetTopWindow(mainWindow)
-    #        mainWindow.Show()
-    #        return 1
-    #
-    #app = ElDispApp(0)
-    # app.MainLoop()
-    mainWindow = ElementView(None, -1, "")
-    mainWindow.ex = ex
-    mainWindow.ey = ey
-    mainWindow.showNodalValues = False
-    mainWindow.Show()
-    globalWindows.append(mainWindow)
-
-
-def eliso2_old(ex, ey, ed, showMesh=False):
-    """
-    Draw nodal values in 2d.
-
-    Parameters:
-
-        ex, ey          Element coordinates
-        ed              Element nodal values
-        plotpar         (not implemented yet)
-
-    """
-    # if not haveWx:
-    #    print("wxPython not installed.")
-    #    return
-
-    # class ElDispApp(wx.App):
-    #    def OnInit(self):
-    #        wx.InitAllImageHandlers()
-    #        mainWindow = ElementView(None, -1, "")
-    #        mainWindow.ex = ex
-    #        mainWindow.ey = ey
-    #        mainWindow.ed = ed
-    #        mainWindow.showMesh = showMesh
-    #        mainWindow.showNodalValues = True
-    #        self.SetTopWindow(mainWindow)
-    #        mainWindow.Show()
-    #        return 1
-    #
-    #app = ElDispApp(0)
-    # app.MainLoop()
-    mainWindow = ElementView(None, -1, "")
-    mainWindow.ex = ex
-    mainWindow.ey = ey
-    mainWindow.ed = ed
-    mainWindow.showMesh = showMesh
-    mainWindow.showNodalValues = True
-    mainWindow.Show()
-    globalWindows.append(mainWindow)
-
-
-def elval2(ex, ey, ev, showMesh=False):
-    """
-    Draw elements values in 2d.
-
-    Parameters:
-
-        ex, ey          Element coordinates
-        ev              Element values (scalar)
-        plotpar         (not implemented yet)
-
-    """
-    # if not haveWx:
-    #    print("wxPython not installed.")
-    #    return
-
-    mainWindow = ElementView(None, -1, "")
-    mainWindow.ex = ex
-    mainWindow.ey = ey
-    mainWindow.ev = ev
-    mainWindow.showMesh = showMesh
-    mainWindow.showElementValues = True
-    mainWindow.showNodalValues = False
-    mainWindow.Show()
-    globalWindows.append(mainWindow)
-
-
-def eldisp2(ex, ey, ed, magnfac=0.1, showMesh=True):
-    # if not haveWx:
-    #    print("wxPython not installed.")
-    #    return
-
-    mainWindow = ElementView(None, -1, "")
-    mainWindow.dofs_per_node = 2
-    mainWindow.ex = ex
-    mainWindow.ey = ey
-    mainWindow.ed = ed
-    mainWindow.showMesh = showMesh
-    mainWindow.showNodalValues = False
-    mainWindow.showDisplacements = True
-    mainWindow.magnfac = magnfac
-    mainWindow.Show()
-    globalWindows.append(mainWindow)
 
 
 def waitDisplayNative():
