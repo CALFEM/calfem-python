@@ -107,7 +107,6 @@ def edit_params(var_dict):
     """Run Qt event loop"""
 
     valid_vars = parse_variables(var_dict)
-    print(valid_vars)
 
     app = cfui.init_qt_app()
 

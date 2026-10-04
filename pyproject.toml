@@ -44,6 +44,9 @@ Homepage = "https://github.com/CALFEM/calfem-python"
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.pdm]
 distribution = true
 

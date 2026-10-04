@@ -4406,8 +4406,7 @@ def plants(ex, ey, ep, D, ed):
         return es, et
 
     else:
-        print("Error ! Check first argument, ptype=1 or 2 allowed")
-        return None
+        raise ValueError("ptype must be 1 (plane stress) or 2 (plane strain)")
     
 def plantf(ex, ey, ep, es):
     """
@@ -6553,7 +6552,12 @@ def effmises(es, ptype):
     Parameters
     ----------
     es : array_like
-        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
+        Element stress matrix, one row for each element:
+
+        - ptype 1: [sigx, sigy, tauxy] or [sigx, sigy, sigz, tauxy]
+        - ptype 2: [sigx, sigy, sigz, tauxy]
+        - ptype 3: [sigr, sigz, sigtheta, taurz]
+        - ptype 4: [sigx, sigy, sigz, tauxy, tauxz, tauyz]
     ptype : int
         Analysis type:
         1 : plane stress
@@ -6567,17 +6571,36 @@ def effmises(es, ptype):
         Effective stress array [eseff_0, ..., eseff_nel-1].
     """
 
-    nel = np.size(es, 0)
+    es = np.asarray(es, dtype=float)
+    if es.ndim == 1:
+        es = es.reshape(1, -1)
     escomps = np.size(es, 1)
 
-    eseff = np.zeros([nel])
-
     if ptype == 1:
-        sigxx = es[:, 0]
-        sigyy = es[:, 1]
-        sigxy = es[:, 2]
-        eseff = np.sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
-        return eseff
+        if escomps == 3:
+            sigxx, sigyy, sigxy = es[:, 0], es[:, 1], es[:, 2]
+        elif escomps == 4:
+            # sigz is zero in plane stress
+            sigxx, sigyy, sigxy = es[:, 0], es[:, 1], es[:, 3]
+        else:
+            raise ValueError("effmises: es must have 3 or 4 columns for plane stress (ptype=1)")
+        return np.sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
+
+    elif ptype == 2 or ptype == 3:
+        if escomps != 4:
+            raise ValueError("effmises: es must have 4 columns for plane strain and axisymmetry (ptype=2, 3)")
+        s1, s2, s3, t12 = es[:, 0], es[:, 1], es[:, 2], es[:, 3]
+        return np.sqrt(s1*s1+s2*s2+s3*s3-s1*s2-s2*s3-s3*s1+3*t12*t12)
+
+    elif ptype == 4:
+        if escomps != 6:
+            raise ValueError("effmises: es must have 6 columns for three dimensional analysis (ptype=4)")
+        sx, sy, sz = es[:, 0], es[:, 1], es[:, 2]
+        txy, txz, tyz = es[:, 3], es[:, 4], es[:, 5]
+        return np.sqrt(sx*sx+sy*sy+sz*sz-sx*sy-sy*sz-sz*sx+3*(txy*txy+txz*txz+tyz*tyz))
+
+    else:
+        raise ValueError(f"effmises: ptype must be 1, 2, 3 or 4, got {ptype}")
 
 
 def stress2nodal(eseff, edof):

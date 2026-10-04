@@ -31,7 +31,7 @@ have_ipython = True
 
 try:
     from IPython.core.display import display, HTML
-except:
+except ImportError:
     have_ipython = False
 
 
@@ -52,8 +52,10 @@ def type_of_script():
             return 'jupyter'
         if 'terminal' in ipy_str:
             return 'ipython'
-    except:
-        return 'terminal'
+    except NameError:
+        # get_ipython is only defined when running in IPython
+        pass
+    return 'terminal'
 
 def disp(msg):
     if type_of_script() == 'jupyter':

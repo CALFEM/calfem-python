@@ -7,11 +7,6 @@ Routines for interfacing wirt user interface toolkits.
 
 import os, sys
 
-print("------------------------------------")
-print("CALFEM/Python ui module initialising")
-print("------------------------------------")
-print()
-
 from qtpy.QtCore import Slot, Signal, QThread
 from qtpy.QtWidgets import QApplication, QDialog, QWidget, QMainWindow
 from qtpy.QtGui import QPixmap
@@ -20,20 +15,14 @@ from qtpy.uic import loadUi
 g_inSpyder = False
 
 if any('SPYDER' in name for name in os.environ):
-    print('Running in Spyder...')
     g_inSpyder = True
     
 g_haveVisVis = True
 
 try:
     import visvis as vv
-except:
+except ImportError:
     g_haveVisVis = False
-        
-if g_haveVisVis:
-    print("VisVis installed...")
-else:
-    print("VisVis not installed...")
 
 def init_qt_app():
     app = QApplication.instance()

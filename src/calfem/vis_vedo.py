@@ -11,7 +11,6 @@ Module for 3D visualization in CALFEM using Vedo (https://vedo.embl.es/)
 import numpy as np
 import vedo as v
 import vtk
-import sys
 import time
 from scipy.io import loadmat
 import calfem.core as cfc
@@ -325,8 +324,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
     plot_window = VedoPlotWindow.instance().plot_window
 
     if surfaces == None and lines == None and points == None:
-        print("draw_geometry: Please input either (points), (points, lines) or (points, lines, surfaces) from geometry module")
-        sys.exit()
+        raise ValueError("draw_geometry: Please input either (points), (points, lines) or (points, lines, surfaces) from geometry module")
     else:
         if surfaces is not None:
 
@@ -379,8 +377,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
                     elif l0[0] == l1[0] or l0[0] == l1[1]:
                         point_list.append(l0[1])
                     else:
-                        print('Error when rendering surface geometry')
-                        sys.exit()
+                        raise ValueError('Error when rendering surface geometry')
 
                 coords = []
                 for i in point_list:
@@ -424,8 +421,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
             plot_window.geometries[plot_window.fig].append(pts)
             plot_window.geometries[plot_window.fig].append(text)
         elif lines is not None:
-            print("draw_geometry: Please provide point coordinates along with lines")
-            sys.exit()
+            raise ValueError("draw_geometry: Please provide point coordinates along with lines")
 
     
 '''
@@ -507,8 +503,7 @@ def draw_mesh(
     if 1 <= element_type <= 6:
         nel, ndof_per_el, nnode, ndim, ndof, ndof_per_n = vdu.check_input(edof,coord,dof,element_type,nseg=nseg)
     else:
-        print("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
-        sys.exit()
+        raise ValueError("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
 
     # OUTPUT FROM check_input
     # Number of elements:                       nel
@@ -778,8 +773,7 @@ def draw_displaced_mesh(
         else:
             nel, ndof_per_el, nnode, ndim, ndof, ndof_per_n, ndisp, val = vdu.check_input(edof,coord,dof,element_type,a,values,nseg=nseg)
     else:
-        print("draw_displaced_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
-        sys.exit()
+        raise ValueError("draw_displaced_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
 
     # OUTPUT FROM check_input
     # Number of elements:                       nel
@@ -1419,8 +1413,7 @@ def add_projection(color='black',plane='xy',offset=-1,rulers=False):
             ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpadding=0, ypadding=0.1, zpadding=0.1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, label_rotation=0, xycross=True)
             plot_window.rulers[plot_window.fig] += [ruler]
     else:
-        print("Please choose a plane to project to. Set plane to 'xy', 'xz' or 'yz'")
-        sys.exit()
+        raise ValueError("Please choose a plane to project to. Set plane to 'xy', 'xz' or 'yz'")
 
 
 
@@ -1692,8 +1685,7 @@ def figure(fig,bg='white',flat=False,hover=False):
     plot_window = VedoPlotWindow.instance().plot_window
 
     if fig < 1:
-        print("figure: Please give a positive integer (> 0)")
-        sys.exit()
+        raise ValueError("figure: Please give a positive integer (> 0)")
     else:
         plot_window.fig = fig - 1
 

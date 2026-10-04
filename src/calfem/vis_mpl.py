@@ -20,23 +20,10 @@ import matplotlib.tri as tri
 from calfem.core import beam2crd
 import calfem.core as cfc
 
-try:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qtagg import (
-        NavigationToolbar2QT as NavigationToolbar,
-    )
-except:
-    print("Could not import Matplotlib backends. Probably due to missing Qt.")
-
 from numpy import sin, cos, pi
 from math import atan2
 
 import logging as cflog
-
-try:
-    from numpy.lib.function_base import place
-except:
-    pass
 
 
 g_figures = []
@@ -107,7 +94,7 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
     else:
         try:
             f = plt.figure(figure.number)
-        except:
+        except AttributeError:
             f = plt.figure(figsize=fig_size)
 
     if f is not None:
@@ -117,6 +104,17 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
 
 
 def figure_widget(fig, parent=None):
+    """Return a Qt widget showing the figure (used by the geometry editor)."""
+    # Imported here so that calfem.vis does not require Qt
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+        from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
+    except ImportError as e:
+        raise ImportError(
+            "figure_widget requires a Qt binding. Install one with e.g. "
+            "pip install calfem-python[pyside6]"
+        ) from e
+
     widget = FigureCanvas(fig)
     #widget.axes = fig.add_subplot(111)
     if parent != None:
