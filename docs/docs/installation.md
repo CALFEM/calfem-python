@@ -14,15 +14,14 @@ or:
 to install system-wide (not recommended if your system used a lot of
 python dependencies):
 
-    pip install -u calfem-python
+    pip install --user calfem-python
 
-to install just for your own user. You can use the argument
-`--user` which is same as `-u`. If you want to specify your Python
+to install just for your own user. If you want to specify your Python
 version, use the command like the following:
 
-    python3.9 -m pip install --user calfem-python
+    python3.12 -m pip install --user calfem-python
 
-where python3.9 is the Python version you want to install CALFEM for
+where python3.12 is the Python version you want to install CALFEM for
 Python. Change this command with your preferable version. This last
 command is the preferred one according to the Python community.
 

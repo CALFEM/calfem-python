@@ -120,7 +120,7 @@ def calc(geometry, bcs, loads, text):
 
         # --- Calc and append effective stress to list.
         vonMises.append(
-            np.sqrt(np.power(es[0], 2) - es[0] * es[1] + np.power(es[1], 2) + 3 * es[2])
+            np.sqrt(np.power(es[0], 2) - es[0] * es[1] + np.power(es[1], 2) + 3 * np.power(es[2], 2))
         )
 
     title = "Effective stress" + text

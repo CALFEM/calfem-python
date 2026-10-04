@@ -48,3 +48,7 @@ test_examples_output.log
 *.log
 test_examples.log
 /examples/.vscode
+
+# Result files written by examples
+examples/*.vtu
+examples/*.html

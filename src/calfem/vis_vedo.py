@@ -10,14 +10,11 @@ Module for 3D visualization in CALFEM using Vedo (https://vedo.embl.es/)
 
 import numpy as np
 import vedo as v
-import pyvtk
 import vtk
-import sys
 import time
 from scipy.io import loadmat
 import calfem.core as cfc
 import calfem.vis_vedo_utils as vdu
-import vtk
 
 # Examples using this module:
     # exv1: Spring
@@ -100,22 +97,15 @@ class VedoMainWindow():
         self.click_msg = v.Text2D("", pos="bottom-center", bg='auto', alpha=0.1, font='Calco',c='black')
 
         # Global settings
-        v.settings.immediateRendering = False
-        
-        #v.settings.allowInteraction = True
-        v.settings.allowInteraction = False
-        #v.settings.renderLinesAsTubes = True
-        v.settings.allowInteraction = True
-        v.settings.useFXAA = True
-        v.settings.useSSAO         = True
-        v.settings.visibleGridEdges = True
+        v.settings.immediate_rendering = False
+        v.settings.use_fxaa = True
 
         # Fonts that could be interesting to use
-        #v.settings.defaultFont = 'Normografo'
-        #v.settings.defaultFont = 'LogoType'
-        #v.settings.defaultFont = 'Courier'
-        #v.settings.defaultFont = 'Comae'
-        #v.settings.defaultFont = 'Calco'
+        #v.settings.default_font = 'Normografo'
+        #v.settings.default_font = 'LogoType'
+        #v.settings.default_font = 'Courier'
+        #v.settings.default_font = 'Comae'
+        #v.settings.default_font = 'Calco'
 
     def click(self,evt):
         """
@@ -124,7 +114,7 @@ class VedoMainWindow():
         """
         if evt.actor:
             # Silouette
-            sil = evt.actor.silhouette().lineWidth(5).c('red5')
+            sil = evt.actor.silhouette().linewidth(5).c('red5')
             self.plt[evt.title].remove(self.silcont.pop()).add(sil)
             self.silcont.append(sil)
             self.click_msg.text(evt.actor.name)
@@ -175,12 +165,19 @@ class VedoMainWindow():
                 mode = 0
             
             if self.mode_anim[plot] == True:
-                v.settings.immediateRendering = True
+                v.settings.immediate_rendering = True
                 opts = dict(axes=4, interactive=0, title=f'Figure {plot+1} - CALFEM vedo visualization tool')
                 keyframes = self.keyframes[self.fig]
                 keyframe_dict = self.keyframe_dict[self.fig]
                 nmesh = len(keyframes)
                 plt = v.Plotter(**opts)
+
+                # vedo no longer has Plotter.escaped, track the Escape key ourselves
+                escaped = []
+                def on_key(evt):
+                    if evt.keypress == 'Escape':
+                        escaped.append(True)
+                plt.add_callback('key press', on_key)
 
                 plt += v.Text2D('Press ESC to exit', pos='bottom-middle')
 
@@ -235,12 +232,14 @@ class VedoMainWindow():
                         for i in range(nmesh):
                             plt += keyframes[i][val]
                         plt.show(resetcam=False)
+                        plt.process_events()
 
-                        
-                    if plt.escaped: break  # if ESC is hit during the loop
+                        if escaped: break
+
+                    if escaped: break  # if ESC is hit during the loop
 
                 plt.close()
-                v.settings.immediateRendering = False
+                v.settings.immediate_rendering = False
 
             
             else:
@@ -254,12 +253,12 @@ class VedoMainWindow():
                 else:
                     opts = dict(mode=mode, axes=4, interactive=False, new=True, title=f'Figure {plot+1} - CALFEM vedo visualization tool')
                 plt = v.show(self.geometries[plot], self.meshes[plot], self.nodes[plot], self.click_msg, **opts)
-                plt.parallelProjection(value=pp)
+                plt.parallel_projection(value=pp)
 
             if self.mode_hover[plot] == True or self.mode_2D[plot] == True:
-                plt.addCallback('MouseMove', self.click)
+                plt.add_callback('MouseMove', self.click)
             else:
-                plt.addCallback('mouse click', self.click)
+                plt.add_callback('mouse click', self.click)
             
             self.plt[f'Figure {plot+1} - CALFEM vedo visualization tool'] = plt
 
@@ -298,7 +297,8 @@ class VedoMainWindow():
 
             self.rendered += 1
 
-        v.interactive()
+        if v.plotter_instance is not None:
+            v.plotter_instance.interactive()
 
 
 
@@ -324,8 +324,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
     plot_window = VedoPlotWindow.instance().plot_window
 
     if surfaces == None and lines == None and points == None:
-        print("draw_geometry: Please input either (points), (points, lines) or (points, lines, surfaces) from geometry module")
-        sys.exit()
+        raise ValueError("draw_geometry: Please input either (points), (points, lines) or (points, lines, surfaces) from geometry module")
     else:
         if surfaces is not None:
 
@@ -378,8 +377,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
                     elif l0[0] == l1[0] or l0[0] == l1[1]:
                         point_list.append(l0[1])
                     else:
-                        print('Error when rendering surface geometry')
-                        sys.exit()
+                        raise ValueError('Error when rendering surface geometry')
 
                 coords = []
                 for i in point_list:
@@ -423,8 +421,7 @@ def draw_geometry(points=None,lines=None,surfaces=None,scale=0.05,points_alpha=1
             plot_window.geometries[plot_window.fig].append(pts)
             plot_window.geometries[plot_window.fig].append(text)
         elif lines is not None:
-            print("draw_geometry: Please provide point coordinates along with lines")
-            sys.exit()
+            raise ValueError("draw_geometry: Please provide point coordinates along with lines")
 
     
 '''
@@ -506,8 +503,7 @@ def draw_mesh(
     if 1 <= element_type <= 6:
         nel, ndof_per_el, nnode, ndim, ndof, ndof_per_n = vdu.check_input(edof,coord,dof,element_type,nseg=nseg)
     else:
-        print("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
-        sys.exit()
+        raise ValueError("draw_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
 
     # OUTPUT FROM check_input
     # Number of elements:                       nel
@@ -540,7 +536,7 @@ def draw_mesh(
         for i in range(nel):
             coord1,coord2 = vdu.get_coord_from_edof(edof[i,:],dof,element_type)
             if element_type == 1 and spring == True:
-                element = v.Spring([coord[coord1,0],coord[coord1,1],coord[coord1,2]],[coord[coord2,0],coord[coord2,1],coord[coord2,2]],r=1.5*scale,c=color).alpha(alpha)
+                element = v.Spring([coord[coord1,0],coord[coord1,1],coord[coord1,2]],[coord[coord2,0],coord[coord2,1],coord[coord2,2]],r1=1.5*scale,c=color).alpha(alpha)
                 element.name = f"Spring element {i+1}"
                 elements.append(element)
             elif element_type == 1 and spring == False:
@@ -777,8 +773,7 @@ def draw_displaced_mesh(
         else:
             nel, ndof_per_el, nnode, ndim, ndof, ndof_per_n, ndisp, val = vdu.check_input(edof,coord,dof,element_type,a,values,nseg=nseg)
     else:
-        print("draw_displaced_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
-        sys.exit()
+        raise ValueError("draw_displaced_mesh: Invalid element type, please declare 'element_type'. The element types are:\n    1 - Spring\n    2 - Bar\n    3 - Flow\n    4 - Solid\n    5 - Beam\n    6 - Plate")
 
     # OUTPUT FROM check_input
     # Number of elements:                       nel
@@ -812,7 +807,7 @@ def draw_displaced_mesh(
 
         for i in range(0, ncoord):
             if element_type == 1:
-                a_dx = a[i]*def_scale
+                a_dx = np.ravel(a)[i]*def_scale
 
                 x = coord[i,0]+a_dx
                 y = coord[i,1]
@@ -820,7 +815,7 @@ def draw_displaced_mesh(
 
                 def_coord[i] = [x,y,z]
             elif element_type == 2 or element_type == 5:
-                a_dx, a_dy, a_dz = vdu.get_a_from_coord(i,6,a,def_scale)
+                a_dx, a_dy, a_dz = vdu.get_a_from_coord(i,np.size(dof,1),a,def_scale)
 
                 x = coord[i,0]+a_dx
                 y = coord[i,1]+a_dy
@@ -838,7 +833,7 @@ def draw_displaced_mesh(
             coord1,coord2 = vdu.get_coord_from_edof(edof[i,:],dof,element_type)
 
             if element_type == 1 and spring == True:
-                element = v.Spring([def_coord[coord1,0],def_coord[coord1,1],def_coord[coord1,2]],[def_coord[coord2,0],def_coord[coord2,1],def_coord[coord2,2]],r=scale*1.5,c=color).alpha(alpha)
+                element = v.Spring([def_coord[coord1,0],def_coord[coord1,1],def_coord[coord1,2]],[def_coord[coord2,0],def_coord[coord2,1],def_coord[coord2,2]],r1=scale*1.5,c=color).alpha(alpha)
                 element.name = f"Spring element {i+1}"
                 elements.append(element)
 
@@ -863,7 +858,7 @@ def draw_displaced_mesh(
                     for j in range(6):
                         el_values_array.append(values[i])
                     element.celldata[scalar_title] = el_values_array
-                    element.cmap(colormap, scalar_title, on="cells", n=colors, vmin=vmin, vmax=vmax)
+                    element.cmap(colormap, scalar_title, on="cells", n_colors=colors, vmin=vmin, vmax=vmax)
 
             elif element_type == 5:
                 if nseg > 2:
@@ -911,7 +906,7 @@ def draw_displaced_mesh(
 
                             element.pointdata[scalar_title] = el_values_array
                             
-                            element.cmap(colormap, scalar_title, on="points", n=colors, vmin=vmin, vmax=vmax)
+                            element.cmap(colormap, scalar_title, on="points", n_colors=colors, vmin=vmin, vmax=vmax)
 
                 else:
                     element = v.Cylinder([[def_coord[coord1,0],def_coord[coord1,1],def_coord[coord1,2]],[def_coord[coord2,0],def_coord[coord2,1],def_coord[coord2,2]]],r=scale,res=res,c=color).alpha(alpha)
@@ -942,7 +937,7 @@ def draw_displaced_mesh(
 
                         element.pointdata[scalar_title] = el_values_array
 
-                        element.cmap(colormap, scalar_title, on="points", n=colors, vmin=vmin, vmax=vmax)        
+                        element.cmap(colormap, scalar_title, on="points", n_colors=colors, vmin=vmin, vmax=vmax)        
 
         if only_ret == False:
 
@@ -969,7 +964,7 @@ def draw_displaced_mesh(
         ex,ey,ez = cfc.coordxtr(edof,coord,dof)
         coord[:] += offset
 
-        ed = cfc.extractEldisp(edof,a)
+        ed = cfc.extract_eldisp(edof,a)
         if element_type == 3:
             if val != 'nodal_values_by_el':
                 coord2, topo, node_dofs, a_node, node_scalars = vdu.convert_to_node_topo(edof,ex,ey,ez,ed,ignore_first=False,dofs_per_node=1)
@@ -991,10 +986,18 @@ def draw_displaced_mesh(
             ct = vtk.VTK_HEXAHEDRON
             celltypes = [ct] * nel
 
-            ug=v.UGrid([def_coord, topo, celltypes])
-            ug.points(def_coord)
-            
-            mesh = ug.tomesh().alpha(alpha)
+            ug=v.UnstructuredGrid([def_coord, topo, celltypes])
+            ug.vertices = def_coord
+
+            # Attach the values to the grid, tomesh() then maps them onto the faces/points of the mesh
+            if val and val == 'el_values':
+                ug.celldata[scalar_title] = np.ravel(values)
+            elif val and val == 'nodal_values_by_el':
+                ug.pointdata[scalar_title] = np.ravel(vdu.convert_nodal_values(edof,topo,dof,values))
+            elif val and val == 'nodal_values':
+                ug.pointdata[scalar_title] = np.ravel(values)
+
+            mesh = ug.tomesh(fill=True).alpha(alpha)
 
         elif element_type == 6:
             mesh = v.Mesh([def_coord, topo]).alpha(alpha)
@@ -1014,25 +1017,17 @@ def draw_displaced_mesh(
 
 
         if element_type == 3 or element_type == 4:
+            # The values were attached to the grid before creating the mesh
             if val and val == 'el_values':
-                el_values = vdu.convert_el_values(edof,values)
-                mesh.celldata[scalar_title] = el_values
+                mesh.cmap(colormap, scalar_title, on="cells", n_colors=colors, vmax=vmax, vmin=vmin)
 
-                mesh.cmap(colormap, scalar_title, on="cells", n=colors, vmax=vmax, vmin=vmin)
-            
-            elif val and val == 'nodal_values_by_el':
-                nodal_values = vdu.convert_nodal_values(edof,topo,dof,values)
-                mesh.pointdata[scalar_title] = nodal_values
-                mesh.cmap(colormap, scalar_title, on="points", n=colors, vmax=vmax, vmin=vmin)
-
-            elif val and val == 'nodal_values':
-                mesh.pointdata[scalar_title] = values
-                mesh.cmap(colormap, scalar_title, on="points", n=colors, vmax=vmax, vmin=vmin)
+            elif val and val in ('nodal_values_by_el', 'nodal_values'):
+                mesh.cmap(colormap, scalar_title, on="points", n_colors=colors, vmax=vmax, vmin=vmin)
 
         elif element_type == 6:
             if val and val == 'el_values':
                 mesh.celldata[scalar_title] = values
-                mesh.cmap(colormap, scalar_title, on="cells", n=colors, vmax=vmax, vmin=vmin)
+                mesh.cmap(colormap, scalar_title, on="cells", n_colors=colors, vmax=vmax, vmin=vmin)
         
         if only_ret == False:
 
@@ -1125,7 +1120,7 @@ def animation(
 
     plot_window.mode_anim[plot_window.fig] = True
 
-    nnode = np.size(coord,1)
+    nnode = np.size(coord,0)
 
     values = scalars
 
@@ -1237,17 +1232,21 @@ def add_scalar_bar(
 
     fig = plot_window.fig
 
+    # vedo expects the bottom-left and top-right corners of the scalar bar
+    if len(pos) == 2 and np.isscalar(pos[0]):
+        pos = ((pos[0], pos[1]), (min(pos[0] + 0.1, 1.0), min(pos[1] + 0.45, 1.0)))
+
     if plot_window.mode_anim[fig] == True:
 
         for key in plot_window.keyframes[fig][0].keys():
-            plot_window.keyframes[fig][0][key].addScalarBar(pos=pos, titleFontSize=font_size)
+            plot_window.keyframes[fig][0][key].add_scalarbar(pos=pos, font_size=font_size)
 
     else:
 
         if on == 'mesh':
-            plot_window.meshes[fig][0].addScalarBar(pos=pos, titleFontSize=font_size)
+            plot_window.meshes[fig][0].add_scalarbar(pos=pos, font_size=font_size)
         elif on == 'vectors':
-            plot_window.vectors[fig][0].addScalarBar(pos=pos, titleFontSize=font_size)
+            plot_window.vectors[fig][0].add_scalarbar(pos=pos, font_size=font_size)
 
     msg = v.Text2D(label, pos=text_pos, alpha=1, c=color)
     plot_window.msg[plot_window.fig] += [msg]
@@ -1303,7 +1302,7 @@ def add_mesh_axes(mesh):
     app = init_app()
     plot_window = VedoPlotWindow.instance().plot_window
 
-    axes = mesh.buildAxes()
+    axes = v.Axes(mesh)
     plot_window.dia_axes[plot_window.fig].append(axes)
 
 
@@ -1355,18 +1354,18 @@ def add_axes(
     plot_window = VedoPlotWindow.instance().plot_window
 
     axes = v.Axes(
-        numberOfDivisions=numberOfDivisions,
+        number_of_divisions=numberOfDivisions,
         xtitle=xtitle,
         ytitle=ytitle,
         ztitle=ztitle,
         htitle=htitle,
-        xyGrid=xyGrid,
-        yzGrid=yzGrid,
-        zxGrid=zxGrid,
-        xyGrid2=xyGrid,
-        yzGrid2=yzGrid,
-        zxGrid2=zxGrid,
-        xyGridTransparent=xyGridTransparent, yzGridTransparent=yzGridTransparent, zxGridTransparent=zxGridTransparent, xyGrid2Transparent=xyGrid2Transparent, yzGrid2Transparent=yzGrid2Transparent, zxGrid2Transparent=zxGrid2Transparent,
+        xygrid=xyGrid,
+        yzgrid=yzGrid,
+        zxgrid=zxGrid,
+        xygrid2=xyGrid2,
+        yzgrid2=yzGrid2,
+        zxgrid2=zxGrid2,
+        xygrid_transparent=xyGridTransparent, yzgrid_transparent=yzGridTransparent, zxgrid_transparent=zxGridTransparent, xygrid2_transparent=xyGrid2Transparent, yzgrid2_transparent=yzGrid2Transparent, zxgrid2_transparent=zxGrid2Transparent,
         xrange=xrange,
         yrange=yrange,
         zrange=zrange
@@ -1391,31 +1390,30 @@ def add_projection(color='black',plane='xy',offset=-1,rulers=False):
     if plane == 'xy':
         assem = plot_window.meshes[plot_window.fig]
         plot_window.meshes[plot_window.fig]
-        proj = assem.projectOnPlane('z').z(offset).silhouette('2d').c(color)
+        proj = assem.project_on_plane('z').z(offset).silhouette('2d').c(color)
         plot_window.proj[plot_window.fig] += [proj]
         if rulers == True:
-            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpad=1, ypad=1, zpad=1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, labelRotation=0, axisRotation=0, xycross=True)
+            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpadding=1, ypadding=1, zpadding=1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, label_rotation=0, xycross=True)
             plot_window.rulers[plot_window.fig] += [ruler]
     elif plane == 'xz':
         meshes = []
         for i in range(len(plot_window.meshes[plot_window.fig])):
             meshes.append(plot_window.meshes[plot_window.fig][i].clone())
         assem = v.merge(meshes)
-        proj = assem.projectOnPlane('y').y(offset).silhouette('2d').c(color)
+        proj = assem.project_on_plane('y').y(offset).silhouette('2d').c(color)
         plot_window.proj[plot_window.fig] += [proj]
         if rulers == True:
-            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpad=1, ypad=1, zpad=1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, labelRotation=0, axisRotation=0, xycross=True)
+            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpadding=1, ypadding=1, zpadding=1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, label_rotation=0, xycross=True)
             plot_window.rulers[plot_window.fig] += [ruler]
     elif plane == 'yz':
         assem = v.Assembly(plot_window.meshes[plot_window.fig])
-        proj = assem.projectOnPlane('x').x(offset).silhouette('2d').c(color)
+        proj = assem.project_on_plane('x').x(offset).silhouette('2d').c(color)
         plot_window.proj[plot_window.fig] += [proj]
         if rulers == True:
-            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpad=0, ypad=0.1, zpad=0.1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, labelRotation=0, axisRotation=0, xycross=True)
+            ruler = v.addons.RulerAxes(proj, xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='', xpadding=0, ypadding=0.1, zpadding=0.1, font='Normografo', s=None, italic=0, units='m', c=color, alpha=1, lw=1, precision=3, label_rotation=0, xycross=True)
             plot_window.rulers[plot_window.fig] += [ruler]
     else:
-        print("Please choose a plane to project to. Set plane to 'xy', 'xz' or 'yz'")
-        sys.exit()
+        raise ValueError("Please choose a plane to project to. Set plane to 'xy', 'xz' or 'yz'")
 
 
 
@@ -1436,7 +1434,7 @@ def add_rulers(xtitle='', ytitle='', ztitle='', xlabel='', ylabel='', zlabel='',
 
     assem = v.merge(plot_window.meshes[plot_window.fig])
 
-    ruler = v.addons.RulerAxes(assem, xtitle=xtitle, ytitle=ytitle, ztitle=ztitle, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, xpad=0.1, ypad=0.1, zpad=0.1, font='Normografo', s=None, italic=0, units='m', c=(0,0,0), alpha=alpha, lw=1, precision=3, labelRotation=0, axisRotation=0, xycross=False)
+    ruler = v.addons.RulerAxes(assem, xtitle=xtitle, ytitle=ytitle, ztitle=ztitle, xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, xpadding=0.1, ypadding=0.1, zpadding=0.1, font='Normografo', s=None, italic=0, units='m', c=(0,0,0), alpha=alpha, lw=1, precision=3, label_rotation=0, xycross=False)
 
     plot_window.rulers[plot_window.fig] += [ruler]
 
@@ -1494,7 +1492,7 @@ def eldia(ex,ey,ez,es,eci,dir='y',scale=1,thickness=5,alpha=1,label='y',invert=T
         
         lines = []
         for j in range(len(pts)-1):
-            lines.append(v.Lines(pts[j].points(), pts[j+1].points(), c='k4', alpha=alpha, res=2).lw(0.5*thickness))
+            lines.append(v.Lines(pts[j].vertices, pts[j+1].vertices, c='k4', alpha=alpha, res=2).lw(0.5*thickness))
 
         plot_window.dia_lines[plot_window.fig].append(lines)
 
@@ -1511,19 +1509,19 @@ def eldia(ex,ey,ez,es,eci,dir='y',scale=1,thickness=5,alpha=1,label='y',invert=T
 
         if dir=='x':
             if invert == True:
-                axes = graph.buildAxes(xInverted=True, c='black', xTitleOffset=[(ticks[1]-ticks[0]),0,0], xtitle=label, xTitleRotation=270, xrange=[-np.min(es[i])*upd_scale+(ticks[1]-ticks[0]), -np.max(es[i])*upd_scale-(ticks[1]-ticks[0])], xValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, x_inverted=True, c='black', xtitle_offset=[(ticks[1]-ticks[0]),0,0], xtitle=label, xtitle_rotation=270, xrange=[-np.min(es[i])*upd_scale+(ticks[1]-ticks[0]), -np.max(es[i])*upd_scale-(ticks[1]-ticks[0])], x_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
             else:
-                axes = graph.buildAxes(c='black', xTitleOffset=[(ticks[1]-ticks[0]),0,0], xtitle=label, xTitleRotation=270, xrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], xValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, c='black', xtitle_offset=[(ticks[1]-ticks[0]),0,0], xtitle=label, xtitle_rotation=270, xrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], x_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
         elif dir=='y':
             if invert == True:
-                axes = graph.buildAxes(yInverted=True, c='black', yTitleOffset=[0,(ticks[1]-ticks[0]),0], ytitle=label, yTitleRotation=270, yrange=[-np.max(es[i])*upd_scale-(ticks[1]-ticks[0]), -np.min(es[i])*upd_scale+(ticks[1]-ticks[0])], yValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, y_inverted=True, c='black', ytitle_offset=[0,(ticks[1]-ticks[0]),0], ytitle=label, ytitle_rotation=270, yrange=[-np.max(es[i])*upd_scale-(ticks[1]-ticks[0]), -np.min(es[i])*upd_scale+(ticks[1]-ticks[0])], y_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
             else:
-                axes = graph.buildAxes(c='black', yTitleOffset=[0,(ticks[1]-ticks[0]),0], ytitle=label, yTitleRotation=270, yrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], yValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, c='black', ytitle_offset=[0,(ticks[1]-ticks[0]),0], ytitle=label, ytitle_rotation=270, yrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], y_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
         elif dir=='z':
             if invert == True:
-                axes = graph.buildAxes(zInverted=True, c='black', zTitleOffset=[0,0,(ticks[1]-ticks[0])], ztitle=label, zTitleRotation=270, zrange=[-np.min(es[i])*upd_scale+(ticks[1]-ticks[0]), -np.max(es[i])*upd_scale-(ticks[1]-ticks[0])], zValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, z_inverted=True, c='black', ztitle_offset=[0,0,(ticks[1]-ticks[0])], ztitle=label, ztitle_rotation=270, zrange=[-np.min(es[i])*upd_scale+(ticks[1]-ticks[0]), -np.max(es[i])*upd_scale-(ticks[1]-ticks[0])], z_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
             else:
-                axes = graph.buildAxes(c='black', zTitleOffset=[0,0,(ticks[1]-ticks[0])], ztitle=label, zTitleRotation=270, zrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], zValuesAndLabels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
+                axes = v.Axes(graph, c='black', ztitle_offset=[0,0,(ticks[1]-ticks[0])], ztitle=label, ztitle_rotation=270, zrange=[np.min(es[i])*upd_scale, np.max(es[i])*upd_scale+(ticks[1]-ticks[0])], z_values_and_labels=[(ticks[0], labels[0]), (ticks[1], labels[1]), (ticks[2], labels[2]), (ticks[3], labels[3]), (ticks[4], labels[4]), (ticks[5], labels[5]), (ticks[6], labels[6]), (ticks[7], labels[7]), (ticks[8], labels[8]), (ticks[9], labels[9])])
 
         plot_window.dia_axes[plot_window.fig].append(axes)
 
@@ -1572,7 +1570,7 @@ def elprinc(ex,ey,ez,val,vec,ed=None,scale=.1, colormap = 'jet', unit='Pa'):
             vector = vec[i, :, j]*val[i,j]*upd_scale
             vectors.append(vector)
 
-    plot = vdu.vectors(points, vectors, c='k', alpha=1, shaftLength=0.8, shaftWidth=0.05, headLength=0.25, headWidth=0.2, fill=True, text=text, vmax=vmax, vmin=vmin, cmap=colormap, values=values)
+    plot = vdu.vectors(points, vectors, c='k', alpha=1, shaftWidth=0.05, text=text, vmax=vmax, vmin=vmin, cmap=colormap, values=values)
 
     plot_window.vectors[plot_window.fig].extend(plot)
 
@@ -1613,7 +1611,7 @@ def elflux(ex,ey,ez,vec,ed=None,scale=.1, colormap = 'jet', unit='W/m^2'):
         values.append([flux_tot,flux_tot,flux_tot,flux_tot,flux_tot,flux_tot])
         vectors.append(vec[i]*upd_scale)
 
-    plot = vdu.vectors(points, vectors, c='k', alpha=1, shaftLength=0.8, shaftWidth=0.05, headLength=0.25, headWidth=0.2, fill=True, text=text, vmax=vmax, vmin=vmin, cmap=colormap, values=values)
+    plot = vdu.vectors(points, vectors, c='k', alpha=1, shaftWidth=0.05, text=text, vmax=vmax, vmin=vmin, cmap=colormap, values=values)
 
     plot_window.vectors[plot_window.fig].extend(plot)
 
@@ -1664,7 +1662,7 @@ def export_vtk(file, meshes):
     else:
         mesh = meshes
     
-    v.io.write(mesh, file+".vtk")
+    v.write(mesh, file+".vtk")
 
 
 
@@ -1687,8 +1685,7 @@ def figure(fig,bg='white',flat=False,hover=False):
     plot_window = VedoPlotWindow.instance().plot_window
 
     if fig < 1:
-        print("figure: Please give a positive integer (> 0)")
-        sys.exit()
+        raise ValueError("figure: Please give a positive integer (> 0)")
     else:
         plot_window.fig = fig - 1
 

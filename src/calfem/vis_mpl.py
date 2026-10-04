@@ -20,23 +20,10 @@ import matplotlib.tri as tri
 from calfem.core import beam2crd
 import calfem.core as cfc
 
-try:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.backends.backend_qtagg import (
-        NavigationToolbar2QT as NavigationToolbar,
-    )
-except:
-    print("Could not import Matplotlib backends. Probably due to missing Qt.")
-
 from numpy import sin, cos, pi
 from math import atan2
 
 import logging as cflog
-
-try:
-    from numpy.lib.function_base import place
-except:
-    pass
 
 
 g_figures = []
@@ -107,7 +94,7 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
     else:
         try:
             f = plt.figure(figure.number)
-        except:
+        except AttributeError:
             f = plt.figure(figsize=fig_size)
 
     if f is not None:
@@ -117,6 +104,17 @@ def figure(figure=None, show=True, fig_size=(6, 5.33)):
 
 
 def figure_widget(fig, parent=None):
+    """Return a Qt widget showing the figure (used by the geometry editor)."""
+    # Imported here so that calfem.vis does not require Qt
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+        from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
+    except ImportError as e:
+        raise ImportError(
+            "figure_widget requires a Qt binding. Install one with e.g. "
+            "pip install calfem-python[pyside6]"
+        ) from e
+
     widget = FigureCanvas(fig)
     #widget.axes = fig.add_subplot(111)
     if parent != None:
@@ -523,6 +521,19 @@ def draw_node_circles(
         ax.set(title=title)
 
 
+def _nodal_displacements(a, coords, dofs_per_node):
+    """
+    Nodal displacements as an N-by-ndim array, from either the global
+    displacement vector (dofs_per_node values per node) or an N-by-ndim
+    array.
+    """
+    a = np.asarray(a, dtype=float)
+    n_nodes, ndim = coords.shape
+    if a.size == n_nodes * dofs_per_node:
+        return a.reshape(n_nodes, dofs_per_node)[:, :ndim]
+    return a.reshape(n_nodes, ndim)
+
+
 def draw_element_values(
     values,
     coords,
@@ -571,10 +582,11 @@ def draw_element_values(
     if draw_undisplaced_mesh:
         draw_mesh(coords, edof, dofs_per_node, el_type, color=(0.5, 0.5, 0.5))
 
+    coords = np.asarray(coords, dtype=float)
+
     if displacements is not None:
-        if displacements.shape[1] != coords.shape[1]:
-            displacements = np.reshape(displacements, (-1, coords.shape[1]))
-            coords = np.asarray(coords + magnfac * displacements)
+        u = _nodal_displacements(displacements, coords, dofs_per_node)
+        coords = coords + magnfac * u
 
     verts, faces, vertices_per_face, is_3d = ce2vf(coords, edof, dofs_per_node, el_type)
 
@@ -608,6 +620,153 @@ def draw_element_values(
         ax.set(title=title)
 
 
+def _flux_scale_factor(ex, ey, flux, krel=0.8):
+    """
+    Automatic arrow scale factor: the mean arrow length becomes krel times
+    the mean element size (diagonal of the element bounding box).
+    """
+    nel = ex.shape[0]
+    dx = np.max(ex, axis=1) - np.min(ex, axis=1)
+    dy = np.max(ey, axis=1) - np.min(ey, axis=1)
+    lm = np.sum(np.sqrt(dx**2 + dy**2)) / nel
+    qm = np.sum(np.sqrt(flux[:, 0]**2 + flux[:, 1]**2)) / nel
+
+    if qm == 0:
+        return 0.0
+    return lm * krel / qm
+
+
+def draw_element_flux(
+    flux,
+    coords,
+    edof,
+    dofs_per_node,
+    el_type,
+    scale=None,
+    color=(0, 0, 0),
+    color_by_magnitude=False,
+    cmap=None,
+    draw_elements=False,
+    element_color=(0.6, 0.6, 0.6),
+    arrow_width=0.003,
+    title=None,
+    ax=None,
+):
+    """
+    Draws element flux (flow) vectors as arrows at the element centroids
+    of a 2D mesh. Modern equivalent of elflux2.
+
+    Parameters
+    ----------
+    flux : array_like
+        An E-by-2 array. Row i contains the flux vector [qx, qy] of
+        element i, e.g. from flw2qs, flw2ts or flw2i4s.
+    coords : array_like
+        An N-by-2 array. Row i contains the x,y coordinates of node i.
+    edof : array_like
+        An E-by-L array. Element topology. (E is the number of elements
+        and L is the number of dofs per element)
+    dofs_per_node : int
+        Dofs per node.
+    el_type : int
+        Element Type. See Gmsh manual for details. 2 for triangles,
+        3 for quadrangles or 16 for 8-node quadrangles.
+    scale : float, optional
+        Scale factor = arrow length / flux magnitude. If omitted, an
+        automatic scale factor is calculated so that the mean arrow length
+        is 0.8 times the mean element size.
+    color : tuple or str, optional
+        Color of the arrows. Default black. Ignored if color_by_magnitude
+        is True.
+    color_by_magnitude : bool, optional
+        Color the arrows by the flux magnitude. The arrows are then set as
+        the current mappable, so colorbar() can be used. Default False.
+    cmap : str or matplotlib.colors.Colormap, optional
+        Colormap used when color_by_magnitude is True.
+    draw_elements : bool, optional
+        Draw the element mesh under the arrows. Default False.
+    element_color : tuple or str, optional
+        Color of the element mesh, if draw_elements is True.
+    arrow_width : float, optional
+        Arrow shaft width as a fraction of the plot width. Default 0.003.
+    title : str, optional
+        Changes title of the figure.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If omitted, the current axes are used.
+
+    Returns
+    -------
+    scale : float
+        Scale factor used for the arrows. Pass it to subsequent calls to
+        draw several flux fields with the same scale.
+    """
+
+    flux = np.asarray(flux, dtype=float)
+    coords = np.asarray(coords, dtype=float)
+    edof = np.asarray(edof)
+
+    if coords.shape[1] != 2:
+        raise ValueError("draw_element_flux only supports 2D meshes.")
+    if flux.ndim != 2 or flux.shape[1] < 2:
+        raise ValueError("flux must be an E-by-2 array of [qx, qy].")
+    if flux.shape[0] != edof.shape[0]:
+        raise ValueError(
+            "Check size of flux! There must be one row for each element."
+        )
+
+    verts, faces, vertices_per_face, is_3d = ce2vf(coords, edof, dofs_per_node, el_type)
+
+    ex = verts[faces, 0]
+    ey = verts[faces, 1]
+
+    if scale is None:
+        scale = _flux_scale_factor(ex, ey, flux)
+
+    if ax is None:
+        ax = plt.gca()
+    ax.set_aspect("equal")
+
+    if draw_elements:
+        polys = np.stack((ex, ey), axis=2)
+        pc = matplotlib.collections.PolyCollection(
+            polys, facecolor="none", edgecolor=element_color
+        )
+        ax.add_collection(pc)
+        ax.autoscale()
+
+    x0 = np.mean(ex, axis=1)
+    y0 = np.mean(ey, axis=1)
+    u = scale * flux[:, 0]
+    v = scale * flux[:, 1]
+
+    quiver_args = dict(
+        angles="xy",
+        scale_units="xy",
+        scale=1,
+        pivot="mid",
+        width=arrow_width,
+    )
+
+    if color_by_magnitude:
+        magnitude = np.sqrt(flux[:, 0]**2 + flux[:, 1]**2)
+        q = ax.quiver(x0, y0, u, v, magnitude, cmap=cmap, **quiver_args)
+        set_mappable(q)
+    else:
+        q = ax.quiver(x0, y0, u, v, color=color, **quiver_args)
+
+    # quiver does not update the data limits, include the arrow tips
+    ax.update_datalim(np.column_stack((
+        np.concatenate((x0 - u/2, x0 + u/2)),
+        np.concatenate((y0 - v/2, y0 + v/2)),
+    )))
+    ax.autoscale_view()
+
+    if title != None:
+        ax.set(title=title)
+
+    return scale
+
+
 def draw_displacements(
     a,
     coords,
@@ -616,64 +775,52 @@ def draw_displacements(
     el_type,
     draw_undisplaced_mesh=False,
     magnfac=-1.0,
-    magscale=0.25,
+    magscale=0.1,
     title=None,
     color=(0, 0, 0),
     node_color=(0, 0, 0),
 ):
     """
-    Draws scalar element values in 2D or 3D. Returns the world object
-    elementsWobject that represents the mesh.
+    Draws the displaced mesh in 2D.
 
     Parameters
     ----------
-    ev : array_like
-        An N-by-1 array or a list of scalars. The Scalar values of the elements. ev[i] should be the value of element i.
+    a : array_like
+        Global displacement vector, or an N-by-2 array where row i contains
+        the x,y displacements of node i.
     coords : array_like
-        An N-by-2 or N-by-3 array. Row i contains the x,y,z coordinates of node i.
+        An N-by-2 array. Row i contains the x,y coordinates of node i.
     edof : array_like
         An E-by-L array. Element topology. (E is the number of elements and L is the number of dofs per element)
     dofs_per_node : int
         Dofs per node.
     el_type : int
         Element Type. See Gmsh manual for details. Usually 2 for triangles or 3 for quadrangles.
-    displacements : array_like
-        An N-by-2 or N-by-3 array. Row i contains the x,y,z  displacements of node i.
-    axes : matplotlib.axes.Axes
-        Matlotlib Axes. The Axes where the model will be drawn. If unspecified the current Axes will be used, or a new Axes will be created if none exist.
     draw_undisplaced_mesh : bool
-        True if the wire of the undisplaced mesh should be drawn on top of the displaced mesh. Default False. Use only if displacements != None.
+        True if the undisplaced mesh should also be drawn (in light gray). Default False.
     magnfac : float
         Magnification factor. Displacements are multiplied by this value. Use this to make small displacements more visible.
+        If negative (default), it is chosen so that the largest displacement is magscale times the model size.
+    magscale : float
+        Largest displacement relative to the model size when magnfac is automatic. Default 0.1.
     title : str
-        Changes title of the figure. Default "Element Values".
+        Changes title of the figure.
     """
 
     if draw_undisplaced_mesh:
         draw_mesh(coords, edof, dofs_per_node, el_type, color=(0.8, 0.8, 0.8))
 
+    coords = np.asarray(coords, dtype=float)
+
     if a is not None:
-        if a.shape[1] != coords.shape[1]:
-            a = np.reshape(a, (-1, coords.shape[1]))
+        u = _nodal_displacements(a, coords, dofs_per_node)
 
-            x_max = np.max(coords[:, 0])
-            x_min = np.min(coords[:, 0])
+        if magnfac is None or magnfac < 0:
+            max_size = np.max(np.max(coords, axis=0) - np.min(coords, axis=0))
+            max_disp = np.max(np.linalg.norm(u, axis=1))
+            magnfac = magscale * max_size / max_disp if max_disp > 0 else 1.0
 
-            y_max = np.max(coords[:, 1])
-            y_min = np.min(coords[:, 1])
-
-            x_size = x_max - x_min
-            y_size = y_max - y_min
-
-            if x_size > y_size:
-                max_size = x_size
-            else:
-                max_size = y_size
-
-            if magnfac < 0:
-                magnfac = 0.25 * max_size
-
-            coords = np.asarray(coords + magnfac * a)
+        coords = coords + magnfac * u
 
     verts, faces, vertices_per_face, is_3d = ce2vf(coords, edof, dofs_per_node, el_type)
 
@@ -1431,7 +1578,7 @@ def _ellipseArc(start, center, majAxP, end, pointsOnCurve=20):
     ellArc = T @ ellArc  # Transform back to the original coordinate system
     return np.asarray(ellArc.T[:, 0:3])  # return points as an N-by-3 array.
 
-def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
+def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=None):
     """
     Draw the undeformed 2D mesh for a number of elements of the same type.
 
@@ -1452,12 +1599,15 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
         - linecolor: 1=black, 2=blue, 3=magenta, 4=red  
         - nodemark: 0=no mark, 1=circle, 2=star
     elnum : array_like, optional
-        Element numbers.
+        Element numbers, drawn at the element centers.
 
     Notes
     -----
-    Default is solid white lines with circles at nodes.
+    Default is solid blue lines with circles at nodes.
     """
+
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
 
     if ex.shape == ey.shape:
         if ex.ndim != 1:
@@ -1501,16 +1651,27 @@ def eldraw2(ex, ey, plotpar=[1, 2, 1], elnum=[]):
 
     plt.axis("equal")
 
-    draw_element_numbers = False
+    elnum = [] if elnum is None else list(elnum)
+    if len(elnum) > 0 and len(elnum) != ex.shape[0]:
+        raise ValueError("elnum must contain one number per element.")
 
-    if len(elnum) == ex.shape[0]:
-        draw_element_numbers = True
+    # 8-node elements: corner and midside nodes in order along the boundary
+    order = [0, 4, 1, 5, 2, 6, 3, 7] if nen == 8 else list(range(nen))
 
-    draw_elements(ex, ey, color=mpl_line_color, line_style=mpl_line_style, filled=False)
+    draw_elements(
+        ex[:, order], ey[:, order], color=mpl_line_color,
+        line_style=mpl_line_style, filled=False, closed=nen > 2,
+    )
     if mpl_node_mark != "":
         draw_node_circles(
             ex, ey, color=mpl_line_color, filled=False, marker_type=mpl_node_mark
         )
+
+    if len(elnum) > 0:
+        ax = plt.gca()
+        for n, xc, yc in zip(elnum, ex.mean(axis=1), ey.mean(axis=1)):
+            ax.text(xc, yc, str(int(n)), color=mpl_line_color,
+                    ha="center", va="center")
 
     return None
 
@@ -1569,22 +1730,58 @@ def scalfact2(ex, ey, ed, rat=0.2):
     return k * dl_max / ed_max
 
 
-def eliso2_mpl(ex, ey, ed):
-    plt.axis("equal")
+def eliso2(ex, ey, ed, isov=10, plotpar=None):
+    """
+    Draw isolines from element nodal values for 2D triangular,
+    quadrilateral or 8-node elements.
 
-    gx = []
-    gy = []
-    gz = []
+    Parameters
+    ----------
+    ex, ey : array_like
+        Element node coordinates, one row per element.
+    ed : array_like
+        Element nodal values, one row per element, e.g. element
+        temperatures from extract_eldisp.
+    isov : int or array_like, optional
+        Number of isolines or the isoline values. Default 10.
+    plotpar : list, optional
+        [linetype, linecolor] for single colored isolines, see pltstyle2.
+        Default isolines colored by value.
 
-    for elx, ely, scl in zip(ex, ey, ed):
-        for x in elx:
-            gx.append(x)
-        for y in ely:
-            gy.append(y)
-        for z in ely:
-            gz.append(y)
+    Returns
+    -------
+    matplotlib.tri.TriContourSet
+        The isolines, e.g. for colorbar() or clabel().
+    """
+    ex = np.atleast_2d(np.asarray(ex, dtype=float))
+    ey = np.atleast_2d(np.asarray(ey, dtype=float))
+    ed = np.asarray(ed, dtype=float).reshape(ex.shape)
 
-    plt.tricontour(gx, gy, gz, 5)
+    # Merge the element nodes into a node based mesh
+    points = np.column_stack((ex.ravel(), ey.ravel()))
+    tol = 1e-9 * max(np.ptp(points[:, 0]), np.ptp(points[:, 1]))
+    keys = np.round(points / tol).astype(np.int64)
+    _, first, inverse = np.unique(
+        keys, axis=0, return_index=True, return_inverse=True
+    )
+    coords = points[first]
+    values = ed.ravel()[first]
+    triangles = topo_to_tri(inverse.reshape(ex.shape) + 1) - 1
+
+    kwargs = {}
+    if plotpar is not None:
+        line_color, line_style, _, _ = pltstyle2(list(plotpar[:2]) + [0])
+        kwargs = dict(colors=[line_color], linestyles=[line_style])
+
+    ax = plt.gca()
+    ax.set_aspect("equal")
+    cs = ax.tricontour(coords[:, 0], coords[:, 1], triangles, values, isov,
+                       **kwargs)
+    set_mappable(cs)
+    return cs
+
+
+eliso2_mpl = eliso2
 
 
 def pltstyle(plotpar):
@@ -1749,13 +1946,13 @@ def pltstyle2(plotpar):
 def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
     """
     Draw the deformed 2D mesh for a number of elements of the same type.
-    
+
     Supported elements are:
-    - 1: bar element
-    - 2: beam element  
-    - 3: triangular 3 node element
-    - 4: quadrilateral 4 node element
-    - 5: 8-node isoparametric element
+    - bar elements (2 nodes, 4 dofs)
+    - beam elements (2 nodes, 6 dofs), drawn with the deflected shape
+    - triangular 3 node elements
+    - quadrilateral 4 node elements
+    - 8-node isoparametric elements, drawn with curved edges
 
     Parameters
     ----------
@@ -1778,8 +1975,8 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
 
     Returns
     -------
-    float or None
-        Scale factor for displacements when sfac is None.
+    float
+        Scale factor used for the displacements.
 
     Notes
     -----
@@ -1793,6 +1990,10 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
                    Division of Solid Mechanics.
                    Lund University
     """
+
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
+    ed = np.asarray(ed, dtype=float)
 
     if ex.shape == ey.shape:
         if ex.ndim != 1:
@@ -1819,7 +2020,7 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
     krel = 0.1
 
     if sfac is None:
-        sfac = krel * dl_max / ed_max
+        sfac = krel * dl_max / ed_max if ed_max > 0 else 1.0
 
     k = sfac
 
@@ -1827,34 +2028,70 @@ def eldisp2(ex, ey, ed, plotpar=[2, 1, 1], sfac=None):
 
     line_color, line_style, node_color, node_style = pltstyle2(plotpar)
 
-    if nen == 2:
-        if ned == 4:
-            x = np.transpose(ex + k * ed[:, [0, 2]])
-            y = np.transpose(ey + k * ed[:, [1, 3]])
-            xc = np.transpose(x)
-            yc = np.transpose(y)
-        elif ned == 6:
-            x = np.transpose(ex + k * ed[:, [0, 3]])
-            y = np.transpose(ey + k * ed[:, [1, 4]])
-            exc, eyc = beam2crd(ex, ey, ed, k)
-            xc = exc
-            yc = eyc
-    elif nen == 3:
-        pass
-    elif nen == 4:
-        pass
-    elif nen == 8:
-        pass
+    closed = False
+
+    if nen == 2 and ned == 4:  # Bar elements
+        x = ex + k * ed[:, [0, 2]]
+        y = ey + k * ed[:, [1, 3]]
+        xc = x
+        yc = y
+    elif nen == 2 and ned == 6:  # Beam elements
+        x = ex + k * ed[:, [0, 3]]
+        y = ey + k * ed[:, [1, 4]]
+        xc, yc = beam2crd(ex, ey, ed, k)
+        xc = np.atleast_2d(xc)
+        yc = np.atleast_2d(yc)
+    elif nen in (3, 4) and ned == 2 * nen:  # Triangles and quadrilaterals
+        x = ex + k * ed[:, 0::2]
+        y = ey + k * ed[:, 1::2]
+        xc = x
+        yc = y
+        closed = True
+    elif nen == 8 and ned == 16:  # 8-node isoparametric elements
+        x = ex + k * ed[:, 0::2]
+        y = ey + k * ed[:, 1::2]
+        xc, yc = _quad8_edges(x, y)
     else:
-        print("Error: Element type is not supported.")
-        return
+        raise ValueError("Element type is not supported.")
 
     draw_elements(
-        xc, yc, color=line_color, line_style=line_style, filled=False, closed=False
+        xc, yc, color=line_color, line_style=line_style, filled=False, closed=closed
     )
 
     if node_style != "":
         draw_node_circles(x, y, color=node_color, filled=False, marker_type=node_style)
+
+    return sfac
+
+
+def _quad8_edges(x, y, n_points=7):
+    """
+    Points along the (curved) edges of 8-node elements, one row per
+    element, from the element shape functions. n_points per edge should be
+    odd, so that the midside nodes are included.
+    """
+
+    def shape(t, s):
+        return np.array([
+            -0.25 * (1 - t) * (1 - s) * (1 + t + s),
+            -0.25 * (1 + t) * (1 - s) * (1 - t + s),
+            -0.25 * (1 + t) * (1 + s) * (1 - t - s),
+            -0.25 * (1 - t) * (1 + s) * (1 + t - s),
+            0.5 * (1 - t * t) * (1 - s),
+            0.5 * (1 + t) * (1 - s * s),
+            0.5 * (1 - t * t) * (1 + s),
+            0.5 * (1 - t) * (1 - s * s),
+        ])
+
+    g = np.linspace(-1, 1, n_points)
+    path = (
+        [(t, -1) for t in g[:-1]]
+        + [(1, s) for s in g[:-1]]
+        + [(t, 1) for t in g[::-1][:-1]]
+        + [(-1, s) for s in g[::-1]]
+    )
+    N = np.array([shape(t, s) for t, s in path])
+    return x @ N.T, y @ N.T
 
 
 # % ********** Bar or Beam elements *************
@@ -2019,13 +2256,13 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
 
     Returns
     -------
-    float or None
-        Scale factor for displacements when sfac is None.
+    float
+        Scale factor used for the displacements.
 
     Notes
     -----
     Default if sfac and plotpar is left out is auto magnification
-    and dashed black lines with circles at nodes -> plotpar=[1 1 1]
+    and dashed black lines with circles at nodes -> plotpar=[2 1 1]
 
     LAST MODIFIED: O Dahlblom  2015-11-18
                    O Dahlblom  2023-01-31 (Python)
@@ -2034,6 +2271,10 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
                    Division of Solid Mechanics.
                    Lund University
     """
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
+    edi = np.asarray(edi, dtype=float)
+
     if ex.shape != ey.shape:
         raise ValueError("Check size of ex, ey dimensions.")
 
@@ -2078,7 +2319,10 @@ def dispbeam2(ex, ey, edi, plotpar=[2, 1, 1], sfac=None):
 
     A1 = np.array([A[0, 0], A[Nbr - 1, 0]]).reshape(1, 2)
     A2 = np.array([A[0, 1], A[Nbr - 1, 1]]).reshape(1, 2)
-    draw_node_circles(A1, A2, color=node_color, filled=False, marker_type=node_style)
+    if node_style != "":
+        draw_node_circles(A1, A2, color=node_color, filled=False, marker_type=node_style)
+
+    return sfac
 
 
 def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
@@ -2107,8 +2351,8 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
 
     Returns
     -------
-    float or None
-        Scale factor for section forces when sfac is None.
+    float
+        Scale factor used for the section forces.
 
     Notes
     -----
@@ -2119,6 +2363,10 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
                    Division of Solid Mechanics.
                    Lund University
     """
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
+    es = np.asarray(es, dtype=float).ravel()
+
     if ex.shape != ey.shape:
         raise ValueError("Check size of ex, ey dimensions.")
 
@@ -2205,6 +2453,8 @@ def secforce2(ex, ey, es, plotpar=[2, 1], sfac=None, eci=None):
     # Plot element
     plt.plot(ex, ey, color=line_color1, linewidth=2)
 
+    return sfac
+
 
 def scalgraph2(sfac, magnitude, plotpar=2):
     """
@@ -2264,3 +2514,263 @@ def scalgraph2(sfac, magnitude, plotpar=2):
         [(x + L), (x + L)], [(y - L / 20), (y + L / 20)], color=line_color, linewidth=1
     )
     plt.text(x + L * 1.1, (y - L / 20), str(N))
+
+def elflux2(ex, ey, es, plotcolor=None, sfac=None, ax=None):
+    """
+    Display element flow arrows for 2D triangular or quadrilateral elements.
+
+    Parameters
+    ----------
+    ex, ey : array_like, shape (nel, nen)
+        Element nodal x- and y-coordinates.
+        nen must be 3 or 4.
+
+    es : array_like, shape (nel, 2)
+        Element flow vectors [qx, qy].
+
+    plotcolor : array_like, optional
+        [arrowcolor]
+
+        arrowcolor:
+            1 -> black
+            2 -> blue
+            3 -> magenta
+            4 -> red
+
+    sfac : float, optional
+        Scale factor = arrow length / element flow magnitude.
+        If omitted, an automatic scale factor is calculated.
+
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If omitted, the current axes are used.
+
+    Returns
+    -------
+    sfac : float
+        Scale factor used for the arrows.
+
+    See Also
+    --------
+    draw_element_flux : Equivalent function using coords/edof input.
+    """
+
+    ex = np.asarray(ex, dtype=float)
+    ey = np.asarray(ey, dtype=float)
+    es = np.asarray(es, dtype=float)
+
+    if ex.shape != ey.shape:
+        raise ValueError("Check size of coordinate input arguments!")
+    if es.shape[0] != ex.shape[0]:
+        raise ValueError(
+            "Check size of flow input argument! "
+            "There must be one row for each element."
+        )
+
+    nen = ex.shape[1]
+    if nen not in (3, 4):
+        raise ValueError(
+            "Sorry, this element is currently not supported! "
+            "Only 3- and 4-node elements are supported."
+        )
+
+    if es.shape[1] < 2:
+        raise ValueError(
+            "es must contain the x- and y-components of the flow."
+        )
+
+    if ax is None:
+        ax = plt.gca()
+    # ---------------------------------------------------------
+    # Calculate automatic scale factor
+    # ---------------------------------------------------------
+
+    if sfac is None:
+        sfac = _flux_scale_factor(ex, ey, es)
+
+    # ---------------------------------------------------------
+    # Plot color
+    # ---------------------------------------------------------
+
+    if plotcolor is None:
+        plotcolor = [1]
+
+    arrowcolor = int(plotcolor[0])
+
+    colors = {
+        1: "black",
+        2: "blue",
+        3: "magenta",
+        4: "red",
+    }
+
+    color = colors.get(arrowcolor, "black")
+
+    # ---------------------------------------------------------
+    # Element centroids
+    # ---------------------------------------------------------
+
+    x0 = np.mean(ex, axis=1)
+    y0 = np.mean(ey, axis=1)
+
+    # ---------------------------------------------------------
+    # Scale flow vectors
+    # ---------------------------------------------------------
+
+    u = sfac * es[:, 0]
+    v = sfac * es[:, 1]
+
+    # ---------------------------------------------------------
+    # Draw arrows
+    # ---------------------------------------------------------
+
+    ax.quiver(
+        x0,
+        y0,
+        u,
+        v,
+        angles="xy",
+        scale_units="xy",
+        scale=1,
+        color=color,
+        pivot="mid",
+        width=0.003,
+    )
+
+    return sfac
+
+
+# -------------------------------------------------------------------------
+# Compatibility with the former visvis based calfem.vis module. calfem.vis
+# is now an alias for this module, these functions and names keep scripts
+# written for it working.
+# -------------------------------------------------------------------------
+
+
+def draw_nodal_values(
+    node_vals,
+    coords,
+    edof,
+    dofs_per_node,
+    el_type,
+    clim=None,
+    axes=None,
+    axes_adjust=True,
+    draw_elements=True,
+    title=None,
+):
+    """
+    Draws scalar nodal values on a 2D mesh with smooth shading, as in the
+    former visvis based calfem.vis.
+
+    Parameters
+    ----------
+    node_vals : array_like
+        One value per node.
+    coords : array_like
+        An N-by-2 array of node coordinates.
+    edof : array_like
+        An E-by-L array. Element topology (dofs).
+    dofs_per_node : int
+        Dofs per node.
+    el_type : int
+        Element type, see draw_mesh.
+    clim : tuple, optional
+        Value range (min, max) of the colormap.
+    axes : matplotlib.axes.Axes, optional
+        Axes to draw in. Default the current axes.
+    axes_adjust : bool, optional
+        Not used, kept for compatibility.
+    draw_elements : bool, optional
+        Draw the mesh on top of the values. Default True.
+    title : str, optional
+        Title of the figure.
+
+    Returns
+    -------
+    matplotlib.collections.TriMesh
+        The shaded mesh, e.g. for colorbar().
+
+    See Also
+    --------
+    draw_nodal_values_shaded, draw_nodal_values_contourf
+    """
+    coords = np.asarray(coords, dtype=float)
+    edof = np.asarray(edof, dtype=int)
+    if coords.shape[1] != 2:
+        raise ValueError("draw_nodal_values only supports 2D meshes.")
+
+    topo = (edof[:, 0::dofs_per_node] - 1) // dofs_per_node
+    triangles = topo_to_tri(topo + 1) - 1
+
+    ax = plt.gca() if axes is None else axes
+    ax.set_aspect("equal")
+
+    tpc = ax.tripcolor(coords[:, 0], coords[:, 1], triangles,
+                       np.asarray(node_vals, dtype=float).ravel(),
+                       shading="gouraud")
+    if clim is not None:
+        tpc.set_clim(*clim)
+    set_mappable(tpc)
+
+    if draw_elements:
+        draw_mesh(coords, edof, dofs_per_node, el_type, color=(0.2, 0.2, 0.2))
+
+    if title is not None:
+        ax.set(title=title)
+
+    return tpc
+
+
+def elval2(ex, ey, ev, showMesh=False):
+    """
+    Draw element values in 2D from element coordinate arrays.
+
+    Parameters
+    ----------
+    ex, ey : array_like
+        Element node coordinates, one row per element.
+    ev : array_like
+        One value per element.
+    showMesh : bool, optional
+        Draw the element edges. Default False.
+
+    Returns
+    -------
+    matplotlib.collections.PolyCollection
+        The elements, e.g. for colorbar().
+    """
+    ex = np.atleast_2d(np.asarray(ex, dtype=float))
+    ey = np.atleast_2d(np.asarray(ey, dtype=float))
+    polys = np.stack((ex, ey), axis=2)
+
+    pc = matplotlib.collections.PolyCollection(
+        polys, edgecolor="black" if showMesh else "face", linewidth=0.5
+    )
+    pc.set_array(np.asarray(ev, dtype=float).ravel())
+
+    ax = plt.gca()
+    ax.add_collection(pc)
+    ax.autoscale()
+    ax.set_aspect("equal")
+    set_mappable(pc)
+    return pc
+
+
+def show_grid(flag=True):
+    """Show or hide the grid of the current axes."""
+    plt.gca().grid(flag)
+
+
+def get_color_bar(axes=None):
+    """Add a colorbar for the most recent drawing, see colorbar()."""
+    return colorbar()
+
+
+drawNodalValues = draw_nodal_values
+drawElementValues = draw_element_values
+drawDisplacements = draw_displacements
+drawGeometry = draw_geometry
+add_label = addLabel = text
+showGrid = show_grid
+getColorbar = color_bar = colorBar = get_color_bar
+eldraw2_mpl = eldraw2

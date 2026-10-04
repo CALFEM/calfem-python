@@ -8,8 +8,6 @@ Utility functions for Vedo
 import numpy as np
 from vedo import *
 import vtk
-import pyvtk
-import sys
 
 ### ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ###
 # By Jonas Lindemann
@@ -56,7 +54,7 @@ def ugrid_from_edof_ec(edof, ex, ey, ez, ed=None, dofs_per_node=3, ignore_first=
 
     celltypes = [ct] * nel
 
-    return UGrid([coords, topo, celltypes])
+    return UnstructuredGrid([coords, topo, celltypes])
 
 def convert_to_node_topo(edof, ex, ey, ez, ed=None, es=None, dofs_per_node=3, ignore_first=False):
     """
@@ -181,31 +179,25 @@ def get_coord_from_edof(edof_row,dof,element_type):
 
     :return array coords: Array of node coordinates for element [n_nodes x 3]
     """
+    # Number of nodes per element for each element type
     if element_type == 1 or element_type == 2 or element_type == 5:
-        edof_row1,edof_row2 = np.split(edof_row,2)
-        coord1 = int(np.where((edof_row1==dof).any(axis=1))[0])
-        coord2 = int(np.where((edof_row2==dof).any(axis=1))[0])
-        return coord1, coord2
+        nnodes = 2
     elif element_type == 3 or element_type == 4:
-        edof_row1,edof_row2,edof_row3,edof_row4,edof_row5,edof_row6,edof_row7,edof_row8 = np.split(edof_row,8)
-        coord1 = int(np.where(np.any(edof_row1==dof,axis=1))[0])
-        coord2 = int(np.where(np.any(edof_row2==dof,axis=1))[0])
-        coord3 = int(np.where(np.any(edof_row3==dof,axis=1))[0])
-        coord4 = int(np.where(np.any(edof_row4==dof,axis=1))[0])
-        coord5 = int(np.where(np.any(edof_row5==dof,axis=1))[0])
-        coord6 = int(np.where(np.any(edof_row6==dof,axis=1))[0])
-        coord7 = int(np.where(np.any(edof_row7==dof,axis=1))[0])
-        coord8 = int(np.where(np.any(edof_row8==dof,axis=1))[0])
-        coords = np.array([coord1, coord2, coord3, coord4, coord5, coord6, coord7, coord8])
-        return coords
+        nnodes = 8
     elif element_type == 6:
-        edof_row1,edof_row2,edof_row3,edof_row4 = np.split(edof_row,4)
-        coord1 = int(np.where(np.any(edof_row1==dof,axis=1))[0])
-        coord2 = int(np.where(np.any(edof_row2==dof,axis=1))[0])
-        coord3 = int(np.where(np.any(edof_row3==dof,axis=1))[0])
-        coord4 = int(np.where(np.any(edof_row4==dof,axis=1))[0])
-        coords = np.array([coord1, coord2, coord3, coord4])
-        return coords
+        nnodes = 4
+
+    # Find the node (row in dof) containing the first dof of each node in the element.
+    # Works for any number of dofs per node in dof, e.g. bars with 3 dofs/node in a
+    # frame model with 6 dofs/node.
+    dof = np.asarray(dof)
+    node_dofs = np.split(np.asarray(edof_row), nnodes)
+    coords = [int(np.where((dof == nd[0]).any(axis=1))[0][0]) for nd in node_dofs]
+
+    if nnodes == 2:
+        return coords[0], coords[1]
+    return np.array(coords)
+
 
 def get_a_from_coord(coord_row_num,num_of_deformations,a,scale=1):
     """
@@ -219,6 +211,7 @@ def get_a_from_coord(coord_row_num,num_of_deformations,a,scale=1):
     :return float dy: Nodal displacement in y-direction
     :return float dz: Nodal displacement in z-direction
     """
+    a = np.ravel(a)
     dx = a[coord_row_num*num_of_deformations]*scale
     dy = a[coord_row_num*num_of_deformations+1]*scale
     dz = a[coord_row_num*num_of_deformations+2]*scale
@@ -332,7 +325,7 @@ def vectors(
     :return list cylinders: Vector actors
     """
     if isinstance(points, Points):
-        points = points.points()
+        points = points.vertices
     else:
         points = np.array(points)
     vectors = np.array(vectors) / 2
@@ -406,8 +399,7 @@ def check_input(edof,coord,dof,element_type,a=None,values=None,nseg=None):
     if a is not None:
         number_of_displacements = np.size(a, axis=0)
         if number_of_displacements != number_of_degrees_of_freedom:
-            print(element_name + " element: Number of displacements (a) and total number of degrees of freedom (Dof) does not correspond")
-            sys.exit()
+            raise ValueError(element_name + " element: Number of displacements (a) and total number of degrees of freedom (Dof) does not correspond")
 
     # Checks scalar values, edof
     if values is not None:
@@ -418,8 +410,7 @@ def check_input(edof,coord,dof,element_type,a=None,values=None,nseg=None):
             if number_of_values == number_of_elements*nseg:
                 val = 'el_values'
             else:
-                print(element_name + " element: Invalid number of element-/nodal scalars, please make sure the number of scalar values correspond to total number of elements/nodes")
-                sys.exit()
+                raise ValueError(element_name + " element: Invalid number of element-/nodal scalars, please make sure the number of scalar values correspond to total number of elements/nodes")
             
         else:
             number_of_values = np.size(values, axis=0)*np.size(values, axis=1)
@@ -431,67 +422,53 @@ def check_input(edof,coord,dof,element_type,a=None,values=None,nseg=None):
             elif number_of_values == number_of_coordinates:
                 val = 'nodal_values'
             else:
-                print(element_name + " element: Invalid number of element-/nodal scalars, please make sure the number of scalar values correspond to total number of elements/nodes")
-                sys.exit()
+                raise ValueError(element_name + " element: Invalid number of element-/nodal scalars, please make sure the number of scalar values correspond to total number of elements/nodes")
 
     # Checks coord, dof
     if np.size(coord, axis=0) != np.size(dof, axis=0):
-        print(element_name + " element: Number of rows in Coord & Dof does not correspond, please check them along with number of nodes")
-        sys.exit()
+        raise ValueError(element_name + " element: Number of rows in Coord & Dof does not correspond, please check them along with number of nodes")
 
     # Checks edof
     if element_type == 1:
         if number_of_degrees_of_freedom_per_element != 2:
-            print(element_name + " element: 2 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 2 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 1:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 1 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 1 required")
 
     # Checks edof
     elif element_type == 2:
         if number_of_degrees_of_freedom_per_element != 6:
-            print(element_name + " element: 6 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 6 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 3:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
 
     # Checks edof
     elif element_type == 3:
         if number_of_degrees_of_freedom_per_element != 8:
-            print(element_name + " element: 8 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 8 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 1:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 1 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 1 required")
 
     # Checks edof
     elif element_type == 4:
         if number_of_degrees_of_freedom_per_element != 24:
-            print(element_name + " element: 24 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 24 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 3:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
 
     # Checks edof
     elif element_type == 5:
         if number_of_degrees_of_freedom_per_element != 12:
-            print(element_name + " element: 12 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 12 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 6:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 6 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 6 required")
 
     # Checks edof
     elif element_type == 6:
         if number_of_degrees_of_freedom_per_element != 12:
-            print(element_name + " element: 12 degrees of freedom per element required")
-            sys.exit()
+            raise ValueError(element_name + " element: 12 degrees of freedom per element required")
         if degrees_of_freedom_per_node < 3:
-            print(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
-            sys.exit()
+            raise ValueError(element_name + " element: Too few degrees of freedom per node in Dof, at least 3 required")
 
     if a is None and values is None:
         return number_of_elements, \

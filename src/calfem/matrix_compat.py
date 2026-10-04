@@ -78,7 +78,7 @@ class MatrixCompat:
                 if other_array.ndim == 1:
                     other_array = other_array.reshape(-1, 1)
                 return MatrixCompat(np.matmul(self.array, other_array))
-            except:
+            except (TypeError, ValueError):
                 return NotImplemented
     
     def __rmul__(self, other):
@@ -95,7 +95,7 @@ class MatrixCompat:
                 if other_array.ndim == 1:
                     other_array = other_array.reshape(1, -1)
                 return MatrixCompat(np.matmul(other_array, self.array))
-            except:
+            except (TypeError, ValueError):
                 return NotImplemented
     
     # Division operations
@@ -113,7 +113,7 @@ class MatrixCompat:
             try:
                 # Try to treat as scalar
                 return MatrixCompat(self.array / other)
-            except:
+            except (TypeError, ValueError):
                 return NotImplemented
     
     def __rtruediv__(self, other):
@@ -128,7 +128,7 @@ class MatrixCompat:
                 other_array = np.array(other, dtype=float)
                 # B / A = B * A^-1
                 return MatrixCompat(np.matmul(other_array, inv(self.array)))
-            except:
+            except (TypeError, ValueError):
                 return NotImplemented
     
     # Handle inverse property

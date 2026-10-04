@@ -6,7 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -30,16 +30,16 @@ class Ui_MainWindow(object):
         MainWindow.tabWidget.setMinimumSize(QtCore.QSize(0, 120))
         MainWindow.tabWidget.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         MainWindow.tabWidget.setStyleSheet("QTabWidget::pane { /* The tab widget frame */\n"
-"    border-bottom: 6px solid;\n"
+"    border-bottom: 3px solid;\n"
 "    border-bottom-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0      rgb(200, 200, 200), stop:1 rgba(220,220,220));\n"
-"     border-top: 8px solid rgb(0,0,128);\n"
-"    /*border-radius: 4px;*/\n"
+"     border-top: 3px solid rgb(0,0,128);\n"
+"    /*border-radius: 3px;*/\n"
 "}\n"
 "\n"
 "\n"
 "QTabWidget::tab-bar {\n"
 "    left: 20px; /* move to the right by 5px */\n"
-"    bottom: -8px;\n"
+"    bottom: -3px;\n"
 "}\n"
 "\n"
 "QTabBar::tab {\n"

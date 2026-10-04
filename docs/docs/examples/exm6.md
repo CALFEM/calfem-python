@@ -268,7 +268,7 @@ for i in range(edof.shape[0]):
     es, et = cfc.planqs(ex[i,:], ey[i,:], ep, D, ed[i,:]) 
 
     # Calc and append effective stress to list.    
-    von_mises.append(np.sqrt(np.power(es[0],2) - es[0]*es[1] + np.power(es[1],2) + 3*es[2] ) ) 
+    von_mises.append(np.sqrt(np.power(es[0],2) - es[0]*es[1] + np.power(es[1],2) + 3*np.power(es[2],2) ) ) 
 
     ## es: [sigx sigy tauxy]
 ```

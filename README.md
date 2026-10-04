@@ -23,13 +23,41 @@ CALFEM for Python is released under the MIT license, which enables its use in op
 
 ## Installation
 
-Install CALFEM for python using 
-`pip install calfem-python`
+Install CALFEM for Python using
 
-## Dependencies
+```bash
+pip install calfem-python
+```
 
-Mesh Generation Software: GMSH.
-Install GMSH [here](http://gmsh.info/) and add to the PATH of your file or instead add contents of GMSH to the file folder.
+This also installs the required dependencies NumPy, SciPy, Matplotlib, tabulate and the Gmsh Python module used for mesh generation. No separate Gmsh installation is needed.
+
+## Visualisation
+
+`calfem.vis` (an alias for `calfem.vis_mpl`) draws geometries, meshes and results using Matplotlib. `calfem.vis_plotly` provides the same functions as interactive plotly figures. The former visvis based module is available as `calfem.vis_visvis`, but is deprecated.
+
+## Optional dependencies
+
+Some modules need additional packages, which can be installed as extras:
+
+| Extra | Installs | Needed for |
+| --- | --- | --- |
+| `plotly` | plotly | Interactive plots with `calfem.vis_plotly` |
+| `io` | meshio | Mesh import/export with `calfem.io` |
+| `vedo` | vedo | 3D visualisation with `calfem.vis_vedo` |
+| `vtk` | vtk | Visualisation with `calfem.vis_vtk` |
+| `pyvtk` | pyvtk | VTK export with `calfem.utils.export_vtk_stress` |
+| `qtpy` | qtpy | The geometry editor `calfem.editor`, using an already installed Qt binding |
+| `pyside6` | qtpy, PySide6 | The geometry editor `calfem.editor` with PySide6 |
+| `pyqt6` | qtpy, PyQt6 | The geometry editor `calfem.editor` with PyQt6 |
+| `visvis` | visvis | The deprecated `calfem.vis_visvis` |
+
+For example:
+
+```bash
+pip install calfem-python[plotly,io]
+```
+
+When using conda, install the Qt binding from conda-forge instead (e.g. `conda install -c conda-forge pyside6`) together with the `qtpy` extra. Mixing a pip installed Qt binding with Qt libraries from conda can fail with DLL load errors.
 
 ## References
 

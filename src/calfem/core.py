@@ -11,7 +11,7 @@ Division of Solid Mechanics, Lund University.
 from __future__ import annotations
 from typing import Optional, Tuple, Union
 
-from scipy.sparse.linalg import dsolve
+from scipy.sparse.linalg import spsolve
 from scipy.sparse import csc_matrix, csr_matrix, linalg, lil_matrix
 from scipy.linalg import eig, lu
 import numpy as np
@@ -903,7 +903,7 @@ def bar3s(ex, ey, ez, ep, ed, eq=None, nep=None):
     
     C1a = C1 @ a1
 
-    X = np.linspace(0., L+L/(ne-1), ne).reshape(ne,1) 
+    X = np.linspace(0., L, ne).reshape(ne,1) 
     #X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
     zero = np.zeros(ne).reshape(ne,1)    
     one = np.ones(ne).reshape(ne,1)
@@ -2806,7 +2806,7 @@ def beam3s(ex, ey, ez, eo, ep, ed, eq=None, nep=None):
     C4 = C1
     C4a = C4 @ a4
   
-    X = np.linspace(0., L+L/(ne-1), ne).reshape(ne,1) 
+    X = np.linspace(0., L, ne).reshape(ne,1)  
     #X = np.arange(0., L+L/(ne-1), L/(ne-1)).reshape(ne,1) 
     zero = np.zeros(ne).reshape(ne,1)    
     one = np.ones(ne).reshape(ne,1)
@@ -4406,8 +4406,7 @@ def plants(ex, ey, ep, D, ed):
         return es, et
 
     else:
-        print("Error ! Check first argument, ptype=1 or 2 allowed")
-        return None
+        raise ValueError("ptype must be 1 (plane stress) or 2 (plane strain)")
     
 def plantf(ex, ey, ep, es):
     """
@@ -4807,6 +4806,9 @@ def plani4e(ex, ey, ep, D, eq=None):
     t = ep[1]
     ir = ep[2]
     ngp = ir*ir
+    D = np.matrix(D)
+    ex = np.asarray(ex, dtype=float).reshape(-1)
+    ey = np.asarray(ey, dtype=float).reshape(-1)
     if eq is None:
         q = np.zeros((2, 1))
     else:
@@ -4856,16 +4858,18 @@ def plani4e(ex, ey, ep, D, eq=None):
             [w2, w1],
             [w1, w1]])
     else:
-        info("Used number of integrat     ion points not implemented")
-    wp = np.multiply(w[:, 0], w[:, 1])
-    xsi = gp[:, 0]
-    eta = gp[:, 1]
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
+    wp = np.multiply(np.asarray(w[:, 0]).reshape(-1, 1), np.asarray(w[:, 1]).reshape(-1, 1))
+    xsi_col = np.asarray(gp[:, 0]).reshape(-1, 1)
+    eta_col = np.asarray(gp[:, 1]).reshape(-1, 1)
+    xsi = xsi_col.reshape(-1)
+    eta = eta_col.reshape(-1)
     r2 = ngp*2
     # Shape Functions
-    N = np.multiply((1-xsi), (1-eta))/4.
-    N = np.append(N, np.multiply((1+xsi), (1-eta))/4., axis=1)
-    N = np.append(N, np.multiply((1+xsi), (1+eta))/4., axis=1)
-    N = np.append(N, np.multiply((1-xsi), (1+eta))/4., axis=1)
+    N = np.multiply((1-xsi_col), (1-eta_col))/4.
+    N = np.append(N, np.multiply((1+xsi_col), (1-eta_col))/4., axis=1)
+    N = np.append(N, np.multiply((1+xsi_col), (1+eta_col))/4., axis=1)
+    N = np.append(N, np.multiply((1-xsi_col), (1+eta_col))/4., axis=1)
 
     dNr = np.matrix(np.zeros((r2, 4)))
     dNr[0:r2:2, 0] = -(1-eta)/4.
@@ -4898,7 +4902,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             if detJ < 10*np.finfo(float).eps:
                 info("Jacobi determinant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1, :])
-            dNx = JTinv*dNr[indx-1, :]
+            dNx = JTinv @ dNr[indx-1, :]
 #
             index_array_even = np.array([0, 2, 4, 6])
             index_array_odd = np.array([1, 3, 5, 7])
@@ -4917,8 +4921,12 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1+B.T*Dm*B*detJ*wp[i].item()*t
-            fe1 = fe1 + N2.T * q * detJ * wp[i].item() * t
+            detJ_val = float(np.asarray(detJ).reshape(-1)[0])
+            wp_val = float(np.asarray(wp).reshape(-1)[i])
+            t_val = float(np.asarray(t).reshape(-1)[0])
+            q_col = np.matrix(q).reshape(-1, 1)
+            Ke1 = Ke1 + B.T * Dm * B * detJ_val * wp_val * t_val
+            fe1 = fe1 + N2.T * q_col * detJ_val * wp_val * t_val
 
         return Ke1, fe1
 #--------- plane strain --------------------------------------
@@ -4938,7 +4946,7 @@ def plani4e(ex, ey, ep, D, eq=None):
             if detJ < 10*np.finfo(float).eps:
                 info("Jacobideterminant equal or less than zero!")
             JTinv = np.linalg.inv(JT[indx-1, :])
-            dNx = JTinv*dNr[indx-1, :]
+            dNx = JTinv @ dNr[indx-1, :]
 #
             index_array_even = np.array([0, 2, 4, 6])
             index_array_odd = np.array([1, 3, 5, 7])
@@ -4959,11 +4967,125 @@ def plani4e(ex, ey, ep, D, eq=None):
                 N2[1, index] = N[i, counter]
                 counter = counter+1
 #
-            Ke1 = Ke1 + B.T * Dm * B * detJ * wp[i].item() * t
-            fe1 = fe1+N2.T*q*detJ*wp[i].item()*t
+            detJ_val = float(np.asarray(detJ).reshape(-1)[0])
+            wp_val = float(np.asarray(wp).reshape(-1)[i])
+            t_val = float(np.asarray(t).reshape(-1)[0])
+            q_col = np.matrix(q).reshape(-1, 1)
+            Ke1 = Ke1 + B.T * Dm * B * detJ_val * wp_val * t_val
+            fe1 = fe1 + N2.T * q_col * detJ_val * wp_val * t_val
         return Ke1, fe1
     else:
         info("Error ! Check first argument, ptype=1 or 2 allowed")
+
+
+def plani4s(ex, ey, ep, D, ed):
+    """
+    Calculate element stresses and strains for a 4 node isoparametric
+    element in plane strain or plane stress.
+
+    Parameters
+    ----------
+    ex : array_like
+        Element coordinates [x1, x2, x3, x4].
+    ey : array_like
+        Element coordinates [y1, y2, y3, y4].
+    ep : array_like
+        Element properties [ptype, t, ir], where ptype is analysis type
+        (1: plane stress, 2: plane strain), t is thickness, and ir is
+        integration rule.
+    D : array_like
+        Constitutive matrix, 3x3, or 4x4/6x6 to also obtain the
+        out-of-plane components.
+    ed : array_like
+        Element displacement vector [u1, u2, ..., u8].
+
+    Returns
+    -------
+    es : ndarray
+        Element stress matrix, one row for each integration point, in the
+        same order as in plani4e. Each row contains [sigx, sigy, tauxy] if
+        D is 3x3, otherwise [sigx, sigy, sigz, tauxy] (followed by zeros
+        for a 6x6 D).
+    et : ndarray
+        Element strain matrix, one row for each integration point.
+        Each row contains [epsx, epsy, gamxy] if D is 3x3, otherwise
+        [epsx, epsy, epsz, gamxy] (followed by zeros for a 6x6 D).
+    """
+    ptype = ep[0]
+    ir = ep[2]
+    D = np.asarray(D, dtype=float)
+    ex = np.asarray(ex, dtype=float).reshape(-1)
+    ey = np.asarray(ey, dtype=float).reshape(-1)
+    ed = np.asarray(ed, dtype=float).reshape(-1)
+
+    #--------- gauss points (same order as plani4e) ---------------
+    if ir == 1:
+        g = np.array([0.0])
+    elif ir == 2:
+        g = np.array([-0.577350269189626, 0.577350269189626])
+    elif ir == 3:
+        g = np.array([-0.774596669241483, 0.0, 0.774596669241483])
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
+
+    xsi = np.tile(g, ir)
+    eta = np.repeat(g, ir)
+    ngp = ir*ir
+
+    colD = D.shape[0]
+    plane = [0, 1, 3]
+    if ptype == 1:
+        if colD > 3:
+            Cm = np.linalg.inv(D)
+            Dm = np.linalg.inv(Cm[np.ix_(plane, plane)])
+        else:
+            Dm = D
+    elif ptype == 2:
+        Dm = D
+    else:
+        raise ValueError("Check first argument, ptype=1 or 2 allowed")
+
+    es = np.zeros((ngp, colD))
+    et = np.zeros((ngp, colD))
+
+    for i in range(ngp):
+        dNr = np.array([
+            [-(1-eta[i]), (1-eta[i]), (1+eta[i]), -(1+eta[i])],
+            [-(1-xsi[i]), -(1+xsi[i]), (1+xsi[i]), (1-xsi[i])]])/4.
+        JT = dNr @ np.column_stack((ex, ey))
+        detJ = np.linalg.det(JT)
+        if detJ < 10*np.finfo(float).eps:
+            info("Jacobi determinant equal or less than zero!")
+        dNx = np.linalg.solve(JT, dNr)
+
+        B = np.zeros((3, 8))
+        B[0, 0::2] = dNx[0, :]
+        B[1, 1::2] = dNx[1, :]
+        B[2, 0::2] = dNx[1, :]
+        B[2, 1::2] = dNx[0, :]
+
+        ee = B @ ed
+
+        if colD > 3:
+            if ptype == 1:
+                # Plane stress: in-plane stresses, out-of-plane strain from
+                # the compliance relation with sigz = 0.
+                ss = np.zeros(colD)
+                ss[plane] = Dm @ ee
+                ee = Cm @ ss
+            else:
+                # Plane strain: epsz = 0, sigz from the full D matrix.
+                e = np.zeros(colD)
+                e[plane] = ee
+                ee = e
+                ss = D @ ee
+        else:
+            ss = Dm @ ee
+
+        es[i, :] = ss
+        et[i, :] = ee
+
+    return es, et
 
 
 def soli8e(ex, ey, ez, ep, D, eqp=None):
@@ -5003,7 +5125,7 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
     if eqp is None:
         eq = np.zeros((3, 1))
     else:
-        eq = eqp
+        eq = np.reshape(eqp, (3, 1))
 
     if ir == 1:
         g1 = 0.0
@@ -5021,8 +5143,8 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
         w[:, 1] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
         gp[:, 2] = np.array([-1, -1, -1, -1, 1, 1, 1, 1])*g1
         w[:, 2] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
-    else:
-        g1 = 0.774596669241483,
+    elif ir == 3:
+        g1 = 0.774596669241483
         g2 = 0.0
         w1 = 0.555555555555555
         w2 = 0.888888888888888
@@ -5063,6 +5185,8 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
 
         w[:, 2] = np.concatenate((I3, I2, I3), axis=1)*w1
         w[:, 2] = np.concatenate((I2, I3, I2), axis=1)*w2 + w[:, 2]
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
 
     wp = w[:, 0]*w[:, 1]*w[:, 2]
 
@@ -5149,7 +5273,7 @@ def soli8e(ex, ey, ez, ep, D, eqp=None):
         Ke = Ke + (np.transpose(B)@D@B)*detJ*wp[i]
         fe = fe + (np.transpose(N2)@eq)*detJ*wp[i]
 
-    if eqp != None:
+    if eqp is not None:
         return Ke, fe
     else:
         return Ke
@@ -5176,21 +5300,26 @@ def soli8s(ex, ey, ez, ep, D, ed):
 
     Returns
     -------
-    es : ndarray
-        Element stress matrix, one row for each integration point.
-        Each row contains [sigx, sigy, sigz, sigxy, sigyz, sigxz].
     et : ndarray
         Element strain matrix, one row for each integration point.
-        Each row contains [epsx, epsy, epsz, epsxy, epsyz, epsxz].
+        Each row contains [epsx, epsy, epsz, gamxy, gamxz, gamyz].
+    es : ndarray
+        Element stress matrix, one row for each integration point.
+        Each row contains [sigx, sigy, sigz, sigxy, sigxz, sigyz].
+    eci : ndarray
+        Integration point coordinates, one row [x, y, z] for each
+        integration point.
+
+    Note
+    ----
+    The return order (et, es, eci) differs from the MATLAB version,
+    which returns [es, et, eci].
 
     History
     -------
     LAST MODIFIED: M Ristinmaa   1995-10-25
                    J Lindemann   2022-02-23 (Python version)
     """
-
-    ir = ep[0]
-    ngp = ir*ir*ir
 
     ir = ep[0]
     ngp = ir*ir*ir
@@ -5211,8 +5340,8 @@ def soli8s(ex, ey, ez, ep, D, ed):
         w[:, 1] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
         gp[:, 2] = np.array([-1, -1, -1, -1, 1, 1, 1, 1])*g1
         w[:, 2] = np.array([1, 1, 1, 1, 1, 1, 1, 1])*w1
-    else:
-        g1 = 0.774596669241483,
+    elif ir == 3:
+        g1 = 0.774596669241483
         g2 = 0.0
         w1 = 0.555555555555555
         w2 = 0.888888888888888
@@ -5253,6 +5382,8 @@ def soli8s(ex, ey, ez, ep, D, ed):
 
         w[:, 2] = np.concatenate((I3, I2, I3), axis=1)*w1
         w[:, 2] = np.concatenate((I2, I3, I2), axis=1)*w2 + w[:, 2]
+    else:
+        raise ValueError("Used number of integration points not implemented, ir=1, 2 or 3 allowed")
 
     wp = w[:, 0]*w[:, 1]*w[:, 2]
 
@@ -5312,7 +5443,7 @@ def soli8s(ex, ey, ez, ep, D, ed):
     et = np.zeros((ngp, 6))
     es = np.zeros((ngp, 6))
 
-    ed = ed.reshape(1, 24)
+    ed = np.asarray(ed, dtype=float).reshape(1, 24)
 
     for i in range(ngp):
         indx = [i*3, i*3+1, i*3+2]
@@ -5604,7 +5735,7 @@ def spsolveq(K, f, bcPrescr, bcVal=None):
     info("done...")
 
     info("Solving system...")
-    asys = dsolve.spsolve(Ksys, fsys)
+    asys = spsolve(Ksys, fsys)
 
     info("Reconstructing full a...")
     a = np.zeros([nDofs, 1])
@@ -6421,7 +6552,12 @@ def effmises(es, ptype):
     Parameters
     ----------
     es : array_like
-        Element stress matrix [[sigx, sigy, [sigz], tauxy], [...]], one row for each element.
+        Element stress matrix, one row for each element:
+
+        - ptype 1: [sigx, sigy, tauxy] or [sigx, sigy, sigz, tauxy]
+        - ptype 2: [sigx, sigy, sigz, tauxy]
+        - ptype 3: [sigr, sigz, sigtheta, taurz]
+        - ptype 4: [sigx, sigy, sigz, tauxy, tauxz, tauyz]
     ptype : int
         Analysis type:
         1 : plane stress
@@ -6435,17 +6571,36 @@ def effmises(es, ptype):
         Effective stress array [eseff_0, ..., eseff_nel-1].
     """
 
-    nel = np.size(es, 0)
+    es = np.asarray(es, dtype=float)
+    if es.ndim == 1:
+        es = es.reshape(1, -1)
     escomps = np.size(es, 1)
 
-    eseff = np.zeros([nel])
-
     if ptype == 1:
-        sigxx = es[:, 0]
-        sigyy = es[:, 1]
-        sigxy = es[:, 2]
-        eseff = np.sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
-        return eseff
+        if escomps == 3:
+            sigxx, sigyy, sigxy = es[:, 0], es[:, 1], es[:, 2]
+        elif escomps == 4:
+            # sigz is zero in plane stress
+            sigxx, sigyy, sigxy = es[:, 0], es[:, 1], es[:, 3]
+        else:
+            raise ValueError("effmises: es must have 3 or 4 columns for plane stress (ptype=1)")
+        return np.sqrt(sigxx*sigxx+sigyy*sigyy-sigxx*sigyy+3*sigxy*sigxy)
+
+    elif ptype == 2 or ptype == 3:
+        if escomps != 4:
+            raise ValueError("effmises: es must have 4 columns for plane strain and axisymmetry (ptype=2, 3)")
+        s1, s2, s3, t12 = es[:, 0], es[:, 1], es[:, 2], es[:, 3]
+        return np.sqrt(s1*s1+s2*s2+s3*s3-s1*s2-s2*s3-s3*s1+3*t12*t12)
+
+    elif ptype == 4:
+        if escomps != 6:
+            raise ValueError("effmises: es must have 6 columns for three dimensional analysis (ptype=4)")
+        sx, sy, sz = es[:, 0], es[:, 1], es[:, 2]
+        txy, txz, tyz = es[:, 3], es[:, 4], es[:, 5]
+        return np.sqrt(sx*sx+sy*sy+sz*sz-sx*sy-sy*sz-sz*sx+3*(txy*txy+txz*txz+tyz*tyz))
+
+    else:
+        raise ValueError(f"effmises: ptype must be 1, 2, 3 or 4, got {ptype}")
 
 
 def stress2nodal(eseff, edof):

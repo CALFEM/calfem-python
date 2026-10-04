@@ -7,10 +7,10 @@
 
 import numpy as np
 import calfem.core as cfc
-import calfem.vis_vedo as cfvv
+import calfem.vis_vedo as cfv
 import calfem.vis_vedo_utils as cfvu
 
-edof,coord,dof,a,ed,bc,f_dofs,Stress_tensors,vM_el,vM_n,lamb,eig = cfvv.import_mat('exv4',['edof','coord','dof','a','ed','bc','force_dofs','Stress_tensors','vM_el','vM_n','lambda','eig'])
+edof,coord,dof,a,ed,bc,f_dofs,Stress_tensors,vM_el,vM_n,lamb,eig = cfv.import_mat('exv4',['edof','coord','dof','a','ed','bc','force_dofs','Stress_tensors','vM_el','vM_n','lambda','eig'])
 
 ex,ey,ez = cfc.coordxtr(edof,coord,dof)
 

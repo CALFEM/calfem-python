@@ -1,11 +1,10 @@
 import itertools
 from functools import cmp_to_key
 
-import PyQt5
 import numpy as np
-from PyQt5.QtCore import QPointF, QLineF, QRectF, QRegExp
-from PyQt5.QtGui import QPen, QColor, QBrush, QPolygonF, QFont, QRegExpValidator
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QGraphicsScene, \
+from qtpy.QtCore import QPointF, QLineF, QRectF, QRegularExpression, Qt
+from qtpy.QtGui import QPen, QColor, QBrush, QPolygonF, QFont, QRegularExpressionValidator
+from qtpy.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QGraphicsScene, \
     QGraphicsItem, QGraphicsPolygonItem, QToolButton, \
     QGraphicsEllipseItem, QLineEdit, QFormLayout, QGraphicsLineItem, QGraphicsTextItem, QGridLayout, QPushButton
 
@@ -170,7 +169,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         # exception case 2: when selecting corner with highest index last edge is indexed with a negative sign,
         # catch this with a special if statement for the highest index
         for item in poly.childItems():
-            if isinstance(item, PyQt5.QtWidgets.QGraphicsLineItem):
+            if isinstance(item, QGraphicsLineItem):
                 if circ.localIndex == 0:
                     if item.localIndex < 0:
                         line = item.line()
@@ -283,7 +282,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         if self.mode == "Arrow":
             if self.selectedItems():
                 # If a polygon is selected update the polygons position with the corresponding mouse movement
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
+                if isinstance(self.selectedItems()[0], QGraphicsPolygonItem):
                     if self.grid_snap:
                         self.selectedItems()[0].moveBy(x - self.grid_snap_last_x, y - self.grid_snap_last_y)
                         self.grid_snap_last_x = x
@@ -292,7 +291,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                         self.selectedItems()[0].moveBy(x - event.lastScenePos().x(), y - event.lastScenePos().y())
                 # If a circle is selected update the circles position with the corresponding mouse movement and
                 # update the parent polygon with the changed corner
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem):
+                if isinstance(self.selectedItems()[0], QGraphicsEllipseItem):
 
                     circ = self.selectedItems()[0]
                     poly = circ.parentItem()
@@ -392,7 +391,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             self.hole_list.remove(poly)
 
         for item in poly.childItems():
-            if isinstance(item, PyQt5.QtWidgets.QGraphicsLineItem):
+            if isinstance(item, QGraphicsLineItem):
                 self.edge_list.remove(item)
             if item in self.potential_edge_splitters:
                 self.potential_edge_splitters.remove(item)
@@ -417,7 +416,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             # If in the surface view highlight the polygon to allow updating exact values of the corner points
             if self.view == "Surface View":
                 if self.selectedItems():
-                    if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
+                    if isinstance(self.selectedItems()[0], QGraphicsPolygonItem):
                         index = 0
                         poly = self.selectedItems()[0]
                         scroll_area_widget_contents = QWidget()
@@ -427,7 +426,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
 
                         # Add a x- and y- editor for each point of the polygon
                         for point in self.poly_to_list(poly, "Global"):
-                            validator = QRegExpValidator(QRegExp("\\-*\\d*\\.\\d+"))
+                            validator = QRegularExpressionValidator(QRegularExpression("\\-*\\d*\\.\\d+"))
                             label_x = QLineEdit(str(point.x()))
                             label_x.setValidator(validator)
                             label_y = QLineEdit(str(-point.y()))
@@ -440,7 +439,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                             # Update the polygon with the new edited values
                             i = 0
                             for child_item in poly.childItems():
-                                if isinstance(child_item, PyQt5.QtWidgets.QGraphicsEllipseItem):
+                                if isinstance(child_item, QGraphicsEllipseItem):
                                     if child_item.localIndex == i:
                                         x = float(grid.itemAtPosition(i, 0).widget().text())
                                         y = -float(grid.itemAtPosition(i, 1).widget().text())
@@ -469,7 +468,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         self.reversed_marker_dict[index] = marker_text
         self.line_marker_index += 1
 
-        if isinstance(item, PyQt5.QtWidgets.QGraphicsEllipseItem):
+        if isinstance(item, QGraphicsEllipseItem):
             self.point_marker_list.append(item)
             item.setBrush(QColor("Red"))
 
@@ -482,7 +481,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             text.setParentItem(item)
             text.setPos(-5, 5)
 
-        if isinstance(item, PyQt5.QtWidgets.QGraphicsLineItem):
+        if isinstance(item, QGraphicsLineItem):
             self.line_marker_list.append(item)
             item.setPen(QPen(QColor("Red"), 2))
 
@@ -560,7 +559,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 self.toggle_border_mode()  # To toggle the newly created polygon to border mode
 
         if self.mode == "Arrow":
-            if event.button() != 1:
+            if event.button() != Qt.LeftButton:
                 # Return if button clicked is any is any other than left mouse
                 return
             super(EditorScene, self).mousePressEvent(event)
@@ -568,7 +567,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             # If a polygon or circle is clicked remove the coordinates from the global coordinate lists to avoid
             # snapping to self etc. point is re-added on mouse release and hence also updating the coord list
             if self.selectedItems():
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
+                if isinstance(self.selectedItems()[0], QGraphicsPolygonItem):
                     for point in self.poly_to_list(self.selectedItems()[0], "Global"):
                         self.point_coord_list = np.delete(self.point_coord_list, np.where(
                             np.all(self.point_coord_list == [[point.x(), point.y()]], axis=1))[0][0], axis=0)
@@ -577,7 +576,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                             y = round(y / self.grid_spacing) * self.grid_spacing
                             self.grid_snap_last_x = x
                             self.grid_snap_last_y = y
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem):
+                if isinstance(self.selectedItems()[0], QGraphicsEllipseItem):
                     self.prev_selected_point = self.selectedItems()[0]
                     point = self.selectedItems()[0].scenePos()
                     self.point_coord_list = np.delete(self.point_coord_list, np.where(
@@ -591,7 +590,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                 x = round(x / self.grid_spacing) * self.grid_spacing
                 y = round(y / self.grid_spacing) * self.grid_spacing
 
-            if event.button() == 2:
+            if event.button() == Qt.RightButton:
                 # If a polygon is being drawn, finish the polygon by clicking right mouse button. This will close the
                 # polygon and remove the lines drawn as support to show the polygon and replace them with the actual
                 # edges and points of the polygon
@@ -601,7 +600,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
                     self.append_text_browser("Polygon created")
                     self.add_poly_to_scene(self.drawing_poly, hole_mode=self.hole_mode)
                     self.remove_drawing_poly()
-            elif event.button() == 1:
+            elif event.button() == Qt.LeftButton:
                 if [x, y] in self.drawing_points_coords:
                     pass
                 elif self.first_draw:
@@ -661,8 +660,8 @@ class EditorScene(QGraphicsScene, QMainWindow):
         if self.mode == "Set Marker":
             super(EditorScene, self).mousePressEvent(event)
             if self.selectedItems():
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem) or isinstance(
-                        self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsLineItem):
+                if isinstance(self.selectedItems()[0], QGraphicsEllipseItem) or isinstance(
+                        self.selectedItems()[0], QGraphicsLineItem):
                     item = self.selectedItems()[0]
                     e1 = QLineEdit()
                     e1.setFont(QFont("Arial", 10))
@@ -688,7 +687,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
             # Delete the pressed polygon
             super(EditorScene, self).mousePressEvent(event)
             if self.selectedItems():
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
+                if isinstance(self.selectedItems()[0], QGraphicsPolygonItem):
                     self.delete_polygon(self.selectedItems()[0])
 
     def remove_drawing_rect(self):
@@ -723,10 +722,10 @@ class EditorScene(QGraphicsScene, QMainWindow):
         # current coordinates back to the global coordinate list to update to the new position
         if self.mode == "Arrow":
             if self.selectedItems():
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsPolygonItem):
+                if isinstance(self.selectedItems()[0], QGraphicsPolygonItem):
                     for point in self.poly_to_list(self.selectedItems()[0], "Global"):
                         self.point_coord_list = np.append(self.point_coord_list, [[point.x(), point.y()]], axis=0)
-                if isinstance(self.selectedItems()[0], PyQt5.QtWidgets.QGraphicsEllipseItem):
+                if isinstance(self.selectedItems()[0], QGraphicsEllipseItem):
                     point = self.selectedItems()[0].scenePos()
                     self.point_coord_list = np.append(self.point_coord_list, [[point.x(), point.y()]], axis=0)
                     self.append_text_browser("Node moved to (" + str(point.x()) + " , " + str(-point.y()) + ")")
@@ -857,7 +856,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         y = 0
 
         # To be able to handle input as both QGraphicsPolygonItem and QPolygonF
-        if isinstance(poly, PyQt5.QtWidgets.QGraphicsPolygonItem):
+        if isinstance(poly, QGraphicsPolygonItem):
             if scope == "Global":
                 x = poly.x()
                 y = poly.y()
@@ -1049,7 +1048,7 @@ class EditorScene(QGraphicsScene, QMainWindow):
         # Loop over all children to the polygon
         for item in polygon.childItems():
             # Look only at edges (overlapping of points is handled elsewhere)
-            if isinstance(item, PyQt5.QtWidgets.QGraphicsLineItem):
+            if isinstance(item, QGraphicsLineItem):
                 edge = item
 
                 p1 = edge.line().p1()
