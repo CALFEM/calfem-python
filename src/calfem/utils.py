@@ -70,7 +70,7 @@ def disp_par(msg):
     if type_of_script() == 'jupyter':
         display(HTML(f"<p>{msg}</p>"))
     else:
-        print(f"\nmsg\n")
+        print(f"\n{msg}\n")
 
 def str_disp_par(msg):
     return f"\n{msg}\n"
