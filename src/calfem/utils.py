@@ -452,11 +452,11 @@ def apply_force_node(nodeIdx, dofs, f, value=0.0, dimension=0):
     """
 
     if (dimension == 0):
-        f[dofs[nodeIdx]] += value
+        f[dofs[nodeIdx]-1] += value
     elif (dimension == 1):
-        f[dofs[nodeIdx, dimension-1]] += value
+        f[dofs[nodeIdx, dimension-1]-1] += value
     else:
-        f[dofs[nodeIdx, dimension-1]] += value
+        f[dofs[nodeIdx, dimension-1]-1] += value
 
 applyforcenode = apply_force_node
 
